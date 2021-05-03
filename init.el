@@ -900,10 +900,10 @@
         (with-current-buffer buffer-name
           (comint-save-history))
       (setq buffer-name (generate-new-buffer-name buffer-name)))
+    (switch-to-buffer buffer-name)
     (if startup-fn
         (funcall startup-fn buffer-name)
       (let ((explicit-shell-file-name (alist-get 'file-name shell-options)))
-        (switch-to-buffer buffer-name)
         (shell buffer-name)))
     (when codings
       (with-current-buffer buffer-name
