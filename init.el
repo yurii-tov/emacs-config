@@ -903,6 +903,7 @@
     (if startup-fn
         (funcall startup-fn buffer-name)
       (let ((explicit-shell-file-name (alist-get 'file-name shell-options)))
+        (switch-to-buffer buffer-name)
         (shell buffer-name)))
     (when codings
       (with-current-buffer buffer-name
