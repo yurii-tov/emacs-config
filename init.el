@@ -123,7 +123,7 @@
        '(("M-x" smex)
          ("C-1" run-shell)
          ("C-x C-b" ibuffer)
-         ("C-c C" copy-file-name-to-clipboard)
+         ("C-c p" copy-file-name-to-clipboard)
          ("C-2" duplicate-line)
          ("M-c" upcase-char)
          ("M-q" hippie-expand)
