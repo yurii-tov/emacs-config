@@ -775,6 +775,11 @@
      printf(\"%s\\n\", \"hello world\");
      return 0;
 }")
+    ("amainv" "#include <stdio.h>\n\n\nint main(void)
+{
+     printf(\"%s\\n\", \"hello world\");
+     return 0;
+}")
     ("apr" "printf(\"%d\\n\", 42);")
     ("afor" "for (int i = 0; i < 42; i++)\n{\n\n}")))
 
