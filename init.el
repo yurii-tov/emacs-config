@@ -981,6 +981,16 @@
           #'colorize-compilation)
 
 
+;; ===========
+;; abbrev-mode
+;; ===========
+
+
+;; disable prompt about saving abbrevs
+
+(setq save-abbrevs nil)
+
+
 ;; ===========================
 ;; load site-specific settings
 ;; ===========================
