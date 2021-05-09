@@ -132,7 +132,7 @@
          ("C-v" scroll-up-5-lines)
          ("M-v" scroll-down-5-lines)
          ("C-x C-p" fill-paragraph)
-         ("M-/" reindent-region)
+         ("M-i" reindent-region)
          ("C-c r" force-revert-buffer)
          ("C-c n" rename-buffer)
          ("C-c h" hexl-mode)
