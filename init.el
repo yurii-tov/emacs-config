@@ -824,6 +824,11 @@
 ;; ======
 
 
+(defun python-make-venv (path)
+  (interactive "Gvenv directory: ")
+  (shell-command
+   (format "python -m venv --system-site-packages '%s'" path)))
+
 (defun python-set-venv (path-to-venv)
   (interactive "fPath to venv: ")
   (setq python-shell-virtualenv-root path-to-venv)
