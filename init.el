@@ -117,6 +117,14 @@
   (define-key search-map (kbd "t") 'translate-en-ru-online)
   (define-key isearch-mode-map (kbd "M-q") 'isearch-query-replace))
 
+;; set/reset Python venvs
+
+(progn
+  (define-prefix-command 'python-venv-map)
+  (define-key global-map (kbd "C-c v") 'python-venv-map)
+  (define-key python-venv-map (kbd "s") 'python-set-venv)
+  (define-key python-venv-map (kbd "r") 'python-reset-venv))
+
 ;; global keymap
 
 (let ((bindings
