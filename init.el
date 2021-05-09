@@ -46,6 +46,8 @@
 
 (require 'ansi-color)
 
+(require 'python)
+
 
 ;; ======
 ;; system
@@ -104,7 +106,7 @@
   (define-prefix-command 'repls-map)
   (global-set-key (kbd "C-c i") 'repls-map)
   (define-key 'repls-map (kbd "i") 'ielm)
-  (define-key 'repls-map (kbd "p") 'run-python)
+  (define-key 'repls-map (kbd "p") 'run-python-with-venv)
   (define-key 'repls-map (kbd "c") 'cider-jack-in)
   (define-key 'repls-map (kbd "s") 'slime))
 
@@ -117,13 +119,6 @@
   (define-key search-map (kbd "t") 'translate-en-ru-online)
   (define-key isearch-mode-map (kbd "M-q") 'isearch-query-replace))
 
-;; set/reset Python venvs
-
-(progn
-  (define-prefix-command 'python-venv-map)
-  (define-key global-map (kbd "C-c v") 'python-venv-map)
-  (define-key python-venv-map (kbd "s") 'python-set-venv)
-  (define-key python-venv-map (kbd "r") 'python-reset-venv))
 
 ;; global keymap
 
@@ -834,11 +829,22 @@
   (setq python-shell-virtualenv-root path-to-venv)
   (message "Set python venv to %s" path-to-venv))
 
-
 (defun python-reset-venv ()
   (interactive)
   (setq python-shell-virtualenv-root nil)
   (message "Reset python venv"))
+
+(defun run-python-with-venv ()
+  "Invoke run-python command, optionally setup venv, if current
+   directory has 'venv' folder.  To manually setup venv, use
+   `python-set-venv'/`python-reset-venv' commands"
+  (interactive)
+  (let ((venv (file-truename "venv")))
+    (if (file-exists-p venv)
+        (let ((python-shell-virtualenv-path venv))
+          (run-python)
+          (message "Using venv: %s"))
+      (run-python))))
 
 
 ;; ===========
