@@ -125,7 +125,7 @@
          ("C-x C-b" ibuffer)
          ("C-c p" copy-file-name-to-clipboard)
          ("C-c d" duplicate-line)
-         ("C-c k" kill-whole-line)
+         ("M-k" kill-whole-line)
          ("C-x u" insert-char)
          ("M-c" upcase-char)
          ("M-q" hippie-expand)
