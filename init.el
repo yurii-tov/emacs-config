@@ -891,7 +891,9 @@
       (kill-buffer buffer))
     (apply #'start-process args)
     (with-current-buffer buffer
-      (shell-mode))))
+      (shell-mode))
+    (set-process-filter (get-buffer-process buffer)
+                        #'comint-output-filter)))
 
 
 ;; =====
