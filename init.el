@@ -106,9 +106,10 @@
   (define-prefix-command 'repls-map)
   (global-set-key (kbd "C-c i") 'repls-map)
   (define-key 'repls-map (kbd "i") 'ielm)
-  (define-key 'repls-map (kbd "p") 'run-python-with-venv)
   (define-key 'repls-map (kbd "c") 'cider-jack-in)
-  (define-key 'repls-map (kbd "s") 'slime))
+  (define-key 'repls-map (kbd "s") 'slime)
+  (define-key 'repls-map (kbd "p") 'run-python-with-venv)
+  (define-key python-mode-map (kbd "C-c C-p") 'run-python-with-venv))
 
 ;; extending (i)search map
 
