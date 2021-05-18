@@ -772,22 +772,35 @@
 (add-hook 'c-mode-hook
           (lambda () (c-set-style "k&r")))
 
+(define-abbrev-table 'c-mode-abbrev-table
+  '(("main" "#include <stdio.h>\n\n\nint main(int argc, char **argv)
+{
+     printf(\"%s\\n\", \"hello world\");
+     return 0;
+}")
+    ("mainv" "#include <stdio.h>\n\n\nint main(void)
+{
+     printf(\"%s\\n\", \"hello world\");
+     return 0;
+}")
+    ("pr" "printf(\"%d\\n\", 42);")
+    ("fori" "for (int i = 0; i < 42; i++)\n{\n\n}")))
+
+
+;; ====
+;; java
+;; ====
+
+
 (add-hook 'java-mode-hook
           (lambda () (c-set-style "user")))
 
-(define-abbrev-table 'c-mode-abbrev-table
-  '(("amain" "#include <stdio.h>\n\n\nint main(int argc, char **argv)
-{
-     printf(\"%s\\n\", \"hello world\");
-     return 0;
+(define-abbrev-table 'java-mode-abbrev-table
+  '(("psvm" "public static void main(String[] args) {
+
 }")
-    ("amainv" "#include <stdio.h>\n\n\nint main(void)
-{
-     printf(\"%s\\n\", \"hello world\");
-     return 0;
-}")
-    ("apr" "printf(\"%d\\n\", 42);")
-    ("afor" "for (int i = 0; i < 42; i++)\n{\n\n}")))
+    ("sout" "System.out.println(\"\");")
+    ("fori" "for (int i = 0; i < 42; i++) {\n\n}")))
 
 
 ;; =======
