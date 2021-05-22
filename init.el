@@ -669,7 +669,7 @@
 (with-eval-after-load 'shell
   (define-key shell-mode-map (kbd "C-c C-c") 'comint-send-c-c))
 
-;; use current command line to filter input-ring browser's output
+;; browsing comint-input-ring
 
 (defun comint-current-input ()
   (let ((pmax (point-max)))
@@ -682,12 +682,10 @@
                    (> pmax prompt-position))
           (buffer-substring prompt-position pmax))))))
 
-(defun comint-query-input-ring ()
+(defun comint-query-input-ring (query)
   "Display `comint-input-ring' contents, optionally filtering it by text in command prompt"
-  (interactive)
   ;; most of code carved from comint.el, comint-dynamic-list-input-ring
-  (let ((query (comint-current-input))
-        (history nil)
+  (let ((history nil)
         (history-buffer " *Input History*")
         (conf (current-window-configuration)))
     (when (and (ring-p comint-input-ring)
@@ -731,7 +729,22 @@
           (push ch unread-command-events))))
     (unless history (message "No history"))))
 
-(define-key comint-mode-map (kbd "C-c C-l") 'comint-query-input-ring)
+(define-key comint-mode-map (kbd "C-c C-l")
+  (lambda () (interactive)
+    (comint-query-input-ring (comint-current-input))))
+
+;;;; view all matching commands from within isearch
+
+(defun modify-comint-isearch-keymap ()
+  (let ((newmap (make-sparse-keymap)))
+    (set-keymap-parent newmap isearch-mode-map)
+    (define-key newmap (kbd "M-r")
+      (lambda () (interactive)
+        (comint-query-input-ring isearch-string)))
+    (setq-local isearch-mode-map newmap)))
+
+(add-hook 'comint-mode-hook
+          'modify-comint-isearch-keymap)
 
 
 ;; ===
