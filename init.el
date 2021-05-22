@@ -685,7 +685,8 @@
 (defun comint-query-input-ring (query)
   "Display `comint-input-ring' contents, optionally filtering it by text in command prompt"
   ;; most of code carved from comint.el, comint-dynamic-list-input-ring
-  (let ((history nil)
+  (let ((query (if (string-empty-p query) nil query))
+        (history nil)
         (history-buffer " *Input History*")
         (conf (current-window-configuration)))
     (when (and (ring-p comint-input-ring)
