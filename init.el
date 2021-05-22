@@ -730,10 +730,6 @@
           (push ch unread-command-events))))
     (unless history (message "No history"))))
 
-(define-key comint-mode-map (kbd "C-c C-l")
-  (lambda () (interactive)
-    (comint-query-input-ring (comint-current-input))))
-
 ;;;; view all matching commands from within isearch
 
 (defun modify-comint-isearch-keymap ()
