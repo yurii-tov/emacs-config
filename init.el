@@ -111,14 +111,13 @@
   (define-key 'repls-map (kbd "p") 'run-python-with-venv)
   (define-key python-mode-map (kbd "C-c C-p") 'run-python-with-venv))
 
-;; extending (i)search map
+;; extending global search map
 
 (progn
   (define-key search-map (kbd "r") 'replace-string)
   (define-key search-map (kbd "R") 'replace-regexp)
   (define-key search-map (kbd "/") 'invert-slashes)
-  (define-key search-map (kbd "t") 'translate-en-ru-online)
-  (define-key isearch-mode-map (kbd "M-q") 'isearch-query-replace))
+  (define-key search-map (kbd "t") 'translate-en-ru-online))
 
 
 ;; global keymap
@@ -864,6 +863,30 @@
           (run-python)
           (message "Using venv: %s"))
       (run-python))))
+
+
+;; =======
+;; isearch
+;; =======
+
+
+(defun isearch-select-search-string ()
+  (interactive)
+  (isearch-done)
+  (set-mark (point))
+  (if isearch-forward
+      (funcall (if isearch-regexp
+                   #'search-backward-regexp
+                 #'search-backward)
+               isearch-string)
+    (funcall (if isearch-regexp
+                 #'search-forward-regexp
+               #'search-forward)
+             isearch-string)))
+
+(progn
+  (define-key isearch-mode-map (kbd "M-q") 'isearch-query-replace)
+  (define-key isearch-mode-map (kbd "C-SPC") 'isearch-select-search-string))
 
 
 ;; ===========
