@@ -560,7 +560,7 @@
     (kbd "C-x C-o")
     'ido-open-in-external-app)
   (define-key ido-file-dir-completion-map
-    (kbd "M-j")
+    (kbd "M-F")
     'ido-find-dired)
   (define-key ido-file-dir-completion-map
     (kbd "M-g")
