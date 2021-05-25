@@ -145,7 +145,7 @@
 
 (let ((bindings
        '(("M-x" smex)
-         ("C-1" run-shell)
+         ("M-i" run-shell)
          ("C-x C-b" ibuffer)
          ("C-c p" copy-file-name-to-clipboard)
          ("C-c d" duplicate-line)
@@ -156,7 +156,7 @@
          ("C-v" scroll-up-5-lines)
          ("M-v" scroll-down-5-lines)
          ("C-x C-p" fill-paragraph)
-         ("M-i" reindent-region)
+         ("M-j" reindent-region)
          ("C-c r" force-revert-buffer)
          ("C-c n" rename-buffer)
          ("C-c h" hexl-mode)
@@ -1100,16 +1100,14 @@
    |                   | (List of strings, e.g. '(\"MSYSTEM=MSYS\"))                     |
    | codings           | (Optional) explicit decoding and encoding systems             |
    |                   | (List of two symbols, e.g. '(cp1251-dos utf-8)                |
-   |-------------------+---------------------------------------------------------------|
-   With universal argument, ask for working directory"
+   |-------------------+---------------------------------------------------------------|"
   (interactive (list (ido-completing-read
-                      "Preset: "
+                      "Shell: "
                       (mapcar #'car shell-presets))))
   (let* ((shell-options (cdr (assoc preset-name shell-presets)))
-         (default-directory (if current-prefix-arg
-                                (ido-read-directory-name "wd: ")
-                              (alist-get 'working-directory
-                                         shell-options)))
+         (default-directory (or (alist-get 'working-directory
+                                           shell-options)
+                                (ido-read-directory-name "wd: ")))
          (startup-fn (alist-get 'startup-fn shell-options))
          (codings (alist-get 'codings shell-options))
          (process-environment (append (alist-get 'env shell-options)
@@ -1133,12 +1131,10 @@
 (setq shell-presets
       ;; Example config
       `(("bash" .
-         ((file-name . "c:/tools/msys64/usr/bin/bash.exe")
-          (working-directory . ,(getenv "USERPROFILE"))))
+         ((file-name . "c:/tools/msys64/usr/bin/bash.exe")))
         ("powershell"
          (startup-fn . powershell)
-         (codings . (cp866-dos cp866-dos))
-         (working-directory . ,(getenv "USERPROFILE")))))
+         (codings . (cp866-dos cp866-dos)))))
 
 
 ;; ================================
