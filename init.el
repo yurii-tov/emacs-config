@@ -5,13 +5,17 @@
 
 ;; install third-party libs
 
+
 (require 'package)
+
 
 (setq package-archives
       '(("gnu" . "https://elpa.gnu.org/packages/")
         ("melpa" . "http://melpa.org/packages/")))
 
+
 (package-initialize)
+
 
 (setq my-packages
       '(zenburn-theme
@@ -24,6 +28,7 @@
         powershell
         smex))
 
+
 (let (refreshed)
   (dolist (p my-packages)
     (unless (package-installed-p p)
@@ -32,21 +37,17 @@
         (setq refreshed t))
       (package-install p))))
 
+
 ;; imports
 
-(require 'ox-textile)
 
-(require 'cl-lib)
-
-(require 'subr-x)
-
-(require 'shell)
-
-(require 'grep)
-
-(require 'ansi-color)
-
-(require 'python)
+(progn (require 'ox-textile)
+       (require 'cl-lib)
+       (require 'subr-x)
+       (require 'shell)
+       (require 'grep)
+       (require 'ansi-color)
+       (require 'python))
 
 
 ;; ======
@@ -56,35 +57,50 @@
 
 ;; encoding
 
+
 (reset-language-environment)
+
 
 (set-coding-system-priority 'cp1251-dos)
 
+
 (prefer-coding-system 'utf-8-unix)
+
 
 (setq default-input-method 'russian-computer)
 
+
 ;; place customization data to separate file (do not edit it by hand)
 
+
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+
 
 (when (file-exists-p custom-file)
   (load-file custom-file))
 
+
 ;; navigate to home directory on startup
+
 
 (when window-system
   (cd (or (getenv "USERPROFILE") "~")))
 
+
 ;; automatically kill subprocesses on emacs shutdown
+
 
 (setq confirm-kill-processes nil)
 
+
 ;; built-in history facilities
+
 
 (savehist-mode 1)
 
+
 (setq savehist-additional-variables '(kill-ring search-ring regexp-search-ring))
+
 
 (setq desktop-save-mode 1)
 
@@ -96,11 +112,14 @@
 
 ;; unset all C-dight / M-dight combos
 
+
 (dotimes (n 10)
   (global-unset-key (kbd (format "C-%d" n)))
   (global-unset-key (kbd (format "M-%d" n))))
 
+
 ;; starting REPLs
+
 
 (progn
   (define-prefix-command 'repls-map)
@@ -110,7 +129,9 @@
   (define-key 'repls-map (kbd "s") 'slime)
   (define-key 'repls-map (kbd "p") 'run-python-with-venv))
 
+
 ;; extending global search map
+
 
 (progn
   (define-key search-map (kbd "r") 'replace-string)
@@ -120,6 +141,7 @@
 
 
 ;; global keymap
+
 
 (let ((bindings
        '(("M-x" smex)
@@ -156,50 +178,69 @@
 
 ;; remove "welcome" messages on startup
 
+
 (setq inhibit-startup-message t
       inhibit-startup-echo-area-message t)
 
+
 ;; replace annoying confirmations with less annoying
 
+
 (fset 'yes-or-no-p 'y-or-n-p)
+
 
 (setq kill-buffer-query-functions
       (remq 'process-kill-buffer-query-function
             kill-buffer-query-functions))
 
+
 ;; turn off bell ringing
+
 
 (setq ring-bell-function 'ignore)
 
+
 ;; show line numbers
+
 
 (global-display-line-numbers-mode t)
 
+
 ;; no line-wrap indicators
+
 
 (when fringe-indicator-alist
   (setf (cdr (assq 'continuation fringe-indicator-alist))
         '(nil nil)))
 
+
 (when (fboundp 'toggle-scroll-bar)
   (toggle-scroll-bar -1))
 
+
 ;; no toolbar
+
 
 (tool-bar-mode -1)
 
+
 ;; show-paren mode
 
+
 (show-paren-mode)
+
 
 (unless window-system
   (set-face-attribute 'show-paren-match nil :background "magenta")
   (set-face-attribute 'show-paren-mismatch nil :background "red"))
 
+
 ;; fonts
+
 
 (defun font-available-p (font-name)
   (not (null (member font-name (font-family-list)))))
+
 
 (defun apply-font (my-font)
   (interactive
@@ -208,10 +249,13 @@
           (cl-remove-duplicates (font-family-list) :test #'equal))))
   (set-face-attribute 'default nil :font my-font))
 
+
 (when (font-available-p "Consolas")
   (apply-font "Consolas-10"))
 
+
 ;; color themes
+
 
 (defun apply-color-theme (theme)
   "Enchanced version of load-theme.
@@ -226,7 +270,9 @@
       (disable-theme theme))
     (load-theme theme)))
 
+
 ;; default color theme
+
 
 (apply-color-theme 'dichromacy)
 
@@ -238,25 +284,34 @@
 
 ;; no backups
 
+
 (setq auto-save-default nil)
+
 
 (setq make-backup-files nil)
 
+
 (setq auto-save-list-file-name nil)
+
 
 ;; reverting file-related buffers
 
+
 (global-auto-revert-mode t)
+
 
 (when (string-equal system-type "windows-nt")
   (setq auto-revert-use-notify nil))
+
 
 (defun force-revert-buffer ()
   (interactive)
   (message "Force revert buffer '%s'" (buffer-name))
   (revert-buffer nil t t))
 
+
 ;; open file(s) in external app
+
 
 (defun open-in-external-app (&optional file-name)
   (interactive)
@@ -270,22 +325,28 @@
                               (start-process "" nil "xdg-open" f)))))))
     (funcall open-file file-name)))
 
+
 ;; dired
+
 
 (setq ls-lisp-format-time-list
       '("%d.%m.%Y %H:%M"
         "%d.%m.%Y %H:%M")
       ls-lisp-use-localized-time-format t)
 
+
 (setq dired-listing-switches "-alh"
       dired-recursive-copies 'always
       dired-dwim-target t)
 
+
 (setq find-ls-option '("-exec ls -ldh {} +" . "-ldh"))
+
 
 (defun dired-open-in-external-app ()
   (interactive)
   (mapc #'open-in-external-app (dired-get-marked-files)))
+
 
 (with-eval-after-load 'dired
   (define-key dired-mode-map
@@ -293,7 +354,9 @@
     'dired-open-in-external-app)
   (define-key dired-mode-map (kbd "f") 'find-dired))
 
+
 ;; copy full names of files to clipboard
+
 
 (defun copy-file-name-to-clipboard ()
   "Copy the current file name(s) to the clipboard"
@@ -313,19 +376,27 @@
 
 ;; auto-completion with TAB
 
+
 (setq tab-always-indent 'complete)
+
 
 (add-to-list 'completion-styles 'initials t)
 
+
 ;; use spaces for indentation
+
 
 (setq-default indent-tabs-mode nil)
 
+
 ;; overwrite selected text
+
 
 (delete-selection-mode t)
 
+
 ;; reindent / cleanup selected region or whole buffer
+
 
 (defun reindent-region (start end)
   "Reindent selected region, untabify it, remove trailing whitespaces"
@@ -338,7 +409,9 @@
   (delete-trailing-whitespace start end)
   (indent-region start end))
 
+
 ;; change \ to / and vice versa
+
 
 (defun invert-slashes (start end)
   "Change \\ to / and vice versa in selected region or in whole buffer"
@@ -353,6 +426,7 @@
       (replace-match
        (if (equal (match-string-no-properties 0) "/")
            "\\\\" "/")))))
+
 
 (defun duplicate-line (arg)
   "Duplicate current line, leaving point in lower line."
@@ -373,11 +447,14 @@
       (setq buffer-undo-list (cons (cons eol (point)) buffer-undo-list))))
   (next-line arg))
 
+
 ;; slower scrolling
+
 
 (defun scroll-down-5-lines ()
   (interactive)
   (scroll-down-command 5))
+
 
 (defun scroll-up-5-lines ()
   (interactive)
@@ -391,9 +468,12 @@
 
 (setq ibuffer-expert t)
 
+
 (setq ibuffer-default-sorting-mode 'alphabetic)
 
+
 (setq ibuffer-show-empty-filter-groups nil)
+
 
 (progn
   (setq ibuffer-mode-hook nil)
@@ -472,7 +552,9 @@
              (string-match remote-uri-pattern s))
            ido-work-directory-list))))
 
+
 ;; redefine `ido-kill-emacs-hook' so that cache is cleaned before being saved
+
 
 (defun ido-kill-emacs-hook ()
   (ido-remove-tramp-from-cache)
@@ -486,7 +568,9 @@
 
 ;; wrap lines
 
+
 (setq org-startup-truncated nil)
+
 
 (setq org-capture-templates
       `(("w" "Work" entry
@@ -502,7 +586,9 @@
          (file+headline "tools.org" "inbox")
          "* TODO %?\n")))
 
+
 (setq org-refile-allow-creating-parent-nodes 'confirm)
+
 
 (setq org-export-with-section-numbers 0)
 
@@ -514,15 +600,21 @@
 
 (ido-mode t)
 
+
 (ido-everywhere t)
+
 
 (setq ido-enable-flex-matching t)
 
+
 (setq ido-auto-merge-work-directories-length -1)
+
 
 (setq ido-use-filename-at-point 'guess)
 
+
 (setq ido-use-url-at-point t)
+
 
 (defun ido-open-in-external-app ()
   (interactive)
@@ -531,6 +623,7 @@
     (message "Open in external app: %s" fname)
     (open-in-external-app fname)
     (minibuffer-keyboard-quit)))
+
 
 (defun ido-find-dired ()
   (interactive)
@@ -543,6 +636,7 @@
                     '(find-args-history . 1)))))
   (minibuffer-keyboard-quit))
 
+
 (defun ido-rgrep ()
   (interactive)
   (run-with-timer
@@ -554,6 +648,7 @@
              (dir ,ido-current-directory))
         (rgrep regexp files dir nil))))
   (minibuffer-keyboard-quit))
+
 
 (with-eval-after-load 'ido
   (define-key ido-file-dir-completion-map
@@ -575,13 +670,17 @@
 ;; use vertical tab (b) as separator in history file
 ;; to enable correct saving of multiline commands
 
+
 (setq comint-input-ring-separator "
 
 ")
 
+
 ;; persistent history
 
+
 (setq comint-input-ring-size 1500)
+
 
 (defun comint-setup-persistent-history ()
   (let ((process (get-buffer-process (current-buffer))))
@@ -596,6 +695,7 @@
                                       user-emacs-directory))
         (add-hook 'kill-buffer-hook 'comint-save-history nil t)
         (comint-read-input-ring t)))))
+
 
 (defun comint-save-history ()
   "Save command history to `comint-input-ring-file-name'
@@ -640,36 +740,48 @@
     (comint-read-input-ring)
     (message "History saved to: %s" comint-input-ring-file-name)))
 
+
 (defun comint-save-history-all ()
   (dolist (b (buffer-list))
     (with-current-buffer b
       (comint-save-history))))
 
+
 (add-hook 'comint-mode-hook
           'comint-setup-persistent-history)
+
 
 (add-hook 'kill-emacs-hook
           'comint-save-history-all)
 
+
 ;; no scrolling to bottom when submitting commands
+
 
 (setq-default comint-scroll-show-maximum-output nil)
 
+
 ;; limit output size
+
 
 (add-to-list 'comint-output-filter-functions
              'comint-truncate-buffer)
 
+
 ;; implement ^C as simple comint-send-string
+
 
 (defun comint-send-c-c ()
   (interactive)
   (comint-send-string nil ""))
 
+
 (with-eval-after-load 'shell
   (define-key shell-mode-map (kbd "C-c C-c") 'comint-send-c-c))
 
+
 ;; browsing comint-input-ring
+
 
 (defun comint-current-input ()
   (let ((pmax (point-max)))
@@ -681,6 +793,7 @@
         (when (and prompt-position
                    (> pmax prompt-position))
           (buffer-substring prompt-position pmax))))))
+
 
 (defun comint-query-input-ring (query)
   "Display `comint-input-ring' contents, optionally filtering it by text in command prompt"
@@ -730,7 +843,9 @@
           (push ch unread-command-events))))
     (unless history (message "No history"))))
 
+
 ;;;; view all matching commands from within isearch
+
 
 (defun modify-comint-isearch-keymap ()
   (let ((newmap (make-sparse-keymap)))
@@ -739,6 +854,7 @@
       (lambda () (interactive)
         (comint-query-input-ring isearch-string)))
     (setq-local isearch-mode-map newmap)))
+
 
 (add-hook 'comint-mode-hook
           'modify-comint-isearch-keymap)
@@ -751,10 +867,13 @@
 
 ;; use sgml mode for xml files
 
+
 (add-to-list 'auto-mode-alist
              (cons (concat "\\." (regexp-opt '("xml" "xsd" "xslt" "xsl" "html" "htm" "wsdl" "xml.template" "xhtml" "jsp" "pom" "jmx") t) "\\'") 'sgml-mode))
 
+
 (setq sgml-basic-offset 4)
+
 
 (defun html-dummy (title)
   (interactive "sTitle: ")
@@ -765,6 +884,7 @@
     <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">
 </head>
 <body>
+
 
 </body>
 </html>" title)))
@@ -777,8 +897,10 @@
 
 (setq-default c-basic-offset 4)
 
+
 (add-hook 'c-mode-hook
           (lambda () (c-set-style "k&r")))
+
 
 (define-abbrev-table 'c-mode-abbrev-table
   '(("main" "#include <stdio.h>\n\n\nint main(int argc, char **argv)
@@ -803,8 +925,10 @@
 (add-hook 'java-mode-hook
           (lambda () (c-set-style "user")))
 
+
 (define-abbrev-table 'java-mode-abbrev-table
   '(("psvm" "public static void main(String[] args) {
+
 
 }")
     ("sout" "System.out.println(\"\");")
@@ -827,16 +951,21 @@
 
 (setq inferior-lisp-program "clisp")
 
+
 (add-to-list 'auto-mode-alist
              '("\\.cl\\'" . common-lisp-mode))
 
+
 (setq slime-contribs '(slime-fancy))
+
 
 (defun use-eww-for-cl-hyperspec-lookup ()
   (setq-local browse-url-browser-function
               'eww-browse-url))
 
+
 (add-hook 'lisp-mode-hook 'use-eww-for-cl-hyperspec-lookup)
+
 
 (add-hook 'slime-repl-mode-hook 'use-eww-for-cl-hyperspec-lookup)
 
@@ -851,15 +980,18 @@
   (shell-command
    (format "python -m venv --system-site-packages '%s'" path)))
 
+
 (defun python-set-venv (path-to-venv)
   (interactive "fPath to venv: ")
   (setq python-shell-virtualenv-root path-to-venv)
   (message "Set python venv to %s" path-to-venv))
 
+
 (defun python-reset-venv ()
   (interactive)
   (setq python-shell-virtualenv-root nil)
   (message "Reset python venv"))
+
 
 (defun run-python-with-venv ()
   "Invoke run-python command, optionally setup venv, if current
@@ -872,6 +1004,7 @@
           (run-python)
           (message "Using venv: %s"))
       (run-python))))
+
 
 (define-key python-mode-map (kbd "C-c C-p") 'run-python-with-venv)
 
@@ -895,6 +1028,7 @@
                #'search-forward)
              isearch-string)))
 
+
 (progn
   (define-key isearch-mode-map (kbd "M-q") 'isearch-query-replace)
   (define-key isearch-mode-map (kbd "C-SPC") 'isearch-select-search-string))
@@ -906,6 +1040,7 @@
 
 
 (setq ssh-tunnels nil)
+
 
 (defun ssh-tunnel (&rest args)
   "Start ssh tunnel by with a command 'ssh -NvL ...' in a buffer with descriptive name.
@@ -994,6 +1129,7 @@
       (with-current-buffer buffer-name
         (set-buffer-process-coding-system (car codings) (cadr codings))))))
 
+
 (setq shell-presets
       ;; Example config
       `(("bash" .
@@ -1042,11 +1178,13 @@
 
 ;; colorize output
 
+
 (defun colorize-compilation ()
   "Colorize from `compilation-filter-start' to `point'."
   (let ((inhibit-read-only t))
     (ansi-color-apply-on-region
      compilation-filter-start (point))))
+
 
 (add-hook 'compilation-filter-hook
           #'colorize-compilation)
@@ -1058,6 +1196,7 @@
 
 
 ;; disable prompt about saving abbrevs
+
 
 (setq save-abbrevs nil)
 
