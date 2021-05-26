@@ -166,7 +166,8 @@
          ("C-c m" compile)
          ("C-1" delete-other-windows)
          ("C-2" split-window-below)
-         ("C-3" split-window-right))))
+         ("C-3" split-window-right)
+         ("C-0" delete-window))))
   (dolist (binding bindings)
     (global-unset-key (kbd (car binding)))
     (global-set-key
