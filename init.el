@@ -164,6 +164,7 @@
          ("C-c c" org-capture)
          ("C-c s" ssh-tunnel)
          ("C-c m" compile)
+         ("M-o" other-window)
          ("C-1" delete-other-windows)
          ("C-2" split-window-below)
          ("C-3" split-window-right)
