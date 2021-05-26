@@ -145,7 +145,7 @@
 
 (let ((bindings
        '(("M-x" smex)
-         ("M-i" run-shell)
+         ("M-/" run-shell)
          ("C-x C-b" ibuffer)
          ("C-c p" copy-file-name-to-clipboard)
          ("C-c d" duplicate-line)
@@ -156,7 +156,7 @@
          ("C-v" scroll-up-5-lines)
          ("M-v" scroll-down-5-lines)
          ("C-x C-p" fill-paragraph)
-         ("M-j" reindent-region)
+         ("M-i" reindent-region)
          ("C-c r" force-revert-buffer)
          ("C-c n" rename-buffer)
          ("C-c h" hexl-mode)
