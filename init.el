@@ -1116,26 +1116,35 @@
                       "Shell: "
                       (mapcar #'car shell-presets))))
   (let* ((shell-options (cdr (assoc preset-name shell-presets)))
-         (default-directory (or (alist-get 'working-directory
-                                           shell-options)
-                                (ido-read-directory-name "wd: ")))
          (startup-fn (alist-get 'startup-fn shell-options))
          (codings (alist-get 'codings shell-options))
-         (process-environment (append (alist-get 'env shell-options)
-                                      process-environment))
-         (buffer-name (format "*%s*" preset-name)))
-    (if (and (get-buffer buffer-name)
-             (not (get-buffer-process buffer-name)))
+         (buffer-name (format "*%s*" preset-name))
+         (dead-buffer-exists (and (get-buffer buffer-name)
+                                  (not (get-buffer-process buffer-name))))
+         (wd (or (when dead-buffer-exists
+                   (with-current-buffer buffer-name
+                     (when (file-exists-p default-directory)
+                       default-directory)))
+                 (alist-get 'working-directory
+                            shell-options)
+                 (ido-read-directory-name "wd: "))))
+    (if dead-buffer-exists
         (with-current-buffer buffer-name
           (comint-save-history))
       (setq buffer-name (generate-new-buffer-name buffer-name)))
+    (let ((w (cl-find-if (lambda (x) (equal (window-buffer x)
+                                            (get-buffer buffer-name)))
+                         (window-list))))
+      (when w (select-window w)))
     (switch-to-buffer buffer-name)
-    (if startup-fn
-        (funcall startup-fn buffer-name)
-      (let ((explicit-shell-file-name (alist-get 'file-name shell-options)))
-        (shell buffer-name)))
-    (when codings
-      (with-current-buffer buffer-name
+    (cd wd)
+    (let ((process-environment (append (alist-get 'env shell-options)
+                                       process-environment)))
+      (if startup-fn
+          (funcall startup-fn buffer-name)
+        (let ((explicit-shell-file-name (alist-get 'file-name shell-options)))
+          (shell buffer-name)))
+      (when codings
         (set-buffer-process-coding-system (car codings) (cadr codings))))))
 
 
