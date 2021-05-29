@@ -919,7 +919,13 @@
      return 0;
 }")
     ("pr" "printf(\"%d\\n\", 42);")
-    ("fori" "for (int i = 0; i < 42; i++)\n{\n\n}")))
+    ("fori" "for (int i = 0; i < 42; i++)\n{\n\n}")
+    ("whl" "while ()\n{\n\n}")
+    ("whlc" "int c;\nwhile ((c = getchar()) != '\\n')\n{\n\n}")
+    ("iff" "if (i == 42)\n{\n\n}")
+    ("ife" "if (i == 42)\n{\n\n} else {\n\n}")
+    ("eif" "else if (i == 99) {\n\n}")
+    ("fun" "void f()\n{\n\n}")))
 
 
 ;; ====
