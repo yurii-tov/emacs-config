@@ -1183,9 +1183,6 @@
 ;; ================
 
 
-;; colorize output
-
-
 (defun colorize-compilation ()
   "Colorize from `compilation-filter-start' to `point'."
   (let ((inhibit-read-only t))
@@ -1195,6 +1192,9 @@
 
 (add-hook 'compilation-filter-hook
           #'colorize-compilation)
+
+
+(setq compilation-scroll-output t)
 
 
 ;; ===========
