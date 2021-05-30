@@ -1100,18 +1100,17 @@
    Start local or remote shell using set of presets (See `shell-presets' variable).
    Each preset is a pair of (<\"preset-name\"> . <options-alist>)
    Legal values in options-alist are:
-   |-------------------+---------------------------------------------------------------|
-   | option            | description                                                   |
-   |-------------------+---------------------------------------------------------------|
-   | file-name         | (Optional) path to shell executable                           |
-   | working-directory |                                                               |
-   | startup-fn        | (Optional) Function to call for starting the shell            |
-   |                   | By default, function `shell' is used                          |
-   | env               | (Optional) Environment variables to pass                      |
-   |                   | (List of strings, e.g. '(\"MSYSTEM=MSYS\"))                     |
-   | codings           | (Optional) explicit decoding and encoding systems             |
-   |                   | (List of two symbols, e.g. '(cp1251-dos utf-8)                |
-   |-------------------+---------------------------------------------------------------|"
+   |-------------------+------------------------------------------------|
+   | option            | description                                    |
+   |-------------------+------------------------------------------------|
+   | file-name         | Path to shell executable                       |
+   | working-directory | Working directory for shell instance           |
+   |                   | Useful for defining remote shell sessions      |
+   | startup-fn        | Function to call for starting the shell        |
+   |                   | By default, function `shell' is used           |
+   | codings           | Explicit decoding and encoding systems         |
+   |                   | (List of two symbols, e.g. '(cp1251-dos utf-8) |
+   |-------------------+------------------------------------------------|"
   (interactive (list (ido-completing-read
                       "Shell: "
                       (mapcar #'car shell-presets))))
@@ -1138,14 +1137,12 @@
       (when w (select-window w)))
     (switch-to-buffer buffer-name)
     (cd wd)
-    (let ((process-environment (append (alist-get 'env shell-options)
-                                       process-environment)))
-      (if startup-fn
-          (funcall startup-fn buffer-name)
-        (let ((explicit-shell-file-name (alist-get 'file-name shell-options)))
-          (shell buffer-name)))
-      (when codings
-        (set-buffer-process-coding-system (car codings) (cadr codings))))))
+    (if startup-fn
+        (funcall startup-fn buffer-name)
+      (let ((explicit-shell-file-name (alist-get 'file-name shell-options)))
+        (shell buffer-name)))
+    (when codings
+      (set-buffer-process-coding-system (car codings) (cadr codings)))))
 
 
 (setq shell-presets
