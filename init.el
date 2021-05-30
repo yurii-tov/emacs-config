@@ -355,7 +355,7 @@
 
 (with-eval-after-load 'dired
   (define-key dired-mode-map
-    (kbd "C-x C-o")
+    (kbd "C-c C-o")
     'dired-open-in-external-app)
   (define-key dired-mode-map (kbd "f") 'find-dired))
 
@@ -658,7 +658,7 @@
 
 (with-eval-after-load 'ido
   (define-key ido-file-dir-completion-map
-    (kbd "C-x C-o")
+    (kbd "C-c C-o")
     'ido-open-in-external-app)
   (define-key ido-file-dir-completion-map
     (kbd "M-r")
