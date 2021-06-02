@@ -691,11 +691,13 @@
 (defun comint-setup-persistent-history ()
   (let ((process (get-buffer-process (current-buffer))))
     (when process
-      (let ((pname (if (equal major-mode 'shell-mode)
-                       "shell"
-                     (replace-regexp-in-string
-                      "<[0-9]*>" ""
-                      (process-name process)))))
+      (let ((pname (cond ((and (equal major-mode 'shell-mode)
+                               (string-match "powershell" (car (process-command process))))
+                          "powershell")
+                         ((equal major-mode 'shell-mode) "shell")
+                         (t (replace-regexp-in-string
+                             "<[0-9]*>" ""
+                             (process-name process))))))
         (setq-local comint-input-ring-file-name
                     (expand-file-name (format ".%s-history" pname)
                                       user-emacs-directory))
