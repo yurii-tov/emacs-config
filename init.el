@@ -694,7 +694,6 @@
       (let ((pname (cond ((and (equal major-mode 'shell-mode)
                                (string-match "powershell" (car (process-command process))))
                           "powershell")
-                         ((equal major-mode 'shell-mode) "shell")
                          (t (replace-regexp-in-string
                              "<[0-9]*>" ""
                              (process-name process))))))
@@ -1082,7 +1081,7 @@
          (ssh-spec (caddr forwarding-options))
          (default-directory "~")
          (buffer (format "*ssh-tunnel/%s*" tunnel-name))
-         (args (list "ssh-tunnel" buffer "ssh" "-vNL" sockets ssh-spec)))
+         (args (list "shell" buffer "ssh" "-vNL" sockets ssh-spec)))
     (message "%s" (string-join (cddr args) " "))
     (when (get-buffer buffer)
       (kill-buffer buffer))
