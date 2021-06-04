@@ -957,24 +957,6 @@
       (expand-file-name ".cider-history" user-emacs-directory))
 
 
-(defun lein-repl (&optional buffer)
-  (interactive)
-  (let* ((socket (read-string "Socket: " "localhost:"))
-         (buffer (or buffer
-                     (format "*lein-repl%s*"
-                             (if (string-empty-p socket) ""
-                               (format "/%s" socket)))))
-         (args (append `("clojure" ,buffer "lein.bat" "repl")
-                       (and (not (string-empty-p socket))
-                            `(":connect" ,socket)))))
-    (apply #'start-process args)
-    (switch-to-buffer buffer)
-    (with-current-buffer buffer
-      (shell-mode))
-    (set-process-filter (get-buffer-process buffer)
-                        #'comint-output-filter)))
-
-
 ;; ===========
 ;; common lisp
 ;; ===========
