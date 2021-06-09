@@ -1025,6 +1025,11 @@
 (define-key python-mode-map (kbd "C-c C-p") 'run-python-with-venv)
 
 
+(define-abbrev-table 'python-mode-abbrev-table
+  '(("main" "if __name__ == '__main__':\n")
+    ("fori" "for x in xs:\n")))
+
+
 ;; =======
 ;; isearch
 ;; =======
