@@ -960,6 +960,9 @@
       (expand-file-name ".cider-history" user-emacs-directory))
 
 
+(setq cider-show-error-buffer nil)
+
+
 ;; ===========
 ;; common lisp
 ;; ===========
