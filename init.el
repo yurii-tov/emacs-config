@@ -126,11 +126,11 @@
   (global-set-key (kbd "M-/") 'repls-map)
   (define-key 'repls-map (kbd "i") 'ielm)
   (define-prefix-command 'run-cider-map)
-  (define-key 'repls-map (kbd "c") 'run-cider-map)
-  (define-key 'run-cider-map (kbd "c") 'cider-connect)
+  (define-key 'repls-map (kbd "j") 'run-cider-map)
+  (define-key 'run-cider-map (kbd "k") 'cider-connect)
   (define-key 'run-cider-map (kbd "j") 'cider-jack-in)
-  (define-key 'repls-map (kbd "l") 'slime)
-  (define-key 'repls-map (kbd "s") 'run-shell)
+  (define-key 'repls-map (kbd "s") 'slime)
+  (define-key 'repls-map (kbd "/") 'run-shell)
   (define-key 'repls-map (kbd "p") 'run-python-with-venv))
 
 
