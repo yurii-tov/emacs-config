@@ -144,6 +144,17 @@
   (define-key search-map (kbd "t") 'translate-en-ru-online))
 
 
+;; swapping letters/words case
+
+
+(progn
+  (define-prefix-command 'swapcase-map)
+  (global-set-key (kbd "M-c") 'swapcase-map)
+  (define-key 'swapcase-map (kbd "c") 'upcase-char)
+  (define-key 'swapcase-map (kbd "M-d") 'downcase-dwim)
+  (define-key 'swapcase-map (kbd "M-c") 'upcase-dwim))
+
+
 ;; global keymap
 
 
@@ -154,8 +165,6 @@
          ("C-c d" duplicate-line)
          ("M-k" kill-whole-line)
          ("C-x u" insert-char)
-         ("C-x C-u" upcase-dwim)
-         ("C-x C-l" downcase-dwim)
          ("M-q" hippie-expand)
          ("C-v" scroll-up-5-lines)
          ("M-v" scroll-down-5-lines)
