@@ -369,8 +369,7 @@
 (with-eval-after-load 'dired
   (define-key dired-mode-map
     (kbd "C-c C-o")
-    'dired-open-in-external-app)
-  (define-key dired-mode-map (kbd "f") 'find-dired))
+    'dired-open-in-external-app))
 
 
 ;; copy full names of files to clipboard
