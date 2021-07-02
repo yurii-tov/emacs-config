@@ -756,8 +756,7 @@
            (comint-input-ring (cons 0 (cons (length history-final)
                                             history-final))))
       (comint-write-input-ring))
-    (comint-read-input-ring)
-    (message "History saved to: %s" comint-input-ring-file-name)))
+    (comint-read-input-ring)))
 
 
 (defun comint-save-history-all ()
