@@ -47,7 +47,8 @@
        (require 'shell)
        (require 'grep)
        (require 'ansi-color)
-       (require 'python))
+       (require 'python)
+       (require 'org-tempo))
 
 
 ;; ======
@@ -584,9 +585,6 @@
 ;; ========
 
 
-;; wrap lines
-
-
 (setq org-startup-truncated nil)
 
 
@@ -609,6 +607,9 @@
 
 
 (setq org-export-with-section-numbers 0)
+
+
+(setq org-confirm-babel-evaluate nil)
 
 
 ;; ===
