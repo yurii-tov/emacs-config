@@ -609,7 +609,17 @@
 (setq org-export-with-section-numbers 0)
 
 
+;; babel
+
+
 (setq org-confirm-babel-evaluate nil)
+
+
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((emacs-lisp . t)
+   (shell . t)
+   (python . t)))
 
 
 ;; ===
