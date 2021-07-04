@@ -1,9 +1,6 @@
-;; =========
-;; libraries
-;; =========
-
-
-;; install third-party libs
+;; ====================
+;; third-party packages
+;; ====================
 
 
 (require 'package)
@@ -17,20 +14,17 @@
 (package-initialize)
 
 
-(setq my-packages
-      '(zenburn-theme
-        cider
-        slime
-        groovy-mode
-        ox-textile
-        htmlize
-        clojure-mode
-        powershell
-        smex))
-
-
-(let (refreshed)
-  (dolist (p my-packages)
+(let ((refreshed)
+      (packages '(zenburn-theme
+                  cider
+                  slime
+                  groovy-mode
+                  ox-textile
+                  htmlize
+                  clojure-mode
+                  powershell
+                  smex)))
+  (dolist (p packages)
     (unless (package-installed-p p)
       (unless refreshed
         (package-refresh-contents)
@@ -38,22 +32,13 @@
       (package-install p))))
 
 
-;; imports
-
-
-(progn (require 'ox-textile)
-       (require 'cl-lib)
-       (require 'subr-x)
-       (require 'shell)
-       (require 'grep)
-       (require 'ansi-color)
-       (require 'python)
-       (require 'org-tempo))
-
-
 ;; ======
 ;; system
 ;; ======
+
+
+(progn (require 'cl-lib)
+       (require 'subr-x))
 
 
 ;; encoding
@@ -585,6 +570,10 @@
 ;; ========
 
 
+(progn (require 'ox-textile)
+       (require 'org-tempo))
+
+
 (setq org-startup-truncated nil)
 
 
@@ -664,6 +653,9 @@
        (read-string "Run find (with args): " find-args
                     '(find-args-history . 1)))))
   (minibuffer-keyboard-quit))
+
+
+(require 'grep)
 
 
 (defun ido-rgrep ()
@@ -1013,6 +1005,9 @@
 ;; ======
 
 
+(require 'python)
+
+
 (defun python-make-venv (path)
   (interactive "Gvenv directory: ")
   (shell-command
@@ -1127,6 +1122,9 @@
 ;; =====
 
 
+(require 'shell)
+
+
 (defun run-shell (preset-name)
   "M-x shell on steroids.
    Start local or remote shell using set of presets (See `shell-presets' variable).
@@ -1219,6 +1217,9 @@
 ;; ================
 ;; compilation-mode
 ;; ================
+
+
+(require 'ansi-color)
 
 
 (defun colorize-compilation ()
