@@ -129,19 +129,21 @@
 (progn
   (define-key search-map (kbd "r") 'replace-string)
   (define-key search-map (kbd "R") 'replace-regexp)
-  (define-key search-map (kbd "/") 'invert-slashes)
   (define-key search-map (kbd "t") 'translate-en-ru-online))
 
 
-;; swapping letters/words case
+;; transforming text
 
 
 (progn
-  (define-prefix-command 'swapcase-map)
-  (global-set-key (kbd "M-c") 'swapcase-map)
-  (define-key 'swapcase-map (kbd "c") 'upcase-char)
-  (define-key 'swapcase-map (kbd "M-d") 'downcase-dwim)
-  (define-key 'swapcase-map (kbd "M-c") 'upcase-dwim))
+  (define-prefix-command 'text-transform-map)
+  (global-set-key (kbd "M-c") 'text-transform-map)
+  (define-key 'text-transform-map (kbd "c") 'upcase-char)
+  (define-key 'text-transform-map (kbd "M-d") 'downcase-dwim)
+  (define-key 'text-transform-map (kbd "M-c") 'upcase-dwim)
+  (define-key 'text-transform-map (kbd "/") 'invert-slashes)
+  (define-key 'text-transform-map (kbd "j") 'join-region)
+  (define-key 'text-transform-map (kbd "b") 'break-line))
 
 
 ;; global keymap
@@ -452,6 +454,30 @@
           (setq count (1- count))))
       (setq buffer-undo-list (cons (cons eol (point)) buffer-undo-list))))
   (next-line arg))
+
+
+(defun join-region (separator)
+  (interactive "sSeparator: ")
+  (when (region-active-p)
+    (let ((text (buffer-substring
+                 (region-beginning)
+                 (region-end))))
+      (setq text (split-string text "\n" t))
+      (setq text (string-join text separator))
+      (delete-active-region)
+      (insert text))))
+
+
+(defun break-line (separator)
+  (interactive "sSeparator: ")
+  (let ((text (buffer-substring
+               (line-beginning-position)
+               (line-end-position))))
+    (setq text (split-string text separator t))
+    (setq text (string-join text "\n"))
+    (delete-region (line-beginning-position)
+                   (line-end-position))
+    (insert text)))
 
 
 ;; slower scrolling
