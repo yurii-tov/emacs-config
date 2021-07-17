@@ -1217,12 +1217,8 @@
 
 
 (setq shell-presets
-      ;; Example config
-      `(("bash" .
-         ((file-name . "c:/tools/msys64/usr/bin/bash.exe")))
-        ("powershell"
-         (startup-fn . powershell)
-         (codings . (cp866-dos cp866-dos)))))
+      ;; Default preset, same as M-x shell
+      '(("shell")))
 
 
 ;; ================================
