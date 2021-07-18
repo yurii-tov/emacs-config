@@ -456,28 +456,36 @@
   (next-line arg))
 
 
-(defun join-region (separator)
-  (interactive "sSeparator: ")
+(defun join-region ()
+  (interactive)
   (when (region-active-p)
-    (let ((text (buffer-substring
+    (let ((separator (read-string "Separator: "
+                                  (and (boundp 'break-line-separator)
+                                       break-line-separator)))
+          (text (buffer-substring
                  (region-beginning)
                  (region-end))))
       (setq text (split-string text "\n" t))
       (setq text (string-join text separator))
       (delete-active-region)
-      (insert text))))
+      (insert text)
+      (setq break-line-separator separator))))
 
 
-(defun break-line (separator)
-  (interactive "sSeparator: ")
-  (let ((text (buffer-substring
+(defun break-line ()
+  (interactive)
+  (let ((separator (read-string "Separator: "
+                                (and (boundp 'break-line-separator)
+                                     break-line-separator)))
+        (text (buffer-substring
                (line-beginning-position)
                (line-end-position))))
     (setq text (split-string text separator t))
     (setq text (string-join text "\n"))
     (delete-region (line-beginning-position)
                    (line-end-position))
-    (insert text)))
+    (insert text)
+    (setq break-line-separator separator)))
 
 
 ;; slower scrolling
