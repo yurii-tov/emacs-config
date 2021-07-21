@@ -94,9 +94,9 @@
 (setq desktop-save-mode 1)
 
 
-;; ============
-;; key bindings
-;; ============
+;; ==================
+;; global keybindings
+;; ==================
 
 
 ;; unset all C-dight / M-dight combos
@@ -146,7 +146,7 @@
   (define-key 'text-transform-map (kbd "b") 'break-line))
 
 
-;; global keymap
+;; misc
 
 
 (let ((bindings
