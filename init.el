@@ -635,6 +635,24 @@
 (setq org-export-with-section-numbers 0)
 
 
+(defun org-insert-checklist-status ()
+  (interactive)
+  (save-excursion
+    (delete-trailing-whitespace
+     (line-beginning-position)
+     (line-end-position))
+    (goto-char (line-end-position))
+    (insert (if current-prefix-arg
+                " [%]"
+              " [/]"))
+    (org-ctrl-c-ctrl-c)))
+
+
+(define-key org-mode-map
+  (kbd "C-c C-/")
+  'org-insert-checklist-status)
+
+
 ;; babel
 
 
