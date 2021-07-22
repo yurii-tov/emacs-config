@@ -152,6 +152,7 @@
 (let ((bindings
        '(("M-x" smex)
          ("C-x C-b" ibuffer)
+         ("C-c l" hl-line-mode)
          ("C-c p" copy-file-name-to-clipboard)
          ("C-c d" duplicate-line)
          ("M-k" kill-whole-line)
