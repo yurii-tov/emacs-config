@@ -1260,22 +1260,24 @@
          (query (if (use-region-p)
                     (buffer-substring (region-beginning) (region-end))
                   (or query (read-string "Translate: "))))
-         (en-ru (concat "bash -c \"curl -sL "
-                        (format "'https://dictionary.cambridge.org/search/direct/?datasetsearch=english-russian&q=%s'"
-                                (url-encode-url query))
-                        " | sed -rn '/span class=.trans/ {s:.*<span.*>(.*[^ ]) *<.span>.*:\\1:g ; p}'"
-                        " | sort | uniq\""))
-         (ru-en (concat "bash -c \"curl -sL '"
-                        (format "https://en.openrussian.org/ru/%s"
-                                (url-encode-url query))
-                        "' | grep -oP '(?<=class=.tl.>)[^<]+' | head -n 3\""))
-         (command (if (string-match "[a-zA-Z]" query)
-                      en-ru ru-en))
+         (en-ru `((command . ,(concat "bash -c \"curl -sL '%s"
+                                      "' | sed -rn '/span class=.trans/ {s:.*<span.*>(.*[^ ]) *<.span>.*:\\1:g ; p}'"
+                                      " | sort | uniq\""))
+                  (link . ,(format "https://dictionary.cambridge.org/search/direct/?datasetsearch=english-russian&q=%s"
+                                   (url-encode-url query)))))
+         (ru-en `((command . ,(concat "bash -c \"curl -sL '%s"
+                                      "' | grep -oP '(?<=class=.tl.>)[^<]+' | head -n 3\""))
+                  (link . ,(format "https://en.openrussian.org/ru/%s"
+                                   (url-encode-url query)))))
+         (preset (if (string-match "[a-zA-Z]" query)
+                     en-ru ru-en))
+         (link (cdr (assoc 'link preset)))
+         (command (format (cdr (assoc 'command preset)) link))
          (translation (shell-command-to-string command)))
     (message "%s" command)
     (if (zerop (length translation))
         (message "Can't find translation for '%s'" query)
-      (message "%s =>\n%s" query translation))))
+      (message "%s =>\n%s\n%s" query translation link))))
 
 
 ;; ================
