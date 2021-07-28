@@ -143,7 +143,9 @@
   (define-key 'text-transform-map (kbd "M-c") 'upcase-dwim)
   (define-key 'text-transform-map (kbd "/") 'invert-slashes)
   (define-key 'text-transform-map (kbd "j") 'join-region)
-  (define-key 'text-transform-map (kbd "b") 'break-line))
+  (define-key 'text-transform-map (kbd "b") 'break-line)
+  (define-key 'text-transform-map (kbd "f") 'flush-lines)
+  (define-key 'text-transform-map (kbd "k") 'keep-lines))
 
 
 ;; misc
@@ -460,7 +462,7 @@
 (defun join-region ()
   (interactive)
   (when (region-active-p)
-    (let ((separator (read-string "Separator: "
+    (let ((separator (read-string "Join region with: "
                                   (and (boundp 'break-line-separator)
                                        break-line-separator)))
           (text (buffer-substring
@@ -475,7 +477,7 @@
 
 (defun break-line ()
   (interactive)
-  (let ((separator (read-string "Separator: "
+  (let ((separator (read-string "Break line with: "
                                 (and (boundp 'break-line-separator)
                                      break-line-separator)))
         (text (buffer-substring
@@ -619,7 +621,10 @@
       `(("w" "Work" entry
          (file+headline "work.org" "inbox")
          "* TODO %?\n")
-        ("f" "Family" entry
+        ("f" "Fun" entry
+         (file+headline "fun.org" "inbox")
+         "* TODO %?\n")
+        ("a" "Family" entry
          (file+headline "family.org" "inbox")
          "* TODO %?\n")
         ("e" "Education" entry
