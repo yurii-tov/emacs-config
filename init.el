@@ -145,7 +145,14 @@
   (define-key 'text-transform-map (kbd "j") 'join-region)
   (define-key 'text-transform-map (kbd "b") 'break-line)
   (define-key 'text-transform-map (kbd "f") 'flush-lines)
-  (define-key 'text-transform-map (kbd "k") 'keep-lines))
+  (define-key 'text-transform-map (kbd "k") 'keep-lines)
+  (define-key 'text-transform-map (kbd "\"") '(lambda () (interactive) (wrap-with-text "\"" "\"")))
+  (define-key 'text-transform-map (kbd "'") '(lambda () (interactive) (wrap-with-text "'" "'")))
+  (define-key 'text-transform-map (kbd "[") '(lambda () (interactive) (wrap-with-text "[" "]")))
+  (define-key 'text-transform-map (kbd "{") '(lambda () (interactive) (wrap-with-text "{" "}")))
+  (define-key 'text-transform-map (kbd "(") '(lambda () (interactive) (wrap-with-text "(" ")")))
+  (define-key 'text-transform-map (kbd "<") '(lambda () (interactive) (wrap-with-text "<" ">")))
+  (define-key 'text-transform-map (kbd ">") '(lambda () (interactive) (wrap-with-text "<" "/>"))))
 
 
 ;; misc
@@ -489,6 +496,24 @@
                    (line-end-position))
     (insert text)
     (setq break-line-separator separator)))
+
+
+(defun wrap-with-text (b1 b2)
+  "Wrap current word (or region) with given bracket-like strings
+   (e.g. brackets/quotes/apostrophes/parens etc.)"
+  (if (region-active-p)
+      (let ((s (region-beginning))
+            (e (region-end)))
+        (save-excursion
+          (goto-char s)
+          (insert b1)
+          (goto-char (1+ e))
+          (insert b2)))
+    (save-excursion
+      (forward-word)
+      (insert b2)
+      (backward-word)
+      (insert b1))))
 
 
 ;; slower scrolling
