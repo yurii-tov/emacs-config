@@ -356,6 +356,7 @@
 
 (setq dired-listing-switches "-alh"
       dired-recursive-copies 'always
+      dired-recursive-deletes 'always
       dired-dwim-target t)
 
 
