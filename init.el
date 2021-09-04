@@ -117,6 +117,7 @@
   (define-key 'repls-map (kbd "s") 'slime)
   (define-key 'repls-map (kbd "l") 'run-shell)
   (define-key 'repls-map (kbd "p") 'run-python-with-venv)
+  (define-key 'repls-map (kbd "r") 'run-racket)
   (progn (define-prefix-command 'run-cider-map)
          (define-key 'repls-map (kbd "j") 'run-cider-map)
          (define-key 'run-cider-map (kbd "k") 'cider-connect)
@@ -146,13 +147,12 @@
   (define-key 'text-transform-map (kbd "b") 'break-line)
   (define-key 'text-transform-map (kbd "f") 'flush-lines)
   (define-key 'text-transform-map (kbd "k") 'keep-lines)
+  (define-key 'text-transform-map (kbd "<") 'wrap-with-tags)
   (define-key 'text-transform-map (kbd "\"") '(lambda () (interactive) (wrap-with-text "\"" "\"")))
   (define-key 'text-transform-map (kbd "'") '(lambda () (interactive) (wrap-with-text "'" "'")))
   (define-key 'text-transform-map (kbd "[") '(lambda () (interactive) (wrap-with-text "[" "]")))
   (define-key 'text-transform-map (kbd "{") '(lambda () (interactive) (wrap-with-text "{" "}")))
-  (define-key 'text-transform-map (kbd "(") '(lambda () (interactive) (wrap-with-text "(" ")")))
-  (define-key 'text-transform-map (kbd "<") '(lambda () (interactive) (wrap-with-text "<" ">")))
-  (define-key 'text-transform-map (kbd ">") '(lambda () (interactive) (wrap-with-text "<" "/>"))))
+  (define-key 'text-transform-map (kbd "(") '(lambda () (interactive) (wrap-with-text "(" ")"))))
 
 
 ;; misc
@@ -506,15 +506,23 @@
       (let ((s (region-beginning))
             (e (region-end)))
         (save-excursion
+          (goto-char e)
+          (insert b2)
           (goto-char s)
-          (insert b1)
-          (goto-char (1+ e))
-          (insert b2)))
+          (insert b1)))
     (save-excursion
       (forward-word)
-      (insert b2)
       (backward-word)
-      (insert b1))))
+      (insert b1)
+      (forward-word)
+      (insert b2))))
+
+
+(defun wrap-with-tags (tag)
+  "Wrap current word (or region) with given xml tag"
+  (interactive "sTag: ")
+  (wrap-with-text (format "<%s>" tag)
+                  (format "</%s>" tag)))
 
 
 ;; slower scrolling
