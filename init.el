@@ -518,13 +518,6 @@
       (insert b2))))
 
 
-(defun wrap-with-tags (tag)
-  "Wrap current word (or region) with given xml tag"
-  (interactive "sTag: ")
-  (wrap-with-text (format "<%s>" tag)
-                  (format "</%s>" tag)))
-
-
 ;; slower scrolling
 
 
@@ -1034,6 +1027,13 @@
                border: 1px solid #ccc;
                <!-- text-align:center; -->
        }")))
+
+
+(defun wrap-with-tags (tag)
+  "Wrap current word (or region) with given xml tag"
+  (interactive "sTag: ")
+  (wrap-with-text (format "<%s>" tag)
+                  (format "</%s>" tag)))
 
 
 ;; =======
