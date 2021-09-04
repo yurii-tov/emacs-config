@@ -1003,19 +1003,37 @@
 (setq sgml-basic-offset 4)
 
 
-(defun html-dummy (title)
-  (interactive "sTitle: ")
-  (insert (format "<!DOCTYPE html>
+(define-abbrev-table 'sgml-mode-abbrev-table
+  '(("html" "<!DOCTYPE html>
 <html>
 <head>
-    <title>%s</title>
+    <title>html</title>
     <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">
 </head>
 <body>
 
 
 </body>
-</html>" title)))
+</html>")
+    ("a" "<a href=\"?\">?</a>")
+    ("img" "<img src=\"?\"/>")
+    ("table" "<table>
+<tr><th>?</th><th>?</th></tr>
+<tr><td>?</td><td>?</td></tr>
+</table>")
+    ("tablecss" "table {
+               border: 1px solid #ccc;
+               border-collapse:collapse;
+               font-family: 'Segoe UI', sans-serif;
+               font-size: 80%;
+               width:100%;
+       }
+
+       table td, table th {
+               padding: 1ex;
+               border: 1px solid #ccc;
+               <!-- text-align:center; -->
+       }")))
 
 
 ;; =======
