@@ -348,13 +348,18 @@
 ;; dired
 
 
+(require 'ls-lisp)
+
+
 (setq ls-lisp-format-time-list
       '("%d.%m.%Y %H:%M"
         "%d.%m.%Y %H:%M")
-      ls-lisp-use-localized-time-format t)
+      ls-lisp-use-localized-time-format t
+      ls-lisp-dirs-first t)
 
 
-(setq dired-listing-switches "-alh"
+(setq dired-use-ls-dired nil
+      dired-listing-switches "-alh"
       dired-recursive-copies 'always
       dired-recursive-deletes 'always
       dired-dwim-target t)
@@ -371,7 +376,13 @@
 (with-eval-after-load 'dired
   (define-key dired-mode-map
     (kbd "C-c C-o")
-    'dired-open-in-external-app))
+    'dired-open-in-external-app)
+  (define-key dired-mode-map
+    (kbd "`")
+    'dired-hide-details-mode))
+
+
+(add-hook 'dired-mode-hook 'dired-hide-details-mode)
 
 
 ;; copy full names of files to clipboard
