@@ -94,6 +94,21 @@
 (setq desktop-save-mode 1)
 
 
+;; on Windows, relying on MSYS2
+
+
+(when (string-equal system-type "windows-nt")
+  (let ((msys "C:/tools/msys64"))
+    (if (file-exists-p msys)
+        (progn (setenv "PATH"
+                       (format "%s\\usr\\bin;%s"
+                               (replace-regexp-in-string "/" "\\\\" msys)
+                               (getenv "PATH")))
+               (add-to-list 'exec-path (format "%s/usr/bin" msys))
+               (setq shell-file-name "bash"))
+      (warn "msys2 not found. Expected location is %s" msys))))
+
+
 ;; ==================
 ;; global keybindings
 ;; ==================
