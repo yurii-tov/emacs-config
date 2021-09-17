@@ -725,6 +725,20 @@
    (python . t)))
 
 
+;; =============
+;; hippie-expand
+;; =============
+
+
+(setq hippie-expand-try-functions-list
+      '(try-complete-file-name
+        try-expand-all-abbrevs
+        try-expand-dabbrev-visible
+        try-expand-line
+        try-expand-dabbrev-all-buffers
+        try-expand-dabbrev-from-kill))
+
+
 ;; ===
 ;; ido
 ;; ===
