@@ -162,7 +162,7 @@
   (define-key 'text-transform-map (kbd "b") 'break-line)
   (define-key 'text-transform-map (kbd "f") 'flush-lines)
   (define-key 'text-transform-map (kbd "k") 'keep-lines)
-  (define-key 'text-transform-map (kbd "<") 'wrap-with-tags)
+  (define-key 'text-transform-map (kbd ".") 'wrap-with-tags)
   (define-key 'text-transform-map (kbd "\"") '(lambda () (interactive) (wrap-with-text "\"" "\"")))
   (define-key 'text-transform-map (kbd "'") '(lambda () (interactive) (wrap-with-text "'" "'")))
   (define-key 'text-transform-map (kbd "[") '(lambda () (interactive) (wrap-with-text "[" "]")))
