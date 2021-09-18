@@ -665,6 +665,7 @@
 
 
 (progn (require 'ox-textile)
+       (require 'ox-md)
        (require 'org-tempo))
 
 
