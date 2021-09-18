@@ -692,7 +692,9 @@
 (setq org-refile-allow-creating-parent-nodes 'confirm)
 
 
-(setq org-export-with-section-numbers 0)
+(setq org-export-with-section-numbers 0
+      org-export-preserve-breaks t
+      org-export-with-toc nil)
 
 
 (defun org-insert-checklist-status ()
