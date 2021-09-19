@@ -741,7 +741,8 @@
         try-expand-dabbrev-visible
         try-expand-line
         try-expand-dabbrev-all-buffers
-        try-expand-dabbrev-from-kill))
+        try-expand-dabbrev-from-kill
+        try-expand-whole-kill))
 
 
 (defun hippie-expand-completions (&optional hippie-expand-function)
