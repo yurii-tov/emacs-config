@@ -94,7 +94,7 @@
 (setq desktop-save-mode 1)
 
 
-;; on Windows, relying on MSYS2
+;; enable unix'y things from MSYS2
 
 
 (when (string-equal system-type "windows-nt")
