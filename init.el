@@ -189,6 +189,7 @@
          ("C-c l" hl-line-mode)
          ("C-c p" copy-file-name-to-clipboard)
          ("C-c d" duplicate-line)
+         ("C-c j" org-clock-goto)
          ("M-k" kill-whole-line)
          ("C-x u" insert-char)
          ("M-q" hippie-expand)
@@ -705,7 +706,8 @@
 
 (setq org-export-with-section-numbers 0
       org-export-preserve-breaks t
-      org-export-with-toc nil)
+      org-export-with-toc nil
+      org-export-with-sub-superscripts nil)
 
 
 (defun org-insert-checklist-status ()
