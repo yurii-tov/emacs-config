@@ -735,7 +735,8 @@
 
 
 (setq hippie-expand-try-functions-list
-      '(try-complete-file-name
+      '(try-complete-file-name-partially
+        try-complete-file-name
         try-expand-all-abbrevs
         try-expand-dabbrev-visible
         try-expand-line
