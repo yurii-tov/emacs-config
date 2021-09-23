@@ -323,6 +323,28 @@
 (apply-color-theme 'dichromacy)
 
 
+;; better modeline
+
+
+(setq-default mode-line-format
+              '((:eval (format "(%s%s) "
+                               (symbol-name buffer-file-coding-system)
+                               (if current-input-method-title
+                                   (format " %s" current-input-method-title)
+                                 "")))
+                mode-line-client
+                mode-line-modified
+                mode-line-remote
+                mode-line-frame-identification
+                mode-line-buffer-identification
+                "   "
+                mode-line-position
+                (vc-mode vc-mode)
+                "  " mode-line-modes
+                mode-line-misc-info
+                mode-line-end-spaces))
+
+
 ;; =====
 ;; files
 ;; =====
