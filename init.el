@@ -569,6 +569,12 @@
   (scroll-up-command 5))
 
 
+;; show col number in modeline
+
+
+(column-number-mode)
+
+
 ;; =======
 ;; ibuffer
 ;; =======
