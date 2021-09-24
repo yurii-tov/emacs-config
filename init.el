@@ -371,6 +371,9 @@
   (setq auto-revert-use-notify nil))
 
 
+(setq revert-without-query '(".*"))
+
+
 (defun force-revert-buffer ()
   (interactive)
   (message "Force revert buffer '%s'" (buffer-name))
