@@ -334,8 +334,7 @@
                                  "")))
                 mode-line-client
                 mode-line-modified
-                mode-line-remote
-                mode-line-frame-identification
+                " "
                 mode-line-buffer-identification
                 "   "
                 mode-line-position
