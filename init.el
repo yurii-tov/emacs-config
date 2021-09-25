@@ -327,7 +327,7 @@
 
 
 (setq-default mode-line-format
-              '((:eval (format "(%s%s) "
+              `((:eval (format "(%s%s) "
                                (symbol-name buffer-file-coding-system)
                                (if current-input-method-title
                                    (format " %s" current-input-method-title)
@@ -337,7 +337,7 @@
                 " "
                 mode-line-buffer-identification
                 "   "
-                mode-line-position
+                ,(cdr mode-line-position)
                 (vc-mode vc-mode)
                 "  " mode-line-modes
                 mode-line-misc-info
