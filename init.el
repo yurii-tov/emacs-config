@@ -185,6 +185,7 @@
 
 (let ((bindings
        '(("M-x" smex)
+         ("M-=" count-words)
          ("C-x C-b" ibuffer)
          ("C-c l" hl-line-mode)
          ("C-c p" copy-file-name-to-clipboard)
