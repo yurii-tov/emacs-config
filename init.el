@@ -891,6 +891,13 @@
     (minibuffer-keyboard-quit)))
 
 
+(defun ido-jump-to-completions ()
+  (select-window (get-buffer-window ido-completion-buffer)))
+
+
+(advice-add 'ido-complete :after #'ido-jump-to-completions)
+
+
 (with-eval-after-load 'ido
   (define-key ido-file-dir-completion-map
     (kbd "C-c C-o")
