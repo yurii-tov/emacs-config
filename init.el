@@ -37,6 +37,12 @@
 ;; ======
 
 
+;; 'are we on windows?'-shortcut
+
+
+(setq system-type-is-windows (string-equal system-type "windows-nt"))
+
+
 ;; enable useful APIs
 
 
@@ -97,7 +103,7 @@
 ;; enable unix'y things from MSYS2
 
 
-(when (string-equal system-type "windows-nt")
+(when system-type-is-windows
   (let ((msys "C:/tools/msys64"))
     (if (file-exists-p msys)
         (progn (setenv "PATH"
@@ -368,8 +374,7 @@
 (global-auto-revert-mode t)
 
 
-(when (string-equal system-type "windows-nt")
-  (setq auto-revert-use-notify nil))
+(when system-type-is-windows (setq auto-revert-use-notify nil))
 
 
 (setq revert-without-query '(".*"))
@@ -387,7 +392,7 @@
 (defun open-in-external-app (&optional file-name)
   (interactive)
   (let ((open-file
-         (cond ((string-equal system-type "windows-nt")
+         (cond (system-type-is-windows
                 (lambda (f) (w32-shell-execute "open" (replace-regexp-in-string "/" "\\" f t t))))
                ((string-equal system-type "darwin")
                 (lambda (f) (shell-command (concat "open " (shell-quote-argument f)))))
@@ -410,8 +415,8 @@
       ls-lisp-dirs-first t)
 
 
-(setq dired-use-ls-dired nil
-      dired-listing-switches "-alh"
+(setq dired-listing-switches (concat "-alh" (unless system-type-is-windows
+                                              " --group-directories-first"))
       dired-recursive-copies 'always
       dired-recursive-deletes 'always
       dired-dwim-target t)
