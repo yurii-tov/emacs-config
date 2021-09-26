@@ -333,6 +333,22 @@
 ;; better modeline
 
 
+;;;; get region lines/words/chars counts
+
+
+(defun count-lwc ()
+  (let* ((start (region-beginning))
+         (end (region-end))
+         (lines (count-lines start end))
+         (words (count-words start end))
+         (chars (- end start))
+         (face 'mode-line-emphasis))
+    (format "Region has %s line%s, %s word%s, and %s character%s"
+            (propertize (number-to-string lines) 'face face) (if (= lines 1) "" "s")
+            (propertize (number-to-string words) 'face face) (if (= words 1) "" "s")
+            (propertize (number-to-string chars) 'face face) (if (= chars 1) "" "s"))))
+
+
 (setq-default mode-line-format
               `((:eval (format "(%s%s) "
                                (symbol-name buffer-file-coding-system)
@@ -344,10 +360,7 @@
                 " "
                 mode-line-buffer-identification
                 "   "
-                (:eval (when (region-active-p)
-                         (let ((inhibit-message t)
-                               (message-log-max nil))
-                           (call-interactively 'count-words))))
+                (:eval (when (use-region-p) (count-lwc)))
                 ,(cdr mode-line-position)
                 (vc-mode vc-mode)
                 "  " mode-line-modes
