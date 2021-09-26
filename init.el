@@ -344,6 +344,10 @@
                 " "
                 mode-line-buffer-identification
                 "   "
+                (:eval (when (region-active-p)
+                         (let ((inhibit-message t)
+                               (message-log-max nil))
+                           (call-interactively 'count-words))))
                 ,(cdr mode-line-position)
                 (vc-mode vc-mode)
                 "  " mode-line-modes
