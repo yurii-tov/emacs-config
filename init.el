@@ -349,14 +349,18 @@
             (propertize (number-to-string chars) 'face face) (if (= chars 1) "" "s"))))
 
 
+(require 'hi-lock)
+
+
 (setq-default mode-line-format
-              `((:eval (format "(%s%s) "
+              `((:eval (format "%s%s "
                                (symbol-name buffer-file-coding-system)
                                (if current-input-method-title
-                                   (format " %s" current-input-method-title)
+                                   (concat " " (propertize (format "[%s]" current-input-method-title) 'face 'hi-green-b))
                                  "")))
                 mode-line-client
                 mode-line-modified
+                mode-line-remote
                 " "
                 mode-line-buffer-identification
                 "   "
