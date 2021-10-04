@@ -149,8 +149,8 @@
 
 
 (progn
-  (define-key search-map (kbd "r") 'replace-string)
-  (define-key search-map (kbd "R") 'replace-regexp)
+  (define-key search-map (kbd "r") 'find-dired)
+  (define-key search-map (kbd "g") 'rgrep)
   (define-key search-map (kbd "t") 'translate-en-ru-online))
 
 
