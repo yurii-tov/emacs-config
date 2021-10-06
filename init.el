@@ -990,42 +990,42 @@
      - When comint-input-ring is overflowed *and* (car comint-input-ring) is zero,
        all its contents treated as 'old' history
        (and therefore goes to the tail of history file)"
-  (when (derived-mode-p 'comint-mode)
-    (let* ((ir (cl-coerce (cl-coerce (cddr comint-input-ring) 'list) 'vector))
-           (ir-items-count (cadr comint-input-ring))
-           (ir-insertion-place (car comint-input-ring))
-           (ir-full-p (= ir-items-count comint-input-ring-size))
-           (history-new-local-bound (cond ((not ir-full-p) (cl-position nil ir))
-                                          ((zerop ir-insertion-place) 0)
-                                          (t ir-insertion-place)))
-           (history-new-local (cl-subseq ir 0 history-new-local-bound))
-           (history-old-local (cl-subseq ir (if ir-full-p
-                                                history-new-local-bound
-                                              (1+ (cl-position nil ir :from-end t)))))
-           (history-current-global (progn (comint-read-input-ring)
-                                          (remove nil
-                                                  (cl-coerce (cl-coerce (cddr comint-input-ring)
-                                                                        'list)
-                                                             'vector))))
-           (history-merged (cl-remove-duplicates
-                            (cl-concatenate 'vector
-                                            history-old-local
-                                            history-current-global
-                                            history-new-local)
-                            :test #'equal))
-           (history-final (cl-subseq history-merged
-                                     (max 0 (- (length history-merged)
-                                               comint-input-ring-size))))
-           (comint-input-ring (cons 0 (cons (length history-final)
-                                            history-final))))
-      (comint-write-input-ring))
-    (comint-read-input-ring)))
+  (let* ((ir (cl-coerce (cl-coerce (cddr comint-input-ring) 'list) 'vector))
+         (ir-items-count (cadr comint-input-ring))
+         (ir-insertion-place (car comint-input-ring))
+         (ir-full-p (= ir-items-count comint-input-ring-size))
+         (history-new-local-bound (cond ((not ir-full-p) (cl-position nil ir))
+                                        ((zerop ir-insertion-place) 0)
+                                        (t ir-insertion-place)))
+         (history-new-local (cl-subseq ir 0 history-new-local-bound))
+         (history-old-local (cl-subseq ir (if ir-full-p
+                                              history-new-local-bound
+                                            (1+ (cl-position nil ir :from-end t)))))
+         (history-current-global (progn (comint-read-input-ring)
+                                        (remove nil
+                                                (cl-coerce (cl-coerce (cddr comint-input-ring)
+                                                                      'list)
+                                                           'vector))))
+         (history-merged (cl-remove-duplicates
+                          (cl-concatenate 'vector
+                                          history-old-local
+                                          history-current-global
+                                          history-new-local)
+                          :test #'equal))
+         (history-final (cl-subseq history-merged
+                                   (max 0 (- (length history-merged)
+                                             comint-input-ring-size))))
+         (comint-input-ring (cons 0 (cons (length history-final)
+                                          history-final))))
+    (comint-write-input-ring))
+  (comint-read-input-ring))
 
 
 (defun comint-save-history-all ()
   (dolist (b (buffer-list))
     (with-current-buffer b
-      (comint-save-history))))
+      (and comint-input-ring-file-name
+           (comint-save-history)))))
 
 
 (add-hook 'comint-mode-hook
