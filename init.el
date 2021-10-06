@@ -968,8 +968,10 @@
                                      (string-match "powershell" (car (process-command process))))
                                 "powershell")
                                (t (replace-regexp-in-string
-                                   "<[0-9]*>" ""
-                                   (process-name process))))))
+                                   " " "_"
+                                   (replace-regexp-in-string
+                                    "[^a-zA-Z ]" ""
+                                    (process-name process)))))))
         (setq-local comint-input-ring-file-name
                     (expand-file-name (format ".%s-history" histfile-id)
                                       user-emacs-directory))
