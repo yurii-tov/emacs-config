@@ -139,6 +139,7 @@
   (define-key 'repls-map (kbd "l") 'run-shell)
   (define-key 'repls-map (kbd "p") 'run-python-with-venv)
   (define-key 'repls-map (kbd "r") 'run-racket)
+  (define-key 'repls-map (kbd "q") 'sql-connect)
   (progn (define-prefix-command 'run-cider-map)
          (define-key 'repls-map (kbd "j") 'run-cider-map)
          (define-key 'run-cider-map (kbd "k") 'cider-connect)
@@ -1138,6 +1139,36 @@
 
 (add-hook 'comint-mode-hook
           'modify-comint-isearch-keymap)
+
+
+;; ==========
+;; SQL client
+;; ==========
+
+
+(require 'sql)
+
+
+(setq sql-connection-alist
+      '((example (sql-product 'sqlite))))
+
+
+;;;; interbase
+
+
+(defun configure-isql ()
+  (let ((process (get-buffer-process (current-buffer))))
+    (cond ((eq sql-product 'interbase)
+           (comint-send-string process "set list on;\n")))))
+
+
+(add-hook 'sql-login-hook 'configure-isql)
+
+
+;;;; sqlite
+
+
+(add-to-list 'sql-sqlite-options "-interactive")
 
 
 ;; ===
