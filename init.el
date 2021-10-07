@@ -967,6 +967,7 @@
       (let ((histfile-id (cond ((and (equal major-mode 'shell-mode)
                                      (string-match "powershell" (car (process-command process))))
                                 "powershell")
+                               ((equal major-mode 'sql-interactive-mode) "sql")
                                (t (replace-regexp-in-string
                                    "<.*>\\|[^a-zA-Z]" ""
                                    (process-name process))))))
