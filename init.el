@@ -1159,7 +1159,7 @@
 (defun configure-isql ()
   (let ((process (get-buffer-process (current-buffer))))
     (cond ((eq sql-product 'interbase)
-           (comint-send-string process "set list on;\n")))))
+           (comint-send-string process "set list on;")))))
 
 
 (add-hook 'sql-login-hook 'configure-isql)
