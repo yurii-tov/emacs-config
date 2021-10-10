@@ -1171,6 +1171,52 @@
 (add-to-list 'sql-sqlite-options "-interactive")
 
 
+;;;; Dealing with remote dbs
+
+
+(defun sqli-handle-remote-db (f product params &rest args)
+  (let* ((remote-p (and (not (file-remote-p default-directory))
+                        (string-match "^/ssh" sql-database)))
+         (sql-database-original (replace-regexp-in-string "^/ssh" "/scp"
+                                                          sql-database))
+         (sql-database-copy (expand-file-name (make-temp-name "db")
+                                              temporary-file-directory))
+         (params (if remote-p
+                     (cl-substitute sql-database-copy
+                                    sql-database
+                                    params
+                                    :test #'equal)
+                   params)))
+    (when (and remote-p (file-exists-p sql-database-original))
+      (copy-file sql-database-original
+                 sql-database-copy
+                 t t))
+    (let ((buffer (apply f product (cons params args))))
+      (when remote-p
+        (with-current-buffer buffer
+          (add-hook 'kill-buffer-hook
+                    `(lambda ()
+                       (process-send-eof)
+                       (when (and (file-exists-p ,sql-database-copy)
+                                  (not (equal (file-attribute-modification-time (file-attributes ,sql-database-original))
+                                              (file-attribute-modification-time (file-attributes ,sql-database-copy)))))
+                         (let ((c (read-key (format "What to do with temp file \"%s\"?\n[P]ush to remote host\n[S]ave as...\n[any other key] - delete"
+                                                    ,sql-database-copy))))
+                           (cond ((char-equal c ?p)
+                                  (copy-file ,sql-database-copy
+                                             ,sql-database-original
+                                             t))
+                                 ((char-equal c ?s)
+                                  (copy-file ,sql-database-copy
+                                             (read-file-name "Save file as: ")
+                                             t)))))
+                       (delete-file ,sql-database-copy))
+                    nil t))))))
+
+
+(advice-add 'sql-comint :around 'sqli-handle-remote-db)
+
+
 ;; ===
 ;; xml
 ;; ===
