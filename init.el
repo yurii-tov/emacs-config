@@ -1156,6 +1156,9 @@
       '((example (sql-product 'sqlite))))
 
 
+(add-hook 'sql-login-hook 'orgtbl-mode)
+
+
 ;; interbase
 
 
