@@ -1156,7 +1156,7 @@
       '((example (sql-product 'sqlite))))
 
 
-;;;; interbase
+;; interbase
 
 
 (defun configure-isql ()
@@ -1168,13 +1168,13 @@
 (add-hook 'sql-login-hook 'configure-isql)
 
 
-;;;; sqlite
+;; sqlite
 
 
 (add-to-list 'sql-sqlite-options "-interactive")
 
 
-;;;; Dealing with remote dbs
+;; Dealing with remote dbs
 
 
 (defun sqli-handle-remote-db (f product params &rest args)
