@@ -1177,6 +1177,45 @@
 (add-to-list 'sql-sqlite-options "-interactive")
 
 
+;; reconnect
+
+
+(defun sqli-reconnect ()
+  (interactive)
+  (let* ((process (get-buffer-process (current-buffer)))
+         (pcoding (process-coding-system process))
+         (pcommand (process-command process))
+         (pname (process-name process))
+         (rpt (sql-make-progress-reporter nil "Login")))
+    (process-send-eof)
+    (sit-for 2)
+    (when (boundp 'sqli-temp-db-copy-params)
+      (apply #'copy-file sqli-temp-db-copy-params))
+    (list pname sql-buffer (car pcommand) nil (cdr pcommand))
+    (apply #'make-comint-in-buffer
+           pname sql-buffer (car pcommand) nil (cdr pcommand))
+    (let ((sql-interactive-product sql-product))
+      (sql-interactive-mode))
+    (let ((proc (get-buffer-process sql-buffer))
+          (secs sql-login-delay)
+          (step 0.3))
+      (while (and proc
+                  (memq (process-status proc) '(open run))
+                  (or (accept-process-output proc step)
+                      (<= 0.0 (setq secs (- secs step))))
+                  (progn (goto-char (point-max))
+                         (not (re-search-backward sql-prompt-regexp 0 t))))
+        (sql-progress-reporter-update rpt)))
+    (goto-char (point-max))
+    (when (re-search-backward sql-prompt-regexp nil t)
+      (run-hooks 'sql-login-hook))
+    (sql-progress-reporter-done rpt)
+    (goto-char (point-max))))
+
+
+(define-key sql-interactive-mode-map (kbd "C-c C-k") 'sqli-reconnect)
+
+
 ;; Dealing with remote dbs
 
 
@@ -1198,26 +1237,30 @@
                  sql-database-copy
                  t t))
     (let ((buffer (apply f product (cons params args))))
-      (when remote-p
-        (with-current-buffer buffer
-          (add-hook 'kill-buffer-hook
-                    `(lambda ()
-                       (process-send-eof)
-                       (when (and (file-exists-p ,sql-database-copy)
-                                  (not (equal (file-attribute-modification-time (file-attributes ,sql-database-original))
-                                              (file-attribute-modification-time (file-attributes ,sql-database-copy)))))
-                         (let ((c (read-key (format "What to do with temp file \"%s\"?\n[P]ush to remote host\n[S]ave as...\n[any other key] - delete"
-                                                    ,sql-database-copy))))
-                           (cond ((char-equal c ?p)
-                                  (copy-file ,sql-database-copy
-                                             ,sql-database-original
-                                             t))
-                                 ((char-equal c ?s)
-                                  (copy-file ,sql-database-copy
-                                             (read-file-name "Save file as: ")
-                                             t)))))
-                       (delete-file ,sql-database-copy))
-                    nil t))))))
+      (with-current-buffer buffer
+        (when remote-p
+          (put 'sqli-temp-db-copy-params 'permanent-local t)
+          (setq-local sqli-temp-db-copy-params (list sql-database-original
+                                                     sql-database-copy
+                                                     t t)))
+        (add-hook 'kill-buffer-hook
+                  `(lambda ()
+                     (process-send-eof)
+                     (when (and (file-exists-p ,sql-database-copy)
+                                (not (equal (file-attribute-modification-time (file-attributes ,sql-database-original))
+                                            (file-attribute-modification-time (file-attributes ,sql-database-copy)))))
+                       (let ((c (read-key (format "What to do with temp file \"%s\"?\n[P]ush to remote host\n[S]ave as...\n[any other key] - delete"
+                                                  ,sql-database-copy))))
+                         (cond ((char-equal c ?p)
+                                (copy-file ,sql-database-copy
+                                           ,sql-database-original
+                                           t))
+                               ((char-equal c ?s)
+                                (copy-file ,sql-database-copy
+                                           (read-file-name "Save file as: ")
+                                           t)))))
+                     (delete-file ,sql-database-copy))
+                  nil t)))))
 
 
 (advice-add 'sql-comint :around 'sqli-handle-remote-db)
