@@ -1180,7 +1180,7 @@
 ;; reconnect
 
 
-(defun sqli-reconnect ()
+(defun sql-reconnect ()
   (interactive)
   (let* ((process (get-buffer-process (current-buffer)))
          (pcoding (process-coding-system process))
@@ -1195,9 +1195,9 @@ Process.*finished
 "))
       (when (re-search-backward pattern nil t)
         (replace-regexp pattern "-- reconnected...\n")))
-    (when (and (boundp 'sqli-temp-db-copy-params)
-               (file-exists-p (car sqli-temp-db-copy-params)))
-      (apply #'copy-file sqli-temp-db-copy-params))
+    (when (and (boundp 'sql-temp-db-copy-params)
+               (file-exists-p (car sql-temp-db-copy-params)))
+      (apply #'copy-file sql-temp-db-copy-params))
     (apply #'make-comint-in-buffer
            pname sql-buffer (car pcommand) nil (cdr pcommand))
     (let ((sql-interactive-product sql-product))
@@ -1219,13 +1219,13 @@ Process.*finished
     (goto-char (point-max))))
 
 
-(define-key sql-interactive-mode-map (kbd "C-c C-k") 'sqli-reconnect)
+(define-key sql-interactive-mode-map (kbd "C-c C-k") 'sql-reconnect)
 
 
 ;; Dealing with remote dbs
 
 
-(defun sqli-handle-remote-db (f product params &rest args)
+(defun sql-handle-remote-db (f product params &rest args)
   (let* ((remote-p (and (not (file-remote-p default-directory))
                         (string-match "^/ssh" sql-database)))
          (sql-database-original (replace-regexp-in-string "^/ssh" "/scp"
@@ -1245,10 +1245,10 @@ Process.*finished
     (let ((buffer (apply f product (cons params args))))
       (with-current-buffer buffer
         (when remote-p
-          (put 'sqli-temp-db-copy-params 'permanent-local t)
-          (setq-local sqli-temp-db-copy-params (list sql-database-original
-                                                     sql-database-copy
-                                                     t t)))
+          (put 'sql-temp-db-copy-params 'permanent-local t)
+          (setq-local sql-temp-db-copy-params (list sql-database-original
+                                                    sql-database-copy
+                                                    t t)))
         (add-hook 'kill-buffer-hook
                   `(lambda ()
                      (when (get-buffer-process (current-buffer))
@@ -1270,7 +1270,7 @@ Process.*finished
                   nil t)))))
 
 
-(advice-add 'sql-comint :around 'sqli-handle-remote-db)
+(advice-add 'sql-comint :around 'sql-handle-remote-db)
 
 
 ;; ===
