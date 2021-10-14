@@ -1189,9 +1189,15 @@
          (rpt (sql-make-progress-reporter nil "Login")))
     (process-send-eof)
     (sit-for 2)
-    (when (boundp 'sqli-temp-db-copy-params)
+    (let ((pattern "
+Process.*finished
+
+"))
+      (when (re-search-backward pattern nil t)
+        (replace-regexp pattern "-- reconnected...\n")))
+    (when (and (boundp 'sqli-temp-db-copy-params)
+               (file-exists-p (car sqli-temp-db-copy-params)))
       (apply #'copy-file sqli-temp-db-copy-params))
-    (list pname sql-buffer (car pcommand) nil (cdr pcommand))
     (apply #'make-comint-in-buffer
            pname sql-buffer (car pcommand) nil (cdr pcommand))
     (let ((sql-interactive-product sql-product))
@@ -1245,7 +1251,8 @@
                                                      t t)))
         (add-hook 'kill-buffer-hook
                   `(lambda ()
-                     (process-send-eof)
+                     (when (get-buffer-process (current-buffer))
+                       (process-send-eof))
                      (when (and (file-exists-p ,sql-database-copy)
                                 (not (equal (file-attribute-modification-time (file-attributes ,sql-database-original))
                                             (file-attribute-modification-time (file-attributes ,sql-database-copy)))))
