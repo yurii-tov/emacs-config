@@ -1193,8 +1193,7 @@
 Process.*finished
 
 "))
-      (when (re-search-backward pattern nil t)
-        (replace-regexp pattern "-- reconnected...\n")))
+      (replace-regexp pattern "-- reconnected...\n" nil nil nil t))
     (when (and (boundp 'sql-temp-db-copy-params)
                (file-exists-p (car sql-temp-db-copy-params)))
       (apply #'copy-file sql-temp-db-copy-params))
