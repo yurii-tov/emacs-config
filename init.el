@@ -1183,7 +1183,6 @@
 (defun sql-reconnect ()
   (interactive)
   (let* ((process (get-buffer-process (current-buffer)))
-         (pcoding (process-coding-system process))
          (pcommand (process-command process))
          (pname (process-name process))
          (rpt (sql-make-progress-reporter nil "Login")))
