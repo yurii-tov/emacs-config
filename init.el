@@ -1168,7 +1168,7 @@
       (let ((process (get-buffer-process (current-buffer))))
         (dolist (command commands)
           (comint-send-string process command)
-          (comint-send-string process "\n"))))))
+          (comint-send-input))))))
 
 
 (add-hook 'sql-login-hook 'sql-perform-initial-commands)
