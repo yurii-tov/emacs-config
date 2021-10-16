@@ -1313,6 +1313,7 @@ Process.*finished
 (defun sql-setup-pprint-tables ()
   (let ((table-parser (sql-get-product-feature sql-product :table-parser)))
     (when table-parser
+      (ring-insert comint-input-ring "--connect")
       (setq-local comint-output-filter-functions
                   (cons (make-sql-table-pprint-filter table-parser) comint-output-filter-functions)))))
 
@@ -1349,6 +1350,15 @@ Process.*finished
 
 
 (sql-set-product-feature 'sqlite :init-commands '(".headers on"))
+
+
+(defun parse-sqlite-table (text)
+  (unless (string-match "^Error: " text)
+    (mapcar (lambda (r) (split-string r "|"))
+            (split-string text "\n" t))))
+
+
+(sql-set-product-feature 'sqlite :table-parser 'parse-sqlite-table)
 
 
 ;; ===
