@@ -1159,24 +1159,6 @@
 (add-hook 'sql-login-hook 'orgtbl-mode)
 
 
-;; interbase
-
-
-(defun configure-isql ()
-  (let ((process (get-buffer-process (current-buffer))))
-    (cond ((eq sql-product 'interbase)
-           (comint-send-string process "set list on;")))))
-
-
-(add-hook 'sql-login-hook 'configure-isql)
-
-
-;; sqlite
-
-
-(add-to-list 'sql-sqlite-options "-interactive")
-
-
 ;; reconnect
 
 
@@ -1199,6 +1181,8 @@ Process.*finished
     (apply #'make-comint-in-buffer
            pname sql-buffer (car pcommand) nil (cdr pcommand))
     (let ((sql-interactive-product sql-product))
+      (setq-local comint-output-filter-functions
+                  (default-value 'comint-output-filter-functions))
       (sql-interactive-mode))
     (let ((proc (get-buffer-process sql-buffer))
           (secs sql-login-delay)
@@ -1211,6 +1195,7 @@ Process.*finished
                          (not (re-search-backward sql-prompt-regexp 0 t))))
         (sql-progress-reporter-update rpt)))
     (goto-char (point-max))
+    (ring-insert comint-input-ring "--reconnect")
     (when (re-search-backward sql-prompt-regexp nil t)
       (run-hooks 'sql-login-hook))
     (sql-progress-reporter-done rpt)
@@ -1220,7 +1205,7 @@ Process.*finished
 (define-key sql-interactive-mode-map (kbd "C-c C-k") 'sql-reconnect)
 
 
-;; Dealing with remote dbs
+;; dealing with remote dbs
 
 
 (defun sql-handle-remote-db (f product params &rest args)
@@ -1269,6 +1254,89 @@ Process.*finished
 
 
 (advice-add 'sql-comint :around 'sql-handle-remote-db)
+
+
+;; pretty-printing result sets using org-mode
+
+
+(defun make-sql-table-pprint-filter (table-parser)
+  `(lambda (s)
+     (let* ((p (point))
+            (bounds (save-excursion
+                      (when (and (= (line-number-at-pos p) ;; if cursor is at the same line as prompt...
+                                    (line-number-at-pos
+                                     (save-excursion
+                                       (re-search-backward comint-prompt-regexp nil t))))
+                                 (or (re-search-backward comint-prompt-regexp nil t 2)  ;; and we can move to previous prompt...
+                                     (goto-char (point-min)))
+                                 (string-match "^select .*;$" (ring-ref comint-input-ring 0)) ;; and last command was 'select'...
+                                 (and (> (- (line-number-at-pos p) ;; and we have any meaningful output
+                                            (line-number-at-pos (point)))
+                                         1)
+                                      (not (string-match "\\*\\*\\* .* \\*\\*\\*"
+                                                         (buffer-substring (point) p)))))
+                        (end-of-line 2)
+                        (let* ((start (line-beginning-position))
+                               (end (progn (re-search-forward comint-prompt-regexp nil t)
+                                           (re-search-backward comint-prompt-regexp nil t)
+                                           (beginning-of-line)
+                                           (1- (point)))))
+                          (list start end))))))
+       (when bounds
+         (let* ((start (car bounds))
+                (end (cadr bounds))
+                (text (string-trim (buffer-substring start end)))
+                (table (funcall ',table-parser text)))
+           (when table
+             (let ((table-pretty (orgtbl-to-orgtbl (append (cons 'hline (cons (car table) (cons 'hline (cdr table)))) '(hline)) nil)))
+               (save-excursion
+                 (goto-char start)
+                 (delete-region start end)
+                 (insert table-pretty)))))))))
+
+
+(defun sql-setup-pprint-tables ()
+  (let ((table-parser (sql-get-product-feature sql-product :table-parser)))
+    (when table-parser
+      (setq-local comint-output-filter-functions
+                  (cons (make-sql-table-pprint-filter table-parser) comint-output-filter-functions)))))
+
+
+(add-hook 'sql-login-hook
+          'sql-setup-pprint-tables)
+
+
+;; interbase
+
+
+(defun configure-isql ()
+  (let ((process (get-buffer-process (current-buffer))))
+    (cond ((eq sql-product 'interbase)
+           (comint-send-string process "set list on;")))))
+
+
+(add-hook 'sql-login-hook 'configure-isql)
+
+
+(defun parse-isql-table (text)
+  (unless (string-match "Dynamic SQL Error" text)
+    (let* ((records-raw (split-string text "\n\n" t))
+           (records (mapcar (lambda (r) (mapcar (lambda (x) (list (replace-regexp-in-string " .+$" "" x)
+                                                                  (string-trim (replace-regexp-in-string "^[^ ]+ +" "" x))))
+                                                (split-string r "\n")))
+                            records-raw))
+           (header (mapcar #'car (car records)))
+           (rows (mapcar (lambda (r) (mapcar #'cadr r)) records)))
+      (cons header rows))))
+
+
+(sql-set-product-feature 'interbase :table-parser 'parse-isql-table)
+
+
+;; sqlite
+
+
+(add-to-list 'sql-sqlite-options "-interactive")
 
 
 ;; ===
