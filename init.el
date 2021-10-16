@@ -1159,6 +1159,21 @@
 (add-hook 'sql-login-hook 'orgtbl-mode)
 
 
+;; initial setup
+
+
+(defun sql-perform-initial-commands ()
+  (let ((commands (sql-get-product-feature sql-product :init-commands)))
+    (when commands
+      (let ((process (get-buffer-process (current-buffer))))
+        (dolist (command commands)
+          (comint-send-string process command)
+          (comint-send-string process "\n"))))))
+
+
+(add-hook 'sql-login-hook 'sql-perform-initial-commands)
+
+
 ;; reconnect
 
 
@@ -1309,13 +1324,7 @@ Process.*finished
 ;; interbase
 
 
-(defun configure-isql ()
-  (let ((process (get-buffer-process (current-buffer))))
-    (cond ((eq sql-product 'interbase)
-           (comint-send-string process "set list on;")))))
-
-
-(add-hook 'sql-login-hook 'configure-isql)
+(sql-set-product-feature 'interbase :init-commands '("set list on;"))
 
 
 (defun parse-isql-table (text)
@@ -1337,6 +1346,9 @@ Process.*finished
 
 
 (add-to-list 'sql-sqlite-options "-interactive")
+
+
+(sql-set-product-feature 'sqlite :init-commands '(".headers on"))
 
 
 ;; ===
