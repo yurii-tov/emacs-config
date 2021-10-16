@@ -1278,13 +1278,13 @@ Process.*finished
   `(lambda (s)
      (let* ((p (point))
             (bounds (save-excursion
-                      (when (and (= (line-number-at-pos p) ;; if cursor is at the same line as prompt...
+                      (when (and (string-match "^select .*;$" (ring-ref comint-input-ring 0)) ;; if last command was 'select'...
+                                 (= (line-number-at-pos p) ;; and cursor is at the same line as prompt...
                                     (line-number-at-pos
                                      (save-excursion
                                        (re-search-backward comint-prompt-regexp nil t))))
                                  (or (re-search-backward comint-prompt-regexp nil t 2)  ;; and we can move to previous prompt...
                                      (goto-char (point-min)))
-                                 (string-match "^select .*;$" (ring-ref comint-input-ring 0)) ;; and last command was 'select'...
                                  (and (> (- (line-number-at-pos p) ;; and we have any meaningful output
                                             (line-number-at-pos (point)))
                                          1)
@@ -1313,7 +1313,7 @@ Process.*finished
 (defun sql-setup-pprint-tables ()
   (let ((table-parser (sql-get-product-feature sql-product :table-parser)))
     (when table-parser
-      (ring-insert comint-input-ring "--connect")
+      (ring-insert comint-input-ring "--tables pprint enabled")
       (setq-local comint-output-filter-functions
                   (cons (make-sql-table-pprint-filter table-parser) comint-output-filter-functions)))))
 
