@@ -1211,8 +1211,7 @@ Process.*finished
         (sql-progress-reporter-update rpt)))
     (goto-char (point-max))
     (ring-insert comint-input-ring "--reconnect")
-    (when (re-search-backward sql-prompt-regexp nil t)
-      (run-hooks 'sql-login-hook))
+    (run-hooks 'sql-login-hook)
     (sql-progress-reporter-done rpt)
     (goto-char (point-max))))
 
