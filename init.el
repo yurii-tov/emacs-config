@@ -1210,7 +1210,6 @@ Process.*finished
                          (not (re-search-backward sql-prompt-regexp 0 t))))
         (sql-progress-reporter-update rpt)))
     (goto-char (point-max))
-    (ring-insert comint-input-ring "--reconnect")
     (run-hooks 'sql-login-hook)
     (sql-progress-reporter-done rpt)
     (goto-char (point-max))))
@@ -1312,7 +1311,7 @@ Process.*finished
 (defun sql-setup-pprint-tables ()
   (let ((table-parser (sql-get-product-feature sql-product :table-parser)))
     (when table-parser
-      (ring-insert comint-input-ring "--tables pprint enabled")
+      (ring-insert comint-input-ring "--tables pprint enabled") ;; hack for preventing influence of previous history on startup
       (setq-local comint-output-filter-functions
                   (cons (make-sql-table-pprint-filter table-parser) comint-output-filter-functions)))))
 
