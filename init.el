@@ -1194,12 +1194,12 @@ Process.*finished
                (file-exists-p (car sql-temp-db-copy-params)))
       (apply #'copy-file sql-temp-db-copy-params))
     (apply #'make-comint-in-buffer
-           pname sql-buffer (car pcommand) nil (cdr pcommand))
+           pname (current-buffer) (car pcommand) nil (cdr pcommand))
     (let ((sql-interactive-product sql-product))
       (setq-local comint-output-filter-functions
                   (default-value 'comint-output-filter-functions))
       (sql-interactive-mode))
-    (let ((proc (get-buffer-process sql-buffer))
+    (let ((proc (get-buffer-process (current-buffer)))
           (secs sql-login-delay)
           (step 0.3))
       (while (and proc
