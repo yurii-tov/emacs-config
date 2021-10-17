@@ -1178,42 +1178,44 @@
 
 
 (defun sql-reconnect ()
+  "Restart sql interpreter with same parameters"
   (interactive)
   (let* ((process (get-buffer-process (current-buffer)))
          (pcommand (process-command process))
          (pname (process-name process))
          (rpt (sql-make-progress-reporter nil "Login")))
-    (comint-save-history)
-    (process-send-eof)
-    (sit-for 2)
+    (comint-save-history) ;; save current command history
+    (process-send-eof) ;; shutdown sql interpreter
+    (sit-for 2) ;; pause for a while (ugly hack)
     (let ((pattern "
 Process.*finished
 
 "))
-      (replace-regexp pattern "-- reconnected...\n" nil nil nil t))
+      (replace-regexp pattern "-- reconnected...\n" nil nil nil t)) ;; replace 'process finished' message with nice-looking comment
     (when (and (boundp 'sql-temp-db-copy-params)
                (file-exists-p (car sql-temp-db-copy-params)))
-      (apply #'copy-file sql-temp-db-copy-params))
+      (apply #'copy-file sql-temp-db-copy-params)) ;; take remote db into account. See `sql-handle-remote-db'
     (apply #'make-comint-in-buffer
-           pname (current-buffer) (car pcommand) nil (cdr pcommand))
+           pname (current-buffer) (car pcommand) nil (cdr pcommand)) ;; start fresh instance of sql interpreter
     (let ((sql-interactive-product sql-product))
       (setq-local comint-output-filter-functions
-                  (default-value 'comint-output-filter-functions))
-      (sql-interactive-mode))
-    (let ((proc (get-buffer-process (current-buffer)))
-          (secs sql-login-delay)
-          (step 0.3))
-      (while (and proc
-                  (memq (process-status proc) '(open run))
-                  (or (accept-process-output proc step)
-                      (<= 0.0 (setq secs (- secs step))))
-                  (progn (goto-char (point-max))
-                         (not (re-search-backward sql-prompt-regexp 0 t))))
-        (sql-progress-reporter-update rpt)))
-    (goto-char (point-max))
-    (run-hooks 'sql-login-hook)
-    (sql-progress-reporter-done rpt)
-    (goto-char (point-max))))
+                  (default-value 'comint-output-filter-functions)) ;; force reset comint-output-filter-functions
+      (sql-interactive-mode)) ;; turn on sql-interactive-mode
+    (progn (let ((proc (get-buffer-process (current-buffer)))
+                 (secs sql-login-delay)
+                 (step 0.3))
+             (while (and proc
+                         (memq (process-status proc) '(open run))
+                         (or (accept-process-output proc step)
+                             (<= 0.0 (setq secs (- secs step))))
+                         (progn (goto-char (point-max))
+                                (not (re-search-backward sql-prompt-regexp 0 t))))
+               (sql-progress-reporter-update rpt)))
+           (goto-char (point-max))
+           (run-hooks 'sql-login-hook)
+           (sql-progress-reporter-done rpt)
+           (goto-char (point-max))) ;; tracking interpreter startup process. Stolen from `sql-product-interactive'
+    ))
 
 
 (define-key sql-interactive-mode-map (kbd "C-c C-k") 'sql-reconnect)
