@@ -1188,7 +1188,7 @@
     (process-send-eof) ;; shutdown sql interpreter
     (sit-for 2) ;; pause for a while (ugly hack)
     (let ((pattern "
-Process.*finished
+Process .+
 
 "))
       (replace-regexp pattern "-- reconnected...\n" nil nil nil t)) ;; replace 'process finished' message with nice-looking comment
