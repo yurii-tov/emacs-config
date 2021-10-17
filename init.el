@@ -1183,6 +1183,7 @@
          (pcommand (process-command process))
          (pname (process-name process))
          (rpt (sql-make-progress-reporter nil "Login")))
+    (comint-save-history)
     (process-send-eof)
     (sit-for 2)
     (let ((pattern "
