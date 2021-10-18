@@ -1329,8 +1329,9 @@ Process .+
     (when table-parser
       (ring-insert comint-input-ring "--tables pprint enabled") ;; hack for preventing influence of previous history on startup
       (setq-local comint-preoutput-filter-functions
-                  (append comint-preoutput-filter-functions
-                          (list (make-sql-table-pprint-filter table-parser)))))))
+                  (cons (car comint-preoutput-filter-functions)
+                        (cons (make-sql-table-pprint-filter table-parser)
+                              (cdr comint-preoutput-filter-functions)))))))
 
 
 (add-hook 'sql-login-hook
