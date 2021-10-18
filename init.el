@@ -1196,6 +1196,8 @@
          (pname (process-name process))
          (rpt (sql-make-progress-reporter nil "Login")))
     (comint-save-history) ;; save current command history
+    (setq-local comint-preoutput-filter-functions
+                (default-value 'comint-preoutput-filter-functions)) ;; force reset comint-preoutput-filter-functions
     (process-send-eof) ;; shutdown sql interpreter
     (sit-for 2) ;; pause for a while (ugly hack)
     (let ((pattern "
@@ -1209,8 +1211,6 @@ Process .+
     (apply #'make-comint-in-buffer
            pname (current-buffer) (car pcommand) nil (cdr pcommand)) ;; start fresh instance of sql interpreter
     (let ((sql-interactive-product sql-product))
-      (setq-local comint-preoutput-filter-functions
-                  (default-value 'comint-preoutput-filter-functions)) ;; force reset comint-preoutput-filter-functions
       (sql-interactive-mode)) ;; turn on sql-interactive-mode
     (progn (let ((proc (get-buffer-process (current-buffer)))
                  (secs sql-login-delay)
