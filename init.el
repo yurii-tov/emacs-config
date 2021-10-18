@@ -1174,6 +1174,17 @@
 (add-hook 'sql-login-hook 'sql-perform-initial-commands)
 
 
+;; enable output accumulation
+
+
+(defun sql-reset-last-command ()
+  (setq-local comint-last-command (cons -1 "")))
+
+
+(add-hook 'sql-login-hook
+          'sql-reset-last-command)
+
+
 ;; reconnect
 
 
@@ -1198,8 +1209,8 @@ Process .+
     (apply #'make-comint-in-buffer
            pname (current-buffer) (car pcommand) nil (cdr pcommand)) ;; start fresh instance of sql interpreter
     (let ((sql-interactive-product sql-product))
-      (setq-local comint-output-filter-functions
-                  (default-value 'comint-output-filter-functions)) ;; force reset comint-output-filter-functions
+      (setq-local comint-preoutput-filter-functions
+                  (default-value 'comint-preoutput-filter-functions)) ;; force reset comint-preoutput-filter-functions
       (sql-interactive-mode)) ;; turn on sql-interactive-mode
     (progn (let ((proc (get-buffer-process (current-buffer)))
                  (secs sql-login-delay)
@@ -1276,47 +1287,80 @@ Process .+
 
 
 (defun make-sql-table-pprint-filter (table-parser)
-  `(lambda (s)
-     (let* ((p (point))
-            (bounds (save-excursion
-                      (when (and (string-match "^select .*;$" (ring-ref comint-input-ring 0)) ;; if last command was 'select'...
-                                 (= (line-number-at-pos p) ;; and cursor is at the same line as prompt...
-                                    (line-number-at-pos
-                                     (save-excursion
-                                       (re-search-backward comint-prompt-regexp nil t))))
-                                 (or (re-search-backward comint-prompt-regexp nil t 2)  ;; and we can move to previous prompt...
-                                     (goto-char (point-min)))
-                                 (and (> (- (line-number-at-pos p) ;; and we have any meaningful output
-                                            (line-number-at-pos (point)))
-                                         1)
-                                      (not (string-match "\\*\\*\\* .* \\*\\*\\*"
-                                                         (buffer-substring (point) p)))))
-                        (end-of-line 2)
-                        (let* ((start (line-beginning-position))
-                               (end (progn (re-search-forward comint-prompt-regexp nil t)
-                                           (re-search-backward comint-prompt-regexp nil t)
-                                           (beginning-of-line)
-                                           (1- (point)))))
-                          (list start end))))))
-       (when bounds
-         (let* ((start (car bounds))
-                (end (cadr bounds))
-                (text (string-trim (buffer-substring start end)))
-                (table (funcall ',table-parser text)))
-           (when table
-             (let ((table-pretty (orgtbl-to-orgtbl (append (cons 'hline (cons (car table) (cons 'hline (cdr table)))) '(hline)) nil)))
-               (save-excursion
-                 (goto-char start)
-                 (delete-region start end)
-                 (insert table-pretty)))))))))
+  `(lambda (string)
+     (message "payload: %s" (prin1-to-string string))
+     (if (and string
+              (not (string-match "\\*\\*\\* .* \\*\\*\\*" string))
+              (string-match "^select .*;$" (ring-ref comint-input-ring 0))) ;; if last command was 'select'...
+         (let ((current-command-index (cadr comint-input-ring)))
+           (unless (= current-command-index (car comint-last-command))
+             (setq-local comint-last-command (cons current-command-index ""))) ;; reset output accumulator if needed
+           (setq-local comint-last-command
+                       (cons current-command-index
+                             (concat (cdr comint-last-command)
+                                     string))) ;; accumulate another output chunk
+           (when (string-match comint-prompt-regexp string)
+             (let* ((payload-raw (cdr comint-last-command))
+                    (prompt-index (string-match comint-prompt-regexp payload-raw))
+                    (prompt (substring payload-raw prompt-index))
+                    (payload (string-trim (replace-regexp-in-string
+                                           comint-prompt-regexp
+                                           ""
+                                           payload-raw))))
+               (sql-reset-last-command)
+               (format "%s%s" (if (string-to-list payload)
+                                    (format "[%s]\n" payload)
+                                  "")
+                       prompt))))
+       string) ;; else return input unchanged
+
+
+
+
+     ;; ---
+     ;; (let* ((p (point))
+     ;;        (bounds (save-excursion
+     ;;                  (when (and (string-match "^select .*;$" (ring-ref comint-input-ring 0)) ;; if last command was 'select'...
+     ;;                             (= (line-number-at-pos p) ;; and cursor is at the same line as prompt...
+     ;;                                (line-number-at-pos
+     ;;                                 (save-excursion
+     ;;                                   (re-search-backward comint-prompt-regexp nil t))))
+     ;;                             (or (re-search-backward comint-prompt-regexp nil t 2)  ;; and we can move to previous prompt...
+     ;;                                 (goto-char (point-min)))
+     ;;                             (and (> (- (line-number-at-pos p) ;; and we have any meaningful output
+     ;;                                        (line-number-at-pos (point)))
+     ;;                                     1)
+     ;;                                  (not (string-match "\\*\\*\\* .* \\*\\*\\*"
+     ;;                                                     (buffer-substring (point) p)))))
+     ;;                    (end-of-line 2)
+     ;;                    (let* ((start (line-beginning-position))
+     ;;                           (end (progn (re-search-forward comint-prompt-regexp nil t)
+     ;;                                       (re-search-backward comint-prompt-regexp nil t)
+     ;;                                       (beginning-of-line)
+     ;;                                       (1- (point)))))
+     ;;                      (list start end))))))
+     ;;   (when bounds
+     ;;     (let* ((start (car bounds))
+     ;;            (end (cadr bounds))
+     ;;            (text (string-trim (buffer-substring start end)))
+     ;;            (table (funcall ',table-parser text)))
+     ;;       (when table
+     ;;         (let ((table-pretty (orgtbl-to-orgtbl (append (cons 'hline (cons (car table) (cons 'hline (cdr table)))) '(hline)) nil)))
+     ;;           (save-excursion
+     ;;             (goto-char start)
+     ;;             (delete-region start end)
+     ;;             (insert table-pretty)))))))
+     ))
 
 
 (defun sql-setup-pprint-tables ()
   (let ((table-parser (sql-get-product-feature sql-product :table-parser)))
+    (sql-reset-last-command) ;; setup output accumulator
     (when table-parser
       (ring-insert comint-input-ring "--tables pprint enabled") ;; hack for preventing influence of previous history on startup
-      (setq-local comint-output-filter-functions
-                  (cons (make-sql-table-pprint-filter table-parser) comint-output-filter-functions)))))
+      (setq-local comint-preoutput-filter-functions
+                  (append comint-preoutput-filter-functions
+                          (list (make-sql-table-pprint-filter table-parser)))))))
 
 
 (add-hook 'sql-login-hook
