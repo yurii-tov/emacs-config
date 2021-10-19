@@ -1211,7 +1211,7 @@ Process .+
         (when (and (file-exists-p sql-database-copy)
                    (not (equal (file-attribute-modification-time (file-attributes sql-database-original))
                                (file-attribute-modification-time (file-attributes sql-database-copy)))))
-          (let ((c (read-key (format "What to do with temp file \"%s\"?\n[P]ush to remote host\n[any other key] - Overwrite with file from remote host"
+          (let ((c (read-key (format "What to do with temp file \"%s\"?\n[P]ush to remote host\n[any other key] - Overwrite with file from remote host, reset any local changes"
                                      sql-database-copy))))
             (cond ((char-equal c ?p)
                    (copy-file sql-database-copy
@@ -1220,7 +1220,8 @@ Process .+
                   ((file-exists-p sql-database-original)
                    (copy-file sql-database-original
                               sql-database-copy
-                              t t))))))) ;; take remote db into account. See `sql-handle-remote-db'
+                              t t))
+                  (t (delete-file sql-database-copy))))))) ;; take remote db into account. See `sql-handle-remote-db'
     (apply #'make-comint-in-buffer
            pname (current-buffer) (car pcommand) nil (cdr pcommand)) ;; start fresh instance of sql interpreter
     (let ((sql-interactive-product sql-product))
