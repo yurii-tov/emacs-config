@@ -1205,9 +1205,22 @@ Process .+
 
 "))
       (replace-regexp pattern "-- reconnected...\n" nil nil nil t)) ;; replace 'process finished' message with nice-looking comment
-    (when (and (boundp 'sql-temp-db-copy-params)
-               (file-exists-p (car sql-temp-db-copy-params)))
-      (apply #'copy-file sql-temp-db-copy-params)) ;; take remote db into account. See `sql-handle-remote-db'
+    (when (boundp 'sql-db-copies)
+      (let ((sql-database-original (car sql-db-copies))
+            (sql-database-copy (cadr sql-db-copies)))
+        (when (and (file-exists-p sql-database-copy)
+                   (not (equal (file-attribute-modification-time (file-attributes sql-database-original))
+                               (file-attribute-modification-time (file-attributes sql-database-copy)))))
+          (let ((c (read-key (format "What to do with temp file \"%s\"?\n[P]ush to remote host\n[any other key] - Overwrite with file from remote host"
+                                     sql-database-copy))))
+            (cond ((char-equal c ?p)
+                   (copy-file sql-database-copy
+                              sql-database-original
+                              t))
+                  ((file-exists-p sql-database-original)
+                   (copy-file sql-database-original
+                              sql-database-copy
+                              t t))))))) ;; take remote db into account. See `sql-handle-remote-db'
     (apply #'make-comint-in-buffer
            pname (current-buffer) (car pcommand) nil (cdr pcommand)) ;; start fresh instance of sql interpreter
     (let ((sql-interactive-product sql-product))
@@ -1255,10 +1268,9 @@ Process .+
     (let ((buffer (apply f product (cons params args))))
       (when remote-p
         (with-current-buffer buffer
-          (put 'sql-temp-db-copy-params 'permanent-local t)
-          (setq-local sql-temp-db-copy-params (list sql-database-original
-                                                    sql-database-copy
-                                                    t t))
+          (put 'sql-db-copies 'permanent-local t)
+          (setq-local sql-db-copies (list sql-database-original
+                                          sql-database-copy))
           (add-hook 'kill-buffer-hook
                     `(lambda ()
                        (ring-insert comint-input-ring "--remote db cleanup")
