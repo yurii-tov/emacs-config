@@ -1253,31 +1253,32 @@ Process .+
                  sql-database-copy
                  t t))
     (let ((buffer (apply f product (cons params args))))
-      (with-current-buffer buffer
-        (when remote-p
+      (when remote-p
+        (with-current-buffer buffer
           (put 'sql-temp-db-copy-params 'permanent-local t)
           (setq-local sql-temp-db-copy-params (list sql-database-original
                                                     sql-database-copy
-                                                    t t)))
-        (add-hook 'kill-buffer-hook
-                  `(lambda ()
-                     (when (get-buffer-process (current-buffer))
-                       (process-send-eof))
-                     (when (and (file-exists-p ,sql-database-copy)
-                                (not (equal (file-attribute-modification-time (file-attributes ,sql-database-original))
-                                            (file-attribute-modification-time (file-attributes ,sql-database-copy)))))
-                       (let ((c (read-key (format "What to do with temp file \"%s\"?\n[P]ush to remote host\n[S]ave as...\n[any other key] - delete"
-                                                  ,sql-database-copy))))
-                         (cond ((char-equal c ?p)
-                                (copy-file ,sql-database-copy
-                                           ,sql-database-original
-                                           t))
-                               ((char-equal c ?s)
-                                (copy-file ,sql-database-copy
-                                           (read-file-name "Save file as: ")
-                                           t)))))
-                     (delete-file ,sql-database-copy))
-                  nil t)))))
+                                                    t t))
+          (add-hook 'kill-buffer-hook
+                    `(lambda ()
+                       (ring-insert comint-input-ring "--remote db cleanup")
+                       (when (get-buffer-process (current-buffer))
+                         (process-send-eof))
+                       (when (and (file-exists-p ,sql-database-copy)
+                                  (not (equal (file-attribute-modification-time (file-attributes ,sql-database-original))
+                                              (file-attribute-modification-time (file-attributes ,sql-database-copy)))))
+                         (let ((c (read-key (format "What to do with temp file \"%s\"?\n[P]ush to remote host\n[S]ave as...\n[any other key] - delete"
+                                                    ,sql-database-copy))))
+                           (cond ((char-equal c ?p)
+                                  (copy-file ,sql-database-copy
+                                             ,sql-database-original
+                                             t))
+                                 ((char-equal c ?s)
+                                  (copy-file ,sql-database-copy
+                                             (read-file-name "Save file as: ")
+                                             t)))))
+                       (delete-file ,sql-database-copy))
+                    nil t))))))
 
 
 (advice-add 'sql-comint :around 'sql-handle-remote-db)
