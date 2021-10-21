@@ -162,6 +162,7 @@
   (define-prefix-command 'text-transform-map)
   (global-set-key (kbd "M-c") 'text-transform-map)
   (define-key 'text-transform-map (kbd "c") 'upcase-char)
+  (define-key 'text-transform-map (kbd "s") 'replace-string)
   (define-key 'text-transform-map (kbd "u") 'upcase-dwim)
   (define-key 'text-transform-map (kbd "d") 'downcase-dwim)
   (define-key 'text-transform-map (kbd "M-c") 'duplicate-line)
