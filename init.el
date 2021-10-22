@@ -1359,11 +1359,6 @@ Process .+
 (sql-set-product-feature 'interbase :init-commands '("set list on;"))
 
 
-(setq sql-interbase-program
-      (or (executable-find "isql")
-          (executable-find "isql-fb")))
-
-
 (defun parse-isql-table (text)
   (unless (string-match "Dynamic SQL Error" text)
     (let* ((records-raw (split-string text "\n\n" t))
