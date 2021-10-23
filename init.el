@@ -343,9 +343,8 @@
          (end (region-end))
          (lines (count-lines start end))
          (words (count-words start end))
-         (chars (- end start))
-         (face 'mode-line-emphasis))
-    (propertize (format "Region has %s line%s, %s word%s, and %s character%s"
+         (chars (- end start)))
+    (propertize (format "Region has %d line%s, %d word%s, and %d character%s"
                         lines (if (= lines 1) "" "s")
                         words (if (= words 1) "" "s")
                         chars (if (= chars 1) "" "s"))
@@ -368,7 +367,10 @@
                 mode-line-buffer-identification
                 "   "
                 (:eval (when (use-region-p) (count-lwc)))
-                ,(cdr mode-line-position)
+                (:eval (format " (l:%s c:%s p:%s)"
+                               (propertize "%l" 'face 'font-lock-builtin-face)
+                               (propertize "%C" 'face 'font-lock-builtin-face)
+                               (propertize (number-to-string (point)) 'face 'font-lock-builtin-face)))
                 (vc-mode vc-mode)
                 "  " mode-line-modes
                 mode-line-misc-info
@@ -621,12 +623,6 @@
 (defun scroll-up-5-lines ()
   (interactive)
   (scroll-up-command 5))
-
-
-;; show col number in modeline
-
-
-(column-number-mode)
 
 
 ;; =======
