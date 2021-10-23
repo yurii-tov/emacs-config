@@ -345,10 +345,11 @@
          (words (count-words start end))
          (chars (- end start))
          (face 'mode-line-emphasis))
-    (format "Region has %s line%s, %s word%s, and %s character%s"
-            (propertize (number-to-string lines) 'face face) (if (= lines 1) "" "s")
-            (propertize (number-to-string words) 'face face) (if (= words 1) "" "s")
-            (propertize (number-to-string chars) 'face face) (if (= chars 1) "" "s"))))
+    (propertize (format "Region has %s line%s, %s word%s, and %s character%s"
+                        lines (if (= lines 1) "" "s")
+                        words (if (= words 1) "" "s")
+                        chars (if (= chars 1) "" "s"))
+                'face 'hi-pink)))
 
 
 (require 'hi-lock)
@@ -358,7 +359,7 @@
               `((:eval (format "%s%s "
                                (symbol-name buffer-file-coding-system)
                                (if current-input-method-title
-                                   (concat " " (propertize (format "[%s]" current-input-method-title) 'face 'hi-green-b))
+                                   (concat " " (propertize (format "[%s]" current-input-method-title) 'face 'hi-blue-b))
                                  "")))
                 mode-line-client
                 mode-line-modified
