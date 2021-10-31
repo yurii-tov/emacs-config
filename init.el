@@ -344,11 +344,8 @@
          (lines (count-lines start end))
          (words (count-words start end))
          (chars (- end start)))
-    (propertize (format "Region has %d line%s, %d word%s, and %d character%s"
-                        lines (if (= lines 1) "" "s")
-                        words (if (= words 1) "" "s")
-                        chars (if (= chars 1) "" "s"))
-                'face 'hi-pink)))
+    (propertize (format "[lines:%d words:%d chars:%d]" lines words chars)
+                'face 'match)))
 
 
 (require 'hi-lock)
