@@ -345,7 +345,7 @@
          (words (count-words start end))
          (chars (- end start)))
     (propertize (format "[lines:%d words:%d chars:%d]" lines words chars)
-                'face 'match)))
+                'face 'hi-green)))
 
 
 (require 'hi-lock)
