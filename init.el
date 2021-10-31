@@ -570,7 +570,7 @@
           (text (buffer-substring
                  (region-beginning)
                  (region-end))))
-      (setq text (split-string text "\n" t))
+      (setq text (split-string text "\n" t " *"))
       (setq text (string-join text separator))
       (delete-active-region)
       (insert text)
