@@ -913,15 +913,6 @@
   (minibuffer-keyboard-quit))
 
 
-(defun ido-load-file ()
-  (interactive)
-  (let ((fname (expand-file-name (ido-name (car ido-matches))
-                                 ido-current-directory)))
-    (run-with-timer
-     0.3 nil `(lambda () (load-file ,fname)))
-    (minibuffer-keyboard-quit)))
-
-
 (defun ido-jump-to-completions ()
   (select-window (get-buffer-window ido-completion-buffer)))
 
@@ -938,10 +929,7 @@
     'ido-find-dired)
   (define-key ido-file-dir-completion-map
     (kbd "M-g")
-    'ido-rgrep)
-  (define-key ido-file-dir-completion-map
-    (kbd "C-c C-l")
-    'ido-load-file))
+    'ido-rgrep))
 
 
 ;; ===========
