@@ -150,7 +150,7 @@
 
 
 (progn
-  (define-key search-map (kbd "r") 'find-dired)
+  (define-key search-map (kbd "f") 'find-dired)
   (define-key search-map (kbd "g") 'rgrep)
   (define-key search-map (kbd "t") 'translate-en-ru-online))
 
@@ -455,6 +455,9 @@
 
 
 (with-eval-after-load 'dired
+  (define-key dired-mode-map
+    (kbd "M-s f f")
+    'find-dired)
   (define-key dired-mode-map
     (kbd "C-c C-o")
     'dired-open-in-external-app)
