@@ -339,6 +339,9 @@
 ;;;; get region lines/words/chars counts
 
 
+(require 'hi-lock)
+
+
 (defun count-lwc ()
   (let* ((start (region-beginning))
          (end (region-end))
@@ -347,9 +350,6 @@
          (chars (- end start)))
     (propertize (format "[lines:%d words:%d chars:%d]" lines words chars)
                 'face 'hi-green)))
-
-
-(require 'hi-lock)
 
 
 (setq-default mode-line-format
