@@ -1804,6 +1804,24 @@ Process .+
 (setq save-abbrevs nil)
 
 
+;; ===
+;; eww
+;; ===
+
+
+(with-eval-after-load 'eww
+  ;; Setup download directory
+  (when system-type-is-windows
+    (setq eww-download-directory
+          (expand-file-name "Downloads"
+                            (getenv "USERPROFILE")))))
+
+
+(with-eval-after-load 'shr
+  ;; Use monospaced fonts by default
+  (setq shr-use-fonts nil))
+
+
 ;; ===========================
 ;; load site-specific settings
 ;; ===========================
