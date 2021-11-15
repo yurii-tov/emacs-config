@@ -203,7 +203,7 @@
          ("M-k" kill-whole-line)
          ("C-x u" insert-char)
          ("M-q" hippie-expand)
-         ("M-/" hippie-expand-all)
+         ("M-/" insert-from-kill-ring)
          ("C-v" scroll-up-5-lines)
          ("M-v" scroll-down-5-lines)
          ("C-x C-p" fill-paragraph)
@@ -619,6 +619,14 @@
       (insert b1)
       (forward-word)
       (insert b2))))
+
+
+(defun insert-from-kill-ring (text)
+  (interactive
+   (list (ido-completing-read
+          "Insert from kill ring: "
+          (cl-remove-duplicates kill-ring :test #'equal))))
+  (insert text))
 
 
 ;; slower scrolling
