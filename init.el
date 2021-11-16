@@ -151,6 +151,7 @@
 
 (progn
   (define-key search-map (kbd "f") 'find-dired)
+  (define-key search-map (kbd "m") 'count-matches)
   (define-key search-map (kbd "g") 'rgrep)
   (define-key search-map (kbd "t") 'translate-en-ru-online))
 
@@ -162,7 +163,8 @@
   (define-prefix-command 'text-transform-map)
   (global-set-key (kbd "M-c") 'text-transform-map)
   (define-key 'text-transform-map (kbd "c") 'upcase-char)
-  (define-key 'text-transform-map (kbd "s") 'replace-string)
+  (define-key 'text-transform-map (kbd "s") 'sort-lines)
+  (define-key 'text-transform-map (kbd "r") 'replace-string)
   (define-key 'text-transform-map (kbd "u") 'upcase-dwim)
   (define-key 'text-transform-map (kbd "d") 'downcase-dwim)
   (define-key 'text-transform-map (kbd "M-c") 'duplicate-line)
