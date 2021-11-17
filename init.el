@@ -199,7 +199,7 @@
        '(("M-x" smex)
          ("M-=" count-words)
          ("C-x C-b" ibuffer)
-         ("C-c l" hl-line-mode)
+         ("C-x l" hl-line-mode)
          ("C-c p" copy-file-name-to-clipboard)
          ("C-c j" org-clock-goto)
          ("M-k" kill-whole-line)
