@@ -167,6 +167,7 @@
   (define-key 'text-transform-map (kbd "r") 'replace-string)
   (define-key 'text-transform-map (kbd "u") 'upcase-dwim)
   (define-key 'text-transform-map (kbd "d") 'downcase-dwim)
+  (define-key 'text-transform-map (kbd "q") 'delete-duplicate-lines)
   (define-key 'text-transform-map (kbd "M-c") 'duplicate-line)
   (define-key 'text-transform-map (kbd "/") 'invert-slashes)
   (define-key 'text-transform-map (kbd "j") 'join-region)
