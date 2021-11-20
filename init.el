@@ -201,8 +201,8 @@
          ("M-=" count-words)
          ("C-x C-b" ibuffer)
          ("C-x l" hl-line-mode)
+         ("C-c n" make-scratch-buffer)
          ("C-c p" copy-file-name-to-clipboard)
-         ("C-c j" org-clock-goto)
          ("M-k" kill-whole-line)
          ("C-x u" insert-char)
          ("M-q" hippie-expand)
@@ -212,7 +212,7 @@
          ("C-x C-p" fill-paragraph)
          ("M-i" reindent-region)
          ("M-u" force-revert-buffer)
-         ("C-c n" rename-buffer)
+         ("C-c r" rename-buffer)
          ("C-c h" hexl-mode)
          ("C-c a" org-agenda)
          ("C-c c" org-capture)
@@ -630,6 +630,12 @@
           "Insert from kill ring: "
           (cl-remove-duplicates kill-ring :test #'equal))))
   (insert text))
+
+
+(defun make-scratch-buffer ()
+  (interactive)
+  (let ((buffer-name (read-string "Buffer name: " (generate-new-buffer-name "*scratch*"))))
+    (switch-to-buffer buffer-name)))
 
 
 ;; slower scrolling
