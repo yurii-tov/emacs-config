@@ -634,8 +634,7 @@
 
 (defun make-scratch-buffer ()
   (interactive)
-  (let ((buffer-name (read-string "Buffer name: " (generate-new-buffer-name "*scratch*"))))
-    (switch-to-buffer buffer-name)))
+  (switch-to-buffer (generate-new-buffer-name "*scratch*")))
 
 
 ;; slower scrolling
