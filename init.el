@@ -1511,9 +1511,6 @@ Process .+
 ;; ===========
 
 
-(setq inferior-lisp-program "clisp")
-
-
 (add-to-list 'auto-mode-alist
              '("\\.cl\\'" . common-lisp-mode))
 
