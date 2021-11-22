@@ -1506,6 +1506,15 @@ Process .+
 (setq cider-show-error-buffer nil)
 
 
+;; ==========
+;; emacs lisp
+;; ==========
+
+
+(define-abbrev-table 'emacs-lisp-mode-abbrev-table
+  '(("wcb" "(with-current-buffer \"\")")))
+
+
 ;; ===========
 ;; common lisp
 ;; ===========
