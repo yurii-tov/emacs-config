@@ -206,6 +206,7 @@
          ("C-c p" copy-file-name-to-clipboard)
          ("M-k" kill-whole-line)
          ("C-x u" insert-char)
+         ("C-c b" insert-buffer-name)
          ("M-q" hippie-expand)
          ("M-/" insert-from-kill-ring)
          ("C-v" scroll-up-5-lines)
@@ -1509,6 +1510,13 @@ Process .+
 ;; ==========
 ;; emacs lisp
 ;; ==========
+
+
+(defun insert-buffer-name (buffer-name)
+  (interactive (list (ido-completing-read
+                      "Insert buffer name: "
+                      (mapcar #'buffer-name (buffer-list)))))
+  (insert buffer-name))
 
 
 (define-abbrev-table 'emacs-lisp-mode-abbrev-table
