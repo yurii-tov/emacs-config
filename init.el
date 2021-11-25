@@ -188,6 +188,7 @@
 (progn
   (define-prefix-command 'eval-elisp-map)
   (global-set-key (kbd "C-c e") 'eval-elisp-map)
+  (define-key 'eval-elisp-map (kbd "e") 'eval-last-sexp)
   (define-key 'eval-elisp-map (kbd "l") 'load-file)
   (define-key 'eval-elisp-map (kbd "r") 'eval-region)
   (define-key 'eval-elisp-map (kbd "b") 'eval-buffer))
