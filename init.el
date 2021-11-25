@@ -193,6 +193,20 @@
   (define-key 'eval-elisp-map (kbd "b") 'eval-buffer))
 
 
+;; inserting things
+
+
+(progn
+  (define-prefix-command 'insert-map)
+  (global-set-key (kbd "C-x i") 'insert-map)
+  (define-key 'insert-map (kbd "f") 'insert-file)
+  (define-key 'insert-map (kbd "n") 'insert-buffer-name)
+  (define-key 'insert-map (kbd "b") 'insert-buffer)
+  (define-key 'insert-map (kbd "c") 'insert-char)
+  (define-key 'insert-map (kbd "q") 'quoted-insert)
+  (define-key 'insert-map (kbd "i") 'insert-from-kill-ring))
+
+
 ;; misc
 
 
@@ -205,10 +219,7 @@
          ("C-c z" zone)
          ("C-c p" copy-file-name-to-clipboard)
          ("M-k" kill-whole-line)
-         ("C-x u" insert-char)
-         ("C-c b" insert-buffer-name)
          ("M-q" hippie-expand)
-         ("M-/" insert-from-kill-ring)
          ("C-v" scroll-up-5-lines)
          ("M-v" scroll-down-5-lines)
          ("C-x C-p" fill-paragraph)
