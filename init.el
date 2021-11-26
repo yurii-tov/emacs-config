@@ -183,18 +183,6 @@
   (define-key 'text-transform-map (kbd "(") '(lambda () (interactive) (wrap-with-text "(" ")"))))
 
 
-;; evaluating emacs lisp
-
-
-(progn
-  (define-prefix-command 'eval-elisp-map)
-  (global-set-key (kbd "C-c e") 'eval-elisp-map)
-  (define-key 'eval-elisp-map (kbd "e") 'eval-last-sexp)
-  (define-key 'eval-elisp-map (kbd "l") 'load-file)
-  (define-key 'eval-elisp-map (kbd "r") 'eval-region)
-  (define-key 'eval-elisp-map (kbd "b") 'eval-buffer))
-
-
 ;; inserting things
 
 
@@ -1533,6 +1521,33 @@ Process .+
 
 (define-abbrev-table 'emacs-lisp-mode-abbrev-table
   '(("wcb" "(with-current-buffer \"\")")))
+
+
+;; evaluating stuff
+
+
+(defun elisp-eval-region ()
+  (interactive)
+  (when (use-region-p)
+    (let ((s (region-beginning))
+          (e (region-end)))
+      (message "Evaluating region: (%d, %d)" s e)
+      (eval-region s e))))
+
+
+(defun elisp-eval-buffer ()
+  (interactive)
+  (message "Evaluating buffer: %s" (current-buffer))
+  (eval-buffer))
+
+
+(progn
+  (define-prefix-command 'eval-elisp-map)
+  (global-set-key (kbd "C-c e") 'eval-elisp-map)
+  (define-key 'eval-elisp-map (kbd "e") 'eval-last-sexp)
+  (define-key 'eval-elisp-map (kbd "l") 'load-file)
+  (define-key 'eval-elisp-map (kbd "r") 'elisp-eval-region)
+  (define-key 'eval-elisp-map (kbd "b") 'elisp-eval-buffer))
 
 
 ;; ===========
