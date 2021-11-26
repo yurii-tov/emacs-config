@@ -136,7 +136,7 @@
   (global-set-key (kbd "C-x i") 'repls-map)
   (define-key 'repls-map (kbd "i") 'ielm)
   (define-key 'repls-map (kbd "c") 'slime)
-  (define-key 'repls-map (kbd "") 'run-shell)
+  (define-key 'repls-map (kbd "s") 'run-shell)
   (define-key 'repls-map (kbd "p") 'run-python-with-venv)
   (define-key 'repls-map (kbd "r") 'run-racket)
   (define-key 'repls-map (kbd "q") 'sql-connect)
