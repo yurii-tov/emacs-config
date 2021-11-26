@@ -1827,7 +1827,8 @@ Process .+
 
 (with-eval-after-load 'shr
   ;; Use monospaced fonts by default
-  (setq shr-use-fonts nil))
+  (setq shr-use-fonts nil)
+  (setq shr-inhibit-images t))
 
 
 ;; ===========================
