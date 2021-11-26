@@ -133,10 +133,10 @@
 
 (progn
   (define-prefix-command 'repls-map)
-  (global-set-key (kbd "M-l") 'repls-map)
+  (global-set-key (kbd "C-x i") 'repls-map)
   (define-key 'repls-map (kbd "i") 'ielm)
-  (define-key 'repls-map (kbd "s") 'slime)
-  (define-key 'repls-map (kbd "l") 'run-shell)
+  (define-key 'repls-map (kbd "c") 'slime)
+  (define-key 'repls-map (kbd "") 'run-shell)
   (define-key 'repls-map (kbd "p") 'run-python-with-venv)
   (define-key 'repls-map (kbd "r") 'run-racket)
   (define-key 'repls-map (kbd "q") 'sql-connect)
@@ -200,7 +200,7 @@
 
 (progn
   (define-prefix-command 'insert-map)
-  (global-set-key (kbd "C-x i") 'insert-map)
+  (global-set-key (kbd "M-i") 'insert-map)
   (define-key 'insert-map (kbd "f") 'insert-file)
   (define-key 'insert-map (kbd "n") 'insert-buffer-name)
   (define-key 'insert-map (kbd "b") 'insert-buffer)
@@ -224,7 +224,7 @@
          ("M-q" hippie-expand)
          ("C-v" scroll-up-5-lines)
          ("M-v" scroll-down-5-lines)
-         ("M-i" reindent-region)
+         ("M-l" reindent-region)
          ("M-u" force-revert-buffer)
          ("C-c r" rename-buffer)
          ("C-c h" hexl-mode)
