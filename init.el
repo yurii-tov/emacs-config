@@ -1662,8 +1662,8 @@ Process .+
    By default, predefined `ssh-tunnels' list is used.
    Example config:
    (setq ssh-tunnels
-         '((\"my-tunnel\" \"localhost:4444:localhost:8888" "hostname\")
-           (\"my-tunnel-2\" \"localhost:4445:localhost:8888" "user@host2\"))
+         '((\"my-tunnel\" \"localhost:4444:localhost:8888\" \"hostname\")
+           (\"my-tunnel-2\" \"localhost:4445:localhost:8888\" \"user@host2\"))
   With universal argument, asks for arbitrary tunnel parameters"
   (interactive)
   (let* ((forwarding-options
