@@ -825,7 +825,8 @@
  'org-babel-load-languages
  '((emacs-lisp . t)
    (shell . t)
-   (python . t)))
+   (python . t)
+   (lisp . t)))
 
 
 ;; =============
