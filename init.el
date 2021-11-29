@@ -636,7 +636,12 @@
 
 (defun make-scratch-buffer ()
   (interactive)
-  (switch-to-buffer (generate-new-buffer-name "*scratch*")))
+  (let* ((name (generate-new-buffer-name "*scratch*"))
+         (already-exists-p (get-buffer name)))
+    (switch-to-buffer name)
+    (unless already-exists-p
+      (org-mode)
+      (insert "#+TITLE: ?\n\n\n"))))
 
 
 ;; slower scrolling
