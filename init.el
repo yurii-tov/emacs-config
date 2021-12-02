@@ -1763,6 +1763,29 @@ Process .+
       '(("shell")))
 
 
+;; enable restarting of async shell commands
+
+
+(defun async-shell-command-setup-restart (f &rest args)
+  (let* ((w (apply f args))
+         (b (window-buffer w))
+         (command (car args)))
+    (with-current-buffer b
+      (use-local-map (copy-keymap (current-local-map)))
+      (local-set-key
+       (kbd "C-c C-k")
+       `(lambda () (interactive)
+          (message "Restart command: %s" ,command)
+          (let ((buffer (current-buffer)))
+            (when (get-buffer-process buffer)
+              (comint-kill-subjob)
+              (sit-for 1))
+            (async-shell-command ,command buffer)))))))
+
+
+(advice-add 'async-shell-command :around 'async-shell-command-setup-restart)
+
+
 ;; ================================
 ;; Access eng-rus dictionary online
 ;; ================================
