@@ -1609,7 +1609,7 @@ Process .+
     (if (file-exists-p venv)
         (let ((python-shell-virtualenv-path venv))
           (run-python)
-          (message "Using venv: %s"))
+          (message "Using venv: %s" venv))
       (run-python))))
 
 
