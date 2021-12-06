@@ -380,6 +380,19 @@
                 mode-line-end-spaces))
 
 
+;; slower scrolling
+
+
+(defun scroll-down-5-lines ()
+  (interactive)
+  (scroll-down-command 5))
+
+
+(defun scroll-up-5-lines ()
+  (interactive)
+  (scroll-up-command 5))
+
+
 ;; =====
 ;; files
 ;; =====
@@ -644,17 +657,137 @@
       (insert "#+TITLE: ?\n\n\n"))))
 
 
-;; slower scrolling
+;; hippie-expand
 
 
-(defun scroll-down-5-lines ()
+(setq hippie-expand-try-functions-list
+      '(try-complete-file-name-partially
+        try-complete-file-name
+        try-expand-all-abbrevs
+        try-expand-dabbrev-visible
+        try-expand-line
+        try-expand-dabbrev-all-buffers
+        try-expand-dabbrev-from-kill
+        try-expand-whole-kill))
+
+
+;; disable prompt about saving abbrevs
+
+
+(setq save-abbrevs nil)
+
+
+;; ===
+;; ido
+;; ===
+
+
+(ido-mode t)
+
+
+(ido-everywhere t)
+
+
+(setq ido-enable-flex-matching t)
+
+
+(setq ido-auto-merge-work-directories-length -1)
+
+
+(setq ido-use-filename-at-point 'guess)
+
+
+(setq ido-use-url-at-point t)
+
+
+(defun ido-open-in-external-app ()
   (interactive)
-  (scroll-down-command 5))
+  (let ((fname (expand-file-name (ido-name (car ido-matches))
+                                 ido-current-directory)))
+    (message "Open in external app: %s" fname)
+    (open-in-external-app fname)
+    (minibuffer-keyboard-quit)))
 
 
-(defun scroll-up-5-lines ()
+(defun ido-find-dired ()
   (interactive)
-  (scroll-up-command 5))
+  (run-with-timer
+   0.3 nil
+   `(lambda ()
+      (find-dired
+       ,ido-current-directory
+       (read-string "Run find (with args): " find-args
+                    '(find-args-history . 1)))))
+  (minibuffer-keyboard-quit))
+
+
+(require 'grep)
+
+
+(defun ido-rgrep ()
+  (interactive)
+  (run-with-timer
+   0.3 nil
+   `(lambda ()
+      (grep-compute-defaults)
+      (let* ((regexp (grep-read-regexp))
+             (files (grep-read-files regexp))
+             (dir ,ido-current-directory))
+        (rgrep regexp files dir nil))))
+  (minibuffer-keyboard-quit))
+
+
+(defun ido-jump-to-completions ()
+  (select-window (get-buffer-window ido-completion-buffer)))
+
+
+(advice-add 'ido-complete :after #'ido-jump-to-completions)
+
+
+(with-eval-after-load 'ido
+  (define-key ido-file-dir-completion-map
+    (kbd "C-c C-o")
+    'ido-open-in-external-app)
+  (define-key ido-file-dir-completion-map
+    (kbd "M-r")
+    'ido-find-dired)
+  (define-key ido-file-dir-completion-map
+    (kbd "M-g")
+    'ido-rgrep))
+
+
+;; =======
+;; isearch
+;; =======
+
+
+(defun isearch-select-search-string ()
+  (interactive)
+  (isearch-done)
+  (set-mark (point))
+  (if isearch-forward
+      (funcall (if isearch-regexp
+                   #'search-backward-regexp
+                 #'search-backward)
+               isearch-string)
+    (funcall (if isearch-regexp
+                 #'search-forward-regexp
+               #'search-forward)
+             isearch-string)))
+
+
+(defun isearch-append-wildcard ()
+  "Append .* to current isearch query"
+  (interactive)
+  (with-isearch-suspended
+   (setq isearch-new-string (concat isearch-string ".*")
+         isearch-new-message isearch-new-string)))
+
+
+(progn
+  (define-key isearch-mode-map (kbd "M-q") 'isearch-query-replace)
+  (define-key isearch-mode-map (kbd "M-.") 'isearch-append-wildcard)
+  (define-key isearch-mode-map (kbd "C-SPC") 'isearch-select-search-string))
 
 
 ;; =======
@@ -834,99 +967,26 @@
    (lisp . t)))
 
 
-;; =============
-;; hippie-expand
-;; =============
+;; ================
+;; compilation-mode
+;; ================
 
 
-(setq hippie-expand-try-functions-list
-      '(try-complete-file-name-partially
-        try-complete-file-name
-        try-expand-all-abbrevs
-        try-expand-dabbrev-visible
-        try-expand-line
-        try-expand-dabbrev-all-buffers
-        try-expand-dabbrev-from-kill
-        try-expand-whole-kill))
+(require 'ansi-color)
 
 
-;; ===
-;; ido
-;; ===
+(defun colorize-compilation ()
+  "Colorize from `compilation-filter-start' to `point'."
+  (let ((inhibit-read-only t))
+    (ansi-color-apply-on-region
+     compilation-filter-start (point))))
 
 
-(ido-mode t)
+(add-hook 'compilation-filter-hook
+          #'colorize-compilation)
 
 
-(ido-everywhere t)
-
-
-(setq ido-enable-flex-matching t)
-
-
-(setq ido-auto-merge-work-directories-length -1)
-
-
-(setq ido-use-filename-at-point 'guess)
-
-
-(setq ido-use-url-at-point t)
-
-
-(defun ido-open-in-external-app ()
-  (interactive)
-  (let ((fname (expand-file-name (ido-name (car ido-matches))
-                                 ido-current-directory)))
-    (message "Open in external app: %s" fname)
-    (open-in-external-app fname)
-    (minibuffer-keyboard-quit)))
-
-
-(defun ido-find-dired ()
-  (interactive)
-  (run-with-timer
-   0.3 nil
-   `(lambda ()
-      (find-dired
-       ,ido-current-directory
-       (read-string "Run find (with args): " find-args
-                    '(find-args-history . 1)))))
-  (minibuffer-keyboard-quit))
-
-
-(require 'grep)
-
-
-(defun ido-rgrep ()
-  (interactive)
-  (run-with-timer
-   0.3 nil
-   `(lambda ()
-      (grep-compute-defaults)
-      (let* ((regexp (grep-read-regexp))
-             (files (grep-read-files regexp))
-             (dir ,ido-current-directory))
-        (rgrep regexp files dir nil))))
-  (minibuffer-keyboard-quit))
-
-
-(defun ido-jump-to-completions ()
-  (select-window (get-buffer-window ido-completion-buffer)))
-
-
-(advice-add 'ido-complete :after #'ido-jump-to-completions)
-
-
-(with-eval-after-load 'ido
-  (define-key ido-file-dir-completion-map
-    (kbd "C-c C-o")
-    'ido-open-in-external-app)
-  (define-key ido-file-dir-completion-map
-    (kbd "M-r")
-    'ido-find-dired)
-  (define-key ido-file-dir-completion-map
-    (kbd "M-g")
-    'ido-rgrep))
+(setq compilation-scroll-output t)
 
 
 ;; ===========
@@ -1126,6 +1186,137 @@
 
 (add-hook 'comint-mode-hook
           'modify-comint-isearch-keymap)
+
+
+;; =====
+;; shell
+;; =====
+
+
+(require 'shell)
+
+
+(defun run-shell (preset-name)
+  "M-x shell on steroids.
+   Start local or remote shell using set of presets (See `shell-presets' variable).
+   Each preset is a pair of (<\"preset-name\"> . <options-alist>)
+   Legal values in options-alist are:
+   |-------------------+------------------------------------------------|
+   | option            | description                                    |
+   |-------------------+------------------------------------------------|
+   | file-name         | Path to shell executable                       |
+   | working-directory | Working directory for shell instance           |
+   |                   | Useful for defining remote shell sessions      |
+   | startup-fn        | Function to call for starting the shell        |
+   |                   | By default, function `shell' is used           |
+   | codings           | Explicit decoding and encoding systems         |
+   |                   | (List of two symbols, e.g. '(cp1251-dos utf-8) |
+   |-------------------+------------------------------------------------|"
+  (interactive (list (ido-completing-read
+                      "Shell: "
+                      (mapcar #'car shell-presets))))
+  (let* ((shell-options (cdr (assoc preset-name shell-presets)))
+         (startup-fn (alist-get 'startup-fn shell-options))
+         (codings (alist-get 'codings shell-options))
+         (buffer-name (format "*%s*" preset-name))
+         (dead-buffer-exists (and (get-buffer buffer-name)
+                                  (not (get-buffer-process buffer-name))))
+         (wd (or (when dead-buffer-exists
+                   (with-current-buffer buffer-name
+                     (when (file-exists-p default-directory)
+                       default-directory)))
+                 (alist-get 'working-directory
+                            shell-options)
+                 (ido-read-directory-name "wd: "))))
+    (if dead-buffer-exists
+        (with-current-buffer buffer-name
+          (comint-save-history))
+      (setq buffer-name (generate-new-buffer-name buffer-name)))
+    (let ((w (cl-find-if (lambda (x) (equal (window-buffer x)
+                                            (get-buffer buffer-name)))
+                         (window-list))))
+      (when w (select-window w)))
+    (switch-to-buffer buffer-name)
+    (cd wd)
+    (if startup-fn
+        (funcall startup-fn buffer-name)
+      (let ((explicit-shell-file-name (alist-get 'file-name shell-options)))
+        (shell buffer-name)))
+    (when codings
+      (set-buffer-process-coding-system (car codings) (cadr codings)))))
+
+
+(setq shell-presets
+      ;; Default preset, same as M-x shell
+      '(("shell")))
+
+
+;; enable restarting of async shell commands
+
+
+(defun async-shell-command-setup-restart (f &rest args)
+  (let* ((w (apply f args))
+         (b (window-buffer w))
+         (command (car args)))
+    (with-current-buffer b
+      (use-local-map (copy-keymap (current-local-map)))
+      (local-set-key
+       (kbd "C-c C-k")
+       `(lambda () (interactive)
+          (message "Restart command: %s" ,command)
+          (let ((buffer (current-buffer)))
+            (when (get-buffer-process buffer)
+              (comint-kill-subjob)
+              (sit-for 1))
+            (async-shell-command ,command buffer)))))))
+
+
+(advice-add 'async-shell-command :around 'async-shell-command-setup-restart)
+
+
+;; ===========
+;; ssh tunnels
+;; ===========
+
+
+(setq ssh-tunnels nil)
+
+
+(defun ssh-tunnel (&rest args)
+  "Start ssh tunnel by with a command 'ssh -NvL ...' in a buffer with descriptive name.
+   By default, predefined `ssh-tunnels' list is used.
+   Example config:
+   (setq ssh-tunnels
+         '((\"my-tunnel\" \"localhost:4444:localhost:8888\" \"hostname\")
+           (\"my-tunnel-2\" \"localhost:4445:localhost:8888\" \"user@host2\"))
+  With universal argument, asks for arbitrary tunnel parameters"
+  (interactive)
+  (let* ((forwarding-options
+          (or args
+              (if current-prefix-arg
+                  (list (read-string "Create ssh tunnel: ")
+                        (format "%s:%s"
+                                (read-string "Local socket: ")
+                                (read-string "Remote socket: " "localhost:"))
+                        (read-string "Ssh connection spec (e.g. user@host): "))
+                (assoc (ido-completing-read
+                        "Create ssh tunnel: "
+                        (mapcar #'car ssh-tunnels))
+                       ssh-tunnels))))
+         (tunnel-name (car forwarding-options))
+         (sockets (cadr forwarding-options))
+         (ssh-spec (caddr forwarding-options))
+         (default-directory "~")
+         (buffer (format "*ssh-tunnel/%s*" tunnel-name))
+         (args (list "shell" buffer "ssh" "-vNL" sockets ssh-spec)))
+    (message "%s" (string-join (cddr args) " "))
+    (when (get-buffer buffer)
+      (kill-buffer buffer))
+    (apply #'start-process args)
+    (with-current-buffer buffer
+      (shell-mode))
+    (set-process-filter (get-buffer-process buffer)
+                        #'comint-output-filter)))
 
 
 ;; ==========
@@ -1621,171 +1812,6 @@ Process .+
     ("fori" "for x in xs:\n")))
 
 
-;; =======
-;; isearch
-;; =======
-
-
-(defun isearch-select-search-string ()
-  (interactive)
-  (isearch-done)
-  (set-mark (point))
-  (if isearch-forward
-      (funcall (if isearch-regexp
-                   #'search-backward-regexp
-                 #'search-backward)
-               isearch-string)
-    (funcall (if isearch-regexp
-                 #'search-forward-regexp
-               #'search-forward)
-             isearch-string)))
-
-
-(defun isearch-append-wildcard ()
-  "Append .* to current isearch query"
-  (interactive)
-  (with-isearch-suspended
-   (setq isearch-new-string (concat isearch-string ".*")
-         isearch-new-message isearch-new-string)))
-
-
-(progn
-  (define-key isearch-mode-map (kbd "M-q") 'isearch-query-replace)
-  (define-key isearch-mode-map (kbd "M-.") 'isearch-append-wildcard)
-  (define-key isearch-mode-map (kbd "C-SPC") 'isearch-select-search-string))
-
-
-;; ===========
-;; ssh tunnels
-;; ===========
-
-
-(setq ssh-tunnels nil)
-
-
-(defun ssh-tunnel (&rest args)
-  "Start ssh tunnel by with a command 'ssh -NvL ...' in a buffer with descriptive name.
-   By default, predefined `ssh-tunnels' list is used.
-   Example config:
-   (setq ssh-tunnels
-         '((\"my-tunnel\" \"localhost:4444:localhost:8888\" \"hostname\")
-           (\"my-tunnel-2\" \"localhost:4445:localhost:8888\" \"user@host2\"))
-  With universal argument, asks for arbitrary tunnel parameters"
-  (interactive)
-  (let* ((forwarding-options
-          (or args
-              (if current-prefix-arg
-                  (list (read-string "Create ssh tunnel: ")
-                        (format "%s:%s"
-                                (read-string "Local socket: ")
-                                (read-string "Remote socket: " "localhost:"))
-                        (read-string "Ssh connection spec (e.g. user@host): "))
-                (assoc (ido-completing-read
-                        "Create ssh tunnel: "
-                        (mapcar #'car ssh-tunnels))
-                       ssh-tunnels))))
-         (tunnel-name (car forwarding-options))
-         (sockets (cadr forwarding-options))
-         (ssh-spec (caddr forwarding-options))
-         (default-directory "~")
-         (buffer (format "*ssh-tunnel/%s*" tunnel-name))
-         (args (list "shell" buffer "ssh" "-vNL" sockets ssh-spec)))
-    (message "%s" (string-join (cddr args) " "))
-    (when (get-buffer buffer)
-      (kill-buffer buffer))
-    (apply #'start-process args)
-    (with-current-buffer buffer
-      (shell-mode))
-    (set-process-filter (get-buffer-process buffer)
-                        #'comint-output-filter)))
-
-
-;; =====
-;; shell
-;; =====
-
-
-(require 'shell)
-
-
-(defun run-shell (preset-name)
-  "M-x shell on steroids.
-   Start local or remote shell using set of presets (See `shell-presets' variable).
-   Each preset is a pair of (<\"preset-name\"> . <options-alist>)
-   Legal values in options-alist are:
-   |-------------------+------------------------------------------------|
-   | option            | description                                    |
-   |-------------------+------------------------------------------------|
-   | file-name         | Path to shell executable                       |
-   | working-directory | Working directory for shell instance           |
-   |                   | Useful for defining remote shell sessions      |
-   | startup-fn        | Function to call for starting the shell        |
-   |                   | By default, function `shell' is used           |
-   | codings           | Explicit decoding and encoding systems         |
-   |                   | (List of two symbols, e.g. '(cp1251-dos utf-8) |
-   |-------------------+------------------------------------------------|"
-  (interactive (list (ido-completing-read
-                      "Shell: "
-                      (mapcar #'car shell-presets))))
-  (let* ((shell-options (cdr (assoc preset-name shell-presets)))
-         (startup-fn (alist-get 'startup-fn shell-options))
-         (codings (alist-get 'codings shell-options))
-         (buffer-name (format "*%s*" preset-name))
-         (dead-buffer-exists (and (get-buffer buffer-name)
-                                  (not (get-buffer-process buffer-name))))
-         (wd (or (when dead-buffer-exists
-                   (with-current-buffer buffer-name
-                     (when (file-exists-p default-directory)
-                       default-directory)))
-                 (alist-get 'working-directory
-                            shell-options)
-                 (ido-read-directory-name "wd: "))))
-    (if dead-buffer-exists
-        (with-current-buffer buffer-name
-          (comint-save-history))
-      (setq buffer-name (generate-new-buffer-name buffer-name)))
-    (let ((w (cl-find-if (lambda (x) (equal (window-buffer x)
-                                            (get-buffer buffer-name)))
-                         (window-list))))
-      (when w (select-window w)))
-    (switch-to-buffer buffer-name)
-    (cd wd)
-    (if startup-fn
-        (funcall startup-fn buffer-name)
-      (let ((explicit-shell-file-name (alist-get 'file-name shell-options)))
-        (shell buffer-name)))
-    (when codings
-      (set-buffer-process-coding-system (car codings) (cadr codings)))))
-
-
-(setq shell-presets
-      ;; Default preset, same as M-x shell
-      '(("shell")))
-
-
-;; enable restarting of async shell commands
-
-
-(defun async-shell-command-setup-restart (f &rest args)
-  (let* ((w (apply f args))
-         (b (window-buffer w))
-         (command (car args)))
-    (with-current-buffer b
-      (use-local-map (copy-keymap (current-local-map)))
-      (local-set-key
-       (kbd "C-c C-k")
-       `(lambda () (interactive)
-          (message "Restart command: %s" ,command)
-          (let ((buffer (current-buffer)))
-            (when (get-buffer-process buffer)
-              (comint-kill-subjob)
-              (sit-for 1))
-            (async-shell-command ,command buffer)))))))
-
-
-(advice-add 'async-shell-command :around 'async-shell-command-setup-restart)
-
-
 ;; ================================
 ;; Access eng-rus dictionary online
 ;; ================================
@@ -1816,39 +1842,6 @@ Process .+
     (if (zerop (length translation))
         (message "Can't find translation for '%s'" query)
       (message "%s =>\n%s\n%s" query translation link))))
-
-
-;; ================
-;; compilation-mode
-;; ================
-
-
-(require 'ansi-color)
-
-
-(defun colorize-compilation ()
-  "Colorize from `compilation-filter-start' to `point'."
-  (let ((inhibit-read-only t))
-    (ansi-color-apply-on-region
-     compilation-filter-start (point))))
-
-
-(add-hook 'compilation-filter-hook
-          #'colorize-compilation)
-
-
-(setq compilation-scroll-output t)
-
-
-;; ===========
-;; abbrev-mode
-;; ===========
-
-
-;; disable prompt about saving abbrevs
-
-
-(setq save-abbrevs nil)
 
 
 ;; ===
