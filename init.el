@@ -439,8 +439,8 @@
 
 (setq ls-lisp-use-insert-directory-program nil
       ls-lisp-format-time-list
-      '("%d.%m.%Y %H:%M"
-        "%d.%m.%Y %H:%M")
+      '("%Y-%m-%d %H:%M"
+        "%Y-%m-%d %H:%M")
       ls-lisp-use-localized-time-format t
       ls-lisp-dirs-first t)
 
@@ -475,7 +475,7 @@
 
 
 (defun dired-custom-highlight ()
-  (highlight-regexp " [0-9]+\\.[0-9]+\\.[0-9]+ [0-9]+:[0-9]+ "
+  (highlight-regexp " [0-9]+\\-[0-9][0-9]\\-[0-9][0-9] [0-9][0-9]:[0-9][0-9] "
                     'font-lock-string-face))
 
 
