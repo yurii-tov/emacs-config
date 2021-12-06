@@ -205,6 +205,7 @@
          ("M-=" count-words)
          ("C-x C-b" ibuffer)
          ("C-x l" hl-line-mode)
+         ("C-x C-l" transpose-lines)
          ("C-c n" make-scratch-buffer)
          ("C-c z" zone)
          ("C-c p" copy-file-name-to-clipboard)
