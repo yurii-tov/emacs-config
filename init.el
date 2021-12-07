@@ -683,12 +683,10 @@
 
 (defun make-scratch-buffer ()
   (interactive)
-  (let* ((name (generate-new-buffer-name "*scratch*"))
-         (already-exists-p (get-buffer name)))
+  (let* ((name (generate-new-buffer-name "*scratch*")))
     (switch-to-buffer name)
-    (unless already-exists-p
-      (org-mode)
-      (insert "#+TITLE: ?\n\n\n"))))
+    (org-mode)
+    (insert "#+TITLE: ?\n\n\n")))
 
 
 ;; hippie-expand
