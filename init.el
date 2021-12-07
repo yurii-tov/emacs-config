@@ -1302,10 +1302,27 @@
             (when (get-buffer-process buffer)
               (comint-kill-subjob)
               (sit-for 1))
-            (async-shell-command ,command buffer)))))))
+            (async-shell-command ,command buffer)))))
+    w))
 
 
 (advice-add 'async-shell-command :around 'async-shell-command-setup-restart)
+
+
+;; more descriptive names for 'Async shell command' buffers
+
+
+(defun async-shell-command-setup-sensible-name (f &rest args)
+  (let* ((command (car args))
+         (max-chars 27)
+         (buffer-name (format "*%s*"
+                              (if (> (length command) max-chars)
+                                  (format "%s[...]" (substring command 0 max-chars))
+                                command))))
+    (apply f command buffer-name (cddr args))))
+
+
+(advice-add 'async-shell-command :around 'async-shell-command-setup-sensible-name)
 
 
 ;; ===========
