@@ -198,6 +198,17 @@
   (define-key 'insert-map (kbd "i") 'insert-from-kill-ring))
 
 
+;; evaluating emacs lisp
+
+
+(progn
+  (define-prefix-command 'eval-elisp-map)
+  (global-set-key (kbd "C-c e") 'eval-elisp-map)
+  (define-key 'eval-elisp-map (kbd "e") 'eval-last-sexp)
+  (define-key 'eval-elisp-map (kbd "f") 'load-file)
+  (define-key 'eval-elisp-map (kbd "r") 'elisp-eval-region-or-buffer))
+
+
 ;; misc
 
 
@@ -1755,14 +1766,6 @@ Process .+
         (eval-region s e))
     (progn (message "Evaluating buffer: %s" (current-buffer))
            (eval-buffer))))
-
-
-(progn
-  (define-prefix-command 'eval-elisp-map)
-  (global-set-key (kbd "C-c e") 'eval-elisp-map)
-  (define-key 'eval-elisp-map (kbd "e") 'eval-last-sexp)
-  (define-key 'eval-elisp-map (kbd "f") 'load-file)
-  (define-key 'eval-elisp-map (kbd "r") 'elisp-eval-region-or-buffer))
 
 
 ;; ===========
