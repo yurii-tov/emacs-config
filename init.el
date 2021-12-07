@@ -138,7 +138,6 @@
   (define-key 'repls-map (kbd "l") 'slime)
   (define-key 'repls-map (kbd "s") 'run-shell)
   (define-key 'repls-map (kbd "p") 'run-python-with-venv)
-  (define-key 'repls-map (kbd "r") 'run-racket)
   (define-key 'repls-map (kbd "q") 'sql-connect)
   (progn (define-prefix-command 'run-cider-map)
          (define-key 'repls-map (kbd "j") 'run-cider-map)
