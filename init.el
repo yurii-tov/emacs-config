@@ -1315,10 +1315,11 @@
 (defun async-shell-command-setup-sensible-name (f &rest args)
   (let* ((command (car args))
          (max-chars 27)
-         (buffer-name (format "*%s*"
-                              (if (> (length command) max-chars)
-                                  (format "%s[...]" (substring command 0 max-chars))
-                                command))))
+         (buffer-name (or (cadr args)
+                          (format "*%s*"
+                                  (if (> (length command) max-chars)
+                                      (format "%s[...]" (substring command 0 max-chars))
+                                    command)))))
     (apply f command buffer-name (cddr args))))
 
 
