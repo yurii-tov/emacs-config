@@ -1287,8 +1287,10 @@
 
 
 (defun async-shell-command-setup-restart (f &rest args)
-  (let* ((w (apply f args))
-         (b (window-buffer w))
+  (let* ((r (apply f args))
+         (b (if (windowp r)
+                (window-buffer r)
+              (process-buffer r)))
          (command (car args)))
     (with-current-buffer b
       (use-local-map (copy-keymap (current-local-map)))
@@ -1301,7 +1303,7 @@
               (comint-kill-subjob)
               (sit-for 1))
             (async-shell-command ,command buffer)))))
-    w))
+    r))
 
 
 (advice-add 'async-shell-command :around 'async-shell-command-setup-restart)
