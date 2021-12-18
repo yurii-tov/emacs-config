@@ -1043,7 +1043,7 @@ Example input:
                               (cl-mapcar #'cons
                                          (cl-loop for i from 1 upto (length cp)
                                                   collect i)
-                                         (cartesian-product factors)))
+                                         cp))
                     '(hline))))
       (delete-region (org-table-begin) (org-table-end))
       (insert (format "%s\n" (orgtbl-to-orgtbl
