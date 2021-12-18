@@ -999,6 +999,59 @@
    (lisp . t)))
 
 
+;; cartesian product from org tables
+
+
+(defun cartesian-product (factors)
+  "Example:
+=> (cartesian-product '((a1 a2 a3) (b1 b2) (c1)))
+=> ((a1 b1 c1)
+    (a1 b2 c1)
+    (a2 b1 c1)
+    (a2 b2 c1)
+    (a3 b1 c1)
+    (a3 b2 c1))"
+  (if (cdr factors)
+      (let ((factor (car factors))
+            (vectors (cartesian-product (cdr factors))))
+        (mapcan
+         (lambda (f) (mapcar (lambda (v) (cons f v)) vectors))
+         factor))
+    (mapcar #'list (car factors))))
+
+
+(defun org-table-cartesian-product ()
+  "Replace current table with cartesian product of its factors
+Example input:
+| A  | B  | C  |
+|----+----+----|
+| a1 | b1 | c1 |
+| a2 | b2 | c2 |
+| a3 |    |    |"
+  (interactive)
+  (when (org-table-p)
+    (let* ((table (remove 'hline (org-table-to-lisp)))
+           (header (cons "#" (car table)))
+           (rows (cdr table))
+           (factors (apply #'cl-mapcar
+                           (lambda (&rest xs)
+                             (cl-remove-if (lambda (x) (equal x "")) xs))
+                           rows))
+           (cp (cartesian-product factors))
+           (table-cartesian-product
+            (append (cl-list* 'hline header 'hline
+                              (cl-mapcar #'cons
+                                         (cl-loop for i from 1 upto (length cp)
+                                                  collect i)
+                                         (cartesian-product factors)))
+                    '(hline))))
+      (delete-region (org-table-begin) (org-table-end))
+      (insert (format "%s\n" (orgtbl-to-orgtbl
+                              table-cartesian-product
+                              nil)))
+      (goto-char (1- (org-table-end))))))
+
+
 ;; ================
 ;; compilation-mode
 ;; ================
