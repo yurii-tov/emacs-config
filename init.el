@@ -1474,34 +1474,43 @@ Example input:
   (let* ((process (get-buffer-process (current-buffer)))
          (pcommand (process-command process))
          (pname (process-name process))
-         (rpt (sql-make-progress-reporter nil "Login")))
+         (rpt (sql-make-progress-reporter nil "Login"))
+         (update-db-files (when (boundp 'sql-db-copies)
+                            (let ((sql-database-original (car sql-db-copies))
+                                  (sql-database-copy (cadr sql-db-copies)))
+                              (when (file-exists-p sql-database-copy)
+                                (let ((c (read-key (format "What to do with temp file \"%s\"?\n[P]ush to remote host\n[any other key] - Delete it, pull db from remote host (if any)"
+                                                           sql-database-copy))))
+                                  `(lambda ()
+                                     (cond ((char-equal ,c ?p)
+                                            (copy-file ,sql-database-copy
+                                                       ,sql-database-original
+                                                       t)
+                                            (format "push working copy: %s -> %s"
+                                                    ,sql-database-copy
+                                                    ,sql-database-original))
+                                           ((file-exists-p ,sql-database-original)
+                                            (copy-file ,sql-database-original
+                                                       ,sql-database-copy
+                                                       t t)
+                                            (format "pull remote db: %s -> %s"
+                                                    ,sql-database-original
+                                                    ,sql-database-copy))
+                                           (t (delete-file ,sql-database-copy)
+                                              (format "delete local copy: %s"
+                                                      ,sql-database-copy))))))))))
     (comint-save-history) ;; save current command history
     (setq-local comint-preoutput-filter-functions
                 (default-value 'comint-preoutput-filter-functions)) ;; force reset comint-preoutput-filter-functions
     (process-send-eof) ;; shutdown sql interpreter
     (sit-for 2) ;; pause for a while (ugly hack)
-    (let ((pattern "
+    (when update-db-files
+      (let ((m (funcall update-db-files))
+            (pattern "
 Process .+
 
 "))
-      (replace-regexp pattern "-- reconnected...\n" nil nil nil t)) ;; replace 'process finished' message with nice-looking comment
-    (when (boundp 'sql-db-copies)
-      (let ((sql-database-original (car sql-db-copies))
-            (sql-database-copy (cadr sql-db-copies)))
-        (when (and (file-exists-p sql-database-copy)
-                   (not (equal (file-attribute-modification-time (file-attributes sql-database-original))
-                               (file-attribute-modification-time (file-attributes sql-database-copy)))))
-          (let ((c (read-key (format "What to do with temp file \"%s\"?\n[P]ush to remote host\n[any other key] - Overwrite with file from remote host, reset any local changes"
-                                     sql-database-copy))))
-            (cond ((char-equal c ?p)
-                   (copy-file sql-database-copy
-                              sql-database-original
-                              t))
-                  ((file-exists-p sql-database-original)
-                   (copy-file sql-database-original
-                              sql-database-copy
-                              t t))
-                  (t (delete-file sql-database-copy))))))) ;; take remote db into account. See `sql-handle-remote-db'
+        (replace-regexp pattern (format "-- %s\n" m) nil nil nil t)))
     (apply #'make-comint-in-buffer
            pname (current-buffer) (car pcommand) nil (cdr pcommand)) ;; start fresh instance of sql interpreter
     (let ((sql-interactive-product sql-product))
