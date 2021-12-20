@@ -19,7 +19,6 @@
                   cider
                   slime
                   groovy-mode
-                  ox-textile
                   htmlize
                   clojure-mode
                   powershell
@@ -932,8 +931,7 @@
 ;; ========
 
 
-(progn (require 'ox-textile)
-       (require 'ox-md)
+(progn (require 'ox-md)
        (require 'org-tempo))
 
 
