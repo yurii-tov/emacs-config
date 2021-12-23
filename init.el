@@ -740,25 +740,68 @@ Expects args like `unicode-describe-regions' output"
 
 (defun insert-unicode-arrow ()
   (interactive)
-  (insert (unicode-select-char (unicode-describe-regions '(#x2190 #x21FF)
-                                                         '(#x2600 #x26FF)
-                                                         '(#x2700 #x27BF)
-                                                         '(#x27C0 #x27EF)
-                                                         '(#x27F0 #x27FF)
-                                                         '(#x2900 #x297F)
-                                                         '(#x2980 #x29FF)
-                                                         '(#x2B00 #x2BFF)
-                                                         '(#x2980 #x29FF)
-                                                         '(#x1F800 #x1F8FF)
-                                                         '(#x2A00 #x2AFF)
-                                                         '(#x0300 #x036F)
-                                                         '(#x1AB0 #x1AFF)
-                                                         '(#x20D0 #x20FF)
-                                                         '(#xFF00 #xFFEF)
-                                                         '(#x1F300 #x1F5FF)
-                                                         '(#x2300 #x23FF)
-                                                         '(#xA700 #xA71F)
-                                                         '(#x02B0 #x02FF)))))
+  (insert
+   (unicode-select-char
+    (unicode-describe-regions
+     #x003C #x003E #x005E #x00AB #x00BB #x02C2 #x02C3 #x02C4 #x02C5 #x02C6
+     #x02C7 #x02EC #x02F0 #x02F1 #x02F2 #x0311 #x032C #x032D #x1401 #x1403
+     #x1405 #x1409 #x140A #x141E #x142F #x1431 #x1433 #x1438 #x1449 #x15D0
+     #x15D1 #x15D2 #x15D5 #x16E3 #x1F501 #x1F502 #x1F503 #x1F504 #x1F5D8
+     #x1F791 #x1F792 #x1F793 #x1F810 #x1F811 #x1F812 #x1F813 #x1F814
+     #x1F815 #x1F816 #x1F817 #x1F838 #x1F839 #x1F83A #x1F83B #x1F83C
+     #x1F83D #x1F83E #x1F83F #x1F840 #x1F841 #x1F842 #x1F843 #x1F844
+     #x1F845 #x1F846 #x1F846 #x1F847 #x1F860 #x1F861 #x1F862 #x1F863
+     #x1F864 #x1F865 #x1F866 #x1F867 #x1F868 #x1F869 #x1F86A #x1F86B
+     #x1F86C #x1F86D #x1F86E #x1F86F #x1F870 #x1F871 #x1F872 #x1F873
+     #x1F874 #x1F875 #x1F876 #x1F877 #x1F878 #x1F879 #x1F87A #x1F87B
+     #x1F87C #x1F87D #x1F87E #x1F87F #x1F880 #x1F881 #x1F882 #x1F883
+     #x1F884 #x1F885 #x1F886 #x1F887 #x1F890 #x1F891 #x1F892 #x1F893
+     #x1F894 #x1F895 #x1F896 #x1F897 #x1F89C #x1F89D #x1F89E #x1F89F
+     #x1F8A0 #x1F8A1 #x1F8A2 #x1F8A3 #x1F8A4 #x1F8A5 #x1F8A6 #x1F8A7
+     #x1F8A8 #x1F8A9 #x1F8AA #x1F8AB #x1F8AC #x1F8AD #x2039 #x203A #x20D5
+     #x20D6 #x20D7 #x2190 #x2191 #x2192 #x2193 #x2194 #x2195 #x2196 #x2197
+     #x2198 #x2199 #x219A #x219B #x219C #x219D #x219E #x219F #x21A0 #x21A1
+     #x21A2 #x21A3 #x21A4 #x21A5 #x21A6 #x21A7 #x21A8 #x21A9 #x21AA #x21AB
+     #x21AC #x21AD #x21AE #x21AF #x21B0 #x21B1 #x21B2 #x21B3 #x21B4 #x21B5
+     #x21B6 #x21B7 #x21B8 #x21B9 #x21BA #x21BB #x21BC #x21BD #x21BE #x21BF
+     #x21C0 #x21C1 #x21C2 #x21C3 #x21C4 #x21C5 #x21C6 #x21C7 #x21C8 #x21C9
+     #x21CA #x21CB #x21CC #x21CD #x21CF #x21D0 #x21D1 #x21D2 #x21D3 #x21D4
+     #x21D5 #x21D6 #x21D7 #x21D8 #x21D9 #x21DA #x21DB #x21DC #x21DD #x21DE
+     #x21DF #x21E0 #x21E1 #x21E2 #x21E3 #x21E4 #x21E5 #x21E6 #x21E7 #x21E8
+     #x21E9 #x21EA #x21EB #x21EC #x21ED #x21EE #x21EF #x21F0 #x21F1 #x21F2
+     #x21F3 #x21F4 #x21F5 #x21F6 #x21F7 #x21F8 #x21F9 #x21FA #x21FB #x21FC
+     #x21FD #x21FE #x21FF #x2303 #x2304 #x2343 #x2344 #x2345 #x2346 #x2347
+     #x2348 #x234C #x234D #x234F #x2350 #x2353 #x2354 #x2356 #x2357 #x25A0
+     #x25A1 #x25A4 #x25A6 #x25A7 #x25A8 #x25B2 #x25B6 #x25BC #x25C0 #x2607
+     #x2608 #x261A #x261B #x261D #x261E #x261F #x276E #x276F #x2770 #x2771
+     #x2794 #x2798 #x2799 #x279A #x279B #x279C #x279D #x279E #x279F #x27A0
+     #x27A1 #x27A2 #x27A3 #x27A4 #x27A5 #x27A6 #x27A7 #x27A8 #x27A9 #x27AA
+     #x27AB #x27AC #x27AD #x27AE #x27AF #x27B1 #x27B2 #x27B3 #x27B4 #x27B5
+     #x27B6 #x27B7 #x27B8 #x27B9 #x27BA #x27BB #x27BC #x27BD #x27BE #x27F0
+     #x27F1 #x27F2 #x27F3 #x27F4 #x27F5 #x27F6 #x27F7 #x27F8 #x27F9 #x27FB
+     #x27FC #x27FD #x27FE #x27FF #x2900 #x2901 #x2902 #x2903 #x2904 #x2905
+     #x2906 #x2907 #x2908 #x2909 #x290A #x290B #x290C #x290D #x290E #x290F
+     #x2910 #x2911 #x2912 #x2913 #x2914 #x2915 #x2916 #x2917 #x2918 #x2919
+     #x291A #x291B #x291C #x291D #x291E #x291F #x2920 #x2921 #x2922 #x2923
+     #x2924 #x2925 #x2926 #x2927 #x2928 #x2929 #x292956 #x292A #x292D
+     #x292E #x292F #x2930 #x2931 #x2932 #x2933 #x2934 #x2935 #x2936 #x2937
+     #x2938 #x2939 #x293A #x293B #x293C #x293D #x293E #x293F #x2940 #x2941
+     #x2942 #x2943 #x2944 #x2945 #x2946 #x2947 #x2948 #x2949 #x294A #x294B
+     #x294C #x294D #x294E #x294F #x2950 #x2951 #x2952 #x2953 #x2954 #x2955
+     #x2956 #x2957 #x2958 #x2959 #x295A #x295B #x295C #x295D #x295E #x295F
+     #x2960 #x2961 #x2962 #x2963 #x2964 #x2965 #x2966 #x2967 #x2968 #x2969
+     #x296A #x296B #x296C #x296D #x296E #x296F #x2970 #x2971 #x2972 #x2973
+     #x2974 #x2976 #x2977 #x2978 #x2979 #x297A #x297C #x297D #x297E #x297F
+     #x29C8 #x2B00 #x2B01 #x2B02 #x2B03 #x2B04 #x2B05 #x2B06 #x2B07 #x2B08
+     #x2B09 #x2B0A #x2B0B #x2B0C #x2B0D #x2B33 #x2B34 #x2B35 #x2B36 #x2B39
+     #x2B3A #x2B3B #x2B3C #x2B3D #x2B3F #x2B6E #x2B6F #x2B70 #x2B71 #x2B72
+     #x2B73 #x2B76 #x2B77 #x2B78 #x2B79 #x2B7A #x2B7B #x2B7C #x2B7D #x2B7E
+     #x2B7F #x2B80 #x2B81 #x2B82 #x2B83 #x2B84 #x2B85 #x2B86 #x2B87 #x2B88
+     #x2B89 #x2B8A #x2B8B #x2B8C #x2B8D #x2B8E #x2B8F #x2B94 #x2B98 #x2B99
+     #x2B9A #x2B9B #x2B9C #x2B9D #x2B9E #x2B9F #x2BA8 #x2BA9 #x2BAA #x2BAB
+     #x2BAC #x2BAD #x2BAE #x2BAF #x2BB0 #x2BB1 #x2BB2 #x2BB3 #x2BB4 #x2BB5
+     #x2BB6 #x2BB7 #x2BEC #x2BED #x2BEE #x2BEF))))
+
 
 (defun insert-unicode-math ()
   (interactive)
