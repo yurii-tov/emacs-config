@@ -132,7 +132,7 @@
 
 (progn
   (define-prefix-command 'repls-map)
-  (global-set-key (kbd "C-x i") 'repls-map)
+  (global-set-key (kbd "M-i") 'repls-map)
   (define-key 'repls-map (kbd "i") 'ielm)
   (define-key 'repls-map (kbd "l") 'slime)
   (define-key 'repls-map (kbd "s") 'run-shell)
@@ -187,7 +187,7 @@
 
 (progn
   (define-prefix-command 'insert-map)
-  (global-set-key (kbd "M-i") 'insert-map)
+  (global-set-key (kbd "C-x i") 'insert-map)
   (define-key 'insert-map (kbd "f") 'insert-file)
   (define-key 'insert-map (kbd "n") 'insert-buffer-name)
   (define-key 'insert-map (kbd "b") 'insert-buffer)
