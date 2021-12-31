@@ -1581,6 +1581,14 @@ Example input:
 ;; enable restarting of async shell commands
 
 
+(defun command-to-buffer-name (command)
+  (let ((max-chars 27))
+    (format "*%s*"
+            (if (> (length command) max-chars)
+                (format "%s[...]" (substring command 0 max-chars))
+              command))))
+
+
 (defun async-shell-command-setup-restart (f &rest args)
   (let* ((r (apply f args))
          (b (if (windowp r)
@@ -1588,16 +1596,19 @@ Example input:
               (process-buffer r)))
          (command (car args)))
     (with-current-buffer b
+      (setq-local shell-last-command command)
       (use-local-map (copy-keymap (current-local-map)))
       (local-set-key
        (kbd "C-c C-k")
        `(lambda () (interactive)
-          (message "Restart command: %s" ,command)
-          (let ((buffer (current-buffer)))
+          (let* ((command (read-string "Command: " shell-last-command))
+                 (buffer (current-buffer))
+                 (name (command-to-buffer-name command)))
             (when (get-buffer-process buffer)
               (comint-kill-subjob)
               (sit-for 1))
-            (async-shell-command ,command buffer)))))
+            (rename-buffer name)
+            (async-shell-command command buffer)))))
     r))
 
 
@@ -1609,12 +1620,8 @@ Example input:
 
 (defun async-shell-command-setup-sensible-name (f &rest args)
   (let* ((command (car args))
-         (max-chars 27)
          (buffer-name (or (cadr args)
-                          (format "*%s*"
-                                  (if (> (length command) max-chars)
-                                      (format "%s[...]" (substring command 0 max-chars))
-                                    command)))))
+                          (command-to-buffer-name command))))
     (apply f command buffer-name (cddr args))))
 
 
