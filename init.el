@@ -1336,6 +1336,11 @@ Example input:
 (setq comint-input-ring-size 1500)
 
 
+(defun comint-make-input-ring-file-name (histfile-id)
+  (expand-file-name (format ".%s-history" histfile-id)
+                    user-emacs-directory))
+
+
 (defun comint-setup-persistent-history ()
   (let ((process (get-buffer-process (current-buffer))))
     (when process
@@ -1343,8 +1348,7 @@ Example input:
                                     "<.*>\\| .+\\|[^a-zA-Z]" ""
                                     (process-name process)))))
         (setq-local comint-input-ring-file-name
-                    (expand-file-name (format ".%s-history" histfile-id)
-                                      user-emacs-directory))
+                    (comint-make-input-ring-file-name histfile-id))
         (add-hook 'kill-buffer-hook 'comint-save-history nil t)
         (comint-read-input-ring t)))))
 
@@ -2174,7 +2178,7 @@ Process .+
   (let ((buffer (apply f args)))
     (with-current-buffer buffer
       (setq-local comint-input-ring-file-name
-                  (expand-file-name ".powershell-history" user-emacs-directory))
+                  (comint-make-input-ring-file-name "powershell"))
       (comint-read-input-ring t))))
 
 
