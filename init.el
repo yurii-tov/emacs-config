@@ -1339,12 +1339,9 @@ Example input:
 (defun comint-setup-persistent-history ()
   (let ((process (get-buffer-process (current-buffer))))
     (when process
-      (let ((histfile-id (if (and (equal major-mode 'shell-mode)
-                                  (string-match "powershell" (car (process-command process))))
-                             "powershell"
-                           (downcase (replace-regexp-in-string
-                                      "<.*>\\| .+\\|[^a-zA-Z]" ""
-                                      (process-name process))))))
+      (let ((histfile-id (downcase (replace-regexp-in-string
+                                    "<.*>\\| .+\\|[^a-zA-Z]" ""
+                                    (process-name process)))))
         (setq-local comint-input-ring-file-name
                     (expand-file-name (format ".%s-history" histfile-id)
                                       user-emacs-directory))
@@ -2166,6 +2163,22 @@ Process .+
 (define-abbrev-table 'python-mode-abbrev-table
   '(("main" "if __name__ == '__main__':\n")
     ("fori" "for x in xs:\n")))
+
+
+;; ==========
+;; powershell
+;; ==========
+
+
+(defun powershell-setup-histfile (f &rest args)
+  (let ((buffer (apply f args)))
+    (with-current-buffer buffer
+      (setq-local comint-input-ring-file-name
+                  (expand-file-name ".powershell-history" user-emacs-directory))
+      (comint-read-input-ring t))))
+
+
+(advice-add 'powershell :around 'powershell-setup-histfile)
 
 
 ;; ================================
