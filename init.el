@@ -1607,7 +1607,8 @@ Example input:
             (when (get-buffer-process buffer)
               (comint-kill-subjob)
               (sit-for 1))
-            (rename-buffer name)
+            (unless (string-equal command shell-last-command)
+              (rename-buffer name))
             (async-shell-command command buffer)))))
     r))
 
