@@ -1636,41 +1636,49 @@ Example input:
 (setq ssh-tunnels nil)
 
 
-(defun ssh-tunnel (&rest args)
-  "Start ssh tunnel by with a command 'ssh -NvL ...' in a buffer with descriptive name.
-   By default, predefined `ssh-tunnels' list is used.
+(defun ssh-tunnel (&optional preset)
+  "Start ssh tunnel in a buffer with descriptive name.
+   Can take one parameter (e.g. '(\"tunnel-name\" \"ssh -NvL :8888:localhost:7777 user@host\"))
+   or use `ssh-tunnels' variable (which is mainstream scenario).
    Example config:
    (setq ssh-tunnels
-         '((\"my-tunnel\" \"localhost:4444:localhost:8888\" \"hostname\")
-           (\"my-tunnel-2\" \"localhost:4445:localhost:8888\" \"user@host2\"))
-  With universal argument, asks for arbitrary tunnel parameters"
+         '((\"my-tunnel\" \"ssh -NvL localhost:4444:localhost:8888 hostname\")
+           (\"my-tunnel-2\" \"ssh -NvL localhost:4445:localhost:8888 user@host2\"))
+   With universal argument, asks for arbitrary tunnel parameters"
   (interactive)
-  (let* ((forwarding-options
-          (or args
-              (if current-prefix-arg
-                  (list (read-string "Create ssh tunnel: ")
-                        (format "%s:%s"
-                                (read-string "Local socket: ")
-                                (read-string "Remote socket: " "localhost:"))
-                        (read-string "Ssh connection spec (e.g. user@host): "))
-                (assoc (ido-completing-read
-                        "Create ssh tunnel: "
-                        (mapcar #'car ssh-tunnels))
-                       ssh-tunnels))))
-         (tunnel-name (car forwarding-options))
-         (sockets (cadr forwarding-options))
-         (ssh-spec (caddr forwarding-options))
+  (let* ((preset (or preset
+                     (if current-prefix-arg
+                         (let* ((tunnel-name (read-string "Tunnel name: "))
+                                (command (read-string "Command: "
+                                                      "ssh -NvL localhost:8888:localhost:7777 user@host"))
+                                (preset (list tunnel-name command))
+                                (existing-preset (assoc tunnel-name ssh-tunnels #'equal)))
+                           (when (y-or-n-p (format "Save this preset?%s"
+                                                   (if existing-preset
+                                                       (format " (And overwrite existing: \"%s\")"
+                                                               (cadr existing-preset))
+                                                     "")))
+                             (setq ssh-tunnels
+                                   (append (cl-remove-if (lambda (x) (equal (car x) tunnel-name))
+                                                         ssh-tunnels)
+                                           (list preset))))
+                           preset)
+                       (assoc (ido-completing-read
+                               "Create ssh tunnel: "
+                               (mapcar #'car ssh-tunnels))
+                              ssh-tunnels))))
+         (tunnel-name (car preset))
+         (command (cadr preset))
          (default-directory "~")
-         (buffer (format "*ssh-tunnel/%s*" tunnel-name))
-         (args (list "shell" buffer "ssh" "-vNL" sockets ssh-spec)))
-    (message "%s" (string-join (cddr args) " "))
+         (buffer (format "*ssh-tunnel/%s*" tunnel-name)))
+    (message command)
     (when (get-buffer buffer)
       (kill-buffer buffer))
-    (apply #'start-process args)
-    (with-current-buffer buffer
-      (shell-mode))
-    (set-process-filter (get-buffer-process buffer)
-                        #'comint-output-filter)))
+    (prog1 (apply #'start-process "shell" buffer (split-string command " "))
+      (with-current-buffer buffer
+        (shell-mode))
+      (set-process-filter (get-buffer-process buffer)
+                          #'comint-output-filter))))
 
 
 ;; ==========
