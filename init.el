@@ -1582,7 +1582,7 @@ Example input:
 
 
 (defun command-to-buffer-name (command)
-  (let ((max-chars 27))
+  (let ((max-chars 80))
     (format "*%s*"
             (if (> (length command) max-chars)
                 (format "%s[...]" (substring command 0 max-chars))
