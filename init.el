@@ -233,7 +233,6 @@
          ("C-c h" hexl-mode)
          ("C-c a" org-agenda)
          ("C-c c" org-capture)
-         ("C-c s" ssh-tunnel)
          ("C-c m" compile)
          ("M-o" other-window)
          ("C-1" delete-other-windows)
@@ -1622,59 +1621,6 @@ Example input:
 
 
 (advice-add 'async-shell-command :around 'async-shell-command-setup-sensible-name)
-
-
-;; ===========
-;; ssh tunnels
-;; ===========
-
-
-(setq ssh-tunnels nil)
-
-
-(defun ssh-tunnel (&optional preset)
-  "Start ssh tunnel in a buffer with descriptive name.
-   Can take one parameter (e.g. '(\"tunnel-name\" \"ssh -NvL :8888:localhost:7777 user@host\"))
-   or use `ssh-tunnels' variable (which is mainstream scenario).
-   Example config:
-   (setq ssh-tunnels
-         '((\"my-tunnel\" \"ssh -NvL localhost:4444:localhost:8888 hostname\")
-           (\"my-tunnel-2\" \"ssh -NvL localhost:4445:localhost:8888 user@host2\"))
-   With universal argument, asks for arbitrary tunnel parameters"
-  (interactive)
-  (let* ((preset (or preset
-                     (if current-prefix-arg
-                         (let* ((tunnel-name (read-string "Tunnel name: "))
-                                (command (read-string "Command: "
-                                                      "ssh -NvL localhost:8888:localhost:7777 user@host"))
-                                (preset (list tunnel-name command))
-                                (existing-preset (assoc tunnel-name ssh-tunnels #'equal)))
-                           (when (y-or-n-p (format "Save this preset?%s"
-                                                   (if existing-preset
-                                                       (format " (And overwrite existing: \"%s\")"
-                                                               (cadr existing-preset))
-                                                     "")))
-                             (setq ssh-tunnels
-                                   (append (cl-remove-if (lambda (x) (equal (car x) tunnel-name))
-                                                         ssh-tunnels)
-                                           (list preset))))
-                           preset)
-                       (assoc (ido-completing-read
-                               "Create ssh tunnel: "
-                               (mapcar #'car ssh-tunnels))
-                              ssh-tunnels))))
-         (tunnel-name (car preset))
-         (command (cadr preset))
-         (default-directory "~")
-         (buffer (format "*ssh-tunnel/%s*" tunnel-name)))
-    (message command)
-    (when (get-buffer buffer)
-      (kill-buffer buffer))
-    (prog1 (apply #'start-process "shell" buffer (split-string command " "))
-      (with-current-buffer buffer
-        (shell-mode))
-      (set-process-filter (get-buffer-process buffer)
-                          #'comint-output-filter))))
 
 
 ;; ==========
