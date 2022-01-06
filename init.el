@@ -1423,18 +1423,6 @@ Example input:
              'comint-truncate-buffer)
 
 
-;; implement ^C as simple comint-send-string
-
-
-(defun comint-send-c-c ()
-  (interactive)
-  (comint-send-string nil ""))
-
-
-(with-eval-after-load 'shell
-  (define-key shell-mode-map (kbd "C-c C-c") 'comint-send-c-c))
-
-
 ;; browsing comint-input-ring
 
 
