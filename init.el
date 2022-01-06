@@ -1423,6 +1423,13 @@ Example input:
              'comint-truncate-buffer)
 
 
+;; add useful keybindings
+
+
+(define-key comint-mode-map (kbd "C-c C-i") 'comint-quit-subjob)
+(define-key comint-mode-map (kbd "C-c C-k") 'comint-kill-subjob)
+
+
 ;; browsing comint-input-ring
 
 
@@ -1587,7 +1594,7 @@ Example input:
       (setq-local shell-last-command command)
       (use-local-map (copy-keymap (current-local-map)))
       (local-set-key
-       (kbd "C-c C-k")
+       (kbd "C-c C-j")
        `(lambda () (interactive)
           (let* ((command (read-string "Command: " shell-last-command))
                  (buffer (current-buffer))
@@ -1778,7 +1785,7 @@ Process .+
     ))
 
 
-(define-key sql-interactive-mode-map (kbd "C-c C-k") 'sql-reconnect)
+(define-key sql-interactive-mode-map (kbd "C-c C-j") 'sql-reconnect)
 
 
 ;; dealing with remote dbs
