@@ -2001,6 +2001,11 @@ Process .+
 
 
 }")
+    ("hw" "public class Main {
+    public static void main(String[] args) {
+        System.out.println(\"Hello world!\");
+    }
+}")
     ("sout" "System.out.println(\"\");")
     ("sof" "System.out.printf(\"\");")
     ("sf" "String.format(\"\");")
