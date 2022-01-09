@@ -1595,7 +1595,7 @@ Example input:
       (local-set-key
        (kbd "C-c C-j")
        `(lambda () (interactive)
-          (let* ((command (read-string "Command: " shell-last-command))
+          (let* ((command (read-shell-command "Command: " shell-last-command))
                  (buffer (current-buffer))
                  (name (command-to-buffer-name command)))
             (when (get-buffer-process buffer)
