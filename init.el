@@ -1079,7 +1079,6 @@ Expects args like `unicode-describe-regions' output"
 
 
 (defun ibuffer-custom-setup ()
-  (ibuffer-auto-mode 1)
   (setq ibuffer-saved-filter-groups
         '(("default"
            ("Dired" (mode . dired-mode))
