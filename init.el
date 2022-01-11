@@ -132,16 +132,14 @@
 
 (progn
   (define-prefix-command 'repls-map)
-  (global-set-key (kbd "M-i") 'repls-map)
+  (global-set-key (kbd "C-c j") 'repls-map)
   (define-key 'repls-map (kbd "i") 'ielm)
   (define-key 'repls-map (kbd "l") 'slime)
   (define-key 'repls-map (kbd "s") 'run-shell)
   (define-key 'repls-map (kbd "p") 'run-python-with-venv)
   (define-key 'repls-map (kbd "q") 'sql-connect)
-  (progn (define-prefix-command 'run-cider-map)
-         (define-key 'repls-map (kbd "j") 'run-cider-map)
-         (define-key 'run-cider-map (kbd "k") 'cider-connect)
-         (define-key 'run-cider-map (kbd "j") 'cider-jack-in)))
+  (define-key 'repls-map (kbd "k") 'cider-connect)
+  (define-key 'repls-map (kbd "j") 'cider-jack-in))
 
 
 ;; extending global search map
@@ -219,7 +217,7 @@
          ("C-x C-b" ibuffer)
          ("C-x l" hl-line-mode)
          ("C-x C-l" transpose-lines)
-         ("C-c s" async-shell-command)
+         ("M-i" async-shell-command)
          ("C-c n" make-scratch-buffer)
          ("C-c z" zone)
          ("C-c p" copy-file-name-to-clipboard)
