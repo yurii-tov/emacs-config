@@ -1514,7 +1514,7 @@ Example input:
 (require 'shell)
 
 
-(defun run-shell (preset-name)
+(defun run-shell (preset-name &optional buffer-name)
   "M-x shell on steroids.
    Start local or remote shell using set of presets (See `shell-presets' variable).
    Each preset is a pair of (<\"preset-name\"> . <options-alist>)
@@ -1536,32 +1536,34 @@ Example input:
   (let* ((shell-options (cdr (assoc preset-name shell-presets)))
          (startup-fn (alist-get 'startup-fn shell-options))
          (codings (alist-get 'codings shell-options))
-         (buffer-name (format "*%s*" preset-name))
-         (dead-buffer-exists (and (get-buffer buffer-name)
-                                  (not (get-buffer-process buffer-name))))
-         (wd (or (when dead-buffer-exists
-                   (with-current-buffer buffer-name
-                     (when (file-exists-p default-directory)
-                       default-directory)))
-                 (alist-get 'working-directory
+         (buffer-name (or buffer-name
+                          (generate-new-buffer-name
+                           (format "*%s*" preset-name))))
+         (wd (or (alist-get 'working-directory
                             shell-options)
                  (ido-read-directory-name "wd: "))))
-    (if dead-buffer-exists
-        (with-current-buffer buffer-name
-          (comint-save-history))
-      (setq buffer-name (generate-new-buffer-name buffer-name)))
     (let ((w (cl-find-if (lambda (x) (equal (window-buffer x)
                                             (get-buffer buffer-name)))
                          (window-list))))
       (when w (select-window w)))
     (switch-to-buffer buffer-name)
     (cd wd)
+    (when (get-buffer-process (current-buffer))
+      (comint-kill-subjob)
+      (sit-for 1))
     (if startup-fn
         (funcall startup-fn buffer-name)
       (let ((explicit-shell-file-name (alist-get 'file-name shell-options)))
         (shell buffer-name)))
     (when codings
-      (set-buffer-process-coding-system (car codings) (cadr codings)))))
+      (set-buffer-process-coding-system (car codings) (cadr codings)))
+    ;; Enable restart
+    (use-local-map (copy-keymap (current-local-map)))
+    (local-set-key
+     (kbd "C-c C-j")
+     `(lambda () (interactive)
+        (comint-save-history)
+        (run-shell ,preset-name (buffer-name))))))
 
 
 (setq shell-presets
