@@ -133,13 +133,13 @@
 (progn
   (define-prefix-command 'repls-map)
   (global-set-key (kbd "C-c j") 'repls-map)
+  (define-key 'repls-map (kbd "j") 'run-shell)
   (define-key 'repls-map (kbd "i") 'ielm)
   (define-key 'repls-map (kbd "l") 'slime)
-  (define-key 'repls-map (kbd "s") 'run-shell)
   (define-key 'repls-map (kbd "p") 'run-python-with-venv)
   (define-key 'repls-map (kbd "q") 'sql-connect)
   (define-key 'repls-map (kbd "k") 'cider-connect)
-  (define-key 'repls-map (kbd "j") 'cider-jack-in))
+  (define-key 'repls-map (kbd "K") 'cider-jack-in))
 
 
 ;; extending global search map
