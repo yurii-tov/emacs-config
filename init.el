@@ -190,7 +190,6 @@
   (define-key 'insert-map (kbd "n") 'insert-buffer-name)
   (define-key 'insert-map (kbd "b") 'insert-buffer)
   (define-key 'insert-map (kbd "c") 'insert-char)
-  (define-key 'insert-map (kbd "q") 'quoted-insert)
   (define-key 'insert-map (kbd "i") 'insert-from-kill-ring)
   (define-key 'insert-map (kbd "a") 'insert-unicode-arrow)
   (define-key 'insert-map (kbd "m") 'insert-unicode-math)
