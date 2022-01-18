@@ -1597,6 +1597,7 @@ Example input:
                  (buffer (current-buffer))
                  (name (command-to-buffer-name command)))
             (when (get-buffer-process buffer)
+              (comint-save-history)
               (comint-kill-subjob)
               (sit-for 1))
             (unless (string-equal command shell-last-command)
