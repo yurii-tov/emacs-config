@@ -1570,7 +1570,12 @@ Example input:
       '(("shell")))
 
 
-;; enable restarting of async shell commands
+;; ====================
+;; async shell commands
+;; ====================
+
+
+;; enable restarting
 
 
 (defun command-to-buffer-name (command)
@@ -1609,7 +1614,7 @@ Example input:
 (advice-add 'async-shell-command :around 'async-shell-command-setup-restart)
 
 
-;; more descriptive names for 'Async shell command' buffers
+;; descriptive names
 
 
 (defun async-shell-command-setup-sensible-name (f &rest args)
@@ -1620,6 +1625,21 @@ Example input:
 
 
 (advice-add 'async-shell-command :around 'async-shell-command-setup-sensible-name)
+
+
+;; histfile
+
+
+(defun async-shell-command-setup-histfile (r)
+  (let ((b (if (windowp r)
+               (window-buffer r)
+             (process-buffer r))))
+    (with-current-buffer b
+      (setq-local comint-input-ring-file-name
+                  (comint-make-input-ring-file-name "shell")))))
+
+
+(advice-add 'async-shell-command :filter-return 'async-shell-command-setup-histfile)
 
 
 ;; ==========
