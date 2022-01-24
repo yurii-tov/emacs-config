@@ -1636,7 +1636,8 @@ Example input:
              (process-buffer r))))
     (with-current-buffer b
       (setq-local comint-input-ring-file-name
-                  (comint-make-input-ring-file-name "shell")))))
+                  (comint-make-input-ring-file-name "shell")))
+    r))
 
 
 (advice-add 'async-shell-command :filter-return 'async-shell-command-setup-histfile)
