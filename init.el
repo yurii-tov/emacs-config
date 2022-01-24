@@ -22,7 +22,8 @@
                   htmlize
                   clojure-mode
                   powershell
-                  smex)))
+                  smex
+                  base16-theme)))
   (dolist (p packages)
     (unless (package-installed-p p)
       (unless refreshed
@@ -343,10 +344,16 @@
     (load-theme theme)))
 
 
+;; base16-theme
+
+
+(setq base16-distinct-fringe-background nil)
+
+
 ;; default color theme
 
 
-(apply-color-theme 'dichromacy)
+(apply-color-theme 'base16-chalk)
 
 
 ;; better modeline
