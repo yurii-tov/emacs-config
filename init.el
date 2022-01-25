@@ -347,7 +347,8 @@
 ;; base16-theme
 
 
-(setq base16-distinct-fringe-background nil)
+(setq base16-distinct-fringe-background nil
+      base16-highlight-mode-line 'contrast)
 
 
 ;; default color theme
