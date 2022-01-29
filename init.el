@@ -1205,6 +1205,7 @@ Expects args like `unicode-describe-regions' output"
            ("System" (or (name . "^\\*scratch\\*$")
                          (name . "^\\*Messages\\*$"))))))
   (ibuffer-switch-to-saved-filter-groups "default")
+  (ibuffer-switch-format)
   (local-unset-key (kbd "M-o")))
 
 
