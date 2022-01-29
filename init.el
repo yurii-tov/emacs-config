@@ -358,7 +358,7 @@
 (require 'color)
 
 
-(setq color-contrast-acceptable 3.7)
+(setq color-contrast-acceptable 3.4)
 
 
 (defun relative-luminance (rgb)
