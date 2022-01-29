@@ -350,6 +350,72 @@
 (setq base16-distinct-fringe-background nil)
 
 
+;;;; fix modeline contrast in some base16 themes
+
+
+(require 'color)
+
+
+(setq color-contrast-acceptable 3.7)
+
+
+(defun relative-luminance (rgb)
+  (let* ((rgb (mapcar (lambda (x)
+                        (if (<= x 0.03928)
+                            (/ x 12.92)
+                          (expt (/ (+ 0.055 x) 1.055) 2.4)))
+                      rgb)))
+    (apply #'+ (cl-mapcar #'* rgb '(0.2126 0.7152 0.0722)))))
+
+
+(defun color-contrast (a b)
+  (let* ((rls (mapcar (lambda (x)
+                        (relative-luminance
+                         (color-name-to-rgb x)))
+                      (list a b)))
+         (ratio (/ (+ (car rls) 0.05)
+                   (+ (cadr rls) 0.05))))
+    (if (> ratio 1.0)
+        ratio
+      (/ 1.0 ratio))))
+
+
+(defun base16-theme-colors (theme)
+  (eval (intern (concat (symbol-name theme) "-colors"))))
+
+
+(defun base16-color-contrast (colors a b)
+  (let* ((ab-colors (mapcar (lambda (x)
+                              (plist-get colors x))
+                            (list a b))))
+    (apply #'color-contrast ab-colors)))
+
+
+(defun base16-patch-modeline (colors)
+  (let* ((bg (plist-get colors :base01))
+         (fg (plist-get colors :base06)))
+    (set-face-attribute 'mode-line nil
+                        :foreground fg
+                        :background bg)))
+
+
+(defun base16-patch (f &rest args)
+  (prog1 (apply f args)
+    (let ((theme (car args)))
+      (when (string-match "^base16-" (symbol-name (car args)))
+        (let* ((colors (base16-theme-colors theme))
+               (contrast (base16-color-contrast
+                          colors
+                          :base02
+                          :base04)))
+          (when (< contrast
+                   color-contrast-acceptable)
+            (base16-patch-modeline colors)))))))
+
+
+(advice-add 'load-theme :around #'base16-patch)
+
+
 ;; default color theme
 
 
