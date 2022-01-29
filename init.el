@@ -221,6 +221,7 @@
          ("M-i" async-shell-command)
          ("C-c n" make-scratch-buffer)
          ("C-c z" zone)
+         ("C-c v" capture-video)
          ("C-c p" copy-file-name-to-clipboard)
          ("M-k" kill-whole-line)
          ("M-q" hippie-expand)
@@ -2265,6 +2266,19 @@ Process .+
     (if (zerop (length translation))
         (message "Can't find translation for '%s'" query)
       (message "%s =>\n%s\n%s" query translation link))))
+
+
+;; ==========================
+;; capture videos with ffmpeg
+;; ==========================
+
+
+(defun capture-video (file)
+  (interactive "FOutput file: ")
+  (let ((default-directory (file-name-directory (file-truename file))))
+    (async-shell-command
+     (format "ffmpeg -y -f gdigrab -i desktop -framerate 30 -pix_fmt yuv420p %s" file)
+     (format "*ffmpeg capture → %s*" file))))
 
 
 ;; ===
