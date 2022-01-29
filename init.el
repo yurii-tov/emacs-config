@@ -107,10 +107,11 @@
   (let ((msys "C:/tools/msys64"))
     (if (file-exists-p msys)
         (progn (setenv "PATH"
-                       (format "%s\\usr\\bin;%s"
+                       (format "%1$s\\usr\\bin;%1$s\\mingw64\\bin;%s"
                                (replace-regexp-in-string "/" "\\\\" msys)
                                (getenv "PATH")))
                (add-to-list 'exec-path (format "%s/usr/bin" msys))
+               (add-to-list 'exec-path (format "%s//mingw64/bin" msys))
                (setq shell-file-name "bash"))
       (warn "msys2 not found. Expected location is %s" msys))))
 
