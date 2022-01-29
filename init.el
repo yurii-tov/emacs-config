@@ -1151,6 +1151,12 @@ Expects args like `unicode-describe-regions' output"
 (setq ibuffer-show-empty-filter-groups nil)
 
 
+(setq ibuffer-formats
+      '((mark modified read-only locked " "
+              (name 16 -1)
+              " " filename-and-process)))
+
+
 (defun ibuffer-custom-setup ()
   (setq ibuffer-saved-filter-groups
         '(("default"
@@ -1205,7 +1211,6 @@ Expects args like `unicode-describe-regions' output"
            ("System" (or (name . "^\\*scratch\\*$")
                          (name . "^\\*Messages\\*$"))))))
   (ibuffer-switch-to-saved-filter-groups "default")
-  (ibuffer-switch-format)
   (local-unset-key (kbd "M-o")))
 
 
