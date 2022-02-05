@@ -1612,9 +1612,25 @@ Example input:
 (require 'shell)
 
 
-(defun run-shell (preset-name &optional buffer-name)
+(setq shell-presets
+      ;; Default preset, same as M-x shell
+      '(("shell")))
+
+
+(defun read-ssh-presets ()
+  (let ((hosts (split-string (shell-command-to-string "c=~/.ssh/config; [ -f $c ] && cat $c | sed -n -e '/Host \\*/ d' -e '/Host / {s:Host ::; p}'"))))
+    (mapcar
+     (lambda (x)
+       (let ((wd (format "/sshx:%s:~" x)))
+         `(,x (file-name . "/bin/bash")
+              (working-directory . ,wd))))
+     hosts)))
+
+
+(defun run-shell (&optional preset-name buffer-name)
   "M-x shell on steroids.
    Start local or remote shell using set of presets (See `shell-presets' variable).
+   Also add presets based on ~/.ssh/config file
    Each preset is a pair of (<\"preset-name\"> . <options-alist>)
    Legal values in options-alist are:
    |-------------------+------------------------------------------------|
@@ -1628,10 +1644,13 @@ Example input:
    | codings           | Explicit decoding and encoding systems         |
    |                   | (List of two symbols, e.g. '(cp1251-dos utf-8) |
    |-------------------+------------------------------------------------|"
-  (interactive (list (ido-completing-read
-                      "Shell: "
-                      (mapcar #'car shell-presets))))
-  (let* ((shell-options (cdr (assoc preset-name shell-presets)))
+  (interactive)
+  (let* ((shell-presets (append shell-presets (read-ssh-presets)))
+         (preset-name (or preset-name
+                          (ido-completing-read
+                           "Shell: "
+                           (mapcar #'car shell-presets))))
+         (shell-options (cdr (assoc preset-name shell-presets)))
          (startup-fn (alist-get 'startup-fn shell-options))
          (codings (alist-get 'codings shell-options))
          (buffer-name (or buffer-name
@@ -1662,11 +1681,6 @@ Example input:
      `(lambda () (interactive)
         (comint-save-history)
         (run-shell ,preset-name (buffer-name))))))
-
-
-(setq shell-presets
-      ;; Default preset, same as M-x shell
-      '(("shell")))
 
 
 ;; ====================
