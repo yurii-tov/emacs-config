@@ -568,7 +568,7 @@
     (kbd "C-c C-o")
     'dired-open-in-external-app)
   (define-key dired-mode-map
-    (kbd "`")
+    (kbd "/")
     'dired-hide-details-mode))
 
 
