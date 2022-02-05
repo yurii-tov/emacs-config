@@ -1273,6 +1273,9 @@ Expects args like `unicode-describe-regions' output"
 (setq org-startup-truncated nil)
 
 
+(setq org-agenda-files (list org-directory))
+
+
 (setq org-capture-templates
       `(("w" "Work" entry
          (file+headline "work.org" "inbox")
