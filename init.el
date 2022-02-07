@@ -1614,8 +1614,8 @@ Example input:
 
 
 (setq shell-presets
-      ;; Default preset, same as M-x shell
-      '(("shell")))
+      ;; Preset based on default shell
+      `((,(file-name-base shell-file-name))))
 
 
 (defun read-ssh-presets ()
