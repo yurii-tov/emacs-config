@@ -1628,7 +1628,7 @@ Example input:
      hosts)))
 
 
-(defun run-shell (&optional preset-name buffer-name)
+(defun run-shell (&optional preset-name shell-options buffer-name)
   "M-x shell on steroids.
    Start local or remote shell using set of presets (See `shell-presets' variable).
    Also add presets based on ~/.ssh/config file
@@ -1651,7 +1651,8 @@ Example input:
                           (ido-completing-read
                            "Shell: "
                            (mapcar #'car shell-presets))))
-         (shell-options (cdr (assoc preset-name shell-presets)))
+         (shell-options (or shell-options
+                            (cdr (assoc preset-name shell-presets))))
          (startup-fn (alist-get 'startup-fn shell-options))
          (codings (alist-get 'codings shell-options))
          (buffer-name (or buffer-name
@@ -1681,7 +1682,7 @@ Example input:
      (kbd "C-c C-j")
      `(lambda () (interactive)
         (comint-save-history)
-        (run-shell ,preset-name (buffer-name))))))
+        (run-shell ,preset-name ',shell-options (buffer-name))))))
 
 
 ;; ====================
