@@ -1629,7 +1629,7 @@ Example input:
      hosts)))
 
 
-(defun run-shell (&optional preset-name shell-options buffer-name)
+(defun run-shell (&optional preset buffer-name)
   "M-x shell on steroids.
    Start local or remote shell using set of presets (See `shell-presets' variable).
    Also add presets based on ~/.ssh/config file
@@ -1647,13 +1647,14 @@ Example input:
    |                   | (List of two symbols, e.g. '(cp1251-dos utf-8) |
    |-------------------+------------------------------------------------|"
   (interactive)
-  (let* ((shell-presets (append shell-presets (read-ssh-presets)))
-         (preset-name (or preset-name
-                          (ido-completing-read
-                           "Shell: "
-                           (mapcar #'car shell-presets))))
-         (shell-options (or shell-options
-                            (cdr (assoc preset-name shell-presets))))
+  (let* ((preset (or preset
+                     (let ((shell-presets (append shell-presets
+                                                  (read-ssh-presets))))
+                       (assoc (ido-completing-read
+                               "Shell: " (mapcar #'car shell-presets))
+                              shell-presets))))
+         (preset-name (car preset))
+         (shell-options (cdr preset))
          (startup-fn (alist-get 'startup-fn shell-options))
          (codings (alist-get 'codings shell-options))
          (buffer-name (or buffer-name
@@ -1679,7 +1680,7 @@ Example input:
      (kbd "C-c C-j")
      `(lambda () (interactive)
         (comint-save-history)
-        (run-shell ,preset-name ',shell-options (buffer-name))))))
+        (run-shell ',preset (buffer-name))))))
 
 
 ;; ====================
