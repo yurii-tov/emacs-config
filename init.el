@@ -1662,10 +1662,6 @@ Example input:
          (wd (or (alist-get 'working-directory
                             shell-options)
                  (ido-read-directory-name "wd: "))))
-    (let ((w (cl-find-if (lambda (x) (equal (window-buffer x)
-                                            (get-buffer buffer-name)))
-                         (window-list))))
-      (when w (select-window w)))
     (switch-to-buffer buffer-name)
     (cd wd)
     (when (get-buffer-process (current-buffer))
