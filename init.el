@@ -1620,7 +1620,7 @@ Example input:
 
 (defun read-ssh-presets ()
   (let* ((default-directory "~")
-         (hosts (split-string (shell-command-to-string "c=~/.ssh/config; [ -f $c ] && cat $c | sed -n -e '/Host \\*/ d' -e 's:Host ::p'"))))
+         (hosts (split-string (shell-command-to-string "c=~/.ssh/config; [ -f $c ] && sed -n -e '/Host \\*/ d' -e 's:Host ::p' $c"))))
     (mapcar
      (lambda (x)
        (let ((wd (format "/sshx:%s:~" x)))
