@@ -2275,6 +2275,14 @@ Process .+
 (advice-add 'powershell :around 'powershell-setup-histfile)
 
 
+(when system-type-is-windows
+  (add-to-list 'shell-presets
+               '("powershell"
+                 (startup-fn . powershell)
+                 (codings . (cp866-dos cp866-dos)))
+               t))
+
+
 ;; ================================
 ;; Access eng-rus dictionary online
 ;; ================================
