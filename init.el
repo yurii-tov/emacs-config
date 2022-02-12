@@ -1765,7 +1765,7 @@ Example input:
 
 
 (setq sql-connection-alist
-      '((example (sql-product 'sqlite))))
+      '((sqlilte (sql-product 'sqlite))))
 
 
 (add-hook 'sql-login-hook 'orgtbl-mode)
