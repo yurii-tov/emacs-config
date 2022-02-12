@@ -111,7 +111,7 @@
                                (replace-regexp-in-string "/" "\\\\" msys)
                                (getenv "PATH")))
                (add-to-list 'exec-path (format "%s/usr/bin" msys))
-               (add-to-list 'exec-path (format "%s//mingw64/bin" msys))
+               (add-to-list 'exec-path (format "%s/mingw64/bin" msys))
                (setq shell-file-name "bash"))
       (warn "msys2 not found. Expected location is %s" msys))))
 
