@@ -2026,7 +2026,10 @@ Process .+
 (defun parse-sqlite-table (text)
   (unless (string-match "^Error: " text)
     (mapcar (lambda (r) (split-string r "|"))
-            (split-string text "\n" t))))
+            (let ((lines (split-string text "\n" t)))
+              (if (string-match "^select .*;$" (car lines))
+                  (cdr lines)
+                lines)))))
 
 
 (sql-set-product-feature 'sqlite :table-parser 'parse-sqlite-table)
