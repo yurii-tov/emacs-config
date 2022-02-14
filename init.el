@@ -456,11 +456,8 @@
                 " "
                 mode-line-buffer-identification
                 "   "
-                (:eval (when (use-region-p) (count-lwc)))
-                (:eval (format " (l:%s c:%s p:%s)"
-                               (propertize "%l" 'face 'font-lock-builtin-face)
-                               (propertize "%C" 'face 'font-lock-builtin-face)
-                               (propertize (number-to-string (point)) 'face 'font-lock-builtin-face)))
+                (:eval (when (use-region-p) (concat (count-lwc) " ")))
+                (:eval (propertize "%l:%C" 'face 'font-lock-builtin-face))
                 (vc-mode vc-mode)
                 "  " mode-line-modes
                 mode-line-misc-info
