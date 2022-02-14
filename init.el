@@ -138,7 +138,7 @@
   (define-key 'repls-map (kbd "j") 'run-shell)
   (define-key 'repls-map (kbd "i") 'ielm)
   (define-key 'repls-map (kbd "l") 'slime)
-  (define-key 'repls-map (kbd "p") 'run-python-with-venv)
+  (define-key 'repls-map (kbd "p") 'run-python)
   (define-key 'repls-map (kbd "q") 'sql-connect)
   (define-key 'repls-map (kbd "k") 'cider-connect)
   (define-key 'repls-map (kbd "K") 'cider-jack-in))
@@ -2216,43 +2216,6 @@ Process .+
 ;; ======
 ;; Python
 ;; ======
-
-
-(require 'python)
-
-
-(defun python-make-venv (path)
-  (interactive "Gvenv directory: ")
-  (shell-command
-   (format "python -m venv --system-site-packages '%s'" path)))
-
-
-(defun python-set-venv (path-to-venv)
-  (interactive "fPath to venv: ")
-  (setq python-shell-virtualenv-root path-to-venv)
-  (message "Set python venv to %s" path-to-venv))
-
-
-(defun python-reset-venv ()
-  (interactive)
-  (setq python-shell-virtualenv-root nil)
-  (message "Reset python venv"))
-
-
-(defun run-python-with-venv ()
-  "Invoke run-python command, optionally setup venv, if current
-   directory has 'venv' folder.  To manually setup venv, use
-   `python-set-venv'/`python-reset-venv' commands"
-  (interactive)
-  (let ((venv (file-truename "venv")))
-    (if (file-exists-p venv)
-        (let ((python-shell-virtualenv-path venv))
-          (run-python)
-          (message "Using venv: %s" venv))
-      (run-python))))
-
-
-(define-key python-mode-map (kbd "C-c C-p") 'run-python-with-venv)
 
 
 (define-abbrev-table 'python-mode-abbrev-table
