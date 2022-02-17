@@ -1797,12 +1797,22 @@ Example input:
 ;; reconnect
 
 
+(defun sql-setup-reconnect ()
+  (let ((process (get-buffer-process (current-buffer))))
+    (setq-local process-specs
+                (list (process-name process)
+                      (process-command process)))))
+
+
+(add-hook 'sql-login-hook
+          'sql-setup-reconnect)
+
+
 (defun sql-reconnect ()
   "Restart sql interpreter with same parameters"
   (interactive)
-  (let* ((process (get-buffer-process (current-buffer)))
-         (pcommand (process-command process))
-         (pname (process-name process))
+  (let* ((pname (car process-specs))
+         (pcommand (cadr process-specs))
          (rpt (sql-make-progress-reporter nil "Login"))
          (update-db-files (when (boundp 'sql-db-copies)
                             (let ((sql-database-original (car sql-db-copies))
@@ -1831,8 +1841,9 @@ Example input:
     (comint-save-history) ;; save current command history
     (setq-local comint-preoutput-filter-functions
                 (default-value 'comint-preoutput-filter-functions)) ;; force reset comint-preoutput-filter-functions
-    (process-send-eof) ;; shutdown sql interpreter
-    (sit-for 2) ;; pause for a while (ugly hack)
+    (when (get-buffer-process (current-buffer))
+      (process-send-eof) ;; shutdown sql interpreter
+      (sit-for 2)) ;; pause for a while (ugly hack)
     (when update-db-files
       (let ((m (funcall update-db-files))
             (pattern "
