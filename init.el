@@ -329,6 +329,14 @@
   (apply-font "Consolas-10"))
 
 
+;;;; enable emojis on Windows
+
+
+(when (and system-type-is-windows
+           (font-available-p "Segoe UI Emoji"))
+  (set-fontset-font t 'symbol (font-spec :family "Segoe UI Emoji") nil 'prepend))
+
+
 ;; color themes
 
 
