@@ -2059,7 +2059,8 @@ Process .+
                        (region-end)))))
 
 
-(define-key sgml-mode-map (kbd "M-l") 'reindent-xml)
+(with-eval-after-load 'sgml-mode
+  (define-key sgml-mode-map (kbd "M-l") 'reindent-xml))
 
 
 ;; =======
