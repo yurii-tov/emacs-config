@@ -2042,25 +2042,22 @@ Process .+
 ;; reindent xml buffer with xmllint
 
 
-(defun reindent-xml ()
+(defun xml-pretty-print-buffer ()
   (interactive)
   (let* ((default-directory "~")
          (xmllint (executable-find "xmllint")))
-    (if (not (use-region-p))
-        (progn (when xmllint
-                 (shell-command-on-region (point-min)
-                                          (point-max)
-                                          (format "%s --format -" xmllint)
-                                          (current-buffer)
-                                          t))
-               (reindent-region (point-min)
-                                (point-max)))
-      (reindent-region (region-beginning)
-                       (region-end)))))
+    (when xmllint
+      (shell-command-on-region (point-min)
+                               (point-max)
+                               (format "%s --format -" xmllint)
+                               (current-buffer)
+                               t)
+      (reindent-region (point-min)
+                       (point-max)))))
 
 
 (with-eval-after-load 'sgml-mode
-  (define-key sgml-mode-map (kbd "M-l") 'reindent-xml))
+  (define-key sgml-mode-map (kbd "C-c C-p") 'xml-pretty-print-buffer))
 
 
 ;; =======
