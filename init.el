@@ -2044,8 +2044,8 @@ Process .+
 
 (defun xml-pretty-print-buffer ()
   (interactive)
-  (let* ((default-directory "~")
-         (xmllint (executable-find "xmllint")))
+  (let ((shell-file-name "sh")
+        (xmllint (executable-find "xmllint")))
     (when xmllint
       (shell-command-on-region (point-min)
                                (point-max)
