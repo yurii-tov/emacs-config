@@ -1845,8 +1845,8 @@ Process .+
                                           sql-database-copy))
           (add-hook 'kill-buffer-hook
                     `(lambda ()
-                       (ring-insert comint-input-ring "--remote db cleanup")
                        (when (get-buffer-process (current-buffer))
+                         (ring-insert comint-input-ring "--remote db cleanup")
                          (process-send-eof))
                        (when (and (file-exists-p ,sql-database-copy)
                                   (not (equal (file-attribute-modification-time (file-attributes ,sql-database-original))
