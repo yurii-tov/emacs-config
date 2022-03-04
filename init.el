@@ -1845,23 +1845,24 @@ Process .+
                                           sql-database-copy))
           (add-hook 'kill-buffer-hook
                     `(lambda ()
-                       (when (get-buffer-process (current-buffer))
-                         (ring-insert comint-input-ring "--remote db cleanup")
-                         (process-send-eof))
-                       (when (and (file-exists-p ,sql-database-copy)
-                                  (not (equal (file-attribute-modification-time (file-attributes ,sql-database-original))
-                                              (file-attribute-modification-time (file-attributes ,sql-database-copy)))))
-                         (let ((c (read-key (format "What to do with temp file \"%s\"?\n[P]ush to remote host\n[S]ave as...\n[any other key] - delete"
-                                                    ,sql-database-copy))))
-                           (cond ((char-equal c ?p)
-                                  (copy-file ,sql-database-copy
-                                             ,sql-database-original
-                                             t))
-                                 ((char-equal c ?s)
-                                  (copy-file ,sql-database-copy
-                                             (read-file-name "Save file as: ")
-                                             t)))))
-                       (delete-file ,sql-database-copy))
+                       (unwind-protect
+                           (progn (when (get-buffer-process (current-buffer))
+                                    (ring-insert comint-input-ring "--remote db cleanup")
+                                    (process-send-eof))
+                                  (when (and (file-exists-p ,sql-database-copy)
+                                             (not (equal (file-attribute-modification-time (file-attributes ,sql-database-original))
+                                                         (file-attribute-modification-time (file-attributes ,sql-database-copy)))))
+                                    (let ((c (read-key (format "What to do with temp file \"%s\"?\n[P]ush to remote host\n[S]ave as...\n[any other key] - delete"
+                                                               ,sql-database-copy))))
+                                      (cond ((char-equal c ?p)
+                                             (copy-file ,sql-database-copy
+                                                        ,sql-database-original
+                                                        t))
+                                            ((char-equal c ?s)
+                                             (copy-file ,sql-database-copy
+                                                        (read-file-name "Save file as: ")
+                                                        t))))))
+                         (delete-file ,sql-database-copy)))
                     nil t))))))
 
 
