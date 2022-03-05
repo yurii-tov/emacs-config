@@ -195,8 +195,8 @@
   (define-key 'insert-map (kbd "c") 'insert-char)
   (define-key 'insert-map (kbd "i") 'insert-from-kill-ring)
   (define-key 'insert-map (kbd "m") 'insert-unicode-math)
-  (define-key 'insert-map (kbd "j") 'insert-unicode-emoji)
-  (define-key 'insert-map (kbd "J") 'insert-unicode-emoji-group))
+  (define-key 'insert-map (kbd "J") 'insert-unicode-emoji)
+  (define-key 'insert-map (kbd "j") 'insert-unicode-emoji-group))
 
 
 ;; evaluating emacs lisp
