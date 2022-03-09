@@ -927,7 +927,7 @@ Example:
 (defun insert-unicode-group ()
   (interactive)
   (let* ((group-name (ido-completing-read
-                      "Unicode group: "
+                      "Category: "
                       (mapcar (lambda (x) (symbol-name (car x)))
                               unicode-chars)))
          (group (assoc (intern group-name)
