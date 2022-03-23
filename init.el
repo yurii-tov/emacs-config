@@ -446,9 +446,17 @@
          (end (region-end))
          (lines (count-lines start end))
          (words (count-words start end))
-         (chars (- end start)))
-    (propertize (format "[lines:%d words:%d chars:%d]" lines words chars)
-                'face 'hi-green)))
+         (chars (- end start))
+         (face-base '(:background "#bbffbb" :foreground "black"))
+         (face-value '(:background "#bbffbb" :foreground "blue" :weight bold)))
+    (concat
+     (propertize "[lines:" 'face face-base)
+     (propertize (format "%d" lines) 'face face-value)
+     (propertize " words:" 'face face-base)
+     (propertize (format "%d" words) 'face face-value)
+     (propertize " chars:" 'face face-base)
+     (propertize (format "%d" chars) 'face face-value)
+     (propertize "]" 'face face-base))))
 
 
 (setq-default mode-line-format
