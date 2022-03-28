@@ -192,7 +192,7 @@
   (define-key 'insert-map (kbd "f") 'insert-file)
   (define-key 'insert-map (kbd "n") 'insert-buffer-name)
   (define-key 'insert-map (kbd "b") 'insert-buffer)
-  (define-key 'insert-map (kbd "c") 'insert-char)
+  (define-key 'insert-map (kbd "") 'insert-char)
   (define-key 'insert-map (kbd "k") 'insert-from-kill-ring)
   (define-key 'insert-map (kbd "i") 'iso-transl-ctl-x-8-map)
   (define-key 'insert-map (kbd "J") 'insert-unicode)
