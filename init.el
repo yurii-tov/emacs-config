@@ -234,7 +234,7 @@
          ("C-c h" hexl-mode)
          ("C-c a" org-agenda)
          ("C-c c" org-capture)
-         ("C-c m" compile)
+         ("C-c d" diff)
          ("M-o" other-window)
          ("C-1" delete-other-windows)
          ("C-2" split-window-below)
