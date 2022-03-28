@@ -190,13 +190,13 @@
   (define-prefix-command 'insert-map)
   (global-set-key (kbd "C-x i") 'insert-map)
   (define-key 'insert-map (kbd "f") 'insert-file)
-  (define-key 'insert-map (kbd "n") 'insert-buffer-name)
-  (define-key 'insert-map (kbd "b") 'insert-buffer)
-  (define-key 'insert-map (kbd "") 'insert-char)
-  (define-key 'insert-map (kbd "k") 'insert-from-kill-ring)
-  (define-key 'insert-map (kbd "i") 'iso-transl-ctl-x-8-map)
-  (define-key 'insert-map (kbd "J") 'insert-unicode)
-  (define-key 'insert-map (kbd "j") 'insert-unicode-group))
+  (define-key 'insert-map (kbd "b") 'insert-buffer-name)
+  (define-key 'insert-map (kbd "B") 'insert-buffer)
+  (define-key 'insert-map (kbd "n") 'insert-char)
+  (define-key 'insert-map (kbd "i") 'insert-unicode)
+  (define-key 'insert-map (kbd "I") 'insert-unicode-group)
+  (define-key 'insert-map (kbd "j") 'insert-from-kill-ring)
+  (define-key 'insert-map (kbd "x") 'iso-transl-ctl-x-8-map))
 
 
 ;; evaluating emacs lisp
