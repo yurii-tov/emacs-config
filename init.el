@@ -210,6 +210,16 @@
   (define-key 'eval-elisp-map (kbd "r") 'elisp-eval-region-or-buffer))
 
 
+;; diff
+
+
+(progn
+  (define-prefix-command 'diff-map)
+  (global-set-key (kbd "C-c d") 'diff-map)
+  (define-key 'diff-map (kbd "f") 'diff)
+  (define-key 'diff-map (kbd "b") 'diff-buffers))
+
+
 ;; misc
 
 
@@ -234,7 +244,6 @@
          ("C-c h" hexl-mode)
          ("C-c a" org-agenda)
          ("C-c c" org-capture)
-         ("C-c d" diff)
          ("M-o" other-window)
          ("C-1" delete-other-windows)
          ("C-2" split-window-below)
