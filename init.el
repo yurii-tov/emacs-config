@@ -1910,7 +1910,6 @@ Process .+
 
 (defun sql-setup-pprint-tables ()
   (let ((table-parser (sql-get-product-feature sql-product :table-parser)))
-    (sql-reset-last-command) ;; setup output accumulator
     (when table-parser
       (ring-insert comint-input-ring "--tables pprint enabled") ;; hack for preventing influence of previous history on startup
       (setq-local comint-preoutput-filter-functions
