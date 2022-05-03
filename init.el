@@ -782,8 +782,7 @@
   (interactive)
   (let* ((name (generate-new-buffer-name "*scratch*")))
     (switch-to-buffer name)
-    (org-mode)
-    (insert "#+TITLE: ?\n\n\n")))
+    (org-mode)))
 
 
 ;; hippie-expand
