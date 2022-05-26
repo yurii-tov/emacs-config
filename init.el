@@ -359,7 +359,7 @@
                   (mapcar #'symbol-name
                           (custom-available-themes))))))
   (when window-system
-    (dolist (theme (custom-available-themes))
+    (dolist (theme custom-enabled-themes)
       (disable-theme theme))
     (load-theme theme)))
 
