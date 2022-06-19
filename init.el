@@ -1121,6 +1121,7 @@ Example:
                         (or (derived-mode . text-mode)
                             (mode . fundamental-mode)
                             (derived-mode . conf-mode))))
+           ("Docs" (mode . doc-view-mode))
            ("Org-mode" (or (mode . org-mode)
                            (name . "^\\*Org .*$")))
            ("SQL" (or (mode . sql-mode)
