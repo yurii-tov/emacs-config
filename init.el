@@ -151,6 +151,7 @@
   (define-key search-map (kbd "f") 'find-dired)
   (define-key search-map (kbd "m") 'count-matches)
   (define-key search-map (kbd "g") 'rgrep)
+  (define-key search-map (kbd "b") 'browse-url)
   (define-key search-map (kbd "t") 'translate-en-ru-online))
 
 
