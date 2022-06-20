@@ -149,7 +149,6 @@
 
 (progn
   (define-key search-map (kbd "f") 'find-dired)
-  (define-key search-map (kbd "m") 'count-matches)
   (define-key search-map (kbd "g") 'rgrep)
   (define-key search-map (kbd "b") 'browse-url)
   (define-key search-map (kbd "t") 'translate-en-ru-online))
@@ -1070,7 +1069,18 @@ Example:
          isearch-new-message isearch-new-string)))
 
 
+(defun isearch-count-matches ()
+  (interactive)
+  (with-isearch-suspended
+   (let ((matches (count-matches isearch-new-string
+                                 (point-min)
+                                 (point-max))))
+     (setq isearch-new-message
+           (format "[%s] %s" matches isearch-string)))))
+
+
 (progn
+  (define-key isearch-mode-map (kbd "M-m") 'isearch-count-matches)
   (define-key isearch-mode-map (kbd "M-q") 'isearch-query-replace)
   (define-key isearch-mode-map (kbd "M-.") 'isearch-append-wildcard)
   (define-key isearch-mode-map (kbd "C-SPC") 'isearch-select-search-string))
