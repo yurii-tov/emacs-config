@@ -1173,6 +1173,23 @@ Example:
 (add-hook 'ibuffer-mode-hook 'ibuffer-custom-setup)
 
 
+;; Enhance ibuffer-filter-disable (i.e. "//" command) with 'switch to last filter' ability
+
+
+(defun ibuffer-toggle-last-filter (f &rest args)
+  "When there is no active filters, switches to last filter we used;
+   Otherwise, removes filtering"
+  (if ibuffer-filtering-qualifiers
+      (progn (setq-local last-filter ibuffer-filtering-qualifiers)
+             (apply f args))
+    (when (boundp 'last-filter)
+      (setq ibuffer-filtering-qualifiers last-filter)
+      (ibuffer-update nil))))
+
+
+(advice-add 'ibuffer-filter-disable :around 'ibuffer-toggle-last-filter)
+
+
 ;; =====
 ;; tramp
 ;; =====
