@@ -2287,7 +2287,7 @@ Process .+
 
 
 (defun browser-search-duck-duck-go (query)
-  (interactive "sSearch in Internet: ")
+  (interactive "sSearch DuckDuckGo: ")
   (browse-url (format "https://duckduckgo.com?q=%s" query)))
 
 
