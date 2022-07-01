@@ -150,7 +150,8 @@
 (progn
   (define-key search-map (kbd "f") 'find-dired)
   (define-key search-map (kbd "g") 'rgrep)
-  (define-key search-map (kbd "b") 'browse-url)
+  (define-key search-map (kbd "M-s") 'browser-search-duck-duck-go)
+  (define-key search-map (kbd "s") 'browse-url)
   (define-key search-map (kbd "t") 'translate-en-ru-online))
 
 
@@ -2260,9 +2261,12 @@ Process .+
      (format "*ffmpeg capture → %s*" file))))
 
 
-;; ===
+;; ============
+;; web browsing
+;; ============
+
+
 ;; eww
-;; ===
 
 
 (with-eval-after-load 'eww
@@ -2277,6 +2281,14 @@ Process .+
   ;; Use monospaced fonts by default
   (setq shr-use-fonts nil)
   (setq shr-inhibit-images t))
+
+
+;; GUI browser
+
+
+(defun browser-search-duck-duck-go (query)
+  (interactive "sSearch in Internet: ")
+  (browse-url (format "https://duckduckgo.com?q=%s" query)))
 
 
 ;; ===========================
