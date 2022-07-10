@@ -150,8 +150,7 @@
 (progn
   (define-key search-map (kbd "f") 'find-dired)
   (define-key search-map (kbd "g") 'rgrep)
-  (define-key search-map (kbd "M-s") 'browser-search-duck-duck-go)
-  (define-key search-map (kbd "s") 'browse-url)
+  (define-key search-map (kbd "s") 'browse-url-or-search)
   (define-key search-map (kbd "t") 'translate-en-ru-online))
 
 
@@ -2286,9 +2285,11 @@ Process .+
 ;; GUI browser
 
 
-(defun browser-search-duck-duck-go (query)
-  (interactive "sSearch DuckDuckGo: ")
-  (browse-url (format "https://duckduckgo.com?q=%s" query)))
+(defun browse-url-or-search (query)
+  (interactive "sURL/search query: ")
+  (if (string-match-p "^[a-zA-Z0-9]+://" query)
+      (browse-url query)
+    (browse-url (format "https://duckduckgo.com?q=%s" query))))
 
 
 ;; ===========================
