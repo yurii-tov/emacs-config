@@ -1112,7 +1112,7 @@ Example:
             #'ibuffer-colorize-process-info)
 
 
-(defun ibuffer-custom-setup ()
+(defun ibuffer-setup-filter-groups ()
   (setq ibuffer-saved-filter-groups
         '(("default"
            ("Dired" (mode . dired-mode))
@@ -1166,11 +1166,17 @@ Example:
            ("Tramp" (name . "^\\*tramp.*$"))
            ("System" (or (name . "^\\*scratch\\*$")
                          (name . "^\\*Messages\\*$"))))))
-  (ibuffer-switch-to-saved-filter-groups "default")
+  (ibuffer-switch-to-saved-filter-groups "default"))
+
+
+(add-hook 'ibuffer-mode-hook 'ibuffer-setup-filter-groups)
+
+
+(defun ibuffer-setup-keybindings ()
   (local-unset-key (kbd "M-o")))
 
 
-(add-hook 'ibuffer-mode-hook 'ibuffer-custom-setup)
+(add-hook 'ibuffer-mode-hook 'ibuffer-setup-keybindings)
 
 
 ;; Enhance ibuffer-filter-disable (i.e. "//" command) with 'switch to last filter' ability
