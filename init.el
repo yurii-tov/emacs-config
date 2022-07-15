@@ -367,7 +367,7 @@
 ;; base16-theme
 
 
-(setq base16-distinct-fringe-background nil)
+(setq base16-theme-distinct-fringe-background nil)
 
 
 ;;;; fix modeline contrast in some base16 themes
@@ -401,7 +401,7 @@
 
 
 (defun base16-theme-colors (theme)
-  (eval (intern (concat (symbol-name theme) "-colors"))))
+  (eval (intern (concat (symbol-name theme) "-theme-colors"))))
 
 
 (defun base16-color-contrast (colors a b)
