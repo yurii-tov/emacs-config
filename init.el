@@ -605,6 +605,23 @@
 (add-hook 'dired-hide-details-mode-hook 'dired-custom-highlight)
 
 
+;;;; set custom names for "find" buffers
+
+
+(defun find-dired-rename-buffer (f &rest args)
+  (let* ((dir (file-name-base (directory-file-name (car args))))
+         (name (format "*find [%s]*" dir)))
+    (apply f args)
+    (set (make-local-variable 'revert-buffer-function)
+         `(lambda (ignore-auto noconfirm)
+            (kill-buffer (current-buffer))
+            (apply #'find-dired ',args)))
+    (rename-buffer name t)))
+
+
+(advice-add 'find-dired :around #'find-dired-rename-buffer)
+
+
 ;; copy full names of files to clipboard
 
 
