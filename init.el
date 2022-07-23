@@ -2270,9 +2270,7 @@ Process .+
   "Translate from english to russian or vice versa (depending on query)"
   (interactive)
   (let* ((default-directory "~")
-         (query (if (use-region-p)
-                    (buffer-substring (region-beginning) (region-end))
-                  (or query (read-string "Translate: "))))
+         (query (or query (read-string "Translate: " (word-at-point))))
          (en-ru `((command . ,(concat "bash -c \"curl -sL '%s"
                                       "' | sed -rn '/span class=.trans/ {s:.*<span.*>(.*[^ ]) *<.span>.*:\\1:g ; p}'"
                                       " | sort | uniq\""))
