@@ -1139,12 +1139,15 @@ Example:
 
 
 (defun ibuffer-colorize-process-info (s)
-  (if (string-match "^([^)]+)" s)
-      (let ((i (match-end 0)))
-        (set-text-properties
-         0 i '(face font-lock-builtin-face) s)
-        s)
-    s))
+  (let* ((process-indicator "^([^)]+)"))
+    (if (string-match process-indicator s)
+        (let ((s (replace-regexp-in-string
+                  process-indicator
+                  "•" s)))
+          (set-text-properties
+           0 1 '(face font-lock-builtin-face) s)
+          s)
+      s)))
 
 
 (advice-add 'ibuffer-make-column-filename-and-process
