@@ -1145,7 +1145,7 @@ Example:
                   process-indicator
                   "•" s)))
           (set-text-properties
-           0 1 '(face font-lock-builtin-face) s)
+           0 1 '(face (:foreground "#00cc00")) s)
           s)
       s)))
 
