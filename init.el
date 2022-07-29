@@ -456,17 +456,12 @@
          (end (region-end))
          (lines (count-lines start end))
          (words (count-words start end))
-         (chars (- end start))
-         (face-base '(:background "#bbffbb" :foreground "black"))
-         (face-value '(:background "#bbffbb" :foreground "blue" :weight bold)))
-    (concat
-     (propertize "[lines:" 'face face-base)
-     (propertize (format "%d" lines) 'face face-value)
-     (propertize " words:" 'face face-base)
-     (propertize (format "%d" words) 'face face-value)
-     (propertize " chars:" 'face face-base)
-     (propertize (format "%d" chars) 'face face-value)
-     (propertize "]" 'face face-base))))
+         (chars (- end start)))
+    (propertize (format "%d line%s, %d word%s, %d char%s"
+                        lines (if (= lines 1) "" "s")
+                        words (if (= words 1) "" "s")
+                        chars (if (= chars 1) "" "s"))
+                'face 'mode-line-emphasis)))
 
 
 (setq-default mode-line-format
@@ -481,8 +476,8 @@
                 " "
                 mode-line-buffer-identification
                 "   "
-                (:eval (when (use-region-p) (concat (count-lwc) " ")))
                 (:eval (propertize "%l:%C" 'face 'font-lock-builtin-face))
+                (:eval (when (use-region-p) (format "  %s " (count-lwc))))
                 (vc-mode vc-mode)
                 "  " mode-line-modes
                 mode-line-misc-info
