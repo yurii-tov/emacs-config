@@ -1585,6 +1585,13 @@ Example input:
           'modify-comint-isearch-keymap)
 
 
+;; disable display-line-numbers-mode
+
+
+(add-hook 'comint-mode-hook
+          '(lambda () (display-line-numbers-mode -1)))
+
+
 ;; =====
 ;; shell
 ;; =====
