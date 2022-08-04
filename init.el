@@ -110,6 +110,7 @@
                        (format "%1$s\\mingw64\\bin;%1$s\\usr\\bin;%s"
                                (replace-regexp-in-string "/" "\\\\" msys)
                                (getenv "PATH")))
+               (setenv "LC_ALL" "en_GB.UTF-8")
                (add-to-list 'exec-path (format "%s/usr/bin" msys))
                (add-to-list 'exec-path (format "%s/mingw64/bin" msys))
                (setq shell-file-name "bash"))
