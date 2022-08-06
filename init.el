@@ -1235,6 +1235,13 @@ Example:
 (advice-add 'ibuffer-filter-disable :around 'ibuffer-toggle-last-filter)
 
 
+;; disable display-line-numbers-mode
+
+
+(add-hook 'ibuffer-mode-hook
+          '(lambda () (display-line-numbers-mode -1)))
+
+
 ;; =====
 ;; tramp
 ;; =====
