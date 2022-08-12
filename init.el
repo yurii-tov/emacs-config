@@ -1937,7 +1937,7 @@ Process .+
     `(lambda (string)
        (if (and string
                 (not (string-match "\\*\\*\\* .* \\*\\*\\*" string))
-                (string-match "^select .*;$" (ring-ref comint-input-ring 0))) ;; if last command was 'select'...
+                (string-match "select .*from .*;\\|--.*:pprint" (ring-ref comint-input-ring 0))) ;; if last command was 'select'...
            (let ((current-command-index (cadr comint-input-ring)))
              (unless (= current-command-index (car comint-last-command))
                (setq-local comint-last-command (cons current-command-index ""))) ;; reset output accumulator if needed
