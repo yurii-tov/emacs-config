@@ -1932,6 +1932,12 @@ Process .+
 
 
 (defun make-sql-output-preprocessor (table-parser)
+  "Setup sqli output preprocessing using db-specific output parser
+   Features available:
+   - Slurping raw output and turning it into pretty org-mode table
+     This behavior is applied automatically for select statements;
+     You can also force pretty-printing by using special '-- :pprint' comment at end of a statement
+   - Output data to csv file using syntax '-- :out /path/to/file.csv[separator]'"
   (let ((prettify `(lambda (text)
                      (let ((table (funcall ',table-parser text)))
                        (when table
