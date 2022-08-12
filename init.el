@@ -1922,10 +1922,16 @@ Process .+
 (advice-add 'sql-comint :around 'sql-handle-remote-db)
 
 
-;; pretty-printing result sets using org-mode
+;; output preprocessing
 
 
-(defun make-sql-table-pprint-filter (table-parser)
+(defun sqli-convert-to-csv (table-parser text separator)
+  (string-join (mapcar (lambda (r) (string-join r separator))
+                       (funcall table-parser text))
+               "\n"))
+
+
+(defun make-sql-output-preprocessor (table-parser)
   (let ((prettify `(lambda (text)
                      (let ((table (funcall ',table-parser text)))
                        (when table
@@ -1935,45 +1941,50 @@ Process .+
                                                    '(hline))
                                            nil))))))
     `(lambda (string)
-       (if (and string
-                (not (string-match "\\*\\*\\* .* \\*\\*\\*" string))
-                (string-match "select .*from .*;\\|--.*:pprint" (ring-ref comint-input-ring 0))) ;; if last command was 'select'...
-           (let ((current-command-index (cadr comint-input-ring)))
-             (unless (= current-command-index (car comint-last-command))
-               (setq-local comint-last-command (cons current-command-index ""))) ;; reset output accumulator if needed
-             (setq-local comint-last-command
-                         (cons current-command-index
-                               (concat (cdr comint-last-command)
-                                       string))) ;; accumulate another output chunk
-             (when (string-match comint-prompt-regexp string) ;; when we have prompt string in another output chunk, ...
-               (let* ((payload-raw (cdr comint-last-command)) ;; get all accumulated output...
-                      (prompt-index (string-match comint-prompt-regexp payload-raw))
-                      (prompt (substring payload-raw prompt-index))
-                      (payload (string-trim (replace-regexp-in-string
-                                             comint-prompt-regexp
-                                             ""
-                                             payload-raw)))) ;; then cut prompt from payload
-                 (sql-reset-last-command)
-                 (format "%s%s"
-                         (if (string-to-list payload) ;; if payload is non-empty...
-                             (format "%s\n" (or (funcall ,prettify payload) payload)) ;; then try to convert it into pretty table
-                           "")
-                         prompt))))
-         string)))) ;; else return input unchanged
+       (let ((last-command (ring-ref comint-input-ring 0)))
+         (if (and (string-match "select .*from .*;\\|--.*:pprint\\|--.*:out " last-command)
+                  (not (string-match "\\*\\*\\* .* \\*\\*\\*" string)))
+             (let ((current-command-index (cadr comint-input-ring)))
+               (unless (= current-command-index (car comint-last-command))
+                 (setq-local comint-last-command (cons current-command-index ""))) ;; reset output accumulator if needed
+               (setq-local comint-last-command
+                           (cons current-command-index
+                                 (concat (cdr comint-last-command)
+                                         string))) ;; accumulate another output chunk
+               (when (string-match comint-prompt-regexp string) ;; when we have prompt string in another output chunk, ...
+                 (let* ((payload-raw (cdr comint-last-command)) ;; get all accumulated output...
+                        (prompt-index (string-match comint-prompt-regexp payload-raw))
+                        (prompt (substring payload-raw prompt-index))
+                        (payload (string-trim (replace-regexp-in-string
+                                               comint-prompt-regexp
+                                               ""
+                                               payload-raw)))) ;; then cut prompt from payload
+                   (sql-reset-last-command)
+                   (if (string-to-list payload) ;; if payload is non-empty...
+                       (if (string-match "--.*:out \\(.*.csv\\)\\(.?\\)" last-command)
+                           (progn (with-temp-file (match-string 1 last-command)
+                                    (insert (sqli-convert-to-csv
+                                             ',table-parser
+                                             payload
+                                             (string (or (car (string-to-list (match-string 2 last-command))) 44)))))
+                                  prompt)
+                         (format "%s\n%s" (or (funcall ,prettify payload) payload) prompt))
+                     prompt))))
+           string))))) ;; else return input unchanged
 
 
-(defun sql-setup-pprint-tables ()
+(defun sql-setup-output-preprocessing ()
   (let ((table-parser (sql-get-product-feature sql-product :table-parser)))
     (when table-parser
       (ring-insert comint-input-ring "--tables pprint enabled") ;; hack for preventing influence of previous history on startup
       (setq-local comint-preoutput-filter-functions
                   (cons (car comint-preoutput-filter-functions)
-                        (cons (make-sql-table-pprint-filter table-parser)
+                        (cons (make-sql-output-preprocessor table-parser)
                               (cdr comint-preoutput-filter-functions)))))))
 
 
 (add-hook 'sql-login-hook
-          'sql-setup-pprint-tables)
+          'sql-setup-output-preprocessing)
 
 
 ;;;; provide alternative table view (for tables which is too wide)
