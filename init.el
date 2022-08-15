@@ -1943,9 +1943,9 @@ Process .+
                        `((select-p ,(string-match "select .*from " last-command))
                          (pprint-p ,(string-match "--.*:pprint" last-command))
                          (out-file ,(when (string-match "--.*:out \\(.*.csv\\)" last-command)
-                                      (match-string 1 last-command)))
+                                      (match-string-no-properties 1 last-command)))
                          (out-separator ,(when (string-match "--.*:out .*.csv\\(.?\\)" last-command)
-                                           (string (or (car (string-to-list (match-string 1 last-command))) 44))))
+                                           (string (or (car (string-to-list (match-string-no-properties 1 last-command))) 44))))
                          (service-message-p ,(string-match "^\\*\\*\\* .* \\*\\*\\*$" string))
                          (payload ""))))
          (if (and (or (cadr (assoc 'select-p sql-output-accumulator))
@@ -1962,22 +1962,23 @@ Process .+
                               string))
                     ;; update accumulated payload
                     (payload (setf (cadr (assoc 'payload sql-output-accumulator))
-                                   (concat (cadr (assoc 'payload sql-output-accumulator)) string))))
+                                   (concat (cadr (assoc 'payload sql-output-accumulator)) string)))
+                    (out-file (cadr (assoc 'out-file sql-output-accumulator)))
+                    (out-separator (cadr (assoc 'out-separator sql-output-accumulator))))
                ;; we have prompt in last output chunk => time to finalize
                (when prompt
-                 ;; reset output accumulator
-                 (setq-local sql-output-accumulator nil)
                  ;; if payload is non-empty...
-                 (if (string-to-list payload)
-                     (if (cadr (assoc 'out-file sql-output-accumulator))
-                         (progn (with-temp-file (cadr (assoc 'out-file sql-output-accumulator))
-                                  (insert (sqli-convert-to-csv
-                                           ',table-parser
-                                           payload
-                                           (cadr (assoc 'out-separator sql-output-accumulator)))))
-                                prompt)
-                       (format "%s\n%s" (or (funcall ,prettify payload) payload) prompt))
-                   prompt)))
+                 (prog1 (if (string-to-list payload)
+                            (if out-file
+                                (progn (with-temp-file out-file
+                                         (insert (sqli-convert-to-csv
+                                                  ',table-parser
+                                                  payload
+                                                  out-separator)))
+                                       prompt)
+                              (format "%s\n%s" (or (funcall ,prettify payload) payload) prompt))
+                          prompt)
+                   (setq-local sql-output-accumulator nil))))
            (progn
              (setq-local sql-output-accumulator nil)
              string)))))) ;; else return input unchanged
