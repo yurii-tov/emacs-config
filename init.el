@@ -1778,17 +1778,6 @@ Example input:
 (add-hook 'sql-login-hook 'sql-perform-initial-commands)
 
 
-;; enable output accumulation
-
-
-(defun sql-reset-last-command ()
-  (setq-local comint-last-command (cons -1 "")))
-
-
-(add-hook 'sql-login-hook
-          'sql-reset-last-command)
-
-
 ;; reconnect
 
 
@@ -1947,35 +1936,30 @@ Process .+
                                                    '(hline))
                                            nil))))))
     `(lambda (string)
+       (unless (boundp 'sql-output-accumulator)
+         (setq-local sql-output-accumulator "")) ;; initialize output accumulator if needed
        (let ((last-command (ring-ref comint-input-ring 0)))
          (if (and (string-match "select .*from .*;\\|--.*:pprint\\|--.*:out " last-command)
-                  (not (string-match "\\*\\*\\* .* \\*\\*\\*" string)))
-             (let ((current-command-index (cadr comint-input-ring)))
-               (unless (= current-command-index (car comint-last-command))
-                 (setq-local comint-last-command (cons current-command-index ""))) ;; reset output accumulator if needed
-               (setq-local comint-last-command
-                           (cons current-command-index
-                                 (concat (cdr comint-last-command)
-                                         string))) ;; accumulate another output chunk
-               (when (string-match comint-prompt-regexp string) ;; when we have prompt string in another output chunk, ...
-                 (let* ((payload-raw (cdr comint-last-command)) ;; get all accumulated output...
-                        (prompt-index (string-match comint-prompt-regexp payload-raw))
-                        (prompt (substring payload-raw prompt-index))
-                        (payload (string-trim (replace-regexp-in-string
-                                               comint-prompt-regexp
-                                               ""
-                                               payload-raw)))) ;; then cut prompt from payload
-                   (sql-reset-last-command)
-                   (if (string-to-list payload) ;; if payload is non-empty...
-                       (if (string-match "--.*:out \\(.*.csv\\)\\(.?\\)" last-command)
-                           (progn (with-temp-file (match-string 1 last-command)
-                                    (insert (sqli-convert-to-csv
-                                             ',table-parser
-                                             payload
-                                             (string (or (car (string-to-list (match-string 2 last-command))) 44)))))
-                                  prompt)
-                         (format "%s\n%s" (or (funcall ,prettify payload) payload) prompt))
-                     prompt))))
+                  (not (string-match "^\\*\\*\\* .* \\*\\*\\*$" string)))
+             (progn (setq-local sql-output-accumulator (concat sql-output-accumulator string)) ;; accumulate another output chunk
+                    (when (string-match comint-prompt-regexp string) ;; when we have prompt string in another output chunk, ...
+                      (let* ((prompt-index (string-match comint-prompt-regexp sql-output-accumulator))
+                             (prompt (substring sql-output-accumulator prompt-index))
+                             (payload (string-trim (replace-regexp-in-string
+                                                    comint-prompt-regexp
+                                                    ""
+                                                    sql-output-accumulator)))) ;; then cut prompt from payload
+                        (setq-local sql-output-accumulator "") ;; reset output accumulator
+                        (if (string-to-list payload) ;; if payload is non-empty...
+                            (if (string-match "--.*:out \\(.*.csv\\)\\(.?\\)" last-command)
+                                (progn (with-temp-file (match-string 1 last-command)
+                                         (insert (sqli-convert-to-csv
+                                                  ',table-parser
+                                                  payload
+                                                  (string (or (car (string-to-list (match-string 2 last-command))) 44)))))
+                                       prompt)
+                              (format "%s\n%s" (or (funcall ,prettify payload) payload) prompt))
+                          prompt))))
            string))))) ;; else return input unchanged
 
 
