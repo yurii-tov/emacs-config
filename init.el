@@ -1937,6 +1937,7 @@ Process .+
                                            nil))))))
     `(lambda (string)
        (let ((last-command (ring-ref comint-input-ring 0)))
+         ;; Initialize output accumulator
          (when (or (not (boundp 'sql-output-accumulator))
                    (not sql-output-accumulator))
            (setq-local sql-output-accumulator
@@ -1947,12 +1948,17 @@ Process .+
                          (out-separator ,(when (string-match "--.*:out .*.csv\\(.?\\)" last-command)
                                            (string (or (car (string-to-list (match-string-no-properties 1 last-command))) 44))))
                          (service-message-p ,(string-match "^\\*\\*\\* .* \\*\\*\\*$" string))
-                         (payload ""))))
+                         (payload "")))
+           ;; Truncate output file, if needed
+           (let ((out-file (cadr (assoc 'out-file sql-output-accumulator))))
+             (when out-file (write-region "" nil out-file))))
          (if (and (or (cadr (assoc 'select-p sql-output-accumulator))
                       (cadr (assoc 'out-file sql-output-accumulator))
                       (cadr (assoc 'pprint-p sql-output-accumulator)))
                   (not (cadr (assoc 'service-message-p sql-output-accumulator))))
-             (let* ((prompt-index (string-match comint-prompt-regexp string))
+             (let* ((out-file (cadr (assoc 'out-file sql-output-accumulator)))
+                    (out-separator (cadr (assoc 'out-separator sql-output-accumulator)))
+                    (prompt-index (string-match comint-prompt-regexp string))
                     (prompt (when prompt-index (substring string prompt-index)))
                     ;; cut prompt from current output chunk, if needed
                     (string (if prompt (string-trim (replace-regexp-in-string
@@ -1960,23 +1966,22 @@ Process .+
                                                      ""
                                                      string))
                               string))
-                    ;; update accumulated payload
-                    (payload (setf (cadr (assoc 'payload sql-output-accumulator))
-                                   (concat (cadr (assoc 'payload sql-output-accumulator)) string)))
-                    (out-file (cadr (assoc 'out-file sql-output-accumulator)))
-                    (out-separator (cadr (assoc 'out-separator sql-output-accumulator))))
+                    (payload (unless out-file
+                               (setf (cadr (assoc 'payload sql-output-accumulator))
+                                     (concat (cadr (assoc 'payload sql-output-accumulator)) string)))))
+               (when out-file
+                 (write-region (format "%s\n"
+                                       (sqli-convert-to-csv
+                                        ',table-parser
+                                        string
+                                        out-separator))
+                               nil out-file t))
                ;; we have prompt in last output chunk => time to finalize
                (when prompt
                  ;; if payload is non-empty...
-                 (prog1 (if (string-to-list payload)
-                            (if out-file
-                                (progn (with-temp-file out-file
-                                         (insert (sqli-convert-to-csv
-                                                  ',table-parser
-                                                  payload
-                                                  out-separator)))
-                                       prompt)
-                              (format "%s\n%s" (or (funcall ,prettify payload) payload) prompt))
+                 (prog1 (if (and (string-to-list payload)
+                                 (not out-file))
+                            (format "%s\n%s" (or (funcall ,prettify payload) payload) prompt)
                           prompt)
                    (setq-local sql-output-accumulator nil))))
            (progn
@@ -2050,7 +2055,7 @@ Process .+
 
 (defun parse-sqlite-table (text)
   (unless (string-match "^Error: " text)
-    (mapcar (lambda (r) (split-string r "|"))
+    (mapcar (lambda (r) (mapcar #'string-trim (split-string r "|")))
             (let ((lines (split-string text "\n" t)))
               (if (string-match "^select .*;$" (car lines))
                   (cdr lines)
