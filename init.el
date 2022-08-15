@@ -1936,31 +1936,51 @@ Process .+
                                                    '(hline))
                                            nil))))))
     `(lambda (string)
-       (unless (boundp 'sql-output-accumulator)
-         (setq-local sql-output-accumulator "")) ;; initialize output accumulator if needed
        (let ((last-command (ring-ref comint-input-ring 0)))
-         (if (and (string-match "select .*from .*;\\|--.*:pprint\\|--.*:out " last-command)
-                  (not (string-match "^\\*\\*\\* .* \\*\\*\\*$" string)))
-             (progn (setq-local sql-output-accumulator (concat sql-output-accumulator string)) ;; accumulate another output chunk
-                    (when (string-match comint-prompt-regexp string) ;; when we have prompt string in another output chunk, ...
-                      (let* ((prompt-index (string-match comint-prompt-regexp sql-output-accumulator))
-                             (prompt (substring sql-output-accumulator prompt-index))
-                             (payload (string-trim (replace-regexp-in-string
-                                                    comint-prompt-regexp
-                                                    ""
-                                                    sql-output-accumulator)))) ;; then cut prompt from payload
-                        (setq-local sql-output-accumulator "") ;; reset output accumulator
-                        (if (string-to-list payload) ;; if payload is non-empty...
-                            (if (string-match "--.*:out \\(.*.csv\\)\\(.?\\)" last-command)
-                                (progn (with-temp-file (match-string 1 last-command)
-                                         (insert (sqli-convert-to-csv
-                                                  ',table-parser
-                                                  payload
-                                                  (string (or (car (string-to-list (match-string 2 last-command))) 44)))))
-                                       prompt)
-                              (format "%s\n%s" (or (funcall ,prettify payload) payload) prompt))
-                          prompt))))
-           string))))) ;; else return input unchanged
+         (when (or (not (boundp 'sql-output-accumulator))
+                   (not sql-output-accumulator))
+           (setq-local sql-output-accumulator
+                       `((select-p ,(string-match "select .*from " last-command))
+                         (pprint-p ,(string-match "--.*:pprint" last-command))
+                         (out-file ,(when (string-match "--.*:out \\(.*.csv\\)" last-command)
+                                      (match-string 1 last-command)))
+                         (out-separator ,(when (string-match "--.*:out .*.csv\\(.?\\)" last-command)
+                                           (string (or (car (string-to-list (match-string 1 last-command))) 44))))
+                         (service-message-p ,(string-match "^\\*\\*\\* .* \\*\\*\\*$" string))
+                         (payload ""))))
+         (if (and (or (cadr (assoc 'select-p sql-output-accumulator))
+                      (cadr (assoc 'out-file sql-output-accumulator))
+                      (cadr (assoc 'pprint-p sql-output-accumulator)))
+                  (not (cadr (assoc 'service-message-p sql-output-accumulator))))
+             (let* ((prompt-index (string-match comint-prompt-regexp string))
+                    (prompt (when prompt-index (substring string prompt-index)))
+                    ;; cut prompt from current output chunk, if needed
+                    (string (if prompt (string-trim (replace-regexp-in-string
+                                                     comint-prompt-regexp
+                                                     ""
+                                                     string))
+                              string))
+                    ;; update accumulated payload
+                    (payload (setf (cadr (assoc 'payload sql-output-accumulator))
+                                   (concat (cadr (assoc 'payload sql-output-accumulator)) string))))
+               ;; we have prompt in last output chunk => time to finalize
+               (when prompt
+                 ;; reset output accumulator
+                 (setq-local sql-output-accumulator nil)
+                 ;; if payload is non-empty...
+                 (if (string-to-list payload)
+                     (if (cadr (assoc 'out-file sql-output-accumulator))
+                         (progn (with-temp-file (cadr (assoc 'out-file sql-output-accumulator))
+                                  (insert (sqli-convert-to-csv
+                                           ',table-parser
+                                           payload
+                                           (cadr (assoc 'out-separator sql-output-accumulator)))))
+                                prompt)
+                       (format "%s\n%s" (or (funcall ,prettify payload) payload) prompt))
+                   prompt)))
+           (progn
+             (setq-local sql-output-accumulator nil)
+             string)))))) ;; else return input unchanged
 
 
 (defun sql-setup-output-preprocessing ()
