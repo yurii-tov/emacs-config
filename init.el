@@ -1973,7 +1973,7 @@ Process .+
                  (let* ((buffer (cadr (assoc 'buffer sql-output-accumulator)))
                         (body-p buffer)
                         (buffer (or buffer ""))
-                        (parsed (funcall ',table-parser string body-p))
+                        (parsed (funcall ',table-parser (string-join (list buffer string) "\n") body-p))
                         (table (car parsed))
                         (csv (string-join (mapcar (lambda (r) (string-join r out-separator)) table) "\n")))
                    (unless body-p
@@ -1987,21 +1987,21 @@ Process .+
                    (cl-incf (cadr (assoc 'chunks-written sql-output-accumulator)))))
                ;; we have prompt in last output chunk => time to finalize
                (when prompt
-                 (prog1 (format "%s%s%s%s"
-                                (if (string-to-list payload)
-                                    (format "%s\n" (or (funcall ,prettify payload) payload))
-                                  "")
-                                (let ((time-start (cadr (assoc 'time-start sql-output-accumulator))))
-                                  (format "-- Time elapsed: %fs\n"
-                                          (float-time (time-since time-start))))
-                                (let ((chunks-count (cadr (assoc 'chunks-count sql-output-accumulator)))
-                                      (chunks-written (cadr (assoc 'chunks-written sql-output-accumulator))))
-                                  (if (and out-file (not (= chunks-count chunks-written)))
-                                      (format "-- WARNING: Data lossage detected: total output chunks: %s, written to file: %s. Maybe should try toggle-debug-on-error\n"
-                                              chunks-count
-                                              chunks-written)
-                                    ""))
-                                prompt)
+                 (prog1 (let* ((time-start (cadr (assoc 'time-start sql-output-accumulator)))
+                               (time-elapsed (float-time (time-since time-start))))
+                          (format "%s%s%s%s"
+                                  (if (string-to-list payload)
+                                      (format "%s\n" (or (funcall ,prettify payload) payload))
+                                    "")
+                                  (format "-- Time elapsed: %fs\n" time-elapsed)
+                                  (let ((chunks-count (cadr (assoc 'chunks-count sql-output-accumulator)))
+                                        (chunks-written (cadr (assoc 'chunks-written sql-output-accumulator))))
+                                    (if (and out-file (not (= chunks-count chunks-written)))
+                                        (format "-- WARNING: Data lossage detected: total output chunks: %s, written to file: %s. Maybe should try toggle-debug-on-error\n"
+                                                chunks-count
+                                                chunks-written)
+                                      ""))
+                                  prompt))
                    (setq-local sql-output-accumulator nil))))
            (progn
              (setq-local sql-output-accumulator nil)
@@ -2050,13 +2050,13 @@ Process .+
 
 (defun parse-isql-table (text &optional body-p)
   (unless (string-match "Dynamic SQL Error" text)
-    (let* ((records-raw (split-string text "\n\n" t))
+    (let* ((records-raw (split-string (string-trim text) "\n\n" t))
            (records-raw-r (reverse records-raw))
            (overlap-p (let* ((a (car records-raw-r))
                              (b (or (cadr records-raw-r) a)))
                         (apply #'< (mapcar (lambda (x) (length (split-string x "\n" t)))
                                            (list a b)))))
-           (tail (if overlap-p (format "%s\n" (car records-raw-r)) ""))
+           (tail (if overlap-p (car records-raw-r) ""))
            (records-raw (if overlap-p (reverse (cdr records-raw-r)) records-raw))
            (records (mapcar (lambda (r) (mapcar (lambda (x) (list (replace-regexp-in-string " .+$" "" x)
                                                                   (string-trim (replace-regexp-in-string "^[^ ]+ +" "" x))))
