@@ -1914,21 +1914,17 @@ Process .+
 ;; output preprocessing
 
 
-(defun sqli-convert-to-csv (table-parser text separator)
-  (string-join (mapcar (lambda (r) (string-join r separator))
-                       (funcall table-parser text))
-               "\n"))
-
-
 (defun make-sql-output-preprocessor (table-parser)
   "Setup sqli output preprocessing using db-specific output parser
    Features available:
    - Slurping raw output and turning it into pretty org-mode table
      This behavior is applied automatically for select statements;
      You can also force pretty-printing by using special '-- :pprint' comment at end of a statement
-   - Output data to csv file using syntax '-- :out /path/to/file.csv[separator]'"
+   - Output data to csv file using syntax '-- :out /path/to/file.csv[separator]'
+     WARNING: There is data lossage on large amounts of output. (e.g. ~ >20000 records)
+     Can be avoided by turning on debug-on-error 🧙"
   (let ((prettify `(lambda (text)
-                     (let ((table (funcall ',table-parser text)))
+                     (let ((table (car (funcall ',table-parser text))))
                        (when table
                          (orgtbl-to-orgtbl (append (cons 'hline
                                                          (cons (car table)
@@ -1948,10 +1944,14 @@ Process .+
                          (out-separator ,(when (string-match "--.*:out .*.csv\\(.?\\)" last-command)
                                            (string (or (car (string-to-list (match-string-no-properties 1 last-command))) 44))))
                          (service-message-p ,(string-match "^\\*\\*\\* .* \\*\\*\\*$" string))
-                         (payload "")))
+                         (payload "")
+                         (time-start ,(current-time))
+                         (chunks-count 0)
+                         (chunks-written 0)))
            ;; Truncate output file, if needed
            (let ((out-file (cadr (assoc 'out-file sql-output-accumulator))))
              (when out-file (write-region "" nil out-file))))
+         (cl-incf (cadr (assoc 'chunks-count sql-output-accumulator)))
          (if (and (or (cadr (assoc 'select-p sql-output-accumulator))
                       (cadr (assoc 'out-file sql-output-accumulator))
                       (cadr (assoc 'pprint-p sql-output-accumulator)))
@@ -1970,19 +1970,38 @@ Process .+
                                (setf (cadr (assoc 'payload sql-output-accumulator))
                                      (concat (cadr (assoc 'payload sql-output-accumulator)) string)))))
                (when out-file
-                 (write-region (format "%s\n"
-                                       (sqli-convert-to-csv
-                                        ',table-parser
-                                        string
-                                        out-separator))
-                               nil out-file t))
+                 (let* ((buffer (cadr (assoc 'buffer sql-output-accumulator)))
+                        (body-p buffer)
+                        (buffer (or buffer ""))
+                        (parsed (funcall ',table-parser string body-p))
+                        (table (car parsed))
+                        (csv (string-join (mapcar (lambda (r) (string-join r out-separator)) table) "\n")))
+                   (unless body-p
+                     (push '(buffer nil) sql-output-accumulator))
+                   (setf (cadr (assoc 'buffer sql-output-accumulator))
+                         (cadr parsed))
+                   (write-region (format "%s\n" csv)
+                                 nil
+                                 out-file
+                                 body-p)
+                   (cl-incf (cadr (assoc 'chunks-written sql-output-accumulator)))))
                ;; we have prompt in last output chunk => time to finalize
                (when prompt
-                 ;; if payload is non-empty...
-                 (prog1 (if (and (string-to-list payload)
-                                 (not out-file))
-                            (format "%s\n%s" (or (funcall ,prettify payload) payload) prompt)
-                          prompt)
+                 (prog1 (format "%s%s%s%s"
+                                (if (string-to-list payload)
+                                    (format "%s\n" (or (funcall ,prettify payload) payload))
+                                  "")
+                                (let ((time-start (cadr (assoc 'time-start sql-output-accumulator))))
+                                  (format "-- Time elapsed: %fs\n"
+                                          (float-time (time-since time-start))))
+                                (let ((chunks-count (cadr (assoc 'chunks-count sql-output-accumulator)))
+                                      (chunks-written (cadr (assoc 'chunks-written sql-output-accumulator))))
+                                  (if (and out-file (not (= chunks-count chunks-written)))
+                                      (format "-- WARNING: Data lossage detected: total output chunks: %s, written to file: %s. Maybe should try toggle-debug-on-error\n"
+                                              chunks-count
+                                              chunks-written)
+                                    ""))
+                                prompt)
                    (setq-local sql-output-accumulator nil))))
            (progn
              (setq-local sql-output-accumulator nil)
@@ -2029,16 +2048,23 @@ Process .+
 (sql-set-product-feature 'interbase :init-commands '("set list on;"))
 
 
-(defun parse-isql-table (text)
+(defun parse-isql-table (text &optional body-p)
   (unless (string-match "Dynamic SQL Error" text)
     (let* ((records-raw (split-string text "\n\n" t))
+           (records-raw-r (reverse records-raw))
+           (overlap-p (let* ((a (car records-raw-r))
+                             (b (or (cadr records-raw-r) a)))
+                        (apply #'< (mapcar (lambda (x) (length (split-string x "\n" t)))
+                                           (list a b)))))
+           (tail (if overlap-p (format "%s\n" (car records-raw-r)) ""))
+           (records-raw (if overlap-p (reverse (cdr records-raw-r)) records-raw))
            (records (mapcar (lambda (r) (mapcar (lambda (x) (list (replace-regexp-in-string " .+$" "" x)
                                                                   (string-trim (replace-regexp-in-string "^[^ ]+ +" "" x))))
                                                 (split-string r "\n")))
                             records-raw))
            (header (mapcar #'car (car records)))
            (rows (mapcar (lambda (r) (mapcar #'cadr r)) records)))
-      (cons header rows))))
+      (list (if body-p rows (cons header rows)) tail))))
 
 
 (sql-set-product-feature 'interbase :table-parser 'parse-isql-table)
@@ -2053,13 +2079,14 @@ Process .+
 (sql-set-product-feature 'sqlite :init-commands '(".headers on"))
 
 
-(defun parse-sqlite-table (text)
+(defun parse-sqlite-table (text &optional ignored)
   (unless (string-match "^Error: " text)
-    (mapcar (lambda (r) (mapcar #'string-trim (split-string r "|")))
-            (let ((lines (split-string text "\n" t)))
-              (if (string-match "^select .*;$" (car lines))
-                  (cdr lines)
-                lines)))))
+    (list (mapcar (lambda (r) (mapcar #'string-trim (split-string r "|")))
+                  (let ((lines (split-string text "\n" t)))
+                    (if (string-match "^select .*;$" (car lines))
+                        (cdr lines)
+                      lines)))
+          "")))
 
 
 (sql-set-product-feature 'sqlite :table-parser 'parse-sqlite-table)
