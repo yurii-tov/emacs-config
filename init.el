@@ -1889,7 +1889,7 @@ Process .+
                     `(lambda ()
                        (unwind-protect
                            (progn (when (get-buffer-process (current-buffer))
-                                    (ring-insert comint-input-ring "--remote db cleanup")
+                                    (ring-insert comint-input-ring ";")
                                     (process-send-eof))
                                   (when (and (file-exists-p ,sql-database-copy)
                                              (not (equal (file-attribute-modification-time (file-attributes ,sql-database-original))
@@ -2011,7 +2011,7 @@ Process .+
 (defun sql-setup-output-preprocessing ()
   (let ((table-parser (sql-get-product-feature sql-product :table-parser)))
     (when table-parser
-      (ring-insert comint-input-ring "--tables pprint enabled") ;; hack for preventing influence of previous history on startup
+      (ring-insert comint-input-ring ";") ;; hack for preventing influence of previous history on startup
       (setq-local comint-preoutput-filter-functions
                   (cons (car comint-preoutput-filter-functions)
                         (cons (make-sql-output-preprocessor table-parser)
