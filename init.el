@@ -1980,11 +1980,7 @@ Process .+
                      (push '(buffer nil) sql-output-accumulator))
                    (setf (cadr (assoc 'buffer sql-output-accumulator))
                          (cadr parsed))
-                   (write-region (format "%s\n" csv)
-                                 nil
-                                 out-file
-                                 body-p
-                                 -1)
+                   (write-region (format "%s\n" csv) nil out-file body-p -1)
                    (cl-incf (cadr (assoc 'chunks-written sql-output-accumulator)))))
                ;; we have prompt in last output chunk => time to finalize
                (when prompt
