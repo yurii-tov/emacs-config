@@ -142,7 +142,8 @@
   (define-key 'repls-map (kbd "p") 'run-python)
   (define-key 'repls-map (kbd "q") 'sql-connect)
   (define-key 'repls-map (kbd "k") 'cider-connect)
-  (define-key 'repls-map (kbd "K") 'cider-jack-in))
+  (define-key 'repls-map (kbd "K") 'cider-jack-in)
+  (define-key 'repls-map (kbd "g") 'run-groovy))
 
 
 ;; extending global search map
