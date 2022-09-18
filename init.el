@@ -2224,7 +2224,8 @@ Process .+
     ("sout" "System.out.println(\"\");")
     ("sof" "System.out.printf(\"\");")
     ("sf" "String.format(\"\");")
-    ("fori" "for (int i = 0; i < 42; i++) {\n\n}")))
+    ("fori" "for (int i = 0; i < 42; i++) {\n\n}")
+    ("try" "try {\n\n} catch (Exception e) {\nthrow new RuntimeException(e);\n}")))
 
 
 ;; =======
