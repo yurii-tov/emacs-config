@@ -136,7 +136,9 @@
 (progn
   (define-prefix-command 'repls-map)
   (global-set-key (kbd "C-c j") 'repls-map)
-  (define-key 'repls-map (kbd "j") 'run-shell)
+  (define-key 'repls-map (kbd "j") 'run-default-shell)
+  (define-key 'repls-map (kbd "J") 'run-ssh-session)
+  (define-key 'repls-map (kbd "o") 'run-powershell)
   (define-key 'repls-map (kbd "i") 'ielm)
   (define-key 'repls-map (kbd "l") 'slime)
   (define-key 'repls-map (kbd "p") 'run-python)
@@ -1617,8 +1619,8 @@ Example input:
     (mapcar
      (lambda (x)
        (let ((wd (format "/sshx:%s:~" x)))
-         `(,x (file-name . "/bin/bash")
-              (working-directory . ,wd))))
+         `(,(concat "ssh-" x) (file-name . "/bin/bash")
+           (working-directory . ,wd))))
      hosts)))
 
 
@@ -1674,6 +1676,18 @@ Example input:
      `(lambda () (interactive)
         (comint-save-history)
         (run-shell ',preset (buffer-name))))))
+
+
+(defun run-default-shell ()
+  (interactive)
+  (run-shell (car shell-presets)))
+
+
+(defun run-ssh-session ()
+  (interactive)
+  (run-shell (assoc (ido-completing-read
+                     "Run ssh session: " (read-ssh-presets))
+                    shell-presets)))
 
 
 ;; ====================
@@ -2319,12 +2333,11 @@ Process .+
 (advice-add 'powershell :around 'powershell-setup-histfile)
 
 
-(when system-type-is-windows
-  (add-to-list 'shell-presets
-               '("powershell"
-                 (startup-fn . powershell)
-                 (codings . (cp866-dos cp866-dos)))
-               t))
+(defun run-powershell ()
+  (interactive)
+  (run-shell '("powershell"
+               (startup-fn . powershell)
+               (codings . (cp866-dos cp866-dos)))))
 
 
 ;; ================================
