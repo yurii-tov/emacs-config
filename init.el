@@ -1685,9 +1685,9 @@ Example input:
 
 (defun run-ssh-session ()
   (interactive)
-  (run-shell (assoc (ido-completing-read
-                     "Run ssh session: " (read-ssh-presets))
-                    shell-presets)))
+  (let* ((presets (read-ssh-presets))
+         (p (ido-completing-read "Run ssh session: " presets)))
+    (run-shell (assoc p presets))))
 
 
 ;; ====================
