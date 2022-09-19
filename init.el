@@ -1686,7 +1686,8 @@ Example input:
 (defun run-ssh-session ()
   (interactive)
   (let* ((presets (read-ssh-presets))
-         (p (ido-completing-read "Run ssh session: " presets)))
+         (p (ido-completing-read "Run ssh session: "
+                                 (mapcar #'car presets))))
     (run-shell (assoc p presets))))
 
 
