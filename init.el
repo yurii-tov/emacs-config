@@ -1608,27 +1608,20 @@ Example input:
 (require 'shell)
 
 
-(setq shell-presets
-      ;; Preset based on default shell
-      `((,(file-name-base shell-file-name))))
-
-
 (defun read-ssh-presets ()
   (let* ((default-directory "~")
          (hosts (split-string (shell-command-to-string "c=~/.ssh/config; [ -f $c ] && sed -n -e '/Host \\*/ d' -e 's:Host ::p' $c"))))
     (mapcar
      (lambda (x)
        (let ((wd (format "/sshx:%s:~" x)))
-         `(,(concat "ssh-" x) (file-name . "/bin/bash")
-           (working-directory . ,wd))))
+         `(,x (file-name . "/bin/bash")
+              (working-directory . ,wd))))
      hosts)))
 
 
-(defun run-shell (&optional preset buffer-name)
+(defun run-shell (preset &optional buffer-name)
   "M-x shell on steroids.
-   Start local or remote shell using set of presets (See `shell-presets' variable).
-   Also add presets based on ~/.ssh/config file
-   Each preset is a pair of (<\"preset-name\"> . <options-alist>)
+   Preset is a pair of (<\"preset-name\"> . <options-alist>)
    Legal values in options-alist are:
    |-------------------+------------------------------------------------|
    | option            | description                                    |
@@ -1642,13 +1635,7 @@ Example input:
    |                   | (List of two symbols, e.g. '(cp1251-dos utf-8) |
    |-------------------+------------------------------------------------|"
   (interactive)
-  (let* ((preset (or preset
-                     (let ((shell-presets (append shell-presets
-                                                  (read-ssh-presets))))
-                       (assoc (ido-completing-read
-                               "Shell: " (mapcar #'car shell-presets))
-                              shell-presets))))
-         (preset-name (car preset))
+  (let* ((preset-name (car preset))
          (shell-options (cdr preset))
          (startup-fn (alist-get 'startup-fn shell-options))
          (codings (alist-get 'codings shell-options))
@@ -1680,7 +1667,7 @@ Example input:
 
 (defun run-default-shell ()
   (interactive)
-  (run-shell (car shell-presets)))
+  (run-shell (list shell-file-name)))
 
 
 (defun run-ssh-session ()
@@ -1688,7 +1675,8 @@ Example input:
   (let* ((presets (read-ssh-presets))
          (p (ido-completing-read "Run ssh session: "
                                  (mapcar #'car presets))))
-    (run-shell (assoc p presets))))
+    (run-shell (cons (format "ssh-%s" p)
+                     (cdr (assoc p presets))))))
 
 
 ;; ====================
