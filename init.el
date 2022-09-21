@@ -2400,7 +2400,8 @@ Process .+
 
 (defun capture-video (file)
   (interactive "FCapture mp4 video to file: ")
-  (let ((default-directory (file-name-directory (file-truename file))))
+  (let ((*async-shell-command-ask-for-wd* nil)
+        (default-directory (file-name-directory (file-truename file))))
     (async-shell-command
      (format "ffmpeg -y -f gdigrab -i desktop -framerate 30 -pix_fmt yuv420p %s" file)
      (format "*ffmpeg capture → %s*" file))))
