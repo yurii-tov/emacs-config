@@ -1724,7 +1724,8 @@ Example input:
       (local-set-key
        (kbd "C-c C-j")
        `(lambda () (interactive)
-          (let* ((command (read-shell-command "Command: " shell-last-command))
+          (let* ((*async-shell-command-ask-for-wd* nil)
+                 (command (read-shell-command "Command: " shell-last-command))
                  (buffer (current-buffer))
                  (name (command-to-buffer-name command)))
             (when (get-buffer-process buffer)
@@ -1772,13 +1773,13 @@ Example input:
 ;; specify working directory for the command
 
 
+(defvar *async-shell-command-ask-for-wd* t)
+
+
 (defun async-shell-command-setup-wd (f &rest args)
-  (let ((default-directory (if current-prefix-arg
+  (let ((default-directory (if *async-shell-command-ask-for-wd*
                                (ido-read-directory-name "wd: ")
                              default-directory)))
-    (when current-prefix-arg
-      (setq args (reverse args))
-      (setq args (reverse (cons (car args) (cons nil (cddr args))))))
     (apply f args)))
 
 
