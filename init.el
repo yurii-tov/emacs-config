@@ -1769,6 +1769,22 @@ Example input:
 (advice-add 'async-shell-command :filter-return 'async-shell-command-setup-histfile)
 
 
+;; specify working directory for the command
+
+
+(defun async-shell-command-setup-wd (f &rest args)
+  (let ((default-directory (if current-prefix-arg
+                               (ido-read-directory-name "wd: ")
+                             default-directory)))
+    (when current-prefix-arg
+      (setq args (reverse args))
+      (setq args (reverse (cons (car args) (cons nil (cddr args))))))
+    (apply f args)))
+
+
+(advice-add 'async-shell-command :around 'async-shell-command-setup-wd)
+
+
 ;; ==========
 ;; SQL client
 ;; ==========
