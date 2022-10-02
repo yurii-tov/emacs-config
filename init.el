@@ -1684,7 +1684,7 @@ Example input:
 
 (defun run-default-shell ()
   (interactive)
-  (run-shell (list shell-file-name)))
+  (run-shell (list (file-name-base shell-file-name))))
 
 
 (defun run-ssh-session ()
