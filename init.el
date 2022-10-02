@@ -179,6 +179,7 @@
   (define-key 'text-transform-map (kbd "b") 'break-line)
   (define-key 'text-transform-map (kbd "f") 'flush-lines)
   (define-key 'text-transform-map (kbd "k") 'keep-lines)
+  (define-key 'text-transform-map (kbd "e") 'enumerate-lines)
   (define-key 'text-transform-map (kbd "<") 'wrap-with-tags)
   (define-key 'text-transform-map (kbd "\"") '(lambda () (interactive) (wrap-with-text "\"" "\"")))
   (define-key 'text-transform-map (kbd "'") '(lambda () (interactive) (wrap-with-text "'" "'")))
@@ -758,6 +759,22 @@
         (setq indexes (cl-remove i indexes))))
     (apply #'delete-region bounds)
     (insert (string-join shuffled "\n"))))
+
+
+(defun enumerate-lines ()
+  (interactive)
+  (let* ((bounds (if (use-region-p)
+                     (list (region-beginning)
+                           (region-end))
+                   (list (point-min)
+                         (point-max))))
+         (lines (split-string (apply #'buffer-substring bounds)
+                              "\n" t " *")))
+    (apply #'delete-region bounds)
+    (insert (string-join (cl-loop for i from 1 upto (length lines)
+                                  for x in lines
+                                  collect (format "%s %s" i x))
+                         "\n"))))
 
 
 (defun join-region ()
