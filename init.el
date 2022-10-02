@@ -184,7 +184,8 @@
   (define-key 'text-transform-map (kbd "'") '(lambda () (interactive) (wrap-with-text "'" "'")))
   (define-key 'text-transform-map (kbd "[") '(lambda () (interactive) (wrap-with-text "[" "]")))
   (define-key 'text-transform-map (kbd "{") '(lambda () (interactive) (wrap-with-text "{" "}")))
-  (define-key 'text-transform-map (kbd "(") '(lambda () (interactive) (wrap-with-text "(" ")"))))
+  (define-key 'text-transform-map (kbd "(") '(lambda () (interactive) (wrap-with-text "(" ")")))
+  (define-key 'text-transform-map (kbd "*") '(lambda () (interactive) (wrap-with-text "*" "*"))))
 
 
 ;; inserting things
