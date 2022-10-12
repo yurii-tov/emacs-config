@@ -2282,6 +2282,13 @@ Process .+
 (setq cider-show-error-buffer nil)
 
 
+(defun customize-cider-repl-keys ()
+  (local-unset-key (kbd "M-s")))
+
+
+(add-hook 'cider-repl-mode-hook 'customize-cider-repl-keys)
+
+
 ;; ==========
 ;; emacs lisp
 ;; ==========
