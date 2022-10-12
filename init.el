@@ -295,7 +295,8 @@
 ;; show line numbers
 
 
-(global-display-line-numbers-mode t)
+(dolist (x '(prog-mode-hook text-mode-hook))
+  (add-hook x 'display-line-numbers-mode))
 
 
 ;; no line-wrap indicators
@@ -1270,13 +1271,6 @@ Example:
 (advice-add 'ibuffer-filter-disable :around 'ibuffer-toggle-last-filter)
 
 
-;; disable display-line-numbers-mode
-
-
-(add-hook 'ibuffer-mode-hook
-          '(lambda () (display-line-numbers-mode -1)))
-
-
 ;; =====
 ;; tramp
 ;; =====
@@ -1626,13 +1620,6 @@ Example input:
 
 (add-hook 'comint-mode-hook
           'modify-comint-isearch-keymap)
-
-
-;; disable display-line-numbers-mode
-
-
-(add-hook 'comint-mode-hook
-          '(lambda () (display-line-numbers-mode -1)))
 
 
 ;; =====
