@@ -585,16 +585,13 @@
   (mapc #'open-in-external-app (dired-get-marked-files)))
 
 
-(with-eval-after-load 'dired
-  (define-key dired-mode-map
-    (kbd "M-s f f")
-    'find-dired)
-  (define-key dired-mode-map
-    (kbd "C-c C-o")
-    'dired-open-in-external-app)
-  (define-key dired-mode-map
-    (kbd "/")
-    'dired-hide-details-mode))
+(defun customize-dired-keys ()
+  (local-set-key (kbd "C-c C-o") 'dired-open-in-external-app)
+  (local-set-key (kbd "/") 'dired-hide-details-mode)
+  (local-unset-key (kbd "M-s")))
+
+
+(add-hook 'dired-mode-hook 'customize-dired-keys)
 
 
 (add-hook 'dired-mode-hook 'dired-hide-details-mode)
