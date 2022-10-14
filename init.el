@@ -2097,6 +2097,33 @@ Process .+
 (sql-set-product-feature 'sqlite :table-parser 'parse-sqlite-table)
 
 
+;; =====
+;; clang
+;; =====
+
+
+(setq clang-format (executable-find "clang-format"))
+
+
+(when clang-format
+  (defun clang-pretty-print-buffer ()
+    (interactive)
+    (let ((shell-file-name "sh")
+          (style (or (file-name-extension (or (buffer-file-name) ""))
+                     (replace-regexp-in-string "-mode" "" (symbol-name major-mode)))))
+      (shell-command-on-region (point-min)
+                               (point-max)
+                               (format "%s --assume-filename=.%s --style=Chromium"
+                                       clang-format
+                                       style)
+                               (current-buffer)
+                               t)))
+  (defun enable-clang-pretty-print-buffer ()
+    (local-set-key (kbd "C-c C-p") 'clang-pretty-print-buffer))
+  (dolist (x '(c-mode-common-hook js-mode-hook))
+    (add-hook x 'enable-clang-pretty-print-buffer)))
+
+
 ;; ===
 ;; xml
 ;; ===
