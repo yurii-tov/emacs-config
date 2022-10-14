@@ -1074,7 +1074,8 @@ Example:
 
 
 (with-eval-after-load 'ido
-  (define-key ido-file-dir-completion-map (kbd "C-c C-o") 'ido-open-in-external-app))
+  (define-key ido-file-dir-completion-map
+    (kbd "C-c C-o") 'ido-open-in-external-app))
 
 
 ;; =======
