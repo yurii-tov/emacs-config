@@ -1066,34 +1066,6 @@ Example:
     (minibuffer-keyboard-quit)))
 
 
-(defun ido-find-dired ()
-  (interactive)
-  (run-with-timer
-   0.3 nil
-   `(lambda ()
-      (find-dired
-       ,ido-current-directory
-       (read-string "Run find (with args): " find-args
-                    '(find-args-history . 1)))))
-  (minibuffer-keyboard-quit))
-
-
-(require 'grep)
-
-
-(defun ido-rgrep ()
-  (interactive)
-  (run-with-timer
-   0.3 nil
-   `(lambda ()
-      (grep-compute-defaults)
-      (let* ((regexp (grep-read-regexp))
-             (files (grep-read-files regexp))
-             (dir ,ido-current-directory))
-        (rgrep regexp files dir nil))))
-  (minibuffer-keyboard-quit))
-
-
 (defun ido-jump-to-completions ()
   (select-window (get-buffer-window ido-completion-buffer)))
 
@@ -1102,15 +1074,7 @@ Example:
 
 
 (with-eval-after-load 'ido
-  (define-key ido-file-dir-completion-map
-    (kbd "C-c C-o")
-    'ido-open-in-external-app)
-  (define-key ido-file-dir-completion-map
-    (kbd "M-r")
-    'ido-find-dired)
-  (define-key ido-file-dir-completion-map
-    (kbd "M-g")
-    'ido-rgrep))
+  (define-key ido-file-dir-completion-map (kbd "C-c C-o") 'ido-open-in-external-app))
 
 
 ;; =======
