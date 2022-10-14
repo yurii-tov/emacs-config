@@ -2418,6 +2418,18 @@ Process .+
       (browse-url (format "https://duckduckgo.com?q=%s" query)))))
 
 
+;; ===
+;; VCS
+;; ===
+
+
+(defun customize-log-edit-keys ()
+  (local-unset-key (kbd "M-s")))
+
+
+(add-hook 'log-edit-mode-hook 'customize-log-edit-keys)
+
+
 ;; ===========================
 ;; load site-specific settings
 ;; ===========================
