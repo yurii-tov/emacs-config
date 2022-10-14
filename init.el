@@ -2411,7 +2411,8 @@ Process .+
   (let ((query (read-string "URL/search query: "
                             (when (region-active-p)
                               (buffer-substring (region-beginning)
-                                                (region-end))))))
+                                                (region-end)))))
+        (browse-url-browser-function 'browse-url-default-browser))
     (if (string-match-p "^[a-zA-Z0-9]+://" query)
         (browse-url query)
       (browse-url (format "https://duckduckgo.com?q=%s" query)))))
