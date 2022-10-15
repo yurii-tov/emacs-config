@@ -2111,7 +2111,9 @@ Process .+
     (let* ((shell-file-name "sh")
            (extension (or (file-name-extension (or (buffer-file-name) ""))
                           (replace-regexp-in-string "-mode" "" (symbol-name major-mode))))
-           (style (if (equal extension "java") "Chromium" "WebKit")))
+           (style (if (equal extension "java")
+                      "'{BasedOnStyle: Chromium, ContinuationIndentWidth: 4, MaxEmptyLinesToKeep: 2}'"
+                    "WebKit")))
       (shell-command-on-region (point-min)
                                (point-max)
                                (format "%s --assume-filename=.%s --style=%s"
