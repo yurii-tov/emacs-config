@@ -2108,13 +2108,15 @@ Process .+
 (when clang-format
   (defun clang-pretty-print-buffer ()
     (interactive)
-    (let ((shell-file-name "sh")
-          (style (or (file-name-extension (or (buffer-file-name) ""))
-                     (replace-regexp-in-string "-mode" "" (symbol-name major-mode)))))
+    (let* ((shell-file-name "sh")
+           (extension (or (file-name-extension (or (buffer-file-name) ""))
+                          (replace-regexp-in-string "-mode" "" (symbol-name major-mode))))
+           (style (if (equal extension "java") "Chromium" "WebKit")))
       (shell-command-on-region (point-min)
                                (point-max)
-                               (format "%s --assume-filename=.%s --style=Chromium"
+                               (format "%s --assume-filename=.%s --style=%s"
                                        clang-format
+                                       extension
                                        style)
                                (current-buffer)
                                t)))
