@@ -609,8 +609,7 @@
 
 
 (defun find-dired-rename-buffer (f &rest args)
-  (let* ((dir (file-name-base (directory-file-name (car args))))
-         (name (format "*find [%s]*" dir)))
+  (let* ((name (file-name-base (directory-file-name (car args)))))
     (apply f args)
     (set (make-local-variable 'revert-buffer-function)
          `(lambda (ignore-auto noconfirm)
