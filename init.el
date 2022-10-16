@@ -2111,7 +2111,8 @@ Process .+
     (let* ((shell-file-name "sh")
            (extension (or (file-name-extension (or (buffer-file-name) ""))
                           (replace-regexp-in-string "-mode" "" (symbol-name major-mode))))
-           (style (if (equal extension "java")
+           (java-p (equal extension "java"))
+           (style (if java-p
                       "'{BasedOnStyle: Chromium, ContinuationIndentWidth: 4, MaxEmptyLinesToKeep: 2}'"
                     "WebKit")))
       (shell-command-on-region (point-min)
@@ -2121,7 +2122,17 @@ Process .+
                                        extension
                                        style)
                                (current-buffer)
-                               t)))
+                               t)
+      (when java-p
+        (save-excursion
+          (while (re-search-forward "\\(
+ *\\)->" nil t)
+            (replace-match " ->\\1  ")
+            (save-excursion
+              (backward-up-list)
+              (let ((s (point)))
+                (forward-sexp)
+                (indent-rigidly s (point) -3))))))))
   (defun enable-clang-pretty-print-buffer ()
     (local-set-key (kbd "C-c C-p") 'clang-pretty-print-buffer))
   (dolist (x '(c-mode-common-hook js-mode-hook))
