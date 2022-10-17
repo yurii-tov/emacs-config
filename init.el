@@ -241,7 +241,7 @@
          ("C-c z" zone)
          ("C-c v" capture-video)
          ("C-c p" copy-file-name-to-clipboard)
-         ("M-k" kill-whole-line)
+         ("M-k" kill-line-to-indentation)
          ("M-q" hippie-expand)
          ("C-v" scroll-up-5-lines)
          ("M-v" scroll-down-5-lines)
@@ -839,6 +839,19 @@
          (end-of-line)
          (next-line)
          (beginning-of-line))))
+
+
+(defun kill-line-to-indentation ()
+  "Kills line, leaving cursor at indentation.
+   In case of empty line, kills whole line"
+  (interactive)
+  (back-to-indentation)
+  (when (string-match-p "^[     ]*$"
+                        (buffer-substring
+                         (line-beginning-position)
+                         (line-end-position)))
+    (beginning-of-line))
+  (kill-line))
 
 
 (defun insert-from-kill-ring (text)
