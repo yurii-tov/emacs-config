@@ -133,18 +133,20 @@
 ;; dealing with keymaps boilerplate
 
 
-(defun bind-keys (keymap keybindings)
+(defun bind-keys (keybindings &optional keymap)
   (dotimes (i (length keybindings))
     (when (zerop (mod i 2))
-      (define-key keymap
-        (kbd (nth i keybindings))
-        (nth (1+ i) keybindings)))))
+      (let ((key (kbd (nth i keybindings)))
+            (command (nth (1+ i) keybindings)))
+        (if keymap
+            (define-key keymap key command)
+          (local-set-key key command))))))
 
 
 (defmacro define-custom-keymap (name prefix-key &rest bindings)
   `(progn (define-prefix-command ',name)
           (global-set-key (kbd ,prefix-key) ',name)
-          (bind-keys ',name ',bindings)))
+          (bind-keys ',bindings ',name)))
 
 
 ;; starting REPLs
@@ -166,11 +168,11 @@
 ;; extending global search map
 
 
-(bind-keys search-map
-           '("f" find-dired
+(bind-keys '("f" find-dired
              "g" rgrep
              "s" browse-url-or-search
-             "t" translate-en-ru-online))
+             "t" translate-en-ru-online)
+           search-map)
 
 
 ;; transforming text
@@ -236,8 +238,7 @@
 ;; misc
 
 
-(bind-keys global-map
-           '("M-x" smex
+(bind-keys '("M-x" smex
              "M-=" count-words
              "C-x C-b" ibuffer
              "C-x l" hl-line-mode
@@ -262,7 +263,8 @@
              "C-1" delete-other-windows
              "C-2" split-window-below
              "C-3" split-window-right
-             "C-0" delete-window))
+             "C-0" delete-window)
+           global-map)
 
 
 ;; =============
@@ -582,9 +584,8 @@
 
 
 (defun customize-dired-keys ()
-  (dolist (x '(("C-c C-o" dired-open-in-external-app)
-               ("/" dired-hide-details-mode)))
-    (local-set-key (kbd (car x)) (cadr x)))
+  (bind-keys '("C-c C-o" dired-open-in-external-app
+               "/" dired-hide-details-mode))
   (local-unset-key (kbd "M-s")))
 
 
@@ -1130,10 +1131,10 @@ Example:
          isearch-new-message isearch-new-string)))
 
 
-(bind-keys isearch-mode-map
-           '("M-q" isearch-query-replace
+(bind-keys '("M-q" isearch-query-replace
              "M-." isearch-append-wildcard
-             "C-SPC" isearch-select-search-string))
+             "C-SPC" isearch-select-search-string)
+           isearch-mode-map)
 
 
 ;; =======
@@ -1519,9 +1520,9 @@ Example input:
 ;; add useful keybindings
 
 
-(bind-keys comint-mode-map
-           '("C-c C-i" comint-quit-subjob
-             "C-c C-k" comint-kill-subjob))
+(bind-keys '("C-c C-i" comint-quit-subjob
+             "C-c C-k" comint-kill-subjob)
+           comint-mode-map)
 
 
 ;; browsing comint-input-ring
