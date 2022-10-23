@@ -175,6 +175,16 @@
            search-map)
 
 
+;; disable M-s overriding in all major modes
+
+
+(defun disable-search-map-overriding ()
+  (local-unset-key (kbd "M-s")))
+
+
+(add-hook 'after-change-major-mode-hook 'disable-search-map-overriding)
+
+
 ;; transforming text
 
 
@@ -585,8 +595,7 @@
 
 (defun customize-dired-keys ()
   (bind-keys '("C-c C-o" dired-open-in-external-app
-               "/" dired-hide-details-mode))
-  (local-unset-key (kbd "M-s")))
+               "/" dired-hide-details-mode)))
 
 
 (add-hook 'dired-mode-hook 'customize-dired-keys)
@@ -2307,13 +2316,6 @@ Process .+
 (setq cider-show-error-buffer nil)
 
 
-(defun customize-cider-repl-keys ()
-  (local-unset-key (kbd "M-s")))
-
-
-(add-hook 'cider-repl-mode-hook 'customize-cider-repl-keys)
-
-
 ;; ==========
 ;; emacs lisp
 ;; ==========
@@ -2479,18 +2481,6 @@ Process .+
     (if (string-match-p "^[a-zA-Z0-9]+://" query)
         (browse-url query)
       (browse-url (format "https://duckduckgo.com?q=%s" query)))))
-
-
-;; ===
-;; VCS
-;; ===
-
-
-(defun customize-log-edit-keys ()
-  (local-unset-key (kbd "M-s")))
-
-
-(add-hook 'log-edit-mode-hook 'customize-log-edit-keys)
 
 
 ;; ===========================
