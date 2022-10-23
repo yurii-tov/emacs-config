@@ -130,137 +130,139 @@
   (global-unset-key (kbd (format "M-%d" n))))
 
 
+;; dealing with keymaps boilerplate
+
+
+(defun bind-keys (keymap keybindings)
+  (dotimes (i (length keybindings))
+    (when (zerop (mod i 2))
+      (define-key keymap
+        (kbd (nth i keybindings))
+        (nth (1+ i) keybindings)))))
+
+
+(defmacro define-custom-keymap (name prefix-key &rest bindings)
+  `(progn (define-prefix-command ',name)
+          (global-set-key (kbd ,prefix-key) ',name)
+          (bind-keys ',name ',bindings)))
+
+
 ;; starting REPLs
 
 
-(progn
-  (define-prefix-command 'repls-map)
-  (global-set-key (kbd "C-c j") 'repls-map)
-  (define-key 'repls-map (kbd "j") 'run-default-shell)
-  (define-key 'repls-map (kbd "J") 'run-ssh-session)
-  (define-key 'repls-map (kbd "o") 'run-powershell)
-  (define-key 'repls-map (kbd "i") 'ielm)
-  (define-key 'repls-map (kbd "l") 'slime)
-  (define-key 'repls-map (kbd "p") 'run-python)
-  (define-key 'repls-map (kbd "q") 'sql-connect)
-  (define-key 'repls-map (kbd "k") 'cider-connect)
-  (define-key 'repls-map (kbd "K") 'cider-jack-in)
-  (define-key 'repls-map (kbd "g") 'run-groovy))
+(define-custom-keymap repls-map "C-c j"
+  "j" run-default-shell
+  "J" run-ssh-session
+  "o" run-powershell
+  "i" ielm
+  "l" slime
+  "p" run-python
+  "q" sql-connect
+  "k" cider-connect
+  "K" cider-jack-in
+  "g" run-groovy)
 
 
 ;; extending global search map
 
 
-(progn
-  (define-key search-map (kbd "f") 'find-dired)
-  (define-key search-map (kbd "g") 'rgrep)
-  (define-key search-map (kbd "s") 'browse-url-or-search)
-  (define-key search-map (kbd "t") 'translate-en-ru-online))
+(bind-keys search-map
+           '("f" find-dired
+             "g" rgrep
+             "s" browse-url-or-search
+             "t" translate-en-ru-online))
 
 
 ;; transforming text
 
 
-(progn
-  (define-prefix-command 'text-transform-map)
-  (global-set-key (kbd "M-c") 'text-transform-map)
-  (define-key 'text-transform-map (kbd "c") 'upcase-char)
-  (define-key 'text-transform-map (kbd "o") 'sort-lines)
-  (define-key 'text-transform-map (kbd "O") 'shuffle-lines)
-  (define-key 'text-transform-map (kbd "s") 'replace-string)
-  (define-key 'text-transform-map (kbd "r") 'replace-regexp)
-  (define-key 'text-transform-map (kbd "u") 'upcase-dwim)
-  (define-key 'text-transform-map (kbd "d") 'downcase-dwim)
-  (define-key 'text-transform-map (kbd "M-d") 'delete-duplicate-lines)
-  (define-key 'text-transform-map (kbd "M-c") 'duplicate-line)
-  (define-key 'text-transform-map (kbd "p") 'fill-paragraph)
-  (define-key 'text-transform-map (kbd "/") 'invert-slashes)
-  (define-key 'text-transform-map (kbd "j") 'join-region)
-  (define-key 'text-transform-map (kbd "b") 'break-line)
-  (define-key 'text-transform-map (kbd "f") 'flush-lines)
-  (define-key 'text-transform-map (kbd "k") 'keep-lines)
-  (define-key 'text-transform-map (kbd "e") 'enumerate-lines)
-  (define-key 'text-transform-map (kbd "<") 'wrap-with-tags)
-  (define-key 'text-transform-map (kbd "\"") '(lambda () (interactive) (wrap-with-text "\"" "\"")))
-  (define-key 'text-transform-map (kbd "'") '(lambda () (interactive) (wrap-with-text "'" "'")))
-  (define-key 'text-transform-map (kbd "[") '(lambda () (interactive) (wrap-with-text "[" "]")))
-  (define-key 'text-transform-map (kbd "{") '(lambda () (interactive) (wrap-with-text "{" "}")))
-  (define-key 'text-transform-map (kbd "(") '(lambda () (interactive) (wrap-with-text "(" ")")))
-  (define-key 'text-transform-map (kbd "*") '(lambda () (interactive) (wrap-with-text "*" "*"))))
+(define-custom-keymap text-transform-map "M-c"
+  "c" upcase-char
+  "o" sort-lines
+  "O" shuffle-lines
+  "s" replace-string
+  "r" replace-regexp
+  "u" upcase-dwim
+  "d" downcase-dwim
+  "M-d" delete-duplicate-lines
+  "M-c" duplicate-line
+  "p" fill-paragraph
+  "/" invert-slashes
+  "j" join-region
+  "b" break-line
+  "f" flush-lines
+  "k" keep-lines
+  "e" enumerate-lines
+  "<" wrap-with-tags
+  "\"" (lambda () (interactive) (wrap-with-text "\"" "\""))
+  "'" (lambda () (interactive) (wrap-with-text "'" "'"))
+  "[" (lambda () (interactive) (wrap-with-text "[" "]"))
+  "{" (lambda () (interactive) (wrap-with-text "{" "}"))
+  "(" (lambda () (interactive) (wrap-with-text "(" ")"))
+  "*" (lambda () (interactive) (wrap-with-text "*" "*")))
 
 
 ;; inserting things
 
 
-(progn
-  (define-prefix-command 'insert-map)
-  (global-set-key (kbd "C-x i") 'insert-map)
-  (define-key 'insert-map (kbd "f") 'insert-file)
-  (define-key 'insert-map (kbd "b") 'insert-buffer-name)
-  (define-key 'insert-map (kbd "B") 'insert-buffer)
-  (define-key 'insert-map (kbd "n") 'insert-char)
-  (define-key 'insert-map (kbd "i") 'insert-unicode)
-  (define-key 'insert-map (kbd "I") 'insert-unicode-group)
-  (define-key 'insert-map (kbd "j") 'insert-from-kill-ring)
-  (define-key 'insert-map (kbd "x") 'iso-transl-ctl-x-8-map))
+(define-custom-keymap insert-map "C-x i"
+  "f" insert-file
+  "b" insert-buffer-name
+  "B" insert-buffer
+  "n" insert-char
+  "i" insert-unicode
+  "I" insert-unicode-group
+  "j" insert-from-kill-ring
+  "x" iso-transl-ctl-x-8-map)
 
 
 ;; evaluating emacs lisp
 
 
-(progn
-  (define-prefix-command 'eval-elisp-map)
-  (global-set-key (kbd "C-c e") 'eval-elisp-map)
-  (define-key 'eval-elisp-map (kbd "e") 'eval-last-sexp)
-  (define-key 'eval-elisp-map (kbd "f") 'load-file)
-  (define-key 'eval-elisp-map (kbd "r") 'elisp-eval-region-or-buffer))
+(define-custom-keymap eval-elisp-map "C-c e"
+  "e" eval-last-sexp
+  "f" load-file
+  "r" elisp-eval-region-or-buffer)
 
 
 ;; diff
 
 
-(progn
-  (define-prefix-command 'diff-map)
-  (global-set-key (kbd "C-c d") 'diff-map)
-  (define-key 'diff-map (kbd "f") 'diff)
-  (define-key 'diff-map (kbd "b") 'diff-buffers))
+(define-custom-keymap diff-map "C-c d"
+  "f" diff
+  "b" diff-buffers)
 
 
 ;; misc
 
 
-(let ((bindings
-       '(("M-x" smex)
-         ("M-=" count-words)
-         ("C-x C-b" ibuffer)
-         ("C-x l" hl-line-mode)
-         ("M-l" (lambda () (interactive) (move-line 'up)))
-         ("C-M-l" (lambda () (interactive) (move-line 'down)))
-         ("C-c s" async-shell-command)
-         ("C-c n" make-scratch-buffer)
-         ("C-c z" zone)
-         ("C-c v" capture-video)
-         ("C-c p" copy-file-name-to-clipboard)
-         ("M-k" kill-line-to-indentation)
-         ("M-q" hippie-expand)
-         ("C-v" scroll-up-5-lines)
-         ("M-v" scroll-down-5-lines)
-         ("M-i" reindent-region)
-         ("M-u" force-revert-buffer)
-         ("C-c r" rename-buffer)
-         ("C-c h" hexl-mode)
-         ("C-c a" org-agenda)
-         ("C-c c" org-capture)
-         ("M-o" other-window)
-         ("C-1" delete-other-windows)
-         ("C-2" split-window-below)
-         ("C-3" split-window-right)
-         ("C-0" delete-window))))
-  (dolist (binding bindings)
-    (global-unset-key (kbd (car binding)))
-    (global-set-key
-     (kbd (car binding))
-     (cadr binding))))
+(bind-keys global-map
+           '("M-x" smex
+             "M-=" count-words
+             "C-x C-b" ibuffer
+             "C-x l" hl-line-mode
+             "M-l" (lambda () (interactive) (move-line 'up))
+             "C-M-l" (lambda () (interactive) (move-line 'down))
+             "C-c s" async-shell-command
+             "C-c n" make-scratch-buffer
+             "C-c z" zone
+             "C-c v" capture-video
+             "C-c p" copy-file-name-to-clipboard
+             "M-k" kill-line-to-indentation
+             "M-q" hippie-expand
+             "C-v" scroll-up-5-lines
+             "M-v" scroll-down-5-lines
+             "M-i" reindent-region
+             "M-u" force-revert-buffer
+             "C-c r" rename-buffer
+             "C-c h" hexl-mode
+             "C-c a" org-agenda
+             "C-c c" org-capture
+             "M-o" other-window
+             "C-1" delete-other-windows
+             "C-2" split-window-below
+             "C-3" split-window-right
+             "C-0" delete-window))
 
 
 ;; =============
@@ -580,8 +582,9 @@
 
 
 (defun customize-dired-keys ()
-  (local-set-key (kbd "C-c C-o") 'dired-open-in-external-app)
-  (local-set-key (kbd "/") 'dired-hide-details-mode)
+  (dolist (x '(("C-c C-o" dired-open-in-external-app)
+               ("/" dired-hide-details-mode)))
+    (local-set-key (kbd (car x)) (cadr x)))
   (local-unset-key (kbd "M-s")))
 
 
@@ -1127,10 +1130,10 @@ Example:
          isearch-new-message isearch-new-string)))
 
 
-(progn
-  (define-key isearch-mode-map (kbd "M-q") 'isearch-query-replace)
-  (define-key isearch-mode-map (kbd "M-.") 'isearch-append-wildcard)
-  (define-key isearch-mode-map (kbd "C-SPC") 'isearch-select-search-string))
+(bind-keys isearch-mode-map
+           '("M-q" isearch-query-replace
+             "M-." isearch-append-wildcard
+             "C-SPC" isearch-select-search-string))
 
 
 ;; =======
@@ -1336,9 +1339,7 @@ Example:
     (org-ctrl-c-ctrl-c)))
 
 
-(define-key org-mode-map
-  (kbd "C-c C-/")
-  'org-insert-checklist-status)
+(define-key org-mode-map (kbd "C-c C-/") 'org-insert-checklist-status)
 
 
 ;; babel
@@ -1518,8 +1519,9 @@ Example input:
 ;; add useful keybindings
 
 
-(define-key comint-mode-map (kbd "C-c C-i") 'comint-quit-subjob)
-(define-key comint-mode-map (kbd "C-c C-k") 'comint-kill-subjob)
+(bind-keys comint-mode-map
+           '("C-c C-i" comint-quit-subjob
+             "C-c C-k" comint-kill-subjob))
 
 
 ;; browsing comint-input-ring
