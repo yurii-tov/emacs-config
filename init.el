@@ -615,8 +615,17 @@
 ;;;; set custom names for "find" buffers
 
 
-(defun find-dired-rename-buffer (f &rest args)
-  (let* ((name (file-name-base (directory-file-name (car args)))))
+(defun find-dired-setup-buffer (f &rest args)
+  (let* ((working-directory (directory-file-name (car args)))
+         (name (file-name-base working-directory))
+         (existing (get-buffer name)))
+    (when (and existing
+               (equal (with-current-buffer existing
+                        (directory-file-name default-directory))
+                      working-directory)
+               (eq (with-current-buffer existing major-mode)
+                   'dired-mode))
+      (kill-buffer existing))
     (apply f args)
     (set (make-local-variable 'revert-buffer-function)
          `(lambda (ignore-auto noconfirm)
@@ -625,7 +634,7 @@
     (rename-buffer name t)))
 
 
-(advice-add 'find-dired :around #'find-dired-rename-buffer)
+(advice-add 'find-dired :around #'find-dired-setup-buffer)
 
 
 ;;;; display find-args in "find" buffers
