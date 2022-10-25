@@ -205,7 +205,7 @@
   "f" flush-lines
   "k" keep-lines
   "e" enumerate-lines
-  "<" wrap-with-tags
+  "<" (lambda () (interactive) (wrap-with-text "<" ">"))
   "\"" (lambda () (interactive) (wrap-with-text "\"" "\""))
   "'" (lambda () (interactive) (wrap-with-text "'" "'"))
   "[" (lambda () (interactive) (wrap-with-text "[" "]"))
@@ -2224,13 +2224,6 @@ Process .+
                border: 1px solid #ccc;
                <!-- text-align:center; -->
        }")))
-
-
-(defun wrap-with-tags (tag)
-  "Wrap current word (or region) with given xml tag"
-  (interactive "sTag: ")
-  (wrap-with-text (format "<%s>" tag)
-                  (format "</%s>" tag)))
 
 
 ;; reindent xml buffer with xmllint
