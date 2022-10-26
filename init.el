@@ -1228,6 +1228,7 @@ Example:
                          (mode . geiser-doc-mode)
                          (mode . geiser-debug-mode)))
            ("Clojure" (or (mode . clojure-mode)
+                          (mode . clojurescript-mode)
                           (mode . cider-repl-mode)
                           (name . "^\\*nrepl-server .*$")
                           (name . "^\\*cider-.*$")))
