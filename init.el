@@ -804,15 +804,18 @@
 
 (defun join-region ()
   (interactive)
-  (when (region-active-p)
-    (let ((separator (read-string "Join region with: "))
-          (text (buffer-substring
-                 (region-beginning)
-                 (region-end))))
-      (setq text (split-string text "\n" t " *"))
-      (setq text (string-join text separator))
-      (delete-active-region)
-      (insert text))))
+  (if (region-active-p)
+      (let ((separator (read-string "Join region with: "))
+            (text (buffer-substring (region-beginning)
+                                    (region-end))))
+        (setq text (split-string text "\n" t " *"))
+        (setq text (string-join text separator))
+        (delete-active-region)
+        (insert text))
+    (progn (back-to-indentation)
+           (let ((s (point)))
+             (re-search-backward "\n")
+             (delete-region s (point))))))
 
 
 (defun break-line ()
