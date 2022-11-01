@@ -805,24 +805,19 @@
 (defun join-region ()
   (interactive)
   (when (region-active-p)
-    (let ((separator (read-string "Join region with: "
-                                  (and (boundp 'break-line-separator)
-                                       break-line-separator)))
+    (let ((separator (read-string "Join region with: "))
           (text (buffer-substring
                  (region-beginning)
                  (region-end))))
       (setq text (split-string text "\n" t " *"))
       (setq text (string-join text separator))
       (delete-active-region)
-      (insert text)
-      (setq break-line-separator separator))))
+      (insert text))))
 
 
 (defun break-line ()
   (interactive)
-  (let ((separator (read-string "Break line with: "
-                                (and (boundp 'break-line-separator)
-                                     break-line-separator)))
+  (let ((separator (read-string "Break line with: "))
         (text (buffer-substring
                (line-beginning-position)
                (line-end-position))))
@@ -830,8 +825,7 @@
     (setq text (string-join text "\n"))
     (delete-region (line-beginning-position)
                    (line-end-position))
-    (insert text)
-    (setq break-line-separator separator)))
+    (insert text)))
 
 
 (defun wrap-with-text (b1 b2)
