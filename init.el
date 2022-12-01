@@ -1545,18 +1545,6 @@ Example input:
 ;; browsing comint-input-ring
 
 
-(defun comint-current-input ()
-  (let ((pmax (point-max)))
-    (save-excursion
-      (goto-char pmax)
-      (goto-char (search-backward-regexp "^"))
-      (let ((prompt-position (search-forward-regexp
-                              comint-prompt-regexp nil t)))
-        (when (and prompt-position
-                   (> pmax prompt-position))
-          (buffer-substring prompt-position pmax))))))
-
-
 (defun comint-query-input-ring (query)
   "Display `comint-input-ring' contents, optionally filtering it by text in command prompt"
   ;; most of code carved from comint.el, comint-dynamic-list-input-ring
