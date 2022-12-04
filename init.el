@@ -289,6 +289,12 @@
       inhibit-startup-echo-area-message t)
 
 
+;; maximize window on startup
+
+
+(add-hook 'emacs-startup-hook 'toggle-frame-maximized)
+
+
 ;; replace annoying confirmations with less annoying
 
 
