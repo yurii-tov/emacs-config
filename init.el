@@ -467,9 +467,6 @@
 ;; better modeline
 
 
-;;;; get region lines/words/chars counts
-
-
 (require 'hi-lock)
 
 
