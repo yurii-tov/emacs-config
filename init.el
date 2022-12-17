@@ -1741,7 +1741,7 @@ Example input:
 
 
 (defun command-to-buffer-name (command)
-  (let ((max-chars 80))
+  (let ((max-chars 40))
     (format "*%s*"
             (if (> (length command) max-chars)
                 (format "%s[...]" (substring command 0 max-chars))
@@ -1820,6 +1820,29 @@ Example input:
 
 
 (advice-add 'async-shell-command :around 'async-shell-command-setup-wd)
+
+
+;; output command/wd
+
+
+(defun async-shell-command-setup-echo (f &rest args)
+  (let* ((r (apply f args))
+         (b (if (windowp r)
+                (window-buffer r)
+              (process-buffer r)))
+         (p (get-buffer-process b)))
+    (prog1 r
+      (with-current-buffer b
+        (goto-char 1)
+        (message "%s" args)
+        (comint-output-filter
+         p (format "*** Command: %s ***\n*** wd: %s ***\n"
+                   (car args)
+                   default-directory))
+        (set-marker comint-last-input-end (point))))))
+
+
+(advice-add 'async-shell-command :around 'async-shell-command-setup-echo)
 
 
 ;; ==========
