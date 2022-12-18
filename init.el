@@ -1744,7 +1744,7 @@ Example input:
   (let ((max-chars 40))
     (format "*%s*"
             (if (> (length command) max-chars)
-                (format "%s[...]" (substring command 0 max-chars))
+                (format "%s…" (substring command 0 max-chars))
               command))))
 
 
