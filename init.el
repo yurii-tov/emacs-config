@@ -1834,7 +1834,6 @@ Example input:
     (prog1 r
       (with-current-buffer b
         (goto-char 1)
-        (message "%s" args)
         (comint-output-filter
          p (format "*** Command: %s ***\n*** wd: %s ***\n"
                    (car args)
