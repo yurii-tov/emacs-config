@@ -1121,7 +1121,7 @@ Example:
 
 (defun ido-filter-tramp (f &rest args)
   "Do not record remote paths, e.g. /ssh:host"
-  (unless (string-match-p "/[^/:]+:[^:]+:" default-directory)
+  (unless (file-remote-p default-directory)
     (apply f args)))
 
 
