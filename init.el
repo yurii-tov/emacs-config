@@ -1282,7 +1282,6 @@ Example:
 
 (defun ido-remove-tramp-from-cache ()
   "Remove any TRAMP entries from ido cache"
-  (interactive)
   (let ((remote-uri-pattern
          "/\\(rsh\\|ssh\\|telnet\\|su\\|sudo\\|sshx\\|krlogin\\|ksu\\|rcp\\|scp\\|rsync\\|scpx\\|fcp\\|nc\\|ftp\\|smb\\|adb\\|plinkx\\|pscp\\):"))
     (setq ido-dir-file-cache
@@ -1297,12 +1296,10 @@ Example:
            ido-work-directory-list))))
 
 
-;; redefine `ido-kill-emacs-hook' so that cache is cleaned before being saved
+(add-hook 'tramp-cleanup-all-connections-hook 'ido-remove-tramp-from-cache)
 
 
-(defun ido-kill-emacs-hook ()
-  (ido-remove-tramp-from-cache)
-  (ido-save-history))
+(add-hook 'kill-emacs-hook 'tramp-cleanup-all-connections)
 
 
 ;; ========
