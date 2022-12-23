@@ -1119,6 +1119,15 @@ Example:
     (kbd "C-c C-o") 'ido-open-in-external-app))
 
 
+(defun ido-filter-tramp (f &rest args)
+  "Do not record remote paths, e.g. /ssh:host"
+  (unless (string-match-p "/[^/:]+:[^:]+:" default-directory)
+    (apply f args)))
+
+
+(advice-add 'ido-record-work-directory :around 'ido-filter-tramp)
+
+
 ;; =======
 ;; isearch
 ;; =======
@@ -1273,33 +1282,6 @@ Example:
 
 
 (advice-add 'ibuffer-filter-disable :around 'ibuffer-toggle-last-filter)
-
-
-;; =====
-;; tramp
-;; =====
-
-
-(defun ido-remove-tramp-from-cache ()
-  "Remove any TRAMP entries from ido cache"
-  (let ((remote-uri-pattern
-         "/\\(rsh\\|ssh\\|telnet\\|su\\|sudo\\|sshx\\|krlogin\\|ksu\\|rcp\\|scp\\|rsync\\|scpx\\|fcp\\|nc\\|ftp\\|smb\\|adb\\|plinkx\\|pscp\\):"))
-    (setq ido-dir-file-cache
-          (cl-remove-if
-           (lambda (x)
-             (string-match remote-uri-pattern (car x)))
-           ido-dir-file-cache))
-    (setq ido-work-directory-list
-          (cl-remove-if
-           (lambda (s)
-             (string-match remote-uri-pattern s))
-           ido-work-directory-list))))
-
-
-(add-hook 'tramp-cleanup-all-connections-hook 'ido-remove-tramp-from-cache)
-
-
-(add-hook 'kill-emacs-hook 'tramp-cleanup-all-connections)
 
 
 ;; ========
