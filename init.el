@@ -97,9 +97,6 @@
 (setq savehist-additional-variables '(kill-ring search-ring regexp-search-ring))
 
 
-(setq desktop-save-mode 1)
-
-
 ;; enable unix'y things from MSYS2
 
 
@@ -322,13 +319,13 @@
 ;; no line-wrap indicators
 
 
-(when fringe-indicator-alist
-  (setf (cdr (assq 'continuation fringe-indicator-alist))
-        '(nil nil)))
+(setf (cdr (assq 'continuation fringe-indicator-alist)) '(nil nil))
 
 
-(when (fboundp 'toggle-scroll-bar)
-  (toggle-scroll-bar -1))
+;; no scrollbar
+
+
+(toggle-scroll-bar -1)
 
 
 ;; no toolbar
