@@ -905,7 +905,7 @@
         try-expand-dabbrev-visible ;; thing from visible buffers
         try-expand-dabbrev-from-kill ;; thing from kill-ring
         try-expand-whole-kill
-        try-expand-all-abbrevs ;; abbrev
+        try-expand-all-abbrevs ;; abbrev expansion (see `list-abbrevs')
         try-complete-file-name-partially ;; filename
         try-complete-file-name
         try-expand-list-all-buffers ;; thing from all buffers
