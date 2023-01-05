@@ -898,16 +898,18 @@
 
 
 (setq hippie-expand-try-functions-list
-      '(try-expand-dabbrev-visible
-        try-expand-all-abbrevs
+      ;; try expand to...
+      '(try-expand-list ;; thing from current buffer
         try-expand-line
-        try-expand-list
-        try-complete-file-name-partially
-        try-complete-file-name
-        try-expand-dabbrev-from-kill
+        try-expand-dabbrev
+        try-expand-dabbrev-visible ;; thing from visible buffers
+        try-expand-dabbrev-from-kill ;; thing from kill-ring
         try-expand-whole-kill
+        try-expand-all-abbrevs ;; abbrev
+        try-complete-file-name-partially ;; filename
+        try-complete-file-name
+        try-expand-list-all-buffers ;; thing from all buffers
         try-expand-line-all-buffers
-        try-expand-list-all-buffers
         try-expand-dabbrev-all-buffers))
 
 
