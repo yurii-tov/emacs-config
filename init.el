@@ -319,13 +319,16 @@
 ;; no line-wrap indicators
 
 
-(setf (cdr (assq 'continuation fringe-indicator-alist)) '(nil nil))
+(when fringe-indicator-alist
+  (setf (cdr (assq 'continuation fringe-indicator-alist))
+        '(nil nil)))
 
 
 ;; no scrollbar
 
 
-(toggle-scroll-bar -1)
+(when (fboundp 'toggle-scroll-bar)
+  (toggle-scroll-bar -1))
 
 
 ;; no toolbar
