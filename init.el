@@ -2210,6 +2210,22 @@ Process .+
     (add-hook x 'enable-clang-pretty-print-buffer)))
 
 
+;; =====
+;; ctags
+;; =====
+
+
+(defun create-tags-file ()
+  (interactive)
+  (async-shell-command "time ctags -eR --verbose=yes" "*ctags*"))
+
+
+(define-custom-keymap ctags-keymap "M-s c"
+  "v" visit-tags-table
+  "s" select-tags-table
+  "c" create-tags-file)
+
+
 ;; ===
 ;; xml
 ;; ===
