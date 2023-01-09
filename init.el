@@ -1516,6 +1516,9 @@ Example input:
 ;; limit output size
 
 
+(setq-default comint-buffer-maximum-size 10000)
+
+
 (add-to-list 'comint-output-filter-functions
              'comint-truncate-buffer)
 
