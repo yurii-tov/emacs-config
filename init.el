@@ -1030,16 +1030,7 @@ Example:
                (zodiac #X2648 #X2649 #X264A #X264B #X264C #X264D #X264E #X264F #X2650 #X2651 #X2652 #X2653 #X26CE)
                (av-symbol #X1F500 #X1F501 #X1F502 #X25B6 #X23E9 #X23ED #X23EF #X25C0 #X23EA #X23EE #X1F53C #X23EB #X1F53D #X23EC #X23F8 #X23F9 #X23FA #X23CF #X1F3A6 #X1F505 #X1F506 #X1F4F6 #X1F4F3 #X1F4F4)
                (gender #X2640 #X2642 #X26A7)
-               (math #xd7
-                     #X2716 #X2795
-                     #X2796 #X2797
-                     #X1F7F0 #X267E
-                     (#x2135 #x22FF)
-                     (#x27C0 #x27EF)
-                     (#x2980 #x29FF)
-                     (#x2A00 #x2AFF)
-                     (#x0370 #x03FF)
-                     (#x1D400 #x1D7FF))
+               (math (#X2200 #X22FF) (#X2A00 #X2AFF) #xd7)
                (punctuation #X203C #X2049 #X2753 #X2754 #X2755 #X2757 #X3030)
                (currency #X1F4B1 #X1F4B2)
                (other-symbol #X2695 #X267B #X269C #X1F531 #X1F4DB #X1F530 #X2B55 #X2705 #X2611 #X2714 #X274C #X274E #X27B0 #X27BF #X303D #X2733 #X2734 #X2747 #X00A9 #X00AE #X2122)
