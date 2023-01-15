@@ -220,7 +220,6 @@
   "B" insert-buffer
   "n" insert-char
   "i" insert-unicode
-  "I" insert-unicode-group
   "j" insert-from-kill-ring
   "x" iso-transl-ctl-x-8-map)
 
@@ -1044,8 +1043,8 @@ Example:
             (let ((r (if (listp r) r (list r))))
               (cl-loop for x from (car r) upto (or (cadr r) (car r))
                        collect
-                       (concat (get-char-code-property x 'name)
-                               (format " [%s]" (string x))))))
+                       (concat (format "%s " (string x))
+                               (get-char-code-property x 'name)))))
           regions))
 
 
@@ -1054,28 +1053,17 @@ Example:
    prompts user with a human-readable choice from list of chars definitions,
    returns code of selected character"
   (let* ((char-name (replace-regexp-in-string
-                     "....$" ""
+                     "^.*/" ""
                      (ido-completing-read "Char: " definitions))))
     (char-from-name char-name)))
 
 
-(defun insert-unicode-group ()
-  (interactive)
-  (let* ((group-name (ido-completing-read
-                      "Category: "
-                      (mapcar (lambda (x) (symbol-name (car x)))
-                              unicode-chars)))
-         (group (assoc (intern group-name)
-                       unicode-chars))
-         (r (unicode-describe-regions (cdr group)))
-         (c (unicode-select-char r)))
-    (insert c)))
-
-
 (defun insert-unicode ()
   (interactive)
-  (let ((r (unicode-describe-regions
-            (apply #'append (mapcar #'cdr unicode-chars)))))
+  (let ((r (mapcan (lambda (g) (mapcar (lambda (x) (replace-regexp-in-string
+                                                    "\\(^. \\)" (format "\\1%s/" (car g)) x))
+                                       (unicode-describe-regions (cdr g))))
+                   unicode-chars)))
     (insert (unicode-select-char r))))
 
 
