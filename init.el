@@ -204,8 +204,8 @@
   "e" enumerate-lines
   "," (lambda () (interactive) (wrap-with-text "[" "]"))
   "<" (lambda () (interactive) (wrap-with-text "{" "}"))
-  "." (lambda () (interactive) (wrap-with-text "'" "'"))
-  ">" (lambda () (interactive) (wrap-with-text "\"" "\""))
+  "." (lambda () (interactive) (wrap-with-text "\"" "\""))
+  ">" (lambda () (interactive) (wrap-with-text "'" "'"))
   "/" (lambda () (interactive) (wrap-with-text "<" ">"))
   "?" (lambda () (interactive) (wrap-with-text "*" "*"))
   "(" (lambda () (interactive) (wrap-with-text "(" ")")))
