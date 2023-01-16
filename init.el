@@ -196,19 +196,19 @@
   "M-d" delete-duplicate-lines
   "M-c" duplicate-line
   "p" fill-paragraph
-  "/" invert-slashes
+  "i" invert-slashes
   "j" join-region
   "b" break-line
   "f" flush-lines
   "k" keep-lines
   "e" enumerate-lines
-  "<" (lambda () (interactive) (wrap-with-text "<" ">"))
-  "\"" (lambda () (interactive) (wrap-with-text "\"" "\""))
-  "'" (lambda () (interactive) (wrap-with-text "'" "'"))
-  "[" (lambda () (interactive) (wrap-with-text "[" "]"))
-  "{" (lambda () (interactive) (wrap-with-text "{" "}"))
-  "(" (lambda () (interactive) (wrap-with-text "(" ")"))
-  "*" (lambda () (interactive) (wrap-with-text "*" "*")))
+  "," (lambda () (interactive) (wrap-with-text "[" "]"))
+  "<" (lambda () (interactive) (wrap-with-text "{" "}"))
+  "." (lambda () (interactive) (wrap-with-text "'" "'"))
+  ">" (lambda () (interactive) (wrap-with-text "\"" "\""))
+  "/" (lambda () (interactive) (wrap-with-text "<" ">"))
+  "?" (lambda () (interactive) (wrap-with-text "*" "*"))
+  "(" (lambda () (interactive) (wrap-with-text "(" ")")))
 
 
 ;; inserting things
