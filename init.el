@@ -196,7 +196,7 @@
   "M-d" delete-duplicate-lines
   "M-c" duplicate-line
   "p" fill-paragraph
-  "i" invert-slashes
+  "i" invert-chars
   "j" join-region
   "b" break-line
   "f" flush-lines
@@ -729,22 +729,36 @@
   (indent-region start end))
 
 
-;; change \ to / and vice versa
-
-
-(defun invert-slashes (start end)
-  "Change \\ to / and vice versa in selected region or in whole buffer"
-  (interactive (if (region-active-p)
-                   (list (region-beginning)
-                         (region-end))
-                 (list (point-min)
-                       (point-max))))
-  (save-excursion
-    (goto-char start)
-    (while (re-search-forward "[/\\]" end t)
-      (replace-match
-       (if (equal (match-string-no-properties 0) "/")
-           "\\\\" "/")))))
+(defun invert-chars ()
+  (interactive)
+  (let* ((bounds (if (use-region-p)
+                     (list (region-beginning)
+                           (region-end))
+                   (list (point-min)
+                         (point-max))))
+         (region (apply #'buffer-substring bounds))
+         ;; (region "tar//arabumb[]ia") ;todo
+         (inversions (mapcan (lambda (x)
+                               (when (string-match (nth 2 x) region)
+                                 (list x)))
+                             '(("i /↔\\" ?i "[/\\]" ("\\" "/") ("/" "\\\\"))
+                               ("j []↔{}" ?j "[][}{]" ("[" "{") ("{" "[") ("}" "]") ("]" "}"))
+                               ("k \"↔'" ?k "['\"]" ("\"" "'") ("'" "\"")))))
+         (inversion (cdr (when inversions
+                           (if (cdr inversions)
+                               (let* ((c (read-char (string-join (cons "Select chars to invert:"
+                                                                       (mapcar #'car inversions))
+                                                                 "\n")))
+                                      (inversion (assoc c (mapcar #'cdr inversions))))
+                                 inversion)
+                             (cdar inversions))))))
+    (when inversion
+      (save-excursion
+        (goto-char (car bounds))
+        (while (re-search-forward (car inversion) (cadr bounds) t)
+          (replace-match (cadr (assoc (buffer-substring (1- (point)) (point))
+                                      (cdr inversion)
+                                      #'string-equal))))))))
 
 
 (defun duplicate-line (arg)
