@@ -737,7 +737,6 @@
                    (list (point-min)
                          (point-max))))
          (region (apply #'buffer-substring bounds))
-         ;; (region "tar//arabumb[]ia") ;todo
          (inversions (mapcan (lambda (x)
                                (when (string-match (nth 2 x) region)
                                  (list x)))
