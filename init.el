@@ -741,14 +741,14 @@
          (inversions (mapcan (lambda (x)
                                (when (string-match (nth 2 x) region)
                                  (list x)))
-                             '(("i /↔\\" ?i "[/\\]" ("\\" "/") ("/" "\\\\"))
-                               ("j []↔{}" ?j "[][}{]" ("[" "{") ("{" "[") ("}" "]") ("]" "}"))
-                               ("k \"↔'" ?k "['\"]" ("\"" "'") ("'" "\""))
-                               ("l []↔()" ?l "[][)(]" ("[" "(") ("(" "[") (")" "]") ("]" ")"))
-                               ("h {}↔()" ?h "[}{)(]" ("{" "(") ("(" "{") (")" "}") ("}" ")")))))
+                             '(("i) /↔\\" ?i "[/\\]" ("\\" "/") ("/" "\\\\"))
+                               ("j) []↔{}" ?j "[][}{]" ("[" "{") ("{" "[") ("}" "]") ("]" "}"))
+                               ("k) \"↔'" ?k "['\"]" ("\"" "'") ("'" "\""))
+                               ("l) []↔()" ?l "[][)(]" ("[" "(") ("(" "[") (")" "]") ("]" ")"))
+                               ("h) {}↔()" ?h "[}{)(]" ("{" "(") ("(" "{") (")" "}") ("}" ")")))))
          (inversion (cdr (when inversions
                            (if (cdr inversions)
-                               (let* ((c (read-char (string-join (cons "Select chars to invert:"
+                               (let* ((c (read-char (string-join (cons "What to invert:"
                                                                        (mapcar #'car inversions))
                                                                  "\n")))
                                       (inversion (assoc c (mapcar #'cdr inversions))))
