@@ -1337,14 +1337,14 @@ Example:
 ;; agenda
 
 
-(defun wrap-org-agenda (f &rest args)
+(defun try-switch-to-agenda (f &rest args)
   (let ((agenda-buffer "*Org Agenda*"))
     (if (get-buffer agenda-buffer)
         (switch-to-buffer agenda-buffer)
       (apply f args))))
 
 
-(advice-add 'org-agenda :around 'wrap-org-agenda)
+(advice-add 'org-agenda :around 'try-switch-to-agenda)
 
 
 ;; babel
