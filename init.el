@@ -829,10 +829,7 @@
         (setq text (string-join text separator))
         (delete-active-region)
         (insert text))
-    (progn (back-to-indentation)
-           (let ((s (point)))
-             (re-search-backward "\n")
-             (delete-region s (point))))))
+    (delete-indentation)))
 
 
 (defun break-line ()
