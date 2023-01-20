@@ -1334,6 +1334,19 @@ Example:
 (define-key org-mode-map (kbd "C-c C-/") 'org-insert-checklist-status)
 
 
+;; agenda
+
+
+(defun wrap-org-agenda (f &rest args)
+  (let ((agenda-buffer "*Org Agenda*"))
+    (if (get-buffer agenda-buffer)
+        (switch-to-buffer agenda-buffer)
+      (apply f args))))
+
+
+(advice-add 'org-agenda :around 'wrap-org-agenda)
+
+
 ;; babel
 
 
