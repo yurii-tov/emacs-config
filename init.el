@@ -1411,6 +1411,38 @@ Example input:
       (goto-char (1- (org-table-end))))))
 
 
+;; allpairs integration
+
+
+(defun org-table-allpairs ()
+  "Replace current table with output of allpairs algorithm.
+Requires allpairs executable (https://www.satisfice.com/download/allpairs)
+to be available in exec-path
+Example input:
+| A  | B  | C  |
+|----+----+----|
+| a1 | b1 | c1 |
+| a2 | b2 | c2 |
+| a3 |    |    |"
+  (interactive)
+  (let ((allpairs (executable-find "allpairs")))
+    (unless allpairs
+      (message "Allpairs executable not found. You should get it from https://www.satisfice.com/download/allpairs and make it available in exec-path"))
+    (when (and (org-table-p) allpairs)
+      (let ((tsv (make-temp-file "")))
+        (org-table-export tsv "orgtbl-to-tsv")
+        (let* ((allpairs-output (shell-command-to-string (format "%s %s" allpairs tsv)))
+               (table-string (replace-regexp-in-string
+                              "\nTEST CASES\n" ""
+                              (car (split-string allpairs-output "\n\n"))))
+               (table-lisp (mapcar (lambda (x) (split-string x "\t"))
+                                   (split-string table-string "\n"))))
+          (delete-file tsv)
+          (delete-region (org-table-begin) (org-table-end))
+          (insert (format "%s\n" (orgtbl-to-orgtbl table-lisp nil)))
+          (goto-char (1- (org-table-end))))))))
+
+
 ;; ===========
 ;; comint-mode
 ;; ===========
