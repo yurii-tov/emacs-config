@@ -2253,7 +2253,9 @@ Process .+
 
 (defun create-tags-file ()
   (interactive)
-  (async-shell-command "time ctags -eR --verbose=yes" "*ctags*"))
+  (let ((ctags (or (executable-find "ctags")
+                   (error "Unable to find ctags executable in exec-path"))))
+    (async-shell-command (format "time %s -eR --verbose=yes" ctags) "*ctags*")))
 
 
 (define-custom-keymap ctags-keymap "M-s c"
@@ -2525,10 +2527,12 @@ Process .+
 
 (defun capture-video (file)
   (interactive "FCapture mp4 video to file: ")
-  (let ((*async-shell-command-ask-for-wd* nil)
+  (let ((ffmpeg (or (executable-find "ffmpeg")
+                    (error "Unable to find ffmpeg executable in exec-path")))
+        (*async-shell-command-ask-for-wd* nil)
         (default-directory (file-name-directory (file-truename file))))
     (async-shell-command
-     (format "ffmpeg -y -f gdigrab -i desktop -framerate 30 -pix_fmt yuv420p %s" file)
+     (format "%s -y -f gdigrab -i desktop -framerate 30 -pix_fmt yuv420p %s" ffmpeg file)
      (format "*ffmpeg capture → %s*" file))))
 
 
