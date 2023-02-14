@@ -1851,7 +1851,7 @@ Example input:
       (with-current-buffer b
         (goto-char 1)
         (comint-output-filter
-         p (format "*** Command: %s ***\n*** wd: %s ***\n"
+         p (format "*** %s ***\n*** wd: %s ***\n"
                    (car args)
                    default-directory))
         (set-marker comint-last-input-end (point))))))
