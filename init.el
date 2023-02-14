@@ -2392,6 +2392,32 @@ Process .+
     ("try" "try {\n\n} catch (Exception e) {\nthrow new RuntimeException(e);\n}")))
 
 
+(defun copy-java-class-full-name ()
+  "Copy full name of current class/interface/enum etc. in a form, suitable for import"
+  (interactive)
+  (let (package class-e class-name)
+    (save-excursion
+      (goto-char 1)
+      (re-search-forward "package *\\(.*\\);")
+      (setq package (match-string 1))
+      (search-forward "{")
+      (goto-char (line-beginning-position))
+      (dotimes (i 3)
+        (forward-word))
+      (setq class-e (point))
+      (backward-word)
+      (setq class-name (format "%s.%s" package (buffer-substring (point) class-e))))
+    (message class-name)
+    (kill-new class-name)))
+
+
+(defun java-setup-keybindings ()
+  (local-set-key (kbd "C-c C-c") 'copy-java-class-full-name))
+
+
+(add-hook 'java-mode-hook 'java-setup-keybindings)
+
+
 ;; =======
 ;; clojure
 ;; =======
