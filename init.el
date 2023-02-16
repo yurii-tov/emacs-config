@@ -202,6 +202,7 @@
   "f" flush-lines
   "k" keep-lines
   "e" enumerate-lines
+  "w" whitespace-cleanup
   "," (lambda () (interactive) (wrap-with-text "[" "]"))
   "<" (lambda () (interactive) (wrap-with-text "{" "}"))
   "." (lambda () (interactive) (wrap-with-text "\"" "\""))
@@ -259,7 +260,7 @@
              "M-q" hippie-expand
              "C-v" scroll-up-5-lines
              "M-v" scroll-down-5-lines
-             "M-i" reindent-region
+             "M-i" reformat-region
              "M-u" force-revert-buffer
              "C-c r" rename-buffer
              "C-c h" hexl-mode
@@ -717,16 +718,16 @@
 ;; reindent / cleanup selected region or whole buffer
 
 
-(defun reindent-region (start end)
-  "Reindent selected region, untabify it, remove trailing whitespaces"
+(defun reformat-region (start end)
+  "Reindent selected region, untabify it, cleanup whitespaces"
   (interactive (if (region-active-p)
                    (list (region-beginning)
                          (region-end))
                  (list (point-min)
                        (point-max))))
   (untabify start end)
-  (delete-trailing-whitespace start end)
-  (indent-region start end))
+  (indent-region start end)
+  (whitespace-cleanup))
 
 
 (defun invert-chars ()
@@ -2325,7 +2326,7 @@ Process .+
                                (format "%s --format -" xmllint)
                                (current-buffer)
                                t)
-      (reindent-region (point-min)
+      (reformat-region (point-min)
                        (point-max)))))
 
 
