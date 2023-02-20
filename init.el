@@ -2346,6 +2346,13 @@ Process .+
           (lambda () (c-set-style "k&r")))
 
 
+(defun c-customize-keybindings ()
+  (local-set-key (kbd "TAB") 'indent-for-tab-command))
+
+
+(add-hook 'c-mode-common-hook 'c-customize-keybindings)
+          
+
 (define-abbrev-table 'c-mode-abbrev-table
   '(("main" "#include <stdio.h>\n\n\nint main(int argc, char **argv)
 {
