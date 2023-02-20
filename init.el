@@ -251,7 +251,7 @@
              "C-x l" hl-line-mode
              "M-l" (lambda () (interactive) (move-line 'up))
              "C-M-l" (lambda () (interactive) (move-line 'down))
-             "C-c c" async-shell-command
+             "C-c s" async-shell-command
              "C-c n" make-scratch-buffer
              "C-c z" zone
              "C-c v" capture-video
@@ -265,7 +265,7 @@
              "C-c r" rename-buffer
              "C-c h" hexl-mode
              "C-c a" org-agenda
-             "C-c s" org-capture
+             "C-c c" org-capture
              "M-o" other-window
              "C-1" delete-other-windows
              "C-2" split-window-below
