@@ -1296,8 +1296,11 @@ Example:
         ("f" "Fun" entry
          (file+headline "fun.org" "inbox")
          "* TODO %?\n")
-        ("a" "Family" entry
-         (file+headline "family.org" "inbox")
+        ("a" "Art" entry
+         (file+headline "art.org" "inbox")
+         "* TODO %?\n")
+        ("l" "Life" entry
+         (file+headline "life.org" "inbox")
          "* TODO %?\n")
         ("e" "Education" entry
          (file+headline "education.org" "inbox")
@@ -2351,7 +2354,7 @@ Process .+
 
 
 (add-hook 'c-mode-common-hook 'c-customize-keybindings)
-          
+
 
 (define-abbrev-table 'c-mode-abbrev-table
   '(("main" "#include <stdio.h>\n\n\nint main(int argc, char **argv)
