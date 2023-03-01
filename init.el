@@ -75,13 +75,6 @@
   (load-file custom-file))
 
 
-;; navigate to home directory on startup
-
-
-(when window-system
-  (cd (or (getenv "USERPROFILE") "~")))
-
-
 ;; automatically kill subprocesses on emacs shutdown
 
 
