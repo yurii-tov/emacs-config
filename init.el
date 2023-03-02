@@ -285,6 +285,39 @@
 (add-hook 'emacs-startup-hook 'toggle-frame-maximized)
 
 
+;; show fortune instead of stupid default message
+
+
+(setq fortune-file (expand-file-name "fortune.txt" user-emacs-directory))
+
+
+(defun insert-scratch-fortune ()
+  (let* ((fortune-executable (executable-find "fortune"))
+         (read-fortune (lambda (x)
+                         (with-temp-buffer
+                           (insert-file-contents x)
+                           (goto-char (1+ (random (point-max))))
+                           (let* ((e (search-forward-regexp "^%$" nil t))
+                                  (e (if e (- e 2) (point-max))))
+                             (goto-char e)
+                             (buffer-substring
+                              (+ 2 (or (search-backward-regexp "^%$" nil t) 1)) e)))))
+         (fortune (or (when fortune-executable
+                        (shell-command-to-string fortune-executable))
+                      (when (file-exists-p fortune-file)
+                        (funcall read-fortune fortune-file)))))
+    (when fortune
+      (with-current-buffer "*scratch*"
+        (delete-region (point-min) (point-max))
+        (insert fortune)
+        (open-line 3)
+        (comment-region (point-min) (point-max))
+        (end-of-buffer)))))
+
+
+(add-hook 'emacs-startup-hook 'insert-scratch-fortune)
+
+
 ;; replace annoying confirmations with less annoying
 
 
