@@ -310,8 +310,8 @@
       (with-current-buffer "*scratch*"
         (delete-region (point-min) (point-max))
         (insert fortune)
-        (open-line 3)
         (comment-region (point-min) (point-max))
+        (open-line 3)
         (end-of-buffer)))))
 
 
