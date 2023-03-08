@@ -242,6 +242,7 @@
              "M-=" count-words
              "C-x C-b" ibuffer
              "C-x l" hl-line-mode
+             "C-x C-l" display-line-numbers-mode
              "M-l" (lambda () (interactive) (move-line 'up))
              "C-M-l" (lambda () (interactive) (move-line 'down))
              "C-c s" async-shell-command
