@@ -1872,6 +1872,9 @@ Example input:
 ;; output command/wd
 
 
+(require 'compile)
+
+
 (defun async-shell-command-setup-echo (f &rest args)
   (let* ((r (apply f args))
          (b (if (windowp r)
