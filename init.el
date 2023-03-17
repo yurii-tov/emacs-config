@@ -1880,14 +1880,14 @@ Example input:
          (b (if (windowp r)
                 (window-buffer r)
               (process-buffer r)))
-         (p (get-buffer-process b))
-         (info (format "*** %s ***\n*** wd: %s ***\n" (car args) default-directory)))
+         (p (get-buffer-process b)))
     (prog1 r
       (with-current-buffer b
-        (goto-char 1)
-        (comint-output-filter p info)
-        (set-marker comint-last-input-end (point))
-        (highlight-regexp (regexp-quote info) 'compilation-info)))))
+        (let ((info (format "*** %s ***\n*** wd: %s ***\n" (car args) default-directory)))
+          (goto-char 1)
+          (comint-output-filter p info)
+          (set-marker comint-last-input-end (point))
+          (highlight-regexp (regexp-quote info) 'compilation-info))))))
 
 
 (advice-add 'async-shell-command :around 'async-shell-command-setup-echo)
