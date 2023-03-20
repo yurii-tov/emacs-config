@@ -210,6 +210,7 @@
 
 (define-custom-keymap insert-map "C-x i"
   "f" insert-file
+  "a" insert-fortune
   "b" insert-buffer-name
   "B" insert-buffer
   "n" insert-char
@@ -289,28 +290,12 @@
 ;; show fortune instead of stupid default message
 
 
-(setq fortune-file (expand-file-name "fortune.txt" user-emacs-directory))
-
-
 (defun insert-scratch-fortune ()
-  (let* ((fortune-executable (executable-find "fortune"))
-         (read-fortune (lambda (x)
-                         (with-temp-buffer
-                           (insert-file-contents x)
-                           (goto-char (1+ (random (point-max))))
-                           (let* ((e (search-forward-regexp "^%$" nil t))
-                                  (e (if e (- e 2) (point-max))))
-                             (goto-char e)
-                             (buffer-substring
-                              (+ 2 (or (search-backward-regexp "^%$" nil t) 1)) e)))))
-         (fortune (or (when fortune-executable
-                        (shell-command-to-string fortune-executable))
-                      (when (file-exists-p fortune-file)
-                        (funcall read-fortune fortune-file)))))
-    (when fortune
+  (let* ((f (fortune)))
+    (when f
       (with-current-buffer "*scratch*"
         (delete-region (point-min) (point-max))
-        (insert fortune)
+        (insert f)
         (comment-region (point-min) (point-max))
         (open-line 3)
         (end-of-buffer)))))
@@ -1090,6 +1075,11 @@ Example:
            (replace-regexp-in-string
             "^.*/" ""
             (ido-completing-read "Char: " unicode-chars)))))
+
+
+(defun insert-fortune ()
+  (interactive)
+  (insert (fortune)))
 
 
 ;; ===
@@ -2596,6 +2586,29 @@ Process .+
     (async-shell-command
      (format "%s -y -f gdigrab -i desktop -framerate 30 -pix_fmt yuv420p %s" ffmpeg file)
      (format "*ffmpeg capture → %s*" file))))
+
+
+;; =======
+;; fortune
+;; =======
+
+
+(setq fortune-file (expand-file-name "fortune.txt" user-emacs-directory))
+
+
+(defun fortune ()
+  (let* ((fortune-executable (executable-find "fortune")))
+    (cond (fortune-executable
+           (shell-command-to-string fortune-executable))
+          ((file-exists-p fortune-file)
+           (with-temp-buffer
+             (insert-file-contents fortune-file)
+             (goto-char (1+ (random (point-max))))
+             (let* ((e (search-forward-regexp "^%$" nil t))
+                    (e (if e (- e 2) (point-max))))
+               (goto-char e)
+               (buffer-substring
+                (+ 2 (or (search-backward-regexp "^%$" nil t) 1)) e)))))))
 
 
 ;; ============
