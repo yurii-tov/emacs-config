@@ -1105,6 +1105,27 @@ Example:
 (setq ido-use-url-at-point t)
 
 
+(defun ido-wide-find-file (&optional file)
+  "Redefinition of the original ido-wide-find-file from ido.el:
+   When the query is empty, all directory's files are included"
+  (interactive)
+  (unless file
+    (let ((enable-recursive-minibuffers t))
+      (setq file
+            (condition-case nil
+                (let ((s (read-string (concat "Wide find file: " ido-current-directory) ido-text)))
+                  (if (equal s "") "*" s))
+              (quit "")))))
+  (when (> (length file) 0)
+    (setq ido-use-merged-list t ido-try-merged-list 'wide)
+    (setq ido-exit 'refresh)
+    (setq ido-text-init file)
+    (when (equal file "*")
+      (setq ido-text-init ""))
+    (setq ido-rotate-temp t)
+    (exit-minibuffer)))
+
+
 (defun ido-open-in-external-app ()
   (interactive)
   (let ((fname (expand-file-name (ido-name (car ido-matches))
