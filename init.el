@@ -210,6 +210,7 @@
 
 (define-custom-keymap insert-map "C-x i"
   "f" insert-file
+  "p" insert-path
   "a" insert-fortune
   "b" insert-buffer-name
   "B" insert-buffer
@@ -1080,6 +1081,11 @@ Example:
 (defun insert-fortune ()
   (interactive)
   (insert (fortune)))
+
+
+(defun insert-path ()
+  (interactive)
+  (insert (ido-read-file-name "Insert path: ")))
 
 
 ;; ===
