@@ -1132,6 +1132,18 @@ Example:
     (exit-minibuffer)))
 
 
+(defun ido-find-dired ()
+  (interactive)
+  (run-with-timer
+   0.3 nil
+   `(lambda ()
+      (find-dired
+       ,ido-current-directory
+       (read-string "Run find (with args): " find-args
+                    '(find-args-history . 1)))))
+  (minibuffer-keyboard-quit))
+
+
 (defun ido-open-in-external-app ()
   (interactive)
   (let ((fname (expand-file-name (ido-name (car ido-matches))
@@ -1149,8 +1161,9 @@ Example:
 
 
 (with-eval-after-load 'ido
-  (define-key ido-file-dir-completion-map
-    (kbd "C-c C-o") 'ido-open-in-external-app))
+  (bind-keys '("C-c C-o" ido-open-in-external-app
+               "M-r" ido-find-dired)
+             ido-file-dir-completion-map))
 
 
 (defun ido-filter-tramp (f &rest args)
