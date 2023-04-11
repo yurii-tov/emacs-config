@@ -1099,16 +1099,10 @@ Example:
 (ido-everywhere t)
 
 
-(setq ido-enable-flex-matching t)
-
-
-(setq ido-auto-merge-work-directories-length -1)
-
-
-(setq ido-use-filename-at-point 'guess)
-
-
-(setq ido-use-url-at-point t)
+(setq ido-enable-flex-matching t
+      ido-auto-merge-work-directories-length -1
+      ido-use-filename-at-point 'guess
+      ido-use-url-at-point t)
 
 
 (defun ido-wide-find-file (&optional file)
