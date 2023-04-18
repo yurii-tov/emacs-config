@@ -1353,11 +1353,11 @@ Example:
         ("l" "Life" entry
          (file+headline "life.org" "inbox")
          "* TODO %?\n")
-        ("e" "Education" entry
-         (file+headline "education.org" "inbox")
+        ("m" "Math" entry
+         (file+headline "math.org" "inbox")
          "* TODO %?\n")
-        ("t" "Tools" entry
-         (file+headline "tools.org" "inbox")
+        ("c" "Computer" entry
+         (file+headline "computer.org" "inbox")
          "* TODO %?\n")))
 
 
