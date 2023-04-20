@@ -1143,6 +1143,7 @@ Example:
   (let ((fname (expand-file-name (ido-name (car ido-matches))
                                  ido-current-directory)))
     (message "Open in external app: %s" fname)
+    (ido-record-work-directory)
     (open-in-external-app fname)
     (minibuffer-keyboard-quit)))
 
