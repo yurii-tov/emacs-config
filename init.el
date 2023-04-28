@@ -2615,9 +2615,7 @@ Process .+
 (defun serve-directory ()
   (interactive)
   (let* ((socket (read-string "Start python server at: " "0.0.0.0:5555"))
-         (host (car (split-string socket ":")))
-         (port (cadr (split-string socket ":")))
-         (command (format "python -m http.server -b %s %s" host port))
+         (command (apply 'format "python -m http.server -b %s %s" (split-string socket ":")))
          (buffer (format "*python-server:%s*" socket)))
     (async-shell-command command buffer)))
 
