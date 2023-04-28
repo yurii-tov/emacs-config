@@ -2607,6 +2607,18 @@ Process .+
                (codings . (cp866-dos cp866-dos)))))
 
 
+;; ===============================
+;; Serving directories with Python
+;; ===============================
+
+
+(defun serve-directory ()
+  (interactive)
+  (async-shell-command
+   (read-string "Command: "
+                "python -m http.server -b 0.0.0.0 5555")))
+
+
 ;; ================================
 ;; Access eng-rus dictionary online
 ;; ================================
