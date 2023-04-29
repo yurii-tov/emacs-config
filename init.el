@@ -185,8 +185,8 @@
   "s" replace-string
   "r" replace-regexp
   "u" upcase-dwim
-  "d" downcase-dwim
-  "M-d" delete-duplicate-lines
+  "l" downcase-dwim
+  "d" delete-duplicate-lines
   "M-c" duplicate-line
   "p" fill-paragraph
   "i" invert-chars
