@@ -1108,6 +1108,19 @@ Example:
   (insert (ido-read-file-name "Insert path: ")))
 
 
+;; Simplified multiline editing:
+;; When rectangular region is selected, C-SPC activates multiline editing
+
+
+(defun multiline-edit (f &rest args)
+  (if rectangle-mark-mode
+      (call-interactively 'string-rectangle)
+    (apply f args)))
+
+
+(advice-add 'set-mark-command :around 'multiline-edit)
+
+
 ;; ===
 ;; ido
 ;; ===
