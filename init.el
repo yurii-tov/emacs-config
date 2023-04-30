@@ -1108,7 +1108,6 @@ Example:
   (insert (ido-read-file-name "Insert path: ")))
 
 
-;; Simplified multiline editing:
 ;; When rectangular region is selected, C-SPC activates multiline editing
 
 
