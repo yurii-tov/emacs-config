@@ -238,6 +238,24 @@
   "b" diff-buffers)
 
 
+;; registers
+
+
+(progn
+  (define-custom-keymap registers-map "M-j"
+    "i" insert-register
+    "j" jump-to-register
+    "s s" copy-to-register
+    "s w" window-configuration-to-register)
+  (dolist (x (string-to-list "1234qwer"))
+    (define-key registers-map (kbd (string x))
+      `(lambda () (interactive)
+         (if (region-active-p)
+             (progn (set-register ,x (buffer-substring (region-beginning) (region-end)))
+                    (deactivate-mark))
+           (insert-register ,x))))))
+
+
 ;; misc
 
 
