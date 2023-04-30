@@ -75,10 +75,11 @@
   (load-file custom-file))
 
 
-;; automatically kill subprocesses on emacs shutdown
+;; shutdown
 
 
-(setq confirm-kill-processes nil)
+(setq confirm-kill-processes nil
+      confirm-kill-emacs 'y-or-n-p)
 
 
 ;; built-in history facilities
