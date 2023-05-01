@@ -1111,6 +1111,9 @@ Example:
 ;; When rectangular region is selected, C-SPC activates multiline editing
 
 
+(require 'rect)
+
+
 (defun multiline-edit (f &rest args)
   (if rectangle-mark-mode
       (call-interactively 'string-rectangle)
