@@ -727,6 +727,9 @@
 ;; ===========
 
 
+(require 'rect)
+
+
 ;; auto-completion with TAB
 
 
@@ -839,18 +842,20 @@
 
 (defun enumerate-lines ()
   (interactive)
-  (let* ((bounds (if (use-region-p)
-                     (list (region-beginning)
-                           (region-end))
-                   (list (point-min)
-                         (point-max))))
-         (lines (split-string (apply #'buffer-substring bounds)
-                              "\n" t " *")))
-    (apply #'delete-region bounds)
-    (insert (string-join (cl-loop for i from 1 upto (length lines)
-                                  for x in lines
-                                  collect (format "%s %s" i x))
-                         "\n"))))
+  (if rectangle-mark-mode
+      (call-interactively 'rectangle-number-lines)
+    (let* ((bounds (if (use-region-p)
+                       (list (region-beginning)
+                             (region-end))
+                     (list (point-min)
+                           (point-max))))
+           (lines (split-string (apply #'buffer-substring bounds)
+                                "\n" t " *")))
+      (apply #'delete-region bounds)
+      (insert (string-join (cl-loop for i from 1 upto (length lines)
+                                    for x in lines
+                                    collect (format "%s %s" i x))
+                           "\n")))))
 
 
 (defun join-region ()
@@ -1109,9 +1114,6 @@ Example:
 
 
 ;; When rectangular region is selected, C-SPC activates multiline editing
-
-
-(require 'rect)
 
 
 (defun multiline-edit (f &rest args)
