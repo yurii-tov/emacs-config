@@ -885,22 +885,29 @@
 
 
 (defun wrap-with-text (b1 b2)
-  "Wrap current word (or region) with given bracket-like strings
-   (e.g. brackets/quotes/apostrophes/parens etc.)"
-  (if (region-active-p)
-      (let ((s (region-beginning))
-            (e (region-end)))
-        (save-excursion
-          (goto-char e)
-          (insert b2)
-          (goto-char s)
-          (insert b1)))
-    (save-excursion
-      (forward-word)
-      (backward-word)
-      (insert b1)
-      (forward-word)
-      (insert b2))))
+  "Wraps current word (or region) with given bracket-like strings
+   (e.g. brackets/quotes/apostrophes/parens etc.).
+   When rectangle selection is in effect, applies wrapping on each *line* of that selection"
+  (cond (rectangle-mark-mode
+         (let ((lines (split-string (buffer-substring (region-beginning)
+                                                      (region-end))
+                                    "\n" t " *")))
+           (delete-region (region-beginning) (region-end))
+           (insert (string-join (mapcar (lambda (x) (format "%s%s%s" b1 x b2)) lines) "\n"))))
+        ((region-active-p)
+         (let ((s (region-beginning))
+               (e (region-end)))
+           (save-excursion
+             (goto-char e)
+             (insert b2)
+             (goto-char s)
+             (insert b1))))
+        (t (save-excursion
+             (forward-word)
+             (backward-word)
+             (insert b1)
+             (forward-word)
+             (insert b2)))))
 
 
 (defun move-line (direction)
