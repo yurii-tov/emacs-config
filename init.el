@@ -890,7 +890,8 @@
    When rectangle selection is in effect, applies wrapping on each *line* of that selection"
   (cond (rectangle-mark-mode
          (let* ((bounds (list (region-beginning) (region-end)))
-                (lines (split-string (apply #'buffer-substring bounds) "\n" t " *"))
+                (lines (mapcar #'string-trim-right
+                               (split-string (apply #'buffer-substring bounds) "\n")))
                 (col (save-excursion (goto-char (car bounds)) (current-column))))
            (apply #'delete-region bounds)
            (insert (string-join (cons (format "%s%s%s" b1 (car lines) b2)
