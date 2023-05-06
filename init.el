@@ -889,11 +889,19 @@
    (e.g. brackets/quotes/apostrophes/parens etc.).
    When rectangle selection is in effect, applies wrapping on each *line* of that selection"
   (cond (rectangle-mark-mode
-         (let ((lines (split-string (buffer-substring (region-beginning)
-                                                      (region-end))
-                                    "\n" t " *")))
-           (delete-region (region-beginning) (region-end))
-           (insert (string-join (mapcar (lambda (x) (format "%s%s%s" b1 x b2)) lines) "\n"))))
+         (let* ((bounds (list (region-beginning) (region-end)))
+                (lines (split-string (apply #'buffer-substring bounds) "\n" t " *"))
+                (col (save-excursion (goto-char (car bounds)) (current-column))))
+           (apply #'delete-region bounds)
+           (insert (string-join (cons (format "%s%s%s" b1 (car lines) b2)
+                                      (mapcar (lambda (x)
+                                                (let ((offset (min col (length x))))
+                                                  (format "%s%s" (concat (substring x 0 offset)
+                                                                         b1
+                                                                         (substring x offset))
+                                                          b2)))
+                                              (cdr lines)))
+                                "\n"))))
         ((region-active-p)
          (let ((s (region-beginning))
                (e (region-end)))
