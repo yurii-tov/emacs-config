@@ -220,16 +220,6 @@
   "j" insert-from-kill-ring
   "x" iso-transl-ctl-x-8-map)
 
-
-;; evaluating emacs lisp
-
-
-(define-custom-keymap eval-elisp-map "C-c e"
-  "e" eval-expression
-  "f" load-file
-  "r" elisp-eval-region-or-buffer)
-
-
 ;; diff
 
 
@@ -261,13 +251,14 @@
 
 (bind-keys '("M-x" smex
              "M-=" count-words
-             "M-:" async-shell-command
+             "C-x p" async-shell-command
              "C-x C-b" ibuffer
              "C-x l" hl-line-mode
              "C-x C-l" display-line-numbers-mode
              "M-l" (lambda () (interactive) (move-line 'up))
              "C-M-l" (lambda () (interactive) (move-line 'down))
              "C-c s" serve-directory
+             "C-c e" elisp-eval-region-or-buffer
              "C-c n" make-scratch-buffer
              "C-c z" zone
              "C-c v" capture-video
