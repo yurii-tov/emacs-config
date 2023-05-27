@@ -1221,7 +1221,8 @@ Example:
                          (shell-command-to-string
                           (concat "find "
                                   (shell-quote-argument
-                                   (if remote-prefix (string-remove-prefix remote-prefix dir) dir))
+                                   (if remote-prefix
+                                       (string-remove-prefix remote-prefix dir) dir))
                                   (if ido-case-fold " -iname " " -name ")
                                   (shell-quote-argument
                                    (concat (if prefix "" "*") file "*"))
