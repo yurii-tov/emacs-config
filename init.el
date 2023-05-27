@@ -1205,17 +1205,12 @@ Example:
              ido-file-dir-completion-map))
 
 
-(defun ido-filter-tramp (f &rest args)
-  "Do not record remote paths, e.g. /ssh:host"
-  (unless (file-remote-p default-directory)
-    (apply f args)))
-
-
-(advice-add 'ido-record-work-directory :around 'ido-filter-tramp)
+;; Fix TRAMP-related issues
 
 
 (defun ido-wide-find-dirs-or-files (dir file &optional prefix finddir)
-  "Overrides original function from ido.el in order to work with remote files"
+  "Overrides original function from ido.el
+   Now it is able to search in remote directories"
   (let* ((remote-prefix (file-remote-p dir))
          (filenames
           (delq nil
@@ -1242,6 +1237,39 @@ Example:
                 f (file-name-nondirectory filename)
                 res (cons (cons (if finddir (ido-final-slash f t) f) d) res))))
     res))
+
+
+(defun ido-get-work-directory (&optional incr must-match)
+  "Overrides original function from ido.el.
+   Now it filters out directories from disconnected remote hosts"
+  (let ((n (length ido-work-directory-list))
+        (i ido-work-directory-index)
+        (j 0)
+        dir)
+    (if (or (not ido-text) (= (length ido-text) 0))
+        (setq must-match nil))
+    (while (< j n)
+      (setq i (+ i incr)
+            j (1+ j))
+      (if (> incr 0)
+          (if (>= i n) (setq i 0))
+        (if (< i 0) (setq i (1- n))))
+      (setq dir (nth i ido-work-directory-list))
+      (if (and dir
+               (not (equal dir ido-current-directory))
+               (not (and (file-remote-p dir) (not (file-remote-p dir nil t))))
+               (file-directory-p dir)
+               (or (not must-match)
+                   ;; TODO. check for nonreadable and too-big.
+                   (ido-set-matches-1
+                    (if (eq ido-cur-item 'file)
+                        (ido-make-file-list-1 dir)
+                      (ido-make-dir-list-1 dir)))))
+          (setq j n)
+        (setq dir nil)))
+    (if dir
+        (setq ido-work-directory-index i))
+    dir))
 
 
 ;; =======
