@@ -1212,6 +1212,7 @@ Example:
   "Overrides original function from ido.el
    Now it is able to search in remote directories"
   (let* ((remote-prefix (file-remote-p dir))
+         (default-directory dir)
          (filenames
           (delq nil
                 (mapcar (lambda (name)
