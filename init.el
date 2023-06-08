@@ -723,7 +723,7 @@
                         host (concat host "|sudo:" host) (file-remote-p file))))
           (kill-buffer)
           (find-file (concat prefix (file-remote-p file 'localname))))
-      (message "Implemented for remote files only"))))
+      (find-file (concat "/sudo::" file)))))
 
 
 ;; ===========
