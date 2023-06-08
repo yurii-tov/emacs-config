@@ -251,6 +251,7 @@
 
 (bind-keys '("M-x" smex
              "M-=" count-words
+             "C-x u" reopen-with-sudo
              "C-x p" async-shell-command
              "C-x C-b" ibuffer
              "C-x l" hl-line-mode
@@ -711,6 +712,18 @@
 
 
 (advice-add 'dired-copy-file :around #'dired-copy-force-scp)
+
+
+(defun reopen-with-sudo ()
+  (interactive)
+  (let ((file (or (buffer-file-name (current-buffer)) default-directory)))
+    (if (file-remote-p file)
+        (let* ((host (file-remote-p file 'host))
+               (prefix (replace-regexp-in-string
+                        host (concat host "|sudo:" host) (file-remote-p file))))
+          (kill-buffer (current-buffer))
+          (find-file (concat prefix (file-remote-p file 'localname))))
+      (message "Implemented for remote files only"))))
 
 
 ;; ===========
