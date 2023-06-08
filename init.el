@@ -717,11 +717,11 @@
 (defun reopen-with-sudo ()
   (interactive)
   (let ((file (or (buffer-file-name) default-directory)))
+    (kill-buffer)
     (if (file-remote-p file)
         (let* ((host (file-remote-p file 'host))
                (prefix (replace-regexp-in-string
                         host (concat host "|sudo:" host) (file-remote-p file))))
-          (kill-buffer)
           (find-file (concat prefix (file-remote-p file 'localname))))
       (find-file (concat "/sudo::" file)))))
 
