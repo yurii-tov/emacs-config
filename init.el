@@ -727,6 +727,15 @@
       (find-file (concat "/sudo::" file)))))
 
 
+;; better unique buffer names
+
+
+(require 'uniquify)
+
+
+(setq uniquify-buffer-name-style 'forward)
+
+
 ;; ===========
 ;; text editor
 ;; ===========
