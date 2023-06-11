@@ -189,7 +189,7 @@
   "l" downcase-dwim
   "d" delete-duplicate-lines
   "M-c" duplicate-line
-  "p" fill-paragraph
+  "q" fill-paragraph
   "i" invert-chars
   "j" join-region
   "b" break-line
@@ -203,7 +203,7 @@
   ">" (lambda () (interactive) (wrap-with-text "'" "'"))
   "?" (lambda () (interactive) (wrap-with-text "<" ">"))
   "/" (lambda () (interactive) (wrap-with-text "*" "*"))
-  "(" (lambda () (interactive) (wrap-with-text "(" ")")))
+  "p" (lambda () (interactive) (wrap-with-text "(" ")")))
 
 
 ;; inserting things
@@ -925,6 +925,10 @@
              (insert b2)
              (goto-char s)
              (insert b1))))
+        ((or (eobp) (looking-at "[\](){}<>*\s\n.,;:\[\"']"))
+         (insert b1)
+         (insert b2)
+         (backward-char))
         (t (save-excursion
              (forward-word)
              (backward-word)
