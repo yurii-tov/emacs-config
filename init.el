@@ -515,12 +515,15 @@
                                (if current-input-method-title
                                    (concat " " (propertize (format "[%s]" current-input-method-title) 'face 'hi-pink))
                                  "")))
-                mode-line-client
-                mode-line-modified
-                mode-line-remote
-                " "
-                mode-line-buffer-identification
+                (:eval (let ((ro buffer-read-only)
+                             (m (and (buffer-file-name) (buffer-modified-p))))
+                         (cond ((and m ro) "🔏")
+                               (ro "🔒")
+                               (m "✒")
+                               (t ""))))
                 "   "
+                mode-line-buffer-identification
+                "  "
                 (:eval (propertize "%l:%C" 'face 'font-lock-builtin-face))
                 (:eval (when (use-region-p) (format "  %s " (count-lwc))))
                 (vc-mode vc-mode)
