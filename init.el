@@ -516,12 +516,13 @@
                                    (concat " " (propertize (format "[%s]" current-input-method-title) 'face 'hi-pink))
                                  "")))
                 (:eval (let ((ro buffer-read-only)
-                             (m (and (buffer-file-name) (buffer-modified-p))))
-                         (cond ((and m ro) "🔏")
+                             (m (buffer-modified-p)))
+                         (cond ((not (buffer-file-name)) " ")
+                               ((and m ro) "🔏")
                                (ro "🔒")
                                (m "✒")
-                               (t ""))))
-                "   "
+                               (t " "))))
+                "  "
                 mode-line-buffer-identification
                 "  "
                 (:eval (propertize "%l:%C" 'face 'font-lock-builtin-face))
