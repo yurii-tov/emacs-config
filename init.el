@@ -1229,10 +1229,9 @@ Example:
 (advice-add 'ido-complete :after #'ido-jump-to-completions)
 
 
-(with-eval-after-load 'ido
-  (bind-keys '("C-c C-o" ido-open-in-external-app
-               "M-r" ido-find-dired)
-             ido-file-dir-completion-map))
+(bind-keys '("C-c C-o" ido-open-in-external-app
+             "M-r" ido-find-dired)
+           ido-file-dir-completion-map)
 
 
 ;; Fix storing working directory when use completion menu + ido-wide-find-file
