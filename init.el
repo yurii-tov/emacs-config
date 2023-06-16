@@ -1235,6 +1235,21 @@ Example:
              ido-file-dir-completion-map))
 
 
+;; Fix storing working directory when use completion menu + ido-wide-find-file
+
+
+(defun ido-completion-record-wd (f &rest args)
+  (let ((path (car args)))
+    (when (and ido-current-directory (file-name-absolute-p path))
+      (ido-record-work-directory
+       (if (file-directory-p path)
+           path (file-name-directory path)))))
+  (apply f args))
+
+
+(advice-add 'choose-completion-string :around 'ido-completion-record-wd)
+
+
 ;; Fix TRAMP-related issues
 
 
