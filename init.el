@@ -593,6 +593,7 @@
                ((string-equal system-type "gnu/linux")
                 (lambda (f) (let ((process-connection-type nil))
                               (start-process "" nil "xdg-open" f)))))))
+    (ido-record-work-directory (file-name-directory file-name))
     (funcall open-file file-name)))
 
 
@@ -1217,7 +1218,6 @@ Example:
   (let ((fname (expand-file-name (ido-name (car ido-matches))
                                  ido-current-directory)))
     (message "Open in external app: %s" fname)
-    (ido-record-work-directory)
     (open-in-external-app fname)
     (minibuffer-keyboard-quit)))
 
