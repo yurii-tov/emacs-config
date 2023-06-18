@@ -1234,19 +1234,19 @@ Example:
 (advice-add 'ido-complete :after #'ido-jump-to-completions)
 
 
-;; Fix storing working directory when use completion menu + ido-wide-find-file
+;; Update ido-work-directory-list when visiting any file/directory
 
 
-(defun ido-completion-record-wd (f &rest args)
-  (let ((path (car args)))
-    (when (and ido-current-directory (file-name-absolute-p path))
-      (ido-record-work-directory
-       (if (file-directory-p path)
-           path (file-name-directory path)))))
-  (apply f args))
+(defun ido-record-visited-wd (f &rest args)
+  (let* ((r (apply f args)))
+    (prog1 r
+      (dolist (b (if (listp r) r (list r)))
+        (with-current-buffer b
+          (unless (equal (car ido-work-directory-list) default-directory)
+            (ido-record-work-directory default-directory)))))))
 
 
-(advice-add 'choose-completion-string :around 'ido-completion-record-wd)
+(advice-add 'find-file-noselect :around 'ido-record-visited-wd)
 
 
 ;; Fix TRAMP-related issues
