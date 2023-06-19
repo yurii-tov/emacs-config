@@ -2037,6 +2037,7 @@ Example input:
   (let ((default-directory (if *async-shell-command-ask-for-wd*
                                (ido-read-directory-name "wd: ")
                              default-directory)))
+    (ido-record-work-directory default-directory)
     (apply f args)))
 
 
