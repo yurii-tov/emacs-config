@@ -23,6 +23,7 @@
                   clojure-mode
                   powershell
                   smex
+                  ido-vertical-mode
                   base16-theme)))
   (dolist (p packages)
     (unless (package-installed-p p)
@@ -1168,10 +1169,9 @@ Example:
 ;; ===
 
 
-(ido-mode t)
-
-
-(ido-everywhere t)
+(progn (ido-mode t)
+       (ido-everywhere t)
+       (ido-vertical-mode))
 
 
 (setq ido-enable-flex-matching t
