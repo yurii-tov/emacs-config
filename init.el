@@ -14,8 +14,7 @@
 (package-initialize)
 
 
-(let ((refreshed)
-      (packages '(zenburn-theme
+(let ((packages '(zenburn-theme
                   cider
                   slime
                   groovy-mode
@@ -27,9 +26,7 @@
                   base16-theme)))
   (dolist (p packages)
     (unless (package-installed-p p)
-      (unless refreshed
-        (package-refresh-contents)
-        (setq refreshed t))
+      (package-refresh-contents)
       (package-install p))))
 
 
