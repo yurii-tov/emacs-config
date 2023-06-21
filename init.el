@@ -1769,53 +1769,26 @@ Example input:
 ;; browsing comint-input-ring
 
 
-(defun comint-query-input-ring (query &optional highight-p)
-  "Display `comint-input-ring' contents, optionally filtering it by text in command prompt"
-  ;; most of code carved from comint.el, comint-dynamic-list-input-ring
-  (let ((query (if (string-empty-p query) nil query))
-        (history nil)
-        (history-buffer " *Input History*")
-        (conf (current-window-configuration)))
-    (when (and (ring-p comint-input-ring)
-               (not (ring-empty-p comint-input-ring)))
-      (dotimes (index (ring-length comint-input-ring))
-        (let ((item (ring-ref comint-input-ring index)))
-          (when (or (not query) (string-match query item))
-            (push item history)))))
-    (when history
-      (setq history (nreverse history))
-      (with-output-to-temp-buffer history-buffer
-        (display-completion-list history)
-        (set-buffer history-buffer)
-        (let ((keymap (make-sparse-keymap)))
-          (set-keymap-parent keymap (current-local-map))
-          (define-key keymap "\C-m"
-            `(lambda ()
-               (interactive)
-               ;; kill current comint command line, if any
-               (with-current-buffer ,completion-reference-buffer
-                 (save-excursion
-                   (goto-char (point-max))
-                   (beginning-of-line)
-                   (when (> (point-max) (point))
-                     (kill-line))))
-               ;; paste selected command from history
-               (comint-dynamic-list-input-ring-select)))
-          (use-local-map keymap))
-        (forward-line 3)
-        (while (search-backward "completion" nil 'move)
-          (replace-match "history reference"))
-        ;; highlight query matches
-        (when (and query highight-p)
-          (highlight-regexp query 'completions-common-part)))
-      (sit-for 0)
-      (message "Hit space to flush")
-      (setq comint-dynamic-list-input-ring-window-conf conf)
-      (let ((ch (read-event)))
-        (if (eq ch ?\s)
-            (set-window-configuration conf)
-          (push ch unread-command-events))))
-    (unless history (message "No history"))))
+(defun comint-browse-command-history ()
+  (interactive)
+  (let* ((current-input (buffer-substring
+                         (or (marker-position comint-accum-marker)
+                             (process-mark (get-buffer-process (current-buffer))))
+                         (point)))
+         (query (unless (string-empty-p current-input)
+                  (if (memq last-command '(comint-previous-input-prefixed
+                                           comint-next-input-prefixed))
+                      comint-matching-input-from-input-string
+                    current-input)))
+         (command (ido-completing-read
+                   "Command history: "
+                   (ring-elements comint-input-ring)
+                   nil nil query)))
+    (comint-delete-input)
+    (insert command)))
+
+
+(bind-keys '("M-r" comint-browse-command-history) comint-mode-map)
 
 
 ;;;; Use prefix-style matching when scrolling through history
@@ -1827,13 +1800,12 @@ Example input:
                                comint-next-input-prefixed
                                comint-history-isearch-backward-regexp))
     (setq comint-matching-input-from-input-string
-          (format "^%s.*"
-                  (regexp-quote (buffer-substring
-                                 (or (marker-position comint-accum-marker)
-                                     (process-mark (get-buffer-process (current-buffer))))
-                                 (point))))))
+          (buffer-substring
+           (or (marker-position comint-accum-marker)
+               (process-mark (get-buffer-process (current-buffer))))
+           (point))))
   (comint-previous-matching-input
-   comint-matching-input-from-input-string
+   (format "^%s.*" (regexp-quote comint-matching-input-from-input-string))
    (or n 1)))
 
 
@@ -1842,36 +1814,9 @@ Example input:
   (comint-previous-input-prefixed -1))
 
 
-(defun wrap-comint-history-isearch-backward-regexp (f &rest args)
-  (if (memq last-command '(comint-previous-input-prefixed
-                           comint-next-input-prefixed))
-      (comint-query-input-ring comint-matching-input-from-input-string)
-    (apply f args)))
-
-
-(advice-add 'comint-history-isearch-backward-regexp
-            :around 'wrap-comint-history-isearch-backward-regexp)
-
-
 (bind-keys '("M-p" comint-previous-input-prefixed
              "M-n" comint-next-input-prefixed)
            comint-mode-map)
-
-
-;;;; view all matching commands from within isearch
-
-
-(defun modify-comint-isearch-keymap ()
-  (let ((newmap (make-sparse-keymap)))
-    (set-keymap-parent newmap isearch-mode-map)
-    (define-key newmap (kbd "M-r")
-      (lambda () (interactive)
-        (comint-query-input-ring isearch-string t)))
-    (setq-local isearch-mode-map newmap)))
-
-
-(add-hook 'comint-mode-hook
-          'modify-comint-isearch-keymap)
 
 
 ;; =====
