@@ -1161,14 +1161,15 @@ Example:
 (advice-add 'set-mark-command :around 'multiline-edit)
 
 
-;; ===
-;; ido
-;; ===
+;; ================================
+;; completion frameworks (IDO etc.)
+;; ================================
 
 
 (progn (ido-mode t)
        (ido-everywhere t)
-       (ido-vertical-mode))
+       (ido-vertical-mode)
+       (fido-mode))
 
 
 (setq ido-enable-flex-matching t
