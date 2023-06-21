@@ -1,35 +1,3 @@
-;; ====================
-;; third-party packages
-;; ====================
-
-
-(require 'package)
-
-
-(setq package-archives
-      '(("gnu" . "https://elpa.gnu.org/packages/")
-        ("melpa" . "http://melpa.org/packages/")))
-
-
-(package-initialize)
-
-
-(let ((packages '(zenburn-theme
-                  cider
-                  slime
-                  groovy-mode
-                  htmlize
-                  clojure-mode
-                  powershell
-                  smex
-                  ido-vertical-mode
-                  base16-theme)))
-  (dolist (p packages)
-    (unless (package-installed-p p)
-      (package-refresh-contents)
-      (package-install p))))
-
-
 ;; ======
 ;; system
 ;; ======
@@ -104,6 +72,39 @@
                (add-to-list 'exec-path (format "%s/mingw64/bin" msys))
                (setq shell-file-name "bash"))
       (warn "msys2 not found. Expected location is %s" msys))))
+
+
+;; third-party packages
+
+
+(require 'package)
+
+
+(setq package-archives
+      '(("gnu" . "https://elpa.gnu.org/packages/")
+        ("melpa" . "http://melpa.org/packages/")))
+
+
+(package-initialize)
+
+
+(let ((packages '(zenburn-theme
+                  cider
+                  slime
+                  groovy-mode
+                  htmlize
+                  clojure-mode
+                  powershell
+                  smex
+                  ido-vertical-mode
+                  base16-theme))
+      refreshed)
+  (dolist (p packages)
+    (unless (package-installed-p p)
+      (unless (or system-type-is-windows refreshed)
+        (package-refresh-contents)
+        (setq refreshed t))
+      (package-install p))))
 
 
 ;; ==================
