@@ -1146,7 +1146,7 @@ Example:
 
 (defun insert-path ()
   (interactive)
-  (insert (ido-read-file-name "Insert path: ")))
+  (insert (read-file-name "Insert path: ")))
 
 
 ;; When rectangular region is selected, C-SPC activates multiline editing
@@ -1917,7 +1917,7 @@ Example input:
                            (format "*%s*" preset-name))))
          (wd (or (alist-get 'working-directory
                             shell-options)
-                 (ido-read-directory-name "wd: "))))
+                 (read-directory-name "wd: "))))
     (switch-to-buffer buffer-name)
     (cd wd)
     (when (get-buffer-process (current-buffer))
@@ -2034,7 +2034,7 @@ Example input:
 
 (defun async-shell-command-setup-wd (f &rest args)
   (let ((default-directory (if *async-shell-command-ask-for-wd*
-                               (ido-read-directory-name "wd: ")
+                               (read-directory-name "wd: ")
                              default-directory)))
     (ido-record-work-directory default-directory)
     (apply f args)))
