@@ -1169,8 +1169,7 @@ Example:
 
 (progn (ido-mode t)
        (ido-everywhere t)
-       (ido-vertical-mode)
-       (fido-mode))
+       (ido-vertical-mode))
 
 
 (setq ido-enable-flex-matching t
