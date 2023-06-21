@@ -1226,7 +1226,8 @@ Example:
 
 
 (defun ido-jump-to-completions ()
-  (select-window (get-buffer-window ido-completion-buffer)))
+  (let ((w (get-buffer-window ido-completion-buffer)))
+    (when w (select-window w))))
 
 
 (advice-add 'ido-complete :after #'ido-jump-to-completions)
