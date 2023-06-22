@@ -1779,10 +1779,13 @@ Example input:
                                            comint-next-input-prefixed))
                       comint-matching-input-from-input-string
                     current-input)))
+         (history (ring-elements comint-input-ring))
          (command (ido-completing-read
                    "Command history: "
-                   (ring-elements comint-input-ring)
-                   nil nil query)))
+                   history
+                   nil nil query))
+         (i (cl-position command history :test #'equal)))
+    (setq-local comint-input-ring-index i)
     (comint-delete-input)
     (insert command)))
 
