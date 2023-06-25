@@ -1179,27 +1179,6 @@ Example:
       ido-max-work-directory-list 100)
 
 
-(defun ido-wide-find-file (&optional file)
-  "Redefinition of the original ido-wide-find-file from ido.el:
-   When the query is empty, all directory's files are included"
-  (interactive)
-  (unless file
-    (let ((enable-recursive-minibuffers t))
-      (setq file
-            (condition-case nil
-                (let ((s (read-string (concat "Wide find file: " ido-current-directory) ido-text)))
-                  (if (equal s "") "*" s))
-              (quit "")))))
-  (when (> (length file) 0)
-    (setq ido-use-merged-list t ido-try-merged-list 'wide)
-    (setq ido-exit 'refresh)
-    (setq ido-text-init file)
-    (when (equal file "*")
-      (setq ido-text-init ""))
-    (setq ido-rotate-temp t)
-    (exit-minibuffer)))
-
-
 (defun ido-find-dired ()
   (interactive)
   (run-with-timer
@@ -1249,12 +1228,34 @@ Example:
 (advice-add 'find-file-noselect :around 'ido-record-visited-wd)
 
 
-;; Fix TRAMP-related issues
+;; Various "Wide find file" fixes
+
+
+(defun ido-wide-find-file (&optional file)
+  "Redefinition of the original ido-wide-find-file from ido.el:
+   When the query is empty, all directory's files are included"
+  (interactive)
+  (unless file
+    (let ((enable-recursive-minibuffers t))
+      (setq file
+            (condition-case nil
+                (let ((s (read-string (concat "Wide find file: " ido-current-directory) ido-text)))
+                  (if (equal s "") "*" s))
+              (quit "")))))
+  (when (> (length file) 0)
+    (setq ido-use-merged-list t ido-try-merged-list 'wide)
+    (setq ido-exit 'refresh)
+    (setq ido-text-init file)
+    (when (equal file "*")
+      (setq ido-text-init ""))
+    (setq ido-rotate-temp t)
+    (exit-minibuffer)))
 
 
 (defun ido-wide-find-dirs-or-files (dir file &optional prefix finddir)
-  "Overrides original function from ido.el
-   Now it is able to search in remote directories"
+  "Overrides original function. Now it:
+   - Is able to search remote directories
+   - Splits 'find' output with newline symbol"
   (let* ((remote-prefix (file-remote-p dir))
          (default-directory dir)
          (filenames
@@ -1271,7 +1272,8 @@ Example:
                                   (if ido-case-fold " -iname " " -name ")
                                   (shell-quote-argument
                                    (concat (if prefix "" "*") file "*"))
-                                  " -type " (if finddir "d" "f") " -print"))))))
+                                  " -type " (if finddir "d" "f") " -print"))
+                         "\n"))))
          filename d f
          res)
     (while filenames
