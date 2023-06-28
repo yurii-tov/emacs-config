@@ -1971,7 +1971,7 @@ Example input:
       (setq-local comint-input-ring-file-name
                   (comint-make-input-ring-file-name "shell"))
       (when (zerop (ring-length comint-input-ring))
-        (comint-read-input-ring)))
+        (comint-read-input-ring t)))
     r))
 
 
