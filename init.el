@@ -1969,7 +1969,9 @@ Example input:
              (process-buffer r))))
     (with-current-buffer b
       (setq-local comint-input-ring-file-name
-                  (comint-make-input-ring-file-name "shell")))
+                  (comint-make-input-ring-file-name "shell"))
+      (when (zerop (ring-length comint-input-ring))
+        (comint-read-input-ring)))
     r))
 
 
