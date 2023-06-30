@@ -1493,22 +1493,22 @@ Example:
 
 (setq org-capture-templates
       `(("w" "Work" entry
-         (file+headline "work.org" "inbox")
+         (file+headline "work.org" "📨 inbox")
          "* TODO %?\n")
         ("f" "Fun" entry
-         (file+headline "fun.org" "inbox")
+         (file+headline "fun.org" "📨 inbox")
          "* TODO %?\n")
         ("a" "Art" entry
-         (file+headline "art.org" "inbox")
+         (file+headline "art.org" "📨 inbox")
          "* TODO %?\n")
         ("l" "Life" entry
-         (file+headline "life.org" "inbox")
+         (file+headline "life.org" "📨 inbox")
          "* TODO %?\n")
         ("m" "Math" entry
-         (file+headline "math.org" "inbox")
+         (file+headline "math.org" "📨 inbox")
          "* TODO %?\n")
         ("c" "Computer" entry
-         (file+headline "computer.org" "inbox")
+         (file+headline "computer.org" "📨 inbox")
          "* TODO %?\n")))
 
 
