@@ -2785,17 +2785,25 @@ Process .+
 ;; GUI browser
 
 
-(defun browse-url-or-search ()
-  (interactive)
-  (let ((query (read-string "URL/search query: "
-                            (when (region-active-p)
-                              (buffer-substring (region-beginning)
-                                                (region-end)))
-                            'browser-query-history))
-        (browse-url-browser-function 'browse-url-default-browser))
+(defun browse-url-or-search (query)
+  (interactive (list (read-string "URL/search query: "
+                                  (when (region-active-p)
+                                    (buffer-substring (region-beginning)
+                                                      (region-end)))
+                                  'browser-query-history)))
+  (let ((browse-url-browser-function 'browse-url-default-browser))
     (if (string-match-p "^[a-zA-Z0-9]+://" query)
         (browse-url query)
       (browse-url (format "https://duckduckgo.com?q=%s" query)))))
+
+
+(require 'ffap)
+
+
+(setq ffap-url-fetcher
+      (lambda (x)
+        (browse-url-or-search x)
+        (add-to-history 'browser-query-history x)))
 
 
 ;; ===========================
