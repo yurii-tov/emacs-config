@@ -2790,7 +2790,8 @@ Process .+
   (let ((query (read-string "URL/search query: "
                             (when (region-active-p)
                               (buffer-substring (region-beginning)
-                                                (region-end)))))
+                                                (region-end)))
+                            'browser-query-history))
         (browse-url-browser-function 'browse-url-default-browser))
     (if (string-match-p "^[a-zA-Z0-9]+://" query)
         (browse-url query)
