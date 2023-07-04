@@ -337,7 +337,7 @@
 ;; show line numbers
 
 
-(dolist (x '(prog-mode-hook text-mode-hook conf-mode-hook))
+(dolist (x '(prog-mode-hook conf-mode-hook))
   (add-hook x 'display-line-numbers-mode))
 
 
