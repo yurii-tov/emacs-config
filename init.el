@@ -838,23 +838,13 @@
 
 (defun shuffle-lines ()
   (interactive)
-  (let* ((bounds (if (use-region-p)
+  (apply #'shell-command-on-region
+         (append (if (use-region-p)
                      (list (region-beginning)
                            (region-end))
                    (list (point-min)
-                         (point-max))))
-         (lines (split-string (apply #'buffer-substring bounds)
-                              "\n" t " *"))
-         (lines-count (length lines))
-         (indexes (cl-loop for i from 0 below lines-count collect i))
-         (shuffled (make-vector lines-count nil)))
-    (dolist (x lines)
-      (let ((i (nth (random lines-count) indexes)))
-        (setf (aref shuffled i) x)
-        (setq lines-count (1- lines-count))
-        (setq indexes (cl-remove i indexes))))
-    (apply #'delete-region bounds)
-    (insert (string-join shuffled "\n"))))
+                         (point-max)))
+                 (list "shuf" (current-buffer) t))))
 
 
 (defun enumerate-lines ()
