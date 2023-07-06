@@ -54,7 +54,8 @@
 (savehist-mode 1)
 
 
-(setq savehist-additional-variables '(kill-ring search-ring regexp-search-ring))
+(setq savehist-additional-variables '(kill-ring search-ring regexp-search-ring)
+      history-delete-duplicates t)
 
 
 ;; enable unix'y things from MSYS2
