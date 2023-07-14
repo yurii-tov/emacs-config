@@ -1845,6 +1845,7 @@ Example input:
    |                   | Useful for defining remote shell sessions      |
    | startup-fn        | Function to call for starting the shell        |
    |                   | By default, function `shell' is used           |
+   | histfile-id       | Save history to file whth specific prefix      |
    | codings           | Explicit decoding and encoding systems         |
    |                   | (List of two symbols, e.g. '(cp1251-dos utf-8) |
    |-------------------+------------------------------------------------|"
@@ -1853,6 +1854,7 @@ Example input:
          (shell-options (cdr preset))
          (startup-fn (alist-get 'startup-fn shell-options))
          (codings (alist-get 'codings shell-options))
+         (histfile-id (alist-get 'histfile-id shell-options))
          (buffer-name (or buffer-name
                           (generate-new-buffer-name
                            (format "*%s*" preset-name))))
@@ -1870,6 +1872,10 @@ Example input:
         (shell buffer-name)))
     (when codings
       (set-buffer-process-coding-system (car codings) (cadr codings)))
+    (when histfile-id
+      (setq-local comint-input-ring-file-name
+                  (comint-make-input-ring-file-name histfile-id))
+      (comint-read-input-ring t))
     ;; Enable restart
     (use-local-map (copy-keymap (current-local-map)))
     (local-set-key
@@ -2651,21 +2657,11 @@ Process .+
 ;; ==========
 
 
-(defun powershell-setup-histfile (f &rest args)
-  (let ((buffer (apply f args)))
-    (with-current-buffer buffer
-      (setq-local comint-input-ring-file-name
-                  (comint-make-input-ring-file-name "powershell"))
-      (comint-read-input-ring t))))
-
-
-(advice-add 'powershell :around 'powershell-setup-histfile)
-
-
 (defun run-powershell ()
   (interactive)
   (run-shell '("powershell"
                (startup-fn . powershell)
+               (histfile-id . "powershell")
                (codings . (cp866-dos cp866-dos)))))
 
 
