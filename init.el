@@ -152,6 +152,7 @@
   "l" slime
   "p" run-python
   "q" sql-connect
+  "d" docker-connect
   "k" cider-connect
   "K" cider-jack-in
   "g" run-groovy)
@@ -2676,6 +2677,20 @@ Process .+
                (startup-fn . powershell)
                (histfile-id . "powershell")
                (codings . (cp866-dos cp866-dos)))))
+
+
+;; ======
+;; Docker
+;; ======
+
+
+(defun docker-connect ()
+  (interactive)
+  (let* ((container (ido-completing-read "Connect to Docker container: " (split-string (shell-command-to-string "docker ps --format '{{.Names}}'") "\n" t)))
+         (buffer-name (format "docker:%s" container))
+         (command (format "docker exec -it %s bash" container))
+         (*async-shell-command-ask-for-wd* nil))
+    (async-shell-command command buffer-name)))
 
 
 ;; ===============================
