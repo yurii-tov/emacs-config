@@ -22,7 +22,8 @@
 (reset-language-environment)
 
 
-(set-coding-system-priority 'cp1251-dos)
+(when system-type-is-windows
+  (set-coding-system-priority 'cp1251-dos))
 
 
 (prefer-coding-system 'utf-8-unix)
