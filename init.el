@@ -291,6 +291,12 @@
 ;; =============
 
 
+;; no blinking cursor
+
+
+(blink-cursor-mode 0)
+
+
 ;; remove "welcome" messages on startup
 
 
