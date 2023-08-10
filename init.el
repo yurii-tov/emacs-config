@@ -278,6 +278,8 @@
              "C-c h" hexl-mode
              "C-c a" org-agenda
              "C-c c" org-capture
+             "C-=" text-scale-increase
+             "C-M-=" text-scale-decrease
              "M-o" other-window
              "C-1" delete-other-windows
              "C-2" split-window-below
