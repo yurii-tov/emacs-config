@@ -1871,7 +1871,7 @@ Example input:
                            (format "*%s*" preset-name))))
          (wd (or (alist-get 'working-directory
                             shell-options)
-                 (read-directory-name "wd: "))))
+                 (read-directory-name (format "Run %s at: " preset-name)))))
     (switch-to-buffer buffer-name)
     (cd wd)
     (when (get-buffer-process (current-buffer))
