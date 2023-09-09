@@ -1175,7 +1175,6 @@ Example:
 
 
 (setq ido-enable-flex-matching t
-      ido-auto-merge-work-directories-length -1
       ido-use-filename-at-point 'guess
       ido-use-url-at-point t
       ido-max-work-directory-list 100)
