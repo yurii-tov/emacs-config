@@ -59,23 +59,6 @@
       history-delete-duplicates t)
 
 
-;; enable unix'y things from MSYS2
-
-
-(when system-type-is-windows
-  (let ((msys "C:/tools/msys64"))
-    (if (file-exists-p msys)
-        (progn (setenv "PATH"
-                       (format "%1$s\\mingw64\\bin;%1$s\\usr\\bin;%s"
-                               (replace-regexp-in-string "/" "\\\\" msys)
-                               (getenv "PATH")))
-               (setenv "LC_ALL" "en_GB.UTF-8")
-               (add-to-list 'exec-path (format "%s/usr/bin" msys))
-               (add-to-list 'exec-path (format "%s/mingw64/bin" msys))
-               (setq shell-file-name "bash"))
-      (warn "msys2 not found. Expected location is %s" msys))))
-
-
 ;; third-party packages
 
 
@@ -107,6 +90,24 @@
         (package-refresh-contents)
         (setq refreshed t))
       (package-install p))))
+
+
+;; enable unix'y things from MSYS2
+
+
+(when system-type-is-windows
+  (let ((msys "C:/tools/msys64"))
+    (if (file-exists-p msys)
+        (progn (setenv "PATH"
+                       (format "%1$s\\mingw64\\bin;%1$s\\usr\\bin;%s"
+                               (replace-regexp-in-string "/" "\\\\" msys)
+                               (getenv "PATH")))
+               (setenv "LC_ALL" "en_GB.UTF-8")
+               (add-to-list 'exec-path (format "%s/usr/bin" msys))
+               (add-to-list 'exec-path (format "%s/mingw64/bin" msys))
+               (setq shell-file-name "bash"))
+      (warn "msys2 not found. Expected location is %s" msys))))
+
 
 
 ;; ==================
