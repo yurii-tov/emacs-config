@@ -103,7 +103,7 @@
       refreshed)
   (dolist (p packages)
     (unless (package-installed-p p)
-      (unless (or system-type-is-windows refreshed)
+      (unless refreshed
         (package-refresh-contents)
         (setq refreshed t))
       (package-install p))))
