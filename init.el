@@ -155,8 +155,7 @@
   "p" run-python
   "q" sql-connect
   "d" docker-connect
-  "k" cider-connect
-  "K" cider-jack-in
+  "k" cider-start-map
   "g" run-groovy)
 
 
