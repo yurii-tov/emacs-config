@@ -32,16 +32,6 @@
 (setq default-input-method 'russian-computer)
 
 
-;; place customization data to separate file (do not edit it by hand)
-
-
-(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-
-
-(when (file-exists-p custom-file)
-  (load-file custom-file))
-
-
 ;; shutdown
 
 
@@ -90,6 +80,16 @@
         (package-refresh-contents)
         (setq refreshed t))
       (package-install p))))
+
+
+;; file for auto-saving customization data
+
+
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+
+
+(when (file-exists-p custom-file)
+  (load-file custom-file))
 
 
 ;; enable unix'y things from MSYS2
