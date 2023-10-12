@@ -302,10 +302,11 @@
     (when f
       (with-current-buffer "*scratch*"
         (delete-region (point-min) (point-max))
+        (insert (replace-regexp-in-string "\n" "" (emacs-version)))
+        (newline 3)
         (insert f)
         (comment-region (point-min) (point-max))
-        (open-line 3)
-        (end-of-buffer)))))
+        (newline 3)))))
 
 
 (add-hook 'emacs-startup-hook 'insert-scratch-fortune)
