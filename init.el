@@ -156,6 +156,7 @@
   "q" sql-connect
   "d" docker-connect
   "k" cider-start-map
+  "b" babashka
   "g" run-groovy)
 
 
@@ -2592,6 +2593,11 @@ Process .+
                                  (let ((*async-shell-command-ask-for-wd* nil))
                                    (async-shell-command (format "nc %s %s" ,@socket) b))))
                  (histfile-id . "clojure")))))
+
+
+(defun babashka ()
+  (interactive)
+  (cider-jack-in-universal 3))
 
 
 ;; ==========
