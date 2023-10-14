@@ -148,7 +148,7 @@
 (define-custom-keymap repls-map "C-c j"
   "j" run-default-shell
   "J" run-ssh-session
-  "s" run-clojure-socket-repl
+  "s" connect-clojure-socket-repl
   "o" run-powershell
   "i" ielm
   "l" slime
@@ -2582,7 +2582,7 @@ Process .+
 (setq cider-show-error-buffer nil)
 
 
-(defun run-clojure-socket-repl ()
+(defun connect-clojure-socket-repl ()
   (interactive)
   (let* ((socket (split-string (read-string "Connect to Clojure socket REPL: " "localhost:7777") ":"))
          (buffer-name (apply #'format "clojure-socket-repl:%s:%s" socket))
