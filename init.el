@@ -2768,18 +2768,14 @@ Process .+
 
 
 (defun fortune ()
-  (let* ((fortune-executable (executable-find "fortune")))
-    (cond (fortune-executable
-           (shell-command-to-string fortune-executable))
-          ((file-exists-p fortune-file)
-           (with-temp-buffer
-             (insert-file-contents fortune-file)
-             (goto-char (1+ (random (point-max))))
-             (let* ((e (search-forward-regexp "^%$" nil t))
-                    (e (if e (- e 2) (point-max))))
-               (goto-char e)
-               (buffer-substring
-                (+ 2 (or (search-backward-regexp "^%$" nil t) 1)) e)))))))
+  (with-temp-buffer
+    (insert-file-contents fortune-file)
+    (goto-char (1+ (random (point-max))))
+    (let* ((e (search-forward-regexp "^%$" nil t))
+           (e (if e (- e 2) (point-max))))
+      (goto-char e)
+      (buffer-substring
+       (+ 2 (or (search-backward-regexp "^%$" nil t) 1)) e))))
 
 
 ;; ============
