@@ -216,10 +216,8 @@
                       "f" insert-file
                       "j" insert-path
                       "a" insert-fortune
-                      "b" insert-buffer-name
-                      "B" insert-buffer
-                      "i" insert-char
-                      "x" iso-transl-ctl-x-8-map)
+                      "b" insert-buffer
+                      "i" insert-char)
 
 
 ;; diff
@@ -2478,13 +2476,6 @@ Process .+
 ;; ==========
 ;; emacs lisp
 ;; ==========
-
-
-(defun insert-buffer-name (buffer-name)
-  (interactive (list (ido-completing-read
-                      "Insert buffer name: "
-                      (mapcar #'buffer-name (buffer-list)))))
-  (insert buffer-name))
 
 
 (define-abbrev-table 'emacs-lisp-mode-abbrev-table
