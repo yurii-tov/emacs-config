@@ -70,7 +70,6 @@
                   htmlize
                   clojure-mode
                   powershell
-                  smex
                   ido-vertical-mode
                   base16-theme))
       refreshed)
@@ -146,18 +145,18 @@
 
 
 (define-custom-keymap repls-map "C-c j"
-  "j" run-default-shell
-  "J" run-ssh-session
-  "s" connect-clojure-socket-repl
-  "o" run-powershell
-  "i" ielm
-  "l" slime
-  "p" run-python
-  "q" sql-connect
-  "d" docker-connect
-  "k" cider-start-map
-  "b" babashka
-  "g" run-groovy)
+                      "j" run-default-shell
+                      "J" run-ssh-session
+                      "s" connect-clojure-socket-repl
+                      "o" run-powershell
+                      "i" ielm
+                      "l" slime
+                      "p" run-python
+                      "q" sql-connect
+                      "d" docker-connect
+                      "k" cider-start-map
+                      "b" babashka
+                      "g" run-groovy)
 
 
 ;; extending global search map
@@ -184,60 +183,58 @@
 
 
 (define-custom-keymap text-transform-map "M-c"
-  "c" upcase-char
-  "o" sort-lines
-  "O" shuffle-lines
-  "s" replace-string
-  "r" replace-regexp
-  "u" upcase-dwim
-  "l" downcase-dwim
-  "d" delete-duplicate-lines
-  "M-c" duplicate-line
-  "q" fill-paragraph
-  "i" invert-chars
-  "j" join-region
-  "b" break-line
-  "f" flush-lines
-  "k" keep-lines
-  "e" enumerate-lines
-  "w" whitespace-cleanup
-  "," (lambda () (interactive) (wrap-with-text "[" "]"))
-  "<" (lambda () (interactive) (wrap-with-text "{" "}"))
-  "." (lambda () (interactive) (wrap-with-text "\"" "\""))
-  ">" (lambda () (interactive) (wrap-with-text "'" "'"))
-  "?" (lambda () (interactive) (wrap-with-text "<" ">"))
-  "/" (lambda () (interactive) (wrap-with-text "*" "*"))
-  "p" (lambda () (interactive) (wrap-with-text "(" ")")))
+                      "c" upcase-char
+                      "o" sort-lines
+                      "O" shuffle-lines
+                      "s" replace-string
+                      "r" replace-regexp
+                      "u" upcase-dwim
+                      "l" downcase-dwim
+                      "d" delete-duplicate-lines
+                      "M-c" duplicate-line
+                      "q" fill-paragraph
+                      "i" invert-chars
+                      "j" join-region
+                      "b" break-line
+                      "f" flush-lines
+                      "k" keep-lines
+                      "e" enumerate-lines
+                      "w" whitespace-cleanup
+                      "," (lambda () (interactive) (wrap-with-text "[" "]"))
+                      "<" (lambda () (interactive) (wrap-with-text "{" "}"))
+                      "." (lambda () (interactive) (wrap-with-text "\"" "\""))
+                      ">" (lambda () (interactive) (wrap-with-text "'" "'"))
+                      "?" (lambda () (interactive) (wrap-with-text "<" ">"))
+                      "/" (lambda () (interactive) (wrap-with-text "*" "*"))
+                      "p" (lambda () (interactive) (wrap-with-text "(" ")")))
 
 
 ;; inserting things
 
 
 (define-custom-keymap insert-map "C-x i"
-  "f" insert-file
-  "p" insert-path
-  "a" insert-fortune
-  "b" insert-buffer-name
-  "B" insert-buffer
-  "n" insert-char
-  "i" insert-unicode
-  "j" insert-from-kill-ring
-  "x" iso-transl-ctl-x-8-map)
+                      "f" insert-file
+                      "j" insert-path
+                      "a" insert-fortune
+                      "b" insert-buffer-name
+                      "B" insert-buffer
+                      "n" insert-char
+                      "i" insert-unicode
+                      "x" iso-transl-ctl-x-8-map)
 
 
 ;; diff
 
 
 (define-custom-keymap diff-map "C-c d"
-  "f" diff
-  "b" diff-buffers)
+                      "f" diff
+                      "b" diff-buffers)
 
 
 ;; misc
 
 
-(bind-keys '("M-x" smex
-             "M-=" count-words
+(bind-keys '("M-=" count-words
              "C-x u" reopen-with-sudo
              "C-x p" async-shell-command
              "C-x C-b" ibuffer
@@ -316,7 +313,7 @@
 ;; replace annoying confirmations with less annoying
 
 
-(fset 'yes-or-no-p 'y-or-n-p)
+(setq use-short-answers t)
 
 
 (setq kill-buffer-query-functions
@@ -955,12 +952,11 @@
   (kill-line))
 
 
-(defun insert-from-kill-ring (text)
-  (interactive
-   (list (ido-completing-read
-          "Insert from kill ring: "
-          (cl-remove-duplicates kill-ring :test #'equal))))
-  (insert text))
+(defun ido-read-from-kill-ring (prompt)
+  (ido-completing-read prompt (cl-remove-duplicates kill-ring :test #'equal)))
+
+
+(advice-add 'read-from-kill-ring :override #'ido-read-from-kill-ring)
 
 
 (defun make-scratch-buffer ()
@@ -1153,7 +1149,8 @@ Example:
 ;; ================================
 
 
-(progn (ido-mode t)
+(progn (fido-vertical-mode)
+       (ido-mode t)
        (ido-everywhere t)
        (ido-vertical-mode))
 
@@ -2419,9 +2416,9 @@ Process .+
 
 
 (define-custom-keymap ctags-keymap "M-s c"
-  "v" visit-tags-table
-  "s" select-tags-table
-  "c" create-tags-file)
+                      "v" visit-tags-table
+                      "s" select-tags-table
+                      "c" create-tags-file)
 
 
 ;; ===
