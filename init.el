@@ -2661,12 +2661,11 @@ Process .+
 
 
 (defun browse-url-or-search (query)
-  (interactive (list (ido-completing-read "URL/search query: "
-                                          browser-query-history nil nil
-                                          (when (region-active-p)
-                                            (buffer-substring (region-beginning)
-                                                              (region-end)))
-                                          'browser-query-history)))
+  (interactive (list (read-string "URL/search query: "
+                                  (when (region-active-p)
+                                    (buffer-substring (region-beginning)
+                                                      (region-end)))
+                                  'browser-query-history)))
   (let ((browse-url-browser-function 'browse-url-default-browser))
     (if (string-match-p "^[a-zA-Z0-9]+://" query)
         (browse-url query)
