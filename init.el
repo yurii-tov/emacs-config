@@ -1155,8 +1155,8 @@
     dir))
 
 
-;; Turn off icomplete (including fido-vertical-mode) when browsing filesystem
-;; (Ensure proper fallback file-selection command)
+;; Ensure proper fallback file-selection command:
+;; turn off icomplete (including fido-vertical-mode)
 
 
 (defun ido-disable-icomplete (f &rest args)
