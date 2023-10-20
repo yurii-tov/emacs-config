@@ -1713,7 +1713,7 @@ Example input:
                            (format "*%s*" preset-name))))
          (wd (or (alist-get 'working-directory
                             shell-options)
-                 (read-directory-name (format "Run %s at: " preset-name)))))
+                 (ido-read-directory-name (format "Run %s at: " preset-name)))))
     (switch-to-buffer buffer-name)
     (cd wd)
     (when (get-buffer-process (current-buffer))
@@ -1836,7 +1836,7 @@ Example input:
 
 (defun async-shell-command-setup-wd (f &rest args)
   (let ((default-directory (if *async-shell-command-ask-for-wd*
-                               (read-directory-name "wd: ")
+                               (ido-read-directory-name "wd: ")
                              default-directory)))
     (ido-record-work-directory default-directory)
     (apply f args)))
