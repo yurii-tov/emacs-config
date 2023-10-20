@@ -1155,6 +1155,17 @@
     dir))
 
 
+;; Turn off icomplete (including fido-vertical-mode) when browsing filesystem
+;; (Ensure proper fallback file-selection command)
+
+
+(defun ido-disable-icomplete (f &rest args)
+  (let ((icomplete-mode nil)) (apply f args)))
+
+
+(advice-add 'ido-find-file :around #'ido-disable-icomplete)
+
+
 ;; =======
 ;; isearch
 ;; =======
