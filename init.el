@@ -982,7 +982,7 @@
 
 (defun insert-path ()
   (interactive)
-  (insert (read-file-name "Insert path: ")))
+  (insert (ido-read-file-name "Insert path: ")))
 
 
 ;; When rectangular region is selected, C-SPC activates multiline editing
@@ -2026,7 +2026,7 @@ Process .+
                                                         t))
                                             ((char-equal c ?s)
                                              (copy-file ,sql-database-copy
-                                                        (read-file-name "Save file as: ")
+                                                        (ido-read-file-name "Save file as: ")
                                                         t))))))
                          (delete-file ,sql-database-copy)))
                     nil t))))))
