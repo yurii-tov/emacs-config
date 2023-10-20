@@ -191,7 +191,7 @@
                       "u" upcase-dwim
                       "l" downcase-dwim
                       "d" delete-duplicate-lines
-                      "M-c" duplicate-line
+                      "M-c" duplicate-dwim
                       "q" fill-paragraph
                       "i" invert-chars
                       "j" join-region
@@ -759,6 +759,12 @@
 (delete-selection-mode t)
 
 
+;; duplicating text
+
+
+(setq duplicate-line-final-position -1)
+
+
 ;; reindent / cleanup selected region or whole buffer
 
 
@@ -805,26 +811,6 @@
           (replace-match (cadr (assoc (buffer-substring (1- (point)) (point))
                                       (cdr inversion)
                                       #'string-equal))))))))
-
-
-(defun duplicate-line (arg)
-  "Duplicate current line, leaving point in lower line."
-  (interactive "*p")
-  (setq buffer-undo-list (cons (point) buffer-undo-list))
-  (let ((bol (save-excursion (beginning-of-line) (point)))
-        eol)
-    (save-excursion
-      (end-of-line)
-      (setq eol (point))
-      (let ((line (buffer-substring bol eol))
-            (buffer-undo-list t)
-            (count arg))
-        (while (> count 0)
-          (newline)
-          (insert line)
-          (setq count (1- count))))
-      (setq buffer-undo-list (cons (cons eol (point)) buffer-undo-list))))
-  (next-line arg))
 
 
 (defun shuffle-lines ()
