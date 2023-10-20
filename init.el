@@ -214,6 +214,7 @@
 
 (define-custom-keymap insert-map "C-x i"
                       "i" emoji-search
+                      "e" emoji-insert
                       "f" insert-file
                       "j" insert-path
                       "a" insert-fortune
