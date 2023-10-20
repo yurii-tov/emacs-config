@@ -1017,8 +1017,7 @@
 
 
 (progn (fido-vertical-mode)
-       (ido-mode t)
-       (ido-everywhere t)
+       (ido-mode 'files)
        (ido-vertical-mode))
 
 
