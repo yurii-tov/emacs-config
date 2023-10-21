@@ -1003,15 +1003,35 @@
 ;; ================================
 
 
-(progn (fido-vertical-mode)
-       (ido-mode 'files)
-       (ido-vertical-mode))
+;; Use fido-mode as default completion method
+
+
+(fido-vertical-mode)
+
+
+;; Use IDO for file-browsing only
+
+
+(progn (ido-mode 'files)
+       (ido-vertical-mode)
+       (add-function :override read-file-name-function #'ido-read-file-name))
 
 
 (setq ido-enable-flex-matching t
       ido-use-filename-at-point 'guess
       ido-use-url-at-point t
       ido-max-work-directory-list 100)
+
+
+;; Ensure proper (i.e. old-fashioned) IDO fallback file-selection command:
+
+
+(defun ido-disable-icomplete (f &rest args)
+  (let ((icomplete-mode nil)) (apply f args)))
+
+
+(progn (advice-add 'ido-find-file :around #'ido-disable-icomplete)
+       (advice-add 'ido-read-file-name :around #'ido-disable-icomplete))
 
 
 (defun ido-find-dired ()
@@ -1153,17 +1173,6 @@
     (if dir
         (setq ido-work-directory-index i))
     dir))
-
-
-;; Ensure proper fallback file-selection command:
-;; turn off icomplete (including fido-vertical-mode)
-
-
-(defun ido-disable-icomplete (f &rest args)
-  (let ((icomplete-mode nil)) (apply f args)))
-
-
-(advice-add 'ido-find-file :around #'ido-disable-icomplete)
 
 
 ;; =======
