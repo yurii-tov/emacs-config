@@ -141,24 +141,6 @@
           (bind-keys ',bindings ',name)))
 
 
-;; starting REPLs
-
-
-(define-custom-keymap repls-map "C-c j"
-                      "j" run-default-shell
-                      "J" run-ssh-session
-                      "s" connect-clojure-socket-repl
-                      "o" run-powershell
-                      "i" ielm
-                      "l" slime
-                      "p" run-python
-                      "q" sql-connect
-                      "d" docker-connect
-                      "k" cider-start-map
-                      "b" babashka
-                      "g" run-groovy)
-
-
 ;; extending global search map
 
 
@@ -234,6 +216,8 @@
 
 
 (bind-keys '("M-=" count-words
+             "C-x C-j" run-default-shell
+             "C-x j" run-repl
              "C-x u" reopen-with-sudo
              "C-x p" async-shell-command
              "C-x C-b" ibuffer
@@ -242,7 +226,6 @@
              "M-l" (lambda () (interactive) (move-line 'up))
              "C-M-l" (lambda () (interactive) (move-line 'down))
              "C-c s" serve-directory
-             "C-c e" elisp-eval-region-or-buffer
              "C-c n" make-scratch-buffer
              "C-c z" zone
              "C-c v" capture-video
@@ -2479,29 +2462,6 @@ Process .+
   (cider-jack-in-universal 3))
 
 
-;; ==========
-;; emacs lisp
-;; ==========
-
-
-(define-abbrev-table 'emacs-lisp-mode-abbrev-table
-  '(("wcb" "(with-current-buffer \"\")")))
-
-
-;; evaluating stuff
-
-
-(defun elisp-eval-region-or-buffer ()
-  (interactive)
-  (if (use-region-p)
-      (let ((s (region-beginning))
-            (e (region-end)))
-        (message "Evaluating region: (%d, %d)" s e)
-        (eval-region s e))
-    (progn (message "Evaluating buffer: %s" (current-buffer))
-           (eval-buffer))))
-
-
 ;; ===========
 ;; common lisp
 ;; ===========
@@ -2684,6 +2644,35 @@ Process .+
       (lambda (x)
         (browse-url-or-search x)
         (add-to-history 'browser-query-history x)))
+
+
+;; =================
+;; Run various REPLs
+;; =================
+
+
+(setq repls `((,(intern (file-name-base shell-file-name)) run-default-shell)
+              (ssh run-ssh-session)
+              (cider-connect-clj)
+              (cider-connect-cljs)
+              (cider-jack-in-clj)
+              (cider-jack-in-cljs)
+              (clojure-socket-repl connect-clojure-socket-repl)
+              (powershell run-powershell)
+              (ielm)
+              (slime)
+              (python run-python)
+              (sql sql-connect)
+              (docker docker-connect)
+              (babashka)
+              (groovy run-groovy)))
+
+
+(defun run-repl ()
+  (interactive)
+  (let* ((repl (assoc (intern (completing-read "Start REPL: " (mapcar #'car repls))) repls))
+         (repl (or (cadr repl) (car repl))))
+    (call-interactively repl)))
 
 
 ;; ===========================
