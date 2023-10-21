@@ -374,7 +374,7 @@
 
 (defun apply-font (my-font)
   (interactive
-   (list (ido-completing-read
+   (list (completing-read
           "Font face: "
           (cl-remove-duplicates (font-family-list) :test #'equal))))
   (set-face-attribute 'default nil :font my-font))
@@ -396,10 +396,9 @@
 
 
 (defun apply-color-theme (theme)
-  "Enchanced version of load-theme.
-   Make use of IDO and disable any of previously loaded themes before turning on a new one"
+  "Enchanced version of load-theme. Disable any of previously loaded themes"
   (interactive
-   (list (intern (ido-completing-read
+   (list (intern (completing-read
                   "theme: "
                   (mapcar #'symbol-name
                           (custom-available-themes))))))
@@ -1647,7 +1646,7 @@ Example input:
                       comint-matching-input-from-input-string
                     current-input)))
          (history (ring-elements comint-input-ring))
-         (command (ido-completing-read
+         (command (completing-read
                    "Command history: "
                    history
                    nil nil query))
@@ -1767,8 +1766,8 @@ Example input:
 (defun run-ssh-session ()
   (interactive)
   (let* ((presets (read-ssh-presets))
-         (p (ido-completing-read "Run ssh session: "
-                                 (mapcar #'car presets))))
+         (p (completing-read "Run ssh session: "
+                             (mapcar #'car presets))))
     (run-shell (cons (format "ssh-%s" p)
                      (cdr (assoc p presets))))))
 
@@ -2556,7 +2555,7 @@ Process .+
 
 (defun docker-connect ()
   (interactive)
-  (let* ((container (ido-completing-read "Connect to Docker container: " (split-string (shell-command-to-string "docker ps --format '{{.Names}}'") "\n" t)))
+  (let* ((container (completing-read "Connect to Docker container: " (split-string (shell-command-to-string "docker ps --format '{{.Names}}'") "\n" t)))
          (buffer-name (format "docker:%s" container))
          (command (format "docker exec -it %s bash" container))
          (*async-shell-command-ask-for-wd* nil))
