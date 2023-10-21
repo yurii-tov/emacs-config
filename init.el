@@ -226,7 +226,7 @@
              "M-l" (lambda () (interactive) (move-line 'up))
              "C-M-l" (lambda () (interactive) (move-line 'down))
              "C-c s" serve-directory
-             "C-c n" make-scratch-buffer
+             "C-x C-n" make-scratch-buffer
              "C-c z" zone
              "C-c v" capture-video
              "C-c p" copy-file-name-to-clipboard
@@ -236,7 +236,6 @@
              "M-v" scroll-down-5-lines
              "M-i" reformat-region
              "M-u" force-revert-buffer
-             "C-c r" rename-buffer
              "C-c h" hexl-mode
              "C-c a" org-agenda
              "C-c c" org-capture
