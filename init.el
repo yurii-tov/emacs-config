@@ -218,6 +218,7 @@
 (bind-keys '("M-=" count-words
              "C-x C-j" run-default-shell
              "C-x j" run-repl
+             "C-x J" run-ssh-session
              "C-x u" reopen-with-sudo
              "C-x p" async-shell-command
              "C-x C-b" ibuffer
@@ -2651,7 +2652,6 @@ Process .+
 
 
 (setq repls `((,(intern (file-name-base shell-file-name)) run-default-shell)
-              (ssh run-ssh-session)
               (cider-jack-in-clj)
               (cider-connect-clj)
               (cider-connect-sibling-clj)
