@@ -1629,7 +1629,7 @@ Example input:
                       comint-matching-input-from-input-string
                     current-input)))
          (history (ring-elements comint-input-ring))
-         (command (completing-read
+         (command (ido-completing-read
                    "Command history: "
                    history
                    nil nil query))
