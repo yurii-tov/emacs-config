@@ -991,10 +991,8 @@
 (fido-vertical-mode)
 
 
-;; Disable minibuffer-complete-word in order to have spaces in input
-
-
-(defun minibuffer-complete-word () (interactive) (insert " "))
+(progn (define-key icomplete-minibuffer-map (kbd "C-j") 'icomplete-fido-exit)
+       (define-key icomplete-minibuffer-map (kbd "SPC") 'self-insert-command))
 
 
 ;; Use IDO for file-browsing only
