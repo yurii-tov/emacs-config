@@ -958,7 +958,7 @@
 
 (defun insert-path ()
   (interactive)
-  (insert (ido-read-file-name "Insert path: ")))
+  (insert (read-file-name "Insert path: ")))
 
 
 ;; When rectangular region is selected, C-SPC activates multiline editing
