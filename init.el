@@ -991,6 +991,12 @@
 (fido-vertical-mode)
 
 
+;; Disable minibuffer-complete-word in order to have spaces in input
+
+
+(defun minibuffer-complete-word () (interactive) (insert " "))
+
+
 ;; Use IDO for file-browsing only
 
 
@@ -1870,6 +1876,16 @@ Example input:
 
 
 (advice-add 'async-shell-command :around 'async-shell-command-setup-echo)
+
+
+;; Use completion list when reading shell commands
+
+
+(defun wrap-completing-shell-command (f &rest args)
+  (completing-read (car args) shell-command-history nil nil (cadr args) 'shell-command-history))
+
+
+(advice-add 'read-shell-command :around #'wrap-completing-shell-command)
 
 
 ;; ==========
