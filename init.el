@@ -1843,7 +1843,7 @@ Example input:
 
 (defun async-shell-command-setup-wd (f &rest args)
   (let ((default-directory (if *async-shell-command-ask-for-wd*
-                               (read-directory-name "wd: ")
+                               (read-directory-name (format "Run %s at: " (propertize (car args) 'face 'bold)))
                              default-directory)))
     (ido-record-work-directory default-directory)
     (apply f args)))
