@@ -2041,7 +2041,7 @@ Process .+
                                                         t))
                                             ((char-equal c ?s)
                                              (copy-file ,sql-database-copy
-                                                        (ido-read-file-name "Save file as: ")
+                                                        (read-file-name "Save file as: ")
                                                         t))))))
                          (delete-file ,sql-database-copy)))
                     nil t))))))
