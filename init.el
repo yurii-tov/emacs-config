@@ -1012,7 +1012,8 @@
   (let ((icomplete-mode nil)) (apply f args)))
 
 
-(advice-add 'ido-file-internal :around #'ido-disable-icomplete)
+(progn (advice-add 'ido-file-internal :around #'ido-disable-icomplete)
+       (advice-add 'ido-read-file-name :around #'ido-disable-icomplete))
 
 
 (defun ido-find-dired ()
