@@ -991,8 +991,9 @@
 (fido-vertical-mode)
 
 
-(progn (define-key icomplete-minibuffer-map (kbd "C-j") 'icomplete-fido-exit)
-       (define-key icomplete-minibuffer-map (kbd "SPC") 'self-insert-command))
+(bind-keys '("C-j" icomplete-fido-exit
+             "SPC" self-insert-command)
+           icomplete-minibuffer-map)
 
 
 ;; Use IDO for file-browsing only
