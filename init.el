@@ -1220,7 +1220,9 @@
     (if (string-match process-indicator s)
         (let ((s (replace-regexp-in-string
                   process-indicator
-                  "•" s)))
+                  "•⁤" s)))
+          (set-text-properties
+           1 2 '(ibuffer-process t) s)
           (set-text-properties
            0 1 '(face (:foreground "#00cc00")) s)
           s)
