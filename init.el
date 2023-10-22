@@ -996,6 +996,9 @@
            icomplete-minibuffer-map)
 
 
+(setq completion-auto-select t)
+
+
 ;; Use IDO for file-browsing only
 
 
