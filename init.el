@@ -919,6 +919,13 @@
   (kill-line))
 
 
+(defun ido-read-from-kill-ring (prompt)
+  (ido-completing-read prompt (cl-remove-duplicates kill-ring :test #'equal)))
+
+
+(advice-add 'read-from-kill-ring :override #'ido-read-from-kill-ring)
+
+
 (defun make-scratch-buffer ()
   (interactive)
   (let* ((name (generate-new-buffer-name "*scratch*")))
@@ -1632,7 +1639,7 @@ Example input:
                       comint-matching-input-from-input-string
                     current-input)))
          (history (ring-elements comint-input-ring))
-         (command (completing-read "Command history: " history nil nil query))
+         (command (ido-completing-read "Command history: " history nil nil query))
          (i (cl-position command history :test #'equal)))
     (setq-local comint-input-ring-index i)
     (comint-delete-input)
