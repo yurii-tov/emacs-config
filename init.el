@@ -1759,7 +1759,9 @@ Example input:
   (interactive)
   (let* ((presets (read-ssh-presets))
          (p (completing-read "Run ssh session: "
-                             (mapcar #'car presets))))
+                             (mapcar #'car presets)
+                             nil
+                             t)))
     (run-shell (cons (format "ssh-%s" p)
                      (cdr (assoc p presets))))))
 
@@ -2531,20 +2533,6 @@ Process .+
                (codings . (cp866-dos cp866-dos)))))
 
 
-;; ======
-;; Docker
-;; ======
-
-
-(defun docker-connect ()
-  (interactive)
-  (let* ((container (completing-read "Connect to Docker container: " (split-string (shell-command-to-string "docker ps --format '{{.Names}}'") "\n" t)))
-         (buffer-name (format "docker:%s" container))
-         (command (format "docker exec -it %s bash" container))
-         (*async-shell-command-ask-for-wd* nil))
-    (async-shell-command command buffer-name)))
-
-
 ;; ===============================
 ;; Serving directories with Python
 ;; ===============================
@@ -2692,14 +2680,13 @@ Process .+
               (slime)
               (python run-python)
               (sql sql-connect)
-              (docker docker-connect)
               (babashka)
               (groovy run-groovy)))
 
 
 (defun run-repl ()
   (interactive)
-  (let* ((repl (assoc (intern (completing-read "Start REPL: " (mapcar #'car repls))) repls))
+  (let* ((repl (assoc (intern (completing-read "Start REPL: " (mapcar #'car repls) nil t)) repls))
          (repl (or (cadr repl) (car repl))))
     (call-interactively repl)))
 
