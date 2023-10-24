@@ -227,7 +227,7 @@
              "M-l" (lambda () (interactive) (move-line 'up))
              "C-M-l" (lambda () (interactive) (move-line 'down))
              "C-c s" serve-directory
-             "C-x C-n" make-scratch-buffer
+             "C-x m" make-scratch-buffer
              "C-c z" zone
              "C-c v" capture-video
              "C-c p" copy-file-name-to-clipboard
