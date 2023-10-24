@@ -182,13 +182,13 @@
                       "k" keep-lines
                       "e" enumerate-lines
                       "w" whitespace-cleanup
-                      "," (lambda () (interactive) (wrap-with-text "[" "]"))
-                      "<" (lambda () (interactive) (wrap-with-text "{" "}"))
+                      "," (lambda () (interactive) (wrap-with-text "[" "]" t))
+                      "<" (lambda () (interactive) (wrap-with-text "{" "}" t))
                       "." (lambda () (interactive) (wrap-with-text "\"" "\""))
                       ">" (lambda () (interactive) (wrap-with-text "'" "'"))
                       "?" (lambda () (interactive) (wrap-with-text "<" ">"))
                       "/" (lambda () (interactive) (wrap-with-text "*" "*"))
-                      "p" (lambda () (interactive) (wrap-with-text "(" ")")))
+                      "p" (lambda () (interactive) (wrap-with-text "(" ")" t)))
 
 
 ;; inserting things
@@ -851,7 +851,7 @@
     (insert text)))
 
 
-(defun wrap-with-text (b1 b2)
+(defun wrap-with-text (b1 b2 &optional lisp-style-p)
   "Wraps current word (or region) with given bracket-like strings
    (e.g. brackets/quotes/apostrophes/parens etc.).
    When rectangle selection is in effect, applies wrapping on each *line* of that selection"
@@ -878,7 +878,7 @@
            (goto-char e)
            (forward-char)
            (insert b2)
-           (goto-char (1+ s))))
+           (when lisp-style-p (goto-char (1+ s)))))
         ((or (eobp) (looking-at "[\](){}<>*\s\n.,;:\[\"']"))
          (insert b1)
          (insert b2)
@@ -888,8 +888,9 @@
            (insert b1)
            (forward-word)
            (insert b2)
-           (backward-char)
-           (backward-word))))
+           (when lisp-style-p
+             (backward-char)
+             (backward-word)))))
 
 
 (defun move-line (direction)
