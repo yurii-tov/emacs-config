@@ -999,7 +999,7 @@
            icomplete-minibuffer-map)
 
 
-(setq completion-auto-select t)
+(setq completion-auto-select 'second-tab)
 
 
 ;; Use IDO for file-browsing only
