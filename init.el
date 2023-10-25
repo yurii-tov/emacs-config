@@ -1642,11 +1642,12 @@ Example input:
                       comint-matching-input-from-input-string
                     current-input)))
          (history (ring-elements comint-input-ring))
-         (command (ido-completing-read "Command history: " history nil nil query))
+         (command (completing-read "Command history: " history nil nil query))
          (i (cl-position command history :test #'equal)))
     (setq-local comint-input-ring-index i)
     (comint-delete-input)
-    (insert command)))
+    (insert command)
+    (comint-send-input)))
 
 
 (bind-keys '("M-r" comint-browse-command-history) comint-mode-map)
