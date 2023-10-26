@@ -1642,7 +1642,14 @@ Example input:
                       comint-matching-input-from-input-string
                     current-input)))
          (history (ring-elements comint-input-ring))
-         (command (completing-read "Command history: " history nil nil query))
+         (command (completing-read "Command history: "
+                                   (lambda (string pred action)
+                                     (if (eq action 'metadata)
+                                         '(metadata (display-sort-function . identity)
+                                                    (cycle-sort-function . identity))
+                                       (complete-with-action
+                                        action history string pred)))
+                                   nil nil query))
          (i (cl-position command history :test #'equal)))
     (setq-local comint-input-ring-index i)
     (comint-delete-input)
