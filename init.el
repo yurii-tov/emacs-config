@@ -1630,6 +1630,9 @@ Example input:
 ;; browsing comint-input-ring
 
 
+(add-to-list 'completion-category-overrides '(comint (styles substring)))
+
+
 (defun comint-browse-command-history ()
   (interactive)
   (let* ((current-input (buffer-substring
@@ -1646,7 +1649,8 @@ Example input:
                                    (lambda (string pred action)
                                      (if (eq action 'metadata)
                                          '(metadata (display-sort-function . identity)
-                                                    (cycle-sort-function . identity))
+                                                    (cycle-sort-function . identity)
+                                                    (category . comint))
                                        (complete-with-action
                                         action history string pred)))
                                    nil nil query))
