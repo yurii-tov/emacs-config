@@ -174,7 +174,7 @@
                       "l" downcase-dwim
                       "d" delete-duplicate-lines
                       "M-c" duplicate-dwim
-                      "q" fill-region
+                      "q" fill-region-justify
                       "i" invert-chars
                       "j" join-region
                       "b" break-line
@@ -761,6 +761,15 @@
   (untabify start end)
   (indent-region start end)
   (whitespace-cleanup))
+
+
+(defun fill-region-justify (start end)
+  (interactive (if (region-active-p)
+                   (list (region-beginning)
+                         (region-end))
+                 (list (point-min)
+                       (point-max))))
+  (fill-region start end 'full))
 
 
 (defun invert-chars ()
