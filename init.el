@@ -838,8 +838,7 @@
   (interactive)
   (if (region-active-p)
       (let ((separator (completing-read "Join region with: "
-                                        (and (boundp 'region-separators)
-                                             region-separators)
+                                        (bound-and-true-p region-separators)
                                         nil nil nil
                                         'region-separators))
             (text (buffer-substring (region-beginning)
@@ -854,8 +853,7 @@
 (defun break-line ()
   (interactive)
   (let ((separator (completing-read "Break line with: "
-                                    (and (boundp 'region-separators)
-                                         region-separators)
+                                    (bound-and-true-p region-separators)
                                     nil nil nil
                                     'region-separators))
         (text (buffer-substring
@@ -2668,10 +2666,8 @@ Process .+
 
 (defun browse-url-or-search (query)
   (interactive (list (completing-read "URL/search query: "
-                                      (and (boundp 'browser-query-history)
-                                           browser-query-history)
-                                      nil
-                                      nil
+                                      (bound-and-true-p browser-query-history)
+                                      nil nil
                                       (when (region-active-p)
                                         (buffer-substring (region-beginning)
                                                           (region-end)))
