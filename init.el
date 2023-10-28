@@ -174,7 +174,7 @@
                       "l" downcase-dwim
                       "d" delete-duplicate-lines
                       "M-c" duplicate-dwim
-                      "q" fill-paragraph
+                      "q" fill-region
                       "i" invert-chars
                       "j" join-region
                       "b" break-line
