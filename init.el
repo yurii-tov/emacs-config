@@ -747,7 +747,7 @@
 (setq duplicate-line-final-position -1)
 
 
-;; reindent / cleanup selected region or whole buffer
+;; reindenting / cleaning up
 
 
 (defun reformat-region (start end)
@@ -760,6 +760,12 @@
   (untabify start end)
   (indent-region start end)
   (whitespace-cleanup))
+
+
+;; making text nicely formatted, like in books
+
+
+(setq-default fill-column 80)
 
 
 (defun fill-region-justify (start end)
