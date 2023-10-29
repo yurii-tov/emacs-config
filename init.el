@@ -852,7 +852,12 @@
         (setq text (string-join text separator))
         (delete-active-region)
         (insert text))
-    (delete-indentation)))
+    (progn
+      (beginning-of-line)
+      (re-search-backward "[^\s\n]" nil nil)
+      (dotimes (i 2) (delete-blank-lines))
+      (next-line)
+      (delete-indentation))))
 
 
 (defun break-line ()
