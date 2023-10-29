@@ -837,10 +837,7 @@
 (defun join-lines ()
   (interactive)
   (if (region-active-p)
-      (let ((separator (completing-read "Join with: "
-                                        (bound-and-true-p region-separators)
-                                        nil nil nil
-                                        'region-separators))
+      (let ((separator (read-string "Join with: " nil 'region-separators))
             (text (buffer-substring (region-beginning)
                                     (region-end))))
         (setq text (split-string text "\n" t " *"))
@@ -857,10 +854,7 @@
 
 (defun break-line ()
   (interactive)
-  (let ((separator (completing-read "Break with: "
-                                    (bound-and-true-p region-separators)
-                                    nil nil nil
-                                    'region-separators))
+  (let ((separator (read-string "Break with: " nil 'region-separators))
         (text (buffer-substring
                (line-beginning-position)
                (line-end-position))))
@@ -1030,7 +1024,7 @@
          (history (caddr args))
          (history (cond ((consp history) (car history))
                         ((symbolp history) history))))
-    (if history
+    (if (and history (symbol-value history))
         (completing-read prompt (symbol-value history) nil nil nil history)
       (apply f args))))
 
@@ -1815,12 +1809,26 @@ Example input:
                      (cdr (assoc p presets))))))
 
 
-;; ====================
-;; async shell commands
-;; ====================
+;; ==============
+;; shell commands
+;; ==============
 
 
-;; enable restarting
+;; Use read-string when reading shell commands
+;; to obtain benefits of history completion
+
+
+(defun read-string-shell-command (f &rest args)
+  (read-string (car args) (cadr args) 'shell-command-history))
+
+
+(advice-add 'read-shell-command :around #'read-string-shell-command)
+
+
+;; async-shell-command
+
+
+;;;; enable restarting
 
 
 (defun command-to-buffer-name (command)
@@ -1860,7 +1868,7 @@ Example input:
 (advice-add 'async-shell-command :around 'async-shell-command-setup-restart)
 
 
-;; descriptive names
+;;;; descriptive names
 
 
 (defun async-shell-command-setup-sensible-name (f &rest args)
@@ -1873,7 +1881,7 @@ Example input:
 (advice-add 'async-shell-command :around 'async-shell-command-setup-sensible-name)
 
 
-;; histfile
+;;;; histfile
 
 
 (defun async-shell-command-setup-histfile (r)
@@ -1891,7 +1899,7 @@ Example input:
 (advice-add 'async-shell-command :filter-return 'async-shell-command-setup-histfile)
 
 
-;; specify working directory for the command
+;;;; specify working directory for the command
 
 
 (defvar *async-shell-command-ask-for-wd* t)
@@ -1912,7 +1920,7 @@ Example input:
 (advice-add 'async-shell-command :around 'async-shell-command-setup-wd)
 
 
-;; output command/wd
+;;;; output command/wd
 
 
 (require 'compile)
@@ -1934,16 +1942,6 @@ Example input:
 
 
 (advice-add 'async-shell-command :around 'async-shell-command-setup-echo)
-
-
-;; Use completion list when reading shell commands
-
-
-(defun wrap-completing-shell-command (f &rest args)
-  (completing-read (car args) shell-command-history nil nil (cadr args) 'shell-command-history))
-
-
-(advice-add 'read-shell-command :around #'wrap-completing-shell-command)
 
 
 ;; ==========
@@ -2686,13 +2684,11 @@ Process .+
 
 
 (defun browse-url-or-search (query)
-  (interactive (list (completing-read "URL/search query: "
-                                      (bound-and-true-p browser-query-history)
-                                      nil nil
-                                      (when (region-active-p)
-                                        (buffer-substring (region-beginning)
-                                                          (region-end)))
-                                      'browser-query-history)))
+  (interactive (list (read-string "URL/search query: "
+                                  (when (region-active-p)
+                                    (buffer-substring (region-beginning)
+                                                      (region-end)))
+                                  'browser-query-history)))
   (let ((browse-url-browser-function 'browse-url-default-browser))
     (if (string-match-p "^[a-zA-Z0-9]+://" query)
         (browse-url query)
