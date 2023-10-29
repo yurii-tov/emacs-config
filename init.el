@@ -637,29 +637,6 @@
 (advice-add 'find-dired :around #'find-dired-setup-buffer)
 
 
-;;;; display find-args in "find" buffers
-
-
-(defun find-dired-display-args (f &rest args)
-  (apply f args)
-  (unless (string-empty-p find-args)
-    (save-excursion
-      (let ((formatting (string 10 32 32)))
-        (goto-char 1)
-        (end-of-line)
-        (setq buffer-read-only nil)
-        (insert formatting)
-        (insert find-args)
-        (insert formatting)
-        (dotimes (i (length find-args))
-          (insert "-"))
-        (insert 10)
-        (setq buffer-read-only t)))))
-
-
-(advice-add 'find-dired :around #'find-dired-display-args)
-
-
 ;; copy full names of files to clipboard
 
 
