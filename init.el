@@ -1022,6 +1022,22 @@
 (setq completion-auto-select 'second-tab)
 
 
+;; Enchance read-string with history completion
+
+
+(defun read-string-completing-history (f &rest args)
+  (let* ((prompt (car args))
+         (history (caddr args))
+         (history (cond ((consp history) (car history))
+                        ((symbolp history) history))))
+    (if history
+        (completing-read prompt (symbol-value history) nil nil nil history)
+      (apply f args))))
+
+
+(advice-add 'read-string :around #'read-string-completing-history)
+
+
 ;; Use IDO for file-browsing only
 
 
