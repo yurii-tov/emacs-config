@@ -166,20 +166,15 @@
 
 (define-custom-keymap text-transform-map "M-c"
                       "c" upcase-char
-                      "o" sort-lines
-                      "O" shuffle-lines
-                      "s" replace-string
-                      "r" replace-regexp
-                      "u" upcase-dwim
-                      "l" downcase-dwim
-                      "d" delete-duplicate-lines
                       "M-c" duplicate-dwim
+                      "o" sort-lines     "M-o" shuffle-lines
+                      "s" replace-string "M-s" replace-regexp
+                      "l" upcase-dwim    "M-l" downcase-dwim
+                      "j" join-lines     "M-j" break-line
+                      "k" flush-lines    "M-k" keep-lines
+                      "u" delete-duplicate-lines
                       "q" fill-region-justify
                       "i" invert-chars
-                      "j" join-region
-                      "b" break-line
-                      "f" flush-lines
-                      "k" keep-lines
                       "e" enumerate-lines
                       "w" whitespace-cleanup
                       "," (lambda () (interactive) (wrap-with-text "[" "]" t))
@@ -839,10 +834,10 @@
                            "\n")))))
 
 
-(defun join-region ()
+(defun join-lines ()
   (interactive)
   (if (region-active-p)
-      (let ((separator (completing-read "Join region with: "
+      (let ((separator (completing-read "Join with: "
                                         (bound-and-true-p region-separators)
                                         nil nil nil
                                         'region-separators))
@@ -862,7 +857,7 @@
 
 (defun break-line ()
   (interactive)
-  (let ((separator (completing-read "Break line with: "
+  (let ((separator (completing-read "Break with: "
                                     (bound-and-true-p region-separators)
                                     nil nil nil
                                     'region-separators))
