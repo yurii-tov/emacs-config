@@ -986,6 +986,7 @@
 
 
 (bind-keys '("C-j" icomplete-fido-exit
+             "M-j" icomplete-force-complete
              "SPC" self-insert-command)
            icomplete-minibuffer-map)
 
