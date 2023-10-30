@@ -1279,7 +1279,7 @@
                              (name . "^\\*posh.*$")))
            ("Python" (or (mode . python-mode)
                          (mode . inferior-python-mode)))
-           ("Javascript" (mode . js-mode))
+           ("Javascript" (or (mode . js-mode) (mode . js-json-mode)))
            ("Common Lisp" (or (name . "^\\*inferior-lisp\\*$")
                               (mode . lisp-mode)
                               (name . "^\\*slime-.**$")))
