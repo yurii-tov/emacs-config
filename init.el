@@ -999,10 +999,11 @@
 (defun read-string-completing-history (f &rest args)
   (let* ((prompt (car args))
          (history (caddr args))
+         (initial-input (cadr args))
          (history (cond ((consp history) (car history))
                         ((symbolp history) history))))
     (if (and history (boundp history) (symbol-value history))
-        (completing-read prompt (symbol-value history) nil nil nil history)
+        (completing-read prompt (symbol-value history) nil nil initial-input history)
       (apply f args))))
 
 
