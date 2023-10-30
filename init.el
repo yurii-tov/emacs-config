@@ -1001,7 +1001,7 @@
          (history (caddr args))
          (history (cond ((consp history) (car history))
                         ((symbolp history) history))))
-    (if (and history (symbol-value history))
+    (if (and history (boundp history) (symbol-value history))
         (completing-read prompt (symbol-value history) nil nil nil history)
       (apply f args))))
 
