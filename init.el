@@ -1782,6 +1782,9 @@ Example input:
 ;; ==============
 
 
+;; Custom completion style for shell commands
+
+
 (add-to-list 'completion-category-overrides '(shell-command (styles substring)))
 
 
