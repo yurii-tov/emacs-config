@@ -1639,9 +1639,6 @@ Example input:
 ;; browsing comint-input-ring
 
 
-(add-to-list 'completion-category-overrides '(comint (styles substring)))
-
-
 (defun comint-browse-command-history ()
   (interactive)
   (let* ((current-input (buffer-substring
@@ -1654,15 +1651,7 @@ Example input:
                       comint-matching-input-from-input-string
                     current-input)))
          (history (ring-elements comint-input-ring))
-         (command (completing-read "Command history: "
-                                   (lambda (string pred action)
-                                     (if (eq action 'metadata)
-                                         '(metadata (display-sort-function . identity)
-                                                    (cycle-sort-function . identity)
-                                                    (category . comint))
-                                       (complete-with-action
-                                        action history string pred)))
-                                   nil nil query))
+         (command (completing-read-shell-command "Command history: " history nil query))
          (i (cl-position command history :test #'equal)))
     (setq-local comint-input-ring-index i)
     (comint-delete-input)
@@ -1793,12 +1782,26 @@ Example input:
 ;; ==============
 
 
-;; Use read-string when reading shell commands
-;; to obtain benefits of history completion
+(add-to-list 'completion-category-overrides '(shell-command (styles substring)))
+
+
+(defun completing-read-shell-command (prompt choices hist initial-input)
+  (completing-read prompt
+                   (lambda (string pred action)
+                     (if (eq action 'metadata)
+                         '(metadata (display-sort-function . identity)
+                                    (cycle-sort-function . identity)
+                                    (category . shell-command))
+                       (complete-with-action
+                        action choices string pred)))
+                   nil nil initial-input hist))
 
 
 (defun read-string-shell-command (f &rest args)
-  (read-string (car args) (cadr args) 'shell-command-history))
+  (if shell-command-history
+      (completing-read-shell-command
+       (car args) shell-command-history 'shell-command-history (cadr args))
+    (read-string (car args) (cadr args) 'shell-command-history)))
 
 
 (advice-add 'read-shell-command :around #'read-string-shell-command)
