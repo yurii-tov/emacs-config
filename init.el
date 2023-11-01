@@ -176,6 +176,7 @@
                       "i" invert-chars
                       "e" enumerate-lines
                       "w" whitespace-cleanup
+                      "p" (lambda () (interactive) (wrap-with-text "(" ")" t))
                       "," (lambda () (interactive) (wrap-with-text "[" "]" t))
                       "<" (lambda () (interactive) (wrap-with-text "{" "}" t))
                       "." (lambda () (interactive) (wrap-with-text "\"" "\""))
@@ -234,7 +235,6 @@
              "C-c c" org-capture
              "C-=" text-scale-increase
              "C-M-=" text-scale-decrease
-             "M-9" (lambda () (interactive) (wrap-with-text "(" ")" t))
              "M-o" other-window
              "C-1" delete-other-windows
              "C-2" split-window-below
@@ -797,6 +797,12 @@
            (forward-char)
            (insert b2)
            (when lisp-style-p (goto-char (1+ s)))))
+        ((and lisp-style-p (looking-at "[\[({]"))
+         (insert b1)
+         (forward-sexp)
+         (insert b2)
+         (backward-char)
+         (backward-sexp))
         ((or (eobp) (looking-at "[\](){}<>*\s\n.,;:\[\"']"))
          (insert b1)
          (insert b2)
