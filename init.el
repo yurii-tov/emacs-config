@@ -178,11 +178,11 @@
                       "w" whitespace-cleanup
                       "p" (lambda () (interactive) (wrap-with-text "(" ")" t))
                       "," (lambda () (interactive) (wrap-with-text "[" "]" t))
-                      "<" (lambda () (interactive) (wrap-with-text "{" "}" t))
+                      "M-," (lambda () (interactive) (wrap-with-text "{" "}" t))
                       "." (lambda () (interactive) (wrap-with-text "\"" "\""))
-                      ">" (lambda () (interactive) (wrap-with-text "'" "'"))
-                      "?" (lambda () (interactive) (wrap-with-text "<" ">"))
-                      "/" (lambda () (interactive) (wrap-with-text "*" "*")))
+                      "M-." (lambda () (interactive) (wrap-with-text "'" "'"))
+                      "/" (lambda () (interactive) (wrap-with-text "*" "*"))
+                      "M-/" (lambda () (interactive) (wrap-with-text "<" ">")))
 
 
 ;; inserting things
