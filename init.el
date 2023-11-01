@@ -2602,11 +2602,10 @@ Process .+
                      en-ru ru-en))
          (link (cdr (assoc 'link preset)))
          (command (format (cdr (assoc 'command preset)) link))
-         (translation (shell-command-to-string command)))
-    (message "%s" command)
+         (translation (string-trim (shell-command-to-string command))))
     (if (zerop (length translation))
         (message "Can't find translation for '%s'" query)
-      (message "%s =>\n%s\n%s" query translation link))))
+      (message "%s =>\n%s" query translation))))
 
 
 ;; ==========================
