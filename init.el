@@ -182,8 +182,7 @@
                       "." (lambda () (interactive) (wrap-with-text "\"" "\""))
                       ">" (lambda () (interactive) (wrap-with-text "'" "'"))
                       "?" (lambda () (interactive) (wrap-with-text "<" ">"))
-                      "/" (lambda () (interactive) (wrap-with-text "*" "*"))
-                      "p" (lambda () (interactive) (wrap-with-text "(" ")" t)))
+                      "/" (lambda () (interactive) (wrap-with-text "*" "*")))
 
 
 ;; inserting things
@@ -236,6 +235,7 @@
              "C-c c" org-capture
              "C-=" text-scale-increase
              "C-M-=" text-scale-decrease
+             "M-9" (lambda () (interactive) (wrap-with-text "(" ")" t))
              "M-o" other-window
              "C-1" delete-other-windows
              "C-2" split-window-below
