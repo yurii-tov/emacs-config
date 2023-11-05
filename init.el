@@ -177,6 +177,7 @@
                       "e" enumerate-lines
                       "w" whitespace-cleanup
                       "p" (lambda () (interactive) (wrap-with-text "(" ")" t))
+                      "M-p" wrap-with-text
                       "," (lambda () (interactive) (wrap-with-text "[" "]" t))
                       "M-," (lambda () (interactive) (wrap-with-text "{" "}" t))
                       "." (lambda () (interactive) (wrap-with-text "\"" "\""))
@@ -773,6 +774,13 @@
   "Wraps current word (or region) with given bracket-like strings
    (e.g. brackets/quotes/apostrophes/parens etc.).
    When rectangle selection is in effect, applies wrapping on each *line* of that selection"
+  (interactive (split-string (read-string "Wrap with: "
+                                          (unless (bound-and-true-p wrap-with-text-history)
+                                            (format "%s$%s"
+                                                    (propertize "?" 'face 'read-multiple-choice-face)
+                                                    (propertize "?" 'face 'read-multiple-choice-face)))
+                                          'wrap-with-text-history)
+                             "\\$"))
   (cond (rectangle-mark-mode
          (let* ((bounds (list (region-beginning) (region-end)))
                 (lines (mapcar #'string-trim-right
@@ -900,7 +908,9 @@
 
 (defun multiline-edit (f &rest args)
   (if rectangle-mark-mode
-      (call-interactively 'string-rectangle)
+      (if current-prefix-arg
+          (call-interactively 'wrap-with-text)
+        (call-interactively 'string-rectangle))
     (apply f args)))
 
 
