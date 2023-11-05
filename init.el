@@ -211,8 +211,7 @@
 
 (bind-keys '("M-=" count-words
              "C-x C-j" run-default-shell
-             "C-x j" run-repl
-             "C-x J" run-ssh-session
+             "C-x j" run-ssh-session
              "C-x u" reopen-with-sudo
              "C-x p" async-shell-command
              "C-x C-b" ibuffer
@@ -2630,36 +2629,6 @@ Process .+
       (lambda (x)
         (browse-url-or-search x)
         (add-to-history 'browser-query-history x)))
-
-
-;; =================
-;; Run various REPLs
-;; =================
-
-
-(setq repls `((,(intern (file-name-base shell-file-name)) run-default-shell)
-              (cider-jack-in-clj)
-              (cider-connect-clj)
-              (cider-connect-sibling-clj)
-              (cider-jack-in-cljs)
-              (cider-connect-cljs)
-              (cider-connect-sibling-cljs)
-              (cider-jack-in-clj&cljs)
-              (clojure-socket-repl connect-clojure-socket-repl)
-              (powershell run-powershell)
-              (ielm)
-              (slime)
-              (python run-python)
-              (sql sql-connect)
-              (babashka)
-              (groovy run-groovy)))
-
-
-(defun run-repl ()
-  (interactive)
-  (let* ((repl (assoc (intern (completing-read "Start REPL: " (mapcar #'car repls) nil t)) repls))
-         (repl (or (cadr repl) (car repl))))
-    (call-interactively repl)))
 
 
 ;; ===========================
