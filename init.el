@@ -201,7 +201,7 @@
 ;; diff
 
 
-(define-custom-keymap diff-map "C-c d"
+(define-custom-keymap diff-map "C-x d"
                       "f" diff
                       "b" diff-buffers)
 
@@ -211,9 +211,9 @@
 
 (bind-keys '("M-=" count-words
              "C-x C-j" run-default-shell
-             "C-x j" run-ssh-session
+             "C-x j" async-shell-command
+             "C-c j" run-ssh-session
              "C-x u" reopen-with-sudo
-             "C-x p" async-shell-command
              "C-x C-b" ibuffer
              "C-x l" hl-line-mode
              "C-x C-l" display-line-numbers-mode
