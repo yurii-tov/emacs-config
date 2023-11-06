@@ -1163,19 +1163,12 @@
 ;; =======
 
 
-(setq ibuffer-expert t)
-
-
-(setq ibuffer-default-sorting-mode 'alphabetic)
-
-
-(setq ibuffer-show-empty-filter-groups nil)
-
-
-(setq ibuffer-formats
-      '((mark modified read-only locked " "
-              (name 16 -1)
-              " " filename-and-process)))
+(setq ibuffer-expert t
+      ibuffer-default-sorting-mode 'alphabetic
+      ibuffer-show-empty-filter-groups nil
+      ibuffer-formats '((mark modified read-only locked " "
+                              (name 16 -1)
+                              " " filename-and-process)))
 
 
 (defun ibuffer-colorize-process-info (s)
@@ -1192,9 +1185,10 @@
       s)))
 
 
-(advice-add 'ibuffer-make-column-filename-and-process
-            :filter-return
-            #'ibuffer-colorize-process-info)
+(unless (and system-type-is-windows (not window-system))
+  (advice-add 'ibuffer-make-column-filename-and-process
+              :filter-return
+              #'ibuffer-colorize-process-info))
 
 
 (defun ibuffer-setup-filter-groups ()
@@ -2574,9 +2568,7 @@ Process .+
 (with-eval-after-load 'eww
   ;; Setup download directory
   (when system-type-is-windows
-    (setq eww-download-directory
-          (expand-file-name "Downloads"
-                            (getenv "USERPROFILE")))))
+    (setq eww-download-directory (expand-file-name "Downloads" (getenv "USERPROFILE")))))
 
 
 (with-eval-after-load 'shr
