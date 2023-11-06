@@ -1482,6 +1482,9 @@ Example input:
 (setq comint-input-ring-size 1500)
 
 
+(defvar *comint-histfile-id* nil)
+
+
 (defun comint-make-input-ring-file-name (histfile-id)
   (expand-file-name (format ".%s-history" histfile-id)
                     user-emacs-directory))
@@ -1490,9 +1493,10 @@ Example input:
 (defun comint-setup-persistent-history ()
   (let ((process (get-buffer-process (current-buffer))))
     (when process
-      (let ((histfile-id (downcase (replace-regexp-in-string
-                                    "<.*>\\| .+\\|[^a-zA-Z]" ""
-                                    (process-name process)))))
+      (let ((histfile-id (or *comint-histfile-id*
+                             (downcase (replace-regexp-in-string
+                                        "<.*>\\| .+\\|[^a-zA-Z]" ""
+                                        (process-name process))))))
         (setq-local comint-input-ring-file-name
                     (comint-make-input-ring-file-name histfile-id))
         (add-hook 'kill-buffer-hook 'comint-save-history nil t)
@@ -1663,39 +1667,23 @@ Example input:
    | file-name         | Path to shell executable                       |
    | working-directory | Working directory for shell instance           |
    |                   | Useful for defining remote shell sessions      |
-   | startup-fn        | Function to call for starting the shell        |
-   |                   | By default, function `shell' is used           |
-   | histfile-id       | Save history to file whth specific prefix      |
-   | codings           | Explicit decoding and encoding systems         |
-   |                   | (List of two symbols, e.g. '(cp1251-dos utf-8) |
    |-------------------+------------------------------------------------|"
   (interactive)
   (let* ((preset-name (car preset))
          (shell-options (cdr preset))
-         (startup-fn (alist-get 'startup-fn shell-options))
-         (codings (alist-get 'codings shell-options))
-         (histfile-id (alist-get 'histfile-id shell-options))
          (buffer-name (or buffer-name
                           (generate-new-buffer-name
                            (format "*%s*" preset-name))))
          (wd (or (alist-get 'working-directory
                             shell-options)
-                 (read-directory-name (format "Run %s at: " preset-name)))))
+                 (read-directory-name (format "Run %s at: " preset-name))))
+         (explicit-shell-file-name (alist-get 'file-name shell-options)))
     (switch-to-buffer buffer-name)
     (cd wd)
     (when (get-buffer-process (current-buffer))
       (comint-kill-subjob)
       (sit-for 1))
-    (if startup-fn
-        (funcall startup-fn buffer-name)
-      (let ((explicit-shell-file-name (alist-get 'file-name shell-options)))
-        (shell buffer-name)))
-    (when codings
-      (set-buffer-process-coding-system (car codings) (cadr codings)))
-    (when histfile-id
-      (setq-local comint-input-ring-file-name
-                  (comint-make-input-ring-file-name histfile-id))
-      (comint-read-input-ring t))
+    (shell buffer-name)
     ;; Enable restart
     (use-local-map (copy-keymap (current-local-map)))
     (local-set-key
@@ -2447,18 +2435,6 @@ Process .+
 (setq cider-show-error-buffer nil)
 
 
-(defun connect-clojure-socket-repl ()
-  (interactive)
-  (let* ((socket (split-string (read-string "Connect to Clojure socket REPL: " "localhost:7777") ":"))
-         (buffer-name (apply #'format "clojure-socket-repl:%s:%s" socket))
-         (command (apply #'format "nc %s %s" socket)))
-    (run-shell `(,buffer-name
-                 (startup-fn . (lambda (b)
-                                 (let ((*async-shell-command-ask-for-wd* nil))
-                                   (async-shell-command (format "nc %s %s" ,@socket) b))))
-                 (histfile-id . "clojure")))))
-
-
 (defun babashka ()
   (interactive)
   (cider-jack-in-universal 3))
@@ -2502,12 +2478,12 @@ Process .+
 ;; ==========
 
 
-(defun run-powershell ()
-  (interactive)
-  (run-shell '("powershell"
-               (startup-fn . powershell)
-               (histfile-id . "powershell")
-               (codings . (cp866-dos cp866-dos)))))
+(advice-add 'powershell
+            :around
+            (lambda (f &rest args)
+              (let ((*comint-histfile-id* "powershell"))
+                (prog1 (apply f args)
+                  (set-buffer-process-coding-system 'cp866-dos 'cp866-dos)))))
 
 
 ;; ===============================
