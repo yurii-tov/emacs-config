@@ -409,14 +409,14 @@
                                (if current-input-method-title
                                    (concat " " (propertize (format "[%s]" current-input-method-title) 'face 'hi-pink))
                                  "")))
-                (if (and (not window-system) system-type-is-windows)
-                    mode-line-modified
-                  (:eval (let ((ro buffer-read-only)
-                               (m (and (buffer-file-name) (buffer-modified-p))))
-                           (cond ((and m ro) "🔏")
-                                 (ro "🔒")
-                                 (m "✒")
-                                 (t " ")))))
+                ,(if (and (not window-system) system-type-is-windows)
+                     'mode-line-modified
+                   '(:eval (let ((ro buffer-read-only)
+                                 (m (and (buffer-file-name) (buffer-modified-p))))
+                             (cond ((and m ro) "🔏")
+                                   (ro "🔒")
+                                   (m "✒")
+                                   (t " ")))))
                 "  "
                 mode-line-buffer-identification
                 "  "
