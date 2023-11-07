@@ -955,20 +955,6 @@
 (advice-add 'read-string :around #'read-string-completing-history)
 
 
-;; optionally suppress directory prompts
-
-
-(defvar *read-direcory-name-enabled* t)
-
-
-(advice-add 'read-directory-name
-            :around
-            (lambda (f &rest args)
-              (if *read-direcory-name-enabled*
-                  (apply f args)
-                default-directory)))
-
-
 ;; Use IDO for file-browsing only
 
 
@@ -1681,11 +1667,13 @@ Example input:
 
 
 (defun async-shell-command-read-wd (f &rest args)
-  (let ((default-directory (read-directory-name
-                            (format "Run %s at: "
-                                    (propertize (reverse (string-truncate-left
-                                                          (reverse (car args)) 20))
-                                                'face 'bold)))))
+  (let ((default-directory (if (called-interactively-p)
+                               (read-directory-name
+                                (format "Run %s at: "
+                                        (propertize (reverse (string-truncate-left
+                                                              (reverse (car args)) 20))
+                                                    'face 'bold)))
+                             default-directory)))
     (apply f args)))
 
 
@@ -1723,8 +1711,7 @@ Example input:
       (local-set-key
        (kbd "C-c C-j")
        `(lambda () (interactive)
-          (let* ((*read-direcory-name-enabled* nil)
-                 (command (read-shell-command "Command: " shell-last-command))
+          (let* ((command (read-shell-command "Command: " shell-last-command))
                  (buffer (current-buffer))
                  (name (command-to-buffer-name command)))
             (when (get-buffer-process buffer)
@@ -1816,7 +1803,9 @@ Example input:
                                   (eq major-mode 'fundamental-mode))
                                 "*shell*")
                            (generate-new-buffer-name "*shell*")))
-                    (wd (read-directory-name "Run shell at: ")))
+                    (wd (if (called-interactively-p)
+                            (read-directory-name "Run shell at: ")
+                          default-directory)))
                 (switch-to-buffer b)
                 (cd wd)
                 (apply f (cons b (cdr args)))
@@ -1828,8 +1817,7 @@ Example input:
                    (when (get-buffer-process (current-buffer))
                      (comint-kill-subjob)
                      (sit-for 1))
-                   (let ((*read-direcory-name-enabled* nil))
-                     (shell (buffer-name))))))))
+                   (shell (buffer-name)))))))
 
 
 ;; Ssh sessions
@@ -1843,7 +1831,6 @@ Example input:
 (defun run-ssh-session ()
   (interactive)
   (let* ((p (completing-read "Run ssh session: " (read-ssh-presets) nil t))
-         (*read-direcory-name-enabled* nil)
          (default-directory (format "/sshx:%s:" p))
          (explicit-shell-file-name "/bin/bash"))
     (shell (format "*ssh-%s*" p))))
@@ -2243,7 +2230,8 @@ Process .+
 (defun create-tags-file ()
   (interactive)
   (let ((ctags (or (executable-find "ctags")
-                   (error "Unable to find ctags executable in exec-path"))))
+                   (error "Unable to find ctags executable in exec-path")))
+        (default-directory (read-directory-name "Create ctags file at: ")))
     (async-shell-command (format "time %s -eR --verbose=yes" ctags) "*ctags*")))
 
 
@@ -2481,7 +2469,8 @@ Process .+
 
 (defun serve-directory ()
   (interactive)
-  (let* ((socket (read-string "Start python server at: " "0.0.0.0:5555"))
+  (let* ((default-directory (read-directory-name "Serve directory: "))
+         (socket (read-string "Address: " "0.0.0.0:5555"))
          (command (apply 'format "python -m http.server -b %s %s" (split-string socket ":")))
          (buffer (format "*python-server:%s*" socket)))
     (async-shell-command command buffer)))
@@ -2525,7 +2514,6 @@ Process .+
   (interactive "FCapture mp4 video to file: ")
   (let ((ffmpeg (or (executable-find "ffmpeg")
                     (error "Unable to find ffmpeg executable in exec-path")))
-        (*read-direcory-name-enabled* nil)
         (default-directory (file-name-directory (file-truename file))))
     (async-shell-command
      (format "%s -y -f gdigrab -i desktop -framerate 30 -pix_fmt yuv420p %s" ffmpeg file)
