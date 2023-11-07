@@ -2473,7 +2473,8 @@ Process .+
 (advice-add 'powershell
             :around
             (lambda (f &rest args)
-              (let ((*comint-histfile-id* "powershell"))
+              (let ((*comint-histfile-id* "powershell")
+                    (default-directory (read-directory-name "Run powershell at: ")))
                 (prog1 (apply f args)
                   (set-buffer-process-coding-system 'cp866-dos 'cp866-dos)))))
 
