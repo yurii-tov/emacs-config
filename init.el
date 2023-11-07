@@ -1454,6 +1454,159 @@ Example input:
 (add-hook 'emacs-startup-hook 'preload-org-mode)
 
 
+;; ==============
+;; shell commands
+;; ==============
+
+
+;; Custom completion style for shell commands
+
+
+(add-to-list 'completion-category-overrides '(shell-command (styles substring)))
+
+
+(defun completing-read-shell-command (prompt choices hist initial-input)
+  (completing-read prompt
+                   (lambda (string pred action)
+                     (if (eq action 'metadata)
+                         '(metadata (display-sort-function . identity)
+                                    (cycle-sort-function . identity)
+                                    (category . shell-command))
+                       (complete-with-action
+                        action choices string pred)))
+                   nil nil initial-input hist))
+
+
+(defun read-string-shell-command (f &rest args)
+  (if shell-command-history
+      (completing-read-shell-command
+       (car args) shell-command-history 'shell-command-history (cadr args))
+    (read-string (car args) (cadr args) 'shell-command-history)))
+
+
+(advice-add 'read-shell-command :around #'read-string-shell-command)
+
+
+;; async-shell-command
+
+
+(defun async-shell-command-read-wd (f &rest args)
+  (let ((default-directory (if (called-interactively-p)
+                               (read-directory-name
+                                (format "Run %s at: "
+                                        (propertize (reverse (string-truncate-left
+                                                              (reverse (car args)) 20))
+                                                    'face 'bold)))
+                             default-directory)))
+    (apply f args)))
+
+
+(advice-add 'async-shell-command :around 'async-shell-command-read-wd)
+
+
+(defun async-shell-command-record-wd (f &rest args)
+  (ido-record-work-directory default-directory)
+  (apply f args))
+
+
+(advice-add 'async-shell-command :around 'async-shell-command-record-wd)
+
+
+;;;; enable restarting
+
+
+(defun command-to-buffer-name (command)
+  (let ((max-chars 40))
+    (format "*%s*"
+            (if (> (length command) max-chars)
+                (format "%s…" (substring command 0 max-chars))
+              command))))
+
+
+(defun async-shell-command-setup-restart (f &rest args)
+  (let* ((r (apply f args))
+         (b (if (windowp r)
+                (window-buffer r)
+              (process-buffer r)))
+         (command (car args)))
+    (with-current-buffer b
+      (setq-local shell-last-command command)
+      (use-local-map (copy-keymap (current-local-map)))
+      (local-set-key
+       (kbd "C-c C-j")
+       `(lambda () (interactive)
+          (let* ((command (read-shell-command "Command: " shell-last-command))
+                 (buffer (current-buffer))
+                 (name (command-to-buffer-name command)))
+            (when (get-buffer-process buffer)
+              (comint-kill-subjob)
+              (sit-for 1))
+            (comint-save-history)
+            (unless (string-equal command shell-last-command)
+              (rename-buffer name))
+            (async-shell-command command buffer)))))
+    r))
+
+
+(advice-add 'async-shell-command :around 'async-shell-command-setup-restart)
+
+
+;;;; descriptive names
+
+
+(defun async-shell-command-setup-buffer-name (f &rest args)
+  (let* ((command (car args))
+         (buffer-name (or (cadr args)
+                          (command-to-buffer-name command))))
+    (apply f command buffer-name (cddr args))))
+
+
+(advice-add 'async-shell-command :around 'async-shell-command-setup-buffer-name)
+
+
+;;;; histfile
+
+
+(defun async-shell-command-setup-histfile (r)
+  (let ((b (if (windowp r)
+               (window-buffer r)
+             (process-buffer r))))
+    (with-current-buffer b
+      (setq-local comint-input-ring-file-name
+                  (comint-make-input-ring-file-name "shell"))
+      (when (zerop (ring-length comint-input-ring))
+        (comint-read-input-ring t)))
+    r))
+
+
+(advice-add 'async-shell-command :filter-return 'async-shell-command-setup-histfile)
+
+
+;;;; output command/wd
+
+
+(require 'compile)
+
+
+(defun async-shell-command-setup-echo (f &rest args)
+  (let* ((r (apply f args))
+         (b (if (windowp r)
+                (window-buffer r)
+              (process-buffer r)))
+         (p (get-buffer-process b)))
+    (prog1 r
+      (with-current-buffer b
+        (let ((info (format "*** %s ***\n*** wd: %s ***\n" (car args) default-directory)))
+          (goto-char 1)
+          (comint-output-filter p info)
+          (set-marker comint-last-input-end (point))
+          (highlight-regexp (regexp-quote info) 'compilation-info)
+          (font-lock-update))))))
+
+
+(advice-add 'async-shell-command :around 'async-shell-command-setup-echo)
+
+
 ;; ===========
 ;; comint-mode
 ;; ===========
@@ -1628,159 +1781,6 @@ Example input:
 (bind-keys '("M-p" comint-previous-input-prefixed
              "M-n" comint-next-input-prefixed)
            comint-mode-map)
-
-
-;; ==============
-;; shell commands
-;; ==============
-
-
-;; Custom completion style for shell commands
-
-
-(add-to-list 'completion-category-overrides '(shell-command (styles substring)))
-
-
-(defun completing-read-shell-command (prompt choices hist initial-input)
-  (completing-read prompt
-                   (lambda (string pred action)
-                     (if (eq action 'metadata)
-                         '(metadata (display-sort-function . identity)
-                                    (cycle-sort-function . identity)
-                                    (category . shell-command))
-                       (complete-with-action
-                        action choices string pred)))
-                   nil nil initial-input hist))
-
-
-(defun read-string-shell-command (f &rest args)
-  (if shell-command-history
-      (completing-read-shell-command
-       (car args) shell-command-history 'shell-command-history (cadr args))
-    (read-string (car args) (cadr args) 'shell-command-history)))
-
-
-(advice-add 'read-shell-command :around #'read-string-shell-command)
-
-
-;; async-shell-command
-
-
-(defun async-shell-command-read-wd (f &rest args)
-  (let ((default-directory (if (called-interactively-p)
-                               (read-directory-name
-                                (format "Run %s at: "
-                                        (propertize (reverse (string-truncate-left
-                                                              (reverse (car args)) 20))
-                                                    'face 'bold)))
-                             default-directory)))
-    (apply f args)))
-
-
-(advice-add 'async-shell-command :around 'async-shell-command-read-wd)
-
-
-(defun async-shell-command-record-wd (f &rest args)
-  (ido-record-work-directory default-directory)
-  (apply f args))
-
-
-(advice-add 'async-shell-command :around 'async-shell-command-record-wd)
-
-
-;;;; enable restarting
-
-
-(defun command-to-buffer-name (command)
-  (let ((max-chars 40))
-    (format "*%s*"
-            (if (> (length command) max-chars)
-                (format "%s…" (substring command 0 max-chars))
-              command))))
-
-
-(defun async-shell-command-setup-restart (f &rest args)
-  (let* ((r (apply f args))
-         (b (if (windowp r)
-                (window-buffer r)
-              (process-buffer r)))
-         (command (car args)))
-    (with-current-buffer b
-      (setq-local shell-last-command command)
-      (use-local-map (copy-keymap (current-local-map)))
-      (local-set-key
-       (kbd "C-c C-j")
-       `(lambda () (interactive)
-          (let* ((command (read-shell-command "Command: " shell-last-command))
-                 (buffer (current-buffer))
-                 (name (command-to-buffer-name command)))
-            (when (get-buffer-process buffer)
-              (comint-kill-subjob)
-              (sit-for 1))
-            (comint-save-history)
-            (unless (string-equal command shell-last-command)
-              (rename-buffer name))
-            (async-shell-command command buffer)))))
-    r))
-
-
-(advice-add 'async-shell-command :around 'async-shell-command-setup-restart)
-
-
-;;;; descriptive names
-
-
-(defun async-shell-command-setup-buffer-name (f &rest args)
-  (let* ((command (car args))
-         (buffer-name (or (cadr args)
-                          (command-to-buffer-name command))))
-    (apply f command buffer-name (cddr args))))
-
-
-(advice-add 'async-shell-command :around 'async-shell-command-setup-buffer-name)
-
-
-;;;; histfile
-
-
-(defun async-shell-command-setup-histfile (r)
-  (let ((b (if (windowp r)
-               (window-buffer r)
-             (process-buffer r))))
-    (with-current-buffer b
-      (setq-local comint-input-ring-file-name
-                  (comint-make-input-ring-file-name "shell"))
-      (when (zerop (ring-length comint-input-ring))
-        (comint-read-input-ring t)))
-    r))
-
-
-(advice-add 'async-shell-command :filter-return 'async-shell-command-setup-histfile)
-
-
-;;;; output command/wd
-
-
-(require 'compile)
-
-
-(defun async-shell-command-setup-echo (f &rest args)
-  (let* ((r (apply f args))
-         (b (if (windowp r)
-                (window-buffer r)
-              (process-buffer r)))
-         (p (get-buffer-process b)))
-    (prog1 r
-      (with-current-buffer b
-        (let ((info (format "*** %s ***\n*** wd: %s ***\n" (car args) default-directory)))
-          (goto-char 1)
-          (comint-output-filter p info)
-          (set-marker comint-last-input-end (point))
-          (highlight-regexp (regexp-quote info) 'compilation-info)
-          (font-lock-update))))))
-
-
-(advice-add 'async-shell-command :around 'async-shell-command-setup-echo)
 
 
 ;; =====
