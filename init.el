@@ -1191,7 +1191,12 @@
               #'ibuffer-colorize-process-info))
 
 
-(defun ibuffer-setup-filter-groups ()
+(defun ibuffer-setup ()
+  ;; keybindings
+  (local-unset-key (kbd "M-o"))
+  ;; autoupdate
+  (ibuffer-auto-mode 1)
+  ;; filter groups
   (setq ibuffer-saved-filter-groups
         '(("default"
            ("Dired" (mode . dired-mode))
@@ -1246,14 +1251,7 @@
   (ibuffer-switch-to-saved-filter-groups "default"))
 
 
-(add-hook 'ibuffer-mode-hook 'ibuffer-setup-filter-groups)
-
-
-(defun ibuffer-setup-keybindings ()
-  (local-unset-key (kbd "M-o")))
-
-
-(add-hook 'ibuffer-mode-hook 'ibuffer-setup-keybindings)
+(add-hook 'ibuffer-mode-hook 'ibuffer-setup)
 
 
 ;; Enhance ibuffer-filter-disable (i.e. "//" command) with 'switch to last filter' ability
