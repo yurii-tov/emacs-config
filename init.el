@@ -1821,17 +1821,17 @@ Example input:
 ;; Ssh sessions
 
 
-(defun read-ssh-presets ()
+(defun read-ssh-hosts ()
   (let* ((default-directory "~"))
     (split-string (shell-command-to-string "c=~/.ssh/config; [ -f $c ] && sed -n -e '/Host \\*/ d' -e 's:Host ::p' $c"))))
 
 
 (defun run-ssh-session ()
   (interactive)
-  (let* ((p (completing-read "Run ssh session: " (read-ssh-presets) nil t))
-         (default-directory (format "/sshx:%s:" p))
+  (let* ((x (completing-read "Run ssh session: " (read-ssh-hosts) nil t))
+         (default-directory (format "/sshx:%s:" x))
          (explicit-shell-file-name "/bin/bash"))
-    (shell (format "*ssh-%s*" p))))
+    (shell (format "*ssh-%s*" x))))
 
 
 ;; ==========
