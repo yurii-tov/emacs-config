@@ -210,7 +210,7 @@
 
 
 (bind-keys '("M-=" count-words
-             "C-x C-j" run-default-shell
+             "C-x C-j" shell
              "C-x j" async-shell-command
              "C-c j" run-ssh-session
              "C-x u" reopen-with-sudo
@@ -372,7 +372,7 @@
 
 
 (defun apply-color-theme (theme)
-  "Enchanced version of load-theme. Disable any of previously loaded themes"
+  "Enhanced version of load-theme. Disable any of previously loaded themes"
   (interactive
    (list (intern (completing-read
                   "theme: "
@@ -938,7 +938,7 @@
 (setq completion-auto-select 'second-tab)
 
 
-;; Enchance read-string with history completion
+;; Enhance read-string with history completion
 
 
 (defun read-string-completing-history (f &rest args)
@@ -953,6 +953,20 @@
 
 
 (advice-add 'read-string :around #'read-string-completing-history)
+
+
+;; optionally suppress directory prompts
+
+
+(defvar *read-direcory-name-enabled* t)
+
+
+(advice-add 'read-directory-name
+            :around
+            (lambda (f &rest args)
+              (if *read-direcory-name-enabled*
+                  (apply f args)
+                default-directory)))
 
 
 ;; Use IDO for file-browsing only
@@ -1630,77 +1644,6 @@ Example input:
            comint-mode-map)
 
 
-;; =====
-;; shell
-;; =====
-
-
-(require 'shell)
-
-
-(defun read-ssh-presets ()
-  (let* ((default-directory "~")
-         (hosts (split-string (shell-command-to-string "c=~/.ssh/config; [ -f $c ] && sed -n -e '/Host \\*/ d' -e 's:Host ::p' $c"))))
-    (mapcar
-     (lambda (x)
-       (let ((wd (format "/sshx:%s:~" x)))
-         `(,x (file-name . "/bin/bash")
-              (working-directory . ,wd))))
-     hosts)))
-
-
-(defun run-shell (preset &optional buffer-name)
-  "M-x shell on steroids.
-   Preset is a pair of (<\"preset-name\"> . <options-alist>)
-   Legal values in options-alist are:
-   |-------------------+------------------------------------------------|
-   | option            | description                                    |
-   |-------------------+------------------------------------------------|
-   | file-name         | Path to shell executable                       |
-   | working-directory | Working directory for shell instance           |
-   |                   | Useful for defining remote shell sessions      |
-   |-------------------+------------------------------------------------|"
-  (interactive)
-  (let* ((preset-name (car preset))
-         (shell-options (cdr preset))
-         (buffer-name (or buffer-name
-                          (generate-new-buffer-name
-                           (format "*%s*" preset-name))))
-         (wd (or (alist-get 'working-directory
-                            shell-options)
-                 (read-directory-name (format "Run %s at: " preset-name))))
-         (explicit-shell-file-name (alist-get 'file-name shell-options)))
-    (switch-to-buffer buffer-name)
-    (cd wd)
-    (when (get-buffer-process (current-buffer))
-      (comint-kill-subjob)
-      (sit-for 1))
-    (shell buffer-name)
-    ;; Enable restart
-    (use-local-map (copy-keymap (current-local-map)))
-    (local-set-key
-     (kbd "C-c C-j")
-     `(lambda () (interactive)
-        (comint-save-history)
-        (run-shell ',preset (buffer-name))))))
-
-
-(defun run-default-shell ()
-  (interactive)
-  (run-shell (list (file-name-base shell-file-name))))
-
-
-(defun run-ssh-session ()
-  (interactive)
-  (let* ((presets (read-ssh-presets))
-         (p (completing-read "Run ssh session: "
-                             (mapcar #'car presets)
-                             nil
-                             t)))
-    (run-shell (cons (format "ssh-%s" p)
-                     (cdr (assoc p presets))))))
-
-
 ;; ==============
 ;; shell commands
 ;; ==============
@@ -1737,6 +1680,26 @@ Example input:
 ;; async-shell-command
 
 
+(defun async-shell-command-read-wd (f &rest args)
+  (let ((default-directory (read-directory-name
+                            (format "Run %s at: "
+                                    (propertize (reverse (string-truncate-left
+                                                          (reverse (car args)) 20))
+                                                'face 'bold)))))
+    (apply f args)))
+
+
+(advice-add 'async-shell-command :around 'async-shell-command-read-wd)
+
+
+(defun async-shell-command-record-wd (f &rest args)
+  (ido-record-work-directory default-directory)
+  (apply f args))
+
+
+(advice-add 'async-shell-command :around 'async-shell-command-record-wd)
+
+
 ;;;; enable restarting
 
 
@@ -1760,7 +1723,7 @@ Example input:
       (local-set-key
        (kbd "C-c C-j")
        `(lambda () (interactive)
-          (let* ((*async-shell-command-ask-for-wd* nil)
+          (let* ((*read-direcory-name-enabled* nil)
                  (command (read-shell-command "Command: " shell-last-command))
                  (buffer (current-buffer))
                  (name (command-to-buffer-name command)))
@@ -1780,14 +1743,14 @@ Example input:
 ;;;; descriptive names
 
 
-(defun async-shell-command-setup-sensible-name (f &rest args)
+(defun async-shell-command-setup-buffer-name (f &rest args)
   (let* ((command (car args))
          (buffer-name (or (cadr args)
                           (command-to-buffer-name command))))
     (apply f command buffer-name (cddr args))))
 
 
-(advice-add 'async-shell-command :around 'async-shell-command-setup-sensible-name)
+(advice-add 'async-shell-command :around 'async-shell-command-setup-buffer-name)
 
 
 ;;;; histfile
@@ -1806,27 +1769,6 @@ Example input:
 
 
 (advice-add 'async-shell-command :filter-return 'async-shell-command-setup-histfile)
-
-
-;;;; specify working directory for the command
-
-
-(defvar *async-shell-command-ask-for-wd* t)
-
-
-(defun async-shell-command-setup-wd (f &rest args)
-  (let ((default-directory (if *async-shell-command-ask-for-wd*
-                               (read-directory-name
-                                (format "Run %s at: "
-                                        (propertize (reverse (string-truncate-left
-                                                              (reverse (car args)) 20))
-                                                    'face 'bold)))
-                             default-directory)))
-    (ido-record-work-directory default-directory)
-    (apply f args)))
-
-
-(advice-add 'async-shell-command :around 'async-shell-command-setup-wd)
 
 
 ;;;; output command/wd
@@ -1852,6 +1794,59 @@ Example input:
 
 
 (advice-add 'async-shell-command :around 'async-shell-command-setup-echo)
+
+
+;; =====
+;; shell
+;; =====
+
+
+(require 'shell)
+
+
+;; M-x shell enhancements
+
+
+(advice-add 'shell
+            :around
+            (lambda (f &rest args)
+              (let ((b (or (car args)
+                           (and (get-buffer "*shell*")
+                                (with-current-buffer "*shell*"
+                                  (eq major-mode 'fundamental-mode))
+                                "*shell*")
+                           (generate-new-buffer-name "*shell*")))
+                    (wd (read-directory-name "Run shell at: ")))
+                (switch-to-buffer b)
+                (cd wd)
+                (apply f (cons b (cdr args)))
+                (use-local-map (copy-keymap (current-local-map)))
+                (local-set-key
+                 (kbd "C-c C-j")
+                 (lambda () (interactive)
+                   (comint-save-history)
+                   (when (get-buffer-process (current-buffer))
+                     (comint-kill-subjob)
+                     (sit-for 1))
+                   (let ((*read-direcory-name-enabled* nil))
+                     (shell (buffer-name))))))))
+
+
+;; Ssh sessions
+
+
+(defun read-ssh-presets ()
+  (let* ((default-directory "~"))
+    (split-string (shell-command-to-string "c=~/.ssh/config; [ -f $c ] && sed -n -e '/Host \\*/ d' -e 's:Host ::p' $c"))))
+
+
+(defun run-ssh-session ()
+  (interactive)
+  (let* ((p (completing-read "Run ssh session: " (read-ssh-presets) nil t))
+         (*read-direcory-name-enabled* nil)
+         (default-directory (format "/sshx:%s:" p))
+         (explicit-shell-file-name "/bin/bash"))
+    (shell (format "*ssh-%s*" p))))
 
 
 ;; ==========
@@ -2530,7 +2525,7 @@ Process .+
   (interactive "FCapture mp4 video to file: ")
   (let ((ffmpeg (or (executable-find "ffmpeg")
                     (error "Unable to find ffmpeg executable in exec-path")))
-        (*async-shell-command-ask-for-wd* nil)
+        (*read-direcory-name-enabled* nil)
         (default-directory (file-name-directory (file-truename file))))
     (async-shell-command
      (format "%s -y -f gdigrab -i desktop -framerate 30 -pix_fmt yuv420p %s" ffmpeg file)
