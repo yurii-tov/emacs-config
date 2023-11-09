@@ -212,6 +212,7 @@
 (bind-keys '("M-=" count-words
              "C-x C-j" shell
              "C-x j" async-shell-command
+             "C-c j" cider-start-map
              "C-c s" run-ssh-session
              "C-x u" reopen-with-sudo
              "C-x C-b" ibuffer
