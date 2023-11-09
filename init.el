@@ -1724,9 +1724,7 @@ Example input:
 ;; add useful keybindings
 
 
-(bind-keys '("C-c C-i" comint-quit-subjob
-             "C-c C-k" comint-kill-subjob)
-           comint-mode-map)
+(bind-keys '("C-c C-k" comint-kill-subjob) comint-mode-map)
 
 
 ;; browsing comint-input-ring
