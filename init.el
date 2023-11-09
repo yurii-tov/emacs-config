@@ -212,14 +212,14 @@
 (bind-keys '("M-=" count-words
              "C-x C-j" shell
              "C-x j" async-shell-command
-             "C-c j" run-ssh-session
+             "C-c s" run-ssh-session
              "C-x u" reopen-with-sudo
              "C-x C-b" ibuffer
              "C-x l" hl-line-mode
              "C-x C-l" display-line-numbers-mode
              "M-l" (lambda () (interactive) (move-line 'up))
              "C-M-l" (lambda () (interactive) (move-line 'down))
-             "C-c s" serve-directory
+             "C-c d" serve-directory
              "C-x m" make-scratch-buffer
              "C-c z" zone
              "C-c v" capture-video
