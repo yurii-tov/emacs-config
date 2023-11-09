@@ -209,38 +209,37 @@
 ;; misc
 
 
-(bind-keys '("M-=" count-words
-             "C-x C-j" shell
-             "C-x j" async-shell-command
-             "C-c j" cider-start-map
-             "C-c s" run-ssh-session
-             "C-x u" reopen-with-sudo
-             "C-x C-b" ibuffer
-             "C-x l" hl-line-mode
-             "C-x C-l" display-line-numbers-mode
-             "M-l" (lambda () (interactive) (move-line 'up))
-             "C-M-l" (lambda () (interactive) (move-line 'down))
-             "C-c d" serve-directory
-             "C-x m" make-scratch-buffer
-             "C-c z" zone
-             "C-c v" capture-video
-             "C-c p" copy-file-name-to-clipboard
+(bind-keys '("M-o" other-window
+             "C-1" delete-other-windows
+             "C-2" split-window-below
+             "C-3" split-window-right
+             "C-0" delete-window
              "M-k" kill-line-to-indentation
+             "M-=" count-words
              "M-q" hippie-expand
              "C-v" scroll-up-5-lines
              "M-v" scroll-down-5-lines
              "M-i" reformat-region
              "M-u" force-revert-buffer
-             "C-c h" hexl-mode
-             "C-c a" org-agenda
-             "C-c c" org-capture
              "C-=" text-scale-increase
              "C-M-=" text-scale-decrease
-             "M-o" other-window
-             "C-1" delete-other-windows
-             "C-2" split-window-below
-             "C-3" split-window-right
-             "C-0" delete-window)
+             "M-l" (lambda () (interactive) (move-line 'up))
+             "C-M-l" (lambda () (interactive) (move-line 'down))
+             "C-x m" make-scratch-buffer
+             "C-x j" async-shell-command
+             "C-x C-j" shell
+             "C-x u" reopen-with-sudo
+             "C-x C-b" ibuffer
+             "C-x l" hl-line-mode
+             "C-x C-l" display-line-numbers-mode
+             "C-c j" cider-start-map
+             "C-c s" run-ssh-session
+             "C-c d" serve-directory
+             "C-c v" capture-video
+             "C-c p" copy-file-name-to-clipboard
+             "C-c h" hexl-mode
+             "C-c c" org-capture
+             "C-c a" org-agenda)
            global-map)
 
 
