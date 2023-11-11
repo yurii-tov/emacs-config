@@ -63,11 +63,9 @@
 (package-initialize)
 
 
-(let ((packages '(zenburn-theme
-                  cider
+(let ((packages '(cider
                   slime
                   groovy-mode
-                  htmlize
                   clojure-mode
                   powershell
                   ido-vertical-mode))
