@@ -111,7 +111,7 @@
 ;; ==================
 
 
-;; unset all C-dight / M-dight combos
+;; unset all C-digit / M-digit combos
 
 
 (dotimes (n 10)
