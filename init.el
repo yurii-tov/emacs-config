@@ -354,10 +354,6 @@
   (set-face-attribute 'default nil :font my-font))
 
 
-(when (font-available-p "Consolas")
-  (apply-font "Consolas-10"))
-
-
 ;;;; enable emojis on Windows
 
 
