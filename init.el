@@ -60,9 +60,6 @@
         ("melpa" . "http://melpa.org/packages/")))
 
 
-(package-initialize)
-
-
 (let ((packages '(cider
                   slime
                   groovy-mode
