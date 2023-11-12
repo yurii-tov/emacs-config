@@ -2570,9 +2570,9 @@ Process .+
                                     (buffer-substring (region-beginning)
                                                       (region-end)))
                                   'browser-query-history)))
-  (let ((browse-url-browser-function  (if (display-graphic-p)
-                                          'browse-url-default-browser
-                                        'eww-browse-url)))
+  (let ((browse-url-browser-function (if (display-graphic-p)
+                                         'browse-url-default-browser
+                                       'eww-browse-url)))
     (if (string-match-p "^[a-zA-Z0-9]+://" query)
         (browse-url query)
       (browse-url (format "%s?q=%s"
