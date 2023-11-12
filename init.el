@@ -1000,18 +1000,6 @@
        (advice-add 'ido-read-file-name :around #'ido-disable-icomplete))
 
 
-(defun ido-find-dired ()
-  (interactive)
-  (run-with-timer
-   0.3 nil
-   `(lambda ()
-      (find-dired
-       ,ido-current-directory
-       (read-string "Run find (with args): " find-args
-                    '(find-args-history . 1)))))
-  (minibuffer-keyboard-quit))
-
-
 (defun ido-open-in-external-app ()
   (interactive)
   (let ((fname (expand-file-name (ido-name (car ido-matches))
@@ -1021,8 +1009,7 @@
     (minibuffer-keyboard-quit)))
 
 
-(bind-keys '("C-c C-o" ido-open-in-external-app
-             "M-r" ido-find-dired)
+(bind-keys '("C-c C-o" ido-open-in-external-app)
            ido-file-dir-completion-map)
 
 
