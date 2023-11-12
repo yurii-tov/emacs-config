@@ -883,13 +883,6 @@
   (kill-line))
 
 
-(defun ido-read-from-kill-ring (prompt)
-  (ido-completing-read prompt (cl-remove-duplicates kill-ring :test #'equal)))
-
-
-(advice-add 'read-from-kill-ring :override #'ido-read-from-kill-ring)
-
-
 (defun make-scratch-buffer ()
   (interactive)
   (let* ((name (generate-new-buffer-name "*scratch*")))
