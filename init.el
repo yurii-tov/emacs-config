@@ -2573,7 +2573,11 @@ Process .+
   (let ((browse-url-browser-function 'browse-url-default-browser))
     (if (string-match-p "^[a-zA-Z0-9]+://" query)
         (browse-url query)
-      (browse-url (format "https://duckduckgo.com?q=%s" query)))))
+      (browse-url (format "%s?q=%s"
+                          (if (display-graphic-p)
+                              "https://duckduckgo.com"
+                            "https://html.duckduckgo.com/html/")
+                          query)))))
 
 
 (require 'ffap)
