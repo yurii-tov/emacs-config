@@ -171,6 +171,7 @@
                       "q" fill-region-justify
                       "i" invert-chars
                       "e" enumerate-lines
+                      "r" reverse-region
                       "w" whitespace-cleanup
                       "p" (lambda () (interactive) (wrap-with-text "(" ")" t))
                       "M-p" wrap-with-text
