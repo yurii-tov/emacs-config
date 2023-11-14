@@ -518,6 +518,15 @@
     (funcall open-file file-name)))
 
 
+;; track file with 'tail' program
+
+
+(defun tail (file)
+  (interactive "fTail file: ")
+  (let ((default-directory (file-name-directory file)))
+    (async-shell-command (concat "tail -f " (file-relative-name file)))))
+
+
 ;; dired
 
 
