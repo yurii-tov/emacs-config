@@ -391,7 +391,7 @@
 
 (when (and system-type-is-windows
            (font-available-p "Segoe UI Emoji"))
-  (set-fontset-font t 'unicode (font-spec :family "Segoe UI Emoji") nil 'prepend))
+  (set-fontset-font t 'unicode (font-spec :family "Segoe UI Emoji") nil 'append))
 
 
 ;; color themes
