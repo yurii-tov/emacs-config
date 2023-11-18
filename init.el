@@ -419,9 +419,8 @@
 (defun count-lwc ()
   (let* ((start (region-beginning))
          (end (region-end))
-         (lines (count-lines start end))
-         (words (count-words start end))
-         (chars (- end start)))
+         (chars (- end start))
+         (lines (count-lines start end)))
     (propertize (format "Sel: %d|%d" chars lines)
                 'face 'mode-line-emphasis)))
 
