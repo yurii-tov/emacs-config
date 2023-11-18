@@ -422,10 +422,7 @@
          (lines (count-lines start end))
          (words (count-words start end))
          (chars (- end start)))
-    (propertize (format "%d line%s, %d word%s, %d char%s"
-                        lines (if (= lines 1) "" "s")
-                        words (if (= words 1) "" "s")
-                        chars (if (= chars 1) "" "s"))
+    (propertize (format "Sel: %d|%d" chars lines)
                 'face 'mode-line-emphasis)))
 
 
@@ -446,8 +443,9 @@
                 "  "
                 mode-line-buffer-identification
                 "  "
-                (:eval (propertize "%l:%C" 'face 'font-lock-builtin-face))
-                (:eval (when (use-region-p) (format "  %s " (count-lwc))))
+                (:eval (concat "%l:%C" (format ":%s" (point))))
+                " "
+                (:eval (when (use-region-p) (format "%s  " (count-lwc))))
                 (vc-mode vc-mode)
                 "  " mode-line-modes
                 mode-line-misc-info
