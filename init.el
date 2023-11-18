@@ -413,9 +413,6 @@
 ;; better modeline
 
 
-(require 'hi-lock)
-
-
 (defun count-lwc ()
   (let* ((start (region-beginning))
          (end (region-end))
@@ -429,7 +426,7 @@
               `((:eval (format "%s%s "
                                (symbol-name buffer-file-coding-system)
                                (if current-input-method-title
-                                   (concat " " (propertize (format "[%s]" current-input-method-title) 'face 'hi-pink))
+                                   (concat " " (propertize (format "[%s]" current-input-method-title) 'face 'mode-line-emphasis))
                                  "")))
                 ,(if (and (not window-system) system-type-is-windows)
                      'mode-line-modified
