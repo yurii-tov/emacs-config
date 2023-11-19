@@ -413,7 +413,7 @@
 ;; better modeline
 
 
-(defun count-lwc ()
+(defun modeline-selection-stats ()
   (let* ((start (region-beginning))
          (end (region-end))
          (chars (- end start))
@@ -441,7 +441,7 @@
                 "  "
                 (:eval (concat "%l:%C" (format ":%s" (point))))
                 " "
-                (:eval (when (use-region-p) (format "%s  " (count-lwc))))
+                (:eval (when (use-region-p) (format "%s  " (modeline-selection-stats))))
                 (vc-mode vc-mode)
                 "  " mode-line-modes
                 mode-line-misc-info
