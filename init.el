@@ -444,9 +444,9 @@
                 ,(unless (and (not window-system) system-type-is-windows)
                    '(:eval (if (get-buffer-process (current-buffer))
                                (propertize " •" 'face 'compilation-mode-line-run)
-                             "  ")))
+                             "")))
                 " " mode-line-buffer-identification
-                "  %l:%C"
+                " %l:%C"
                 (:eval (when (use-region-p) (format " %s" (modeline-selection-stats))))))
 
 
