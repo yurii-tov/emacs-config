@@ -431,21 +431,18 @@
                                  "  ")))
                 ,(if (and (not window-system) system-type-is-windows)
                      'mode-line-modified
-                   (m (and (buffer-file-name) (buffer-modified-p))))
-                '(:eval (let ((ro buffer-read-only)
-                              (format " %s"
-                                      (cond ((and m ro) "🔏")
-                                            (ro "🔒")
-                                            (m "✒")
-                                            (t "  "))))))
-                " "
-                mode-line-buffer-identification
-                "  "
-                mode-line-modes
+                   '(:eval (let ((ro buffer-read-only)
+                                 (m (and (buffer-file-name) (buffer-modified-p))))
+                             (format " %s"
+                                     (cond ((and m ro) "🔏")
+                                           (ro "🔒")
+                                           (m "✒")
+                                           (t "  "))))))
+                " " mode-line-buffer-identification
+                "  " mode-line-modes
                 "%l:%C"
                 (:eval (when (use-region-p) (format " %s" (modeline-selection-stats))))
-                "  "
-                mode-line-misc-info
+                "  " mode-line-misc-info
                 mode-line-end-spaces))
 
 
