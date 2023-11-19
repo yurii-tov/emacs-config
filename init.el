@@ -423,27 +423,28 @@
 
 
 (setq-default mode-line-format
-              `((:eval (format "%s%s "
-                               (symbol-name buffer-file-coding-system)
+              `((:eval (symbol-name buffer-file-coding-system))
+                (:eval (format " %s"
                                (if current-input-method-title
-                                   (concat " " (propertize (format "[%s]" current-input-method-title) 'face 'mode-line-emphasis))
-                                 "")))
+                                   (propertize current-input-method-title
+                                               'face 'mode-line-highlight)
+                                 "  ")))
                 ,(if (and (not window-system) system-type-is-windows)
                      'mode-line-modified
-                   '(:eval (let ((ro buffer-read-only)
-                                 (m (and (buffer-file-name) (buffer-modified-p))))
-                             (cond ((and m ro) "🔏")
-                                   (ro "🔒")
-                                   (m "✒")
-                                   (t " ")))))
-                "  "
+                   (m (and (buffer-file-name) (buffer-modified-p))))
+                '(:eval (let ((ro buffer-read-only)
+                              (format " %s"
+                                      (cond ((and m ro) "🔏")
+                                            (ro "🔒")
+                                            (m "✒")
+                                            (t "  "))))))
+                " "
                 mode-line-buffer-identification
                 "  "
-                (:eval (concat "%l:%C" (format ":%s" (point))))
-                " "
-                (:eval (when (use-region-p) (format "%s  " (modeline-selection-stats))))
-                (vc-mode vc-mode)
-                "  " mode-line-modes
+                mode-line-modes
+                "%l:%C"
+                (:eval (when (use-region-p) (format " %s" (modeline-selection-stats))))
+                "  "
                 mode-line-misc-info
                 mode-line-end-spaces))
 
