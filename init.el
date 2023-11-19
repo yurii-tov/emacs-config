@@ -422,13 +422,11 @@
                 'face 'mode-line-emphasis)))
 
 
+(require 'compile)
+
+
 (setq-default mode-line-format
               `((:eval (symbol-name buffer-file-coding-system))
-                (:eval (format " %s"
-                               (if current-input-method-title
-                                   (propertize current-input-method-title
-                                               'face 'mode-line-highlight)
-                                 "  ")))
                 ,(if (and (not window-system) system-type-is-windows)
                      'mode-line-modified
                    '(:eval (let ((ro buffer-read-only)
@@ -438,12 +436,18 @@
                                            (ro "🔒")
                                            (m "✒")
                                            (t "  "))))))
+                (:eval (format " %s"
+                               (if current-input-method-title
+                                   (propertize current-input-method-title
+                                               'face 'mode-line-highlight)
+                                 "  ")))
+                ,(unless (and (not window-system) system-type-is-windows)
+                   '(:eval (if (get-buffer-process (current-buffer))
+                               (propertize " •" 'face 'compilation-mode-line-run)
+                             "  ")))
                 " " mode-line-buffer-identification
-                "  " mode-line-modes
-                "%l:%C"
-                (:eval (when (use-region-p) (format " %s" (modeline-selection-stats))))
-                "  " mode-line-misc-info
-                mode-line-end-spaces))
+                "  %l:%C"
+                (:eval (when (use-region-p) (format " %s" (modeline-selection-stats))))))
 
 
 ;; slower scrolling
