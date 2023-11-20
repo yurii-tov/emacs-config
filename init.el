@@ -278,17 +278,19 @@
   (global-ligature-mode t))
 
 
-;; no blinking cursor
+;; remove noisy stuff
 
 
-(blink-cursor-mode 0)
-
-
-;; remove "welcome" messages on startup
-
-
-(setq inhibit-startup-message t
-      inhibit-startup-echo-area-message t)
+(progn (setq inhibit-startup-message t
+             inhibit-startup-echo-area-message t
+             use-short-answers t
+             ring-bell-function 'ignore
+             kill-buffer-query-functions (remq 'process-kill-buffer-query-function
+                                               kill-buffer-query-functions))
+       (setf (cdr (assq 'continuation fringe-indicator-alist)) '(nil nil))
+       (blink-cursor-mode 0)
+       (toggle-scroll-bar -1)
+       (tool-bar-mode -1))
 
 
 ;; maximize window on startup
@@ -315,23 +317,6 @@
 (add-hook 'emacs-startup-hook 'insert-scratch-fortune)
 
 
-;; replace annoying confirmations with less annoying
-
-
-(setq use-short-answers t)
-
-
-(setq kill-buffer-query-functions
-      (remq 'process-kill-buffer-query-function
-            kill-buffer-query-functions))
-
-
-;; turn off bell ringing
-
-
-(setq ring-bell-function 'ignore)
-
-
 ;; line numbers / line highlight indication
 
 
@@ -340,36 +325,10 @@
   (add-hook x 'hl-line-mode))
 
 
-;; no line-wrap indicators
-
-
-(when fringe-indicator-alist
-  (setf (cdr (assq 'continuation fringe-indicator-alist))
-        '(nil nil)))
-
-
-;; no scrollbar
-
-
-(when (fboundp 'toggle-scroll-bar)
-  (toggle-scroll-bar -1))
-
-
-;; no toolbar
-
-
-(tool-bar-mode -1)
-
-
-;; show-paren mode
+;; highlight parentheses
 
 
 (show-paren-mode)
-
-
-(unless window-system
-  (set-face-attribute 'show-paren-match nil :background "magenta")
-  (set-face-attribute 'show-paren-mismatch nil :background "red"))
 
 
 ;; fonts
@@ -387,7 +346,7 @@
   (set-face-attribute 'default nil :font my-font))
 
 
-;;;; enable emojis on Windows
+;; enable emojis on Windows
 
 
 (when (and system-type-is-windows
