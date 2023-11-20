@@ -1476,7 +1476,7 @@ Example input:
 (add-to-list 'completion-category-overrides '(shell-command (styles substring)))
 
 
-(defun completing-read-shell-command (prompt choices hist initial-input)
+(defun completing-read-shell-command (prompt choices &optional hist initial-input)
   (completing-read prompt
                    (lambda (string pred action)
                      (if (eq action 'metadata)
@@ -1743,17 +1743,8 @@ Example input:
 
 (defun comint-browse-command-history ()
   (interactive)
-  (let* ((current-input (buffer-substring
-                         (or (marker-position comint-accum-marker)
-                             (process-mark (get-buffer-process (current-buffer))))
-                         (point)))
-         (query (unless (string-empty-p current-input)
-                  (if (memq last-command '(comint-previous-input-prefixed
-                                           comint-next-input-prefixed))
-                      comint-matching-input-from-input-string
-                    current-input)))
-         (history (ring-elements comint-input-ring))
-         (command (completing-read-shell-command "Command history: " history nil query))
+  (let* ((history (ring-elements comint-input-ring))
+         (command (completing-read-shell-command "Command history: " history))
          (i (cl-position command history :test #'equal)))
     (setq-local comint-input-ring-index i)
     (comint-delete-input)
