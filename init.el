@@ -332,11 +332,12 @@
 (setq ring-bell-function 'ignore)
 
 
-;; show line numbers
+;; line numbers / line highlight indication
 
 
 (dolist (x '(prog-mode-hook sgml-mode-hook conf-mode-hook))
-  (add-hook x 'display-line-numbers-mode))
+  (add-hook x 'display-line-numbers-mode)
+  (add-hook x 'hl-line-mode))
 
 
 ;; no line-wrap indicators
