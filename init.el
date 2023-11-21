@@ -220,6 +220,7 @@
              "M-u" force-revert-buffer
              "C-=" text-scale-increase
              "C-M-=" text-scale-decrease
+             "C-+" (lambda () (interactive) (text-scale-set 0))
              "M-l" (lambda () (interactive) (move-line 'up))
              "C-M-l" (lambda () (interactive) (move-line 'down))
              "C-x m" make-scratch-buffer
