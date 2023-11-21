@@ -1115,17 +1115,8 @@
              isearch-string)))
 
 
-(defun isearch-append-wildcard ()
-  "Append .* to current isearch query"
-  (interactive)
-  (with-isearch-suspended
-   (setq isearch-new-string (concat isearch-string ".*")
-         isearch-new-message isearch-new-string)))
-
-
 (bind-keys '("M-q" isearch-query-replace
              "M-w" isearch-toggle-word
-             "M-." isearch-append-wildcard
              "C-SPC" isearch-select-search-string)
            isearch-mode-map)
 
