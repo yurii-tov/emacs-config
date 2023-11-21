@@ -1124,6 +1124,7 @@
 
 
 (bind-keys '("M-q" isearch-query-replace
+             "M-w" isearch-toggle-word
              "M-." isearch-append-wildcard
              "C-SPC" isearch-select-search-string)
            isearch-mode-map)
