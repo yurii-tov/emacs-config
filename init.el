@@ -289,9 +289,11 @@
              ring-bell-function 'ignore
              kill-buffer-query-functions (remq 'process-kill-buffer-query-function
                                                kill-buffer-query-functions))
-       (setf (cdr (assq 'continuation fringe-indicator-alist)) '(nil nil))
+       (when fringe-indicator-alist
+         (setf (cdr (assq 'continuation fringe-indicator-alist)) '(nil nil)))
+       (when (fboundp 'toggle-scroll-bar)
+         (toggle-scroll-bar -1))
        (blink-cursor-mode 0)
-       (toggle-scroll-bar -1)
        (tool-bar-mode -1))
 
 
