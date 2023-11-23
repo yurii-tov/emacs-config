@@ -934,16 +934,19 @@
 
 (defun read-string-completing-history (f &rest args)
   (let* ((prompt (car args))
-         (history (caddr args))
          (initial-input (cadr args))
-         (history (cond ((consp history) (car history))
-                        ((symbolp history) history))))
-    (if (and history
-             (not (member history '(junk-hist org-read-date-history)))
-             (boundp history)
-             (listp (symbol-value history))
-             (not (null (symbol-value history))))
-        (completing-read prompt (symbol-value history) nil nil initial-input history)
+         (history-arg (caddr args))
+         (history-symbol (cond ((consp history-arg) (car history-arg))
+                               ((symbolp history-arg) history-arg)))
+         (history-value (and history-symbol
+                             (not (member history-symbol
+                                          '(junk-hist org-read-date-history)))
+                             (boundp history-symbol)
+                             (symbol-value history-symbol))))
+    (if (and history-value
+             (listp history-value)
+             (not (null history-value)))
+        (completing-read prompt history-value nil nil initial-input history-symbol)
       (apply f args))))
 
 
