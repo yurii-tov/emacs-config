@@ -939,8 +939,8 @@
          (history (cond ((consp history) (car history))
                         ((symbolp history) history))))
     (if (and history
+             (not (member history '(junk-hist org-read-date-history)))
              (boundp history)
-             (not (eq history 'junk-hist))
              (listp (symbol-value history)))
         (completing-read prompt (symbol-value history) nil nil initial-input history)
       (apply f args))))
