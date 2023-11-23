@@ -321,7 +321,7 @@
 (add-hook 'emacs-startup-hook 'insert-scratch-fortune)
 
 
-;; line numbers / line highlight indication
+;; line numbers / line highlight indication in "programming" modes
 
 
 (dolist (x '(prog-mode-hook sgml-mode-hook conf-mode-hook))
@@ -526,6 +526,9 @@
 
 
 (add-hook 'dired-mode-hook 'dired-hide-details-mode)
+
+
+(add-hook 'dired-mode-hook 'hl-line-mode)
 
 
 (defun dired-custom-highlight ()
