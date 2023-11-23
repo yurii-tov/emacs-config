@@ -953,7 +953,7 @@
 (advice-add 'read-string :around #'read-string-completing-history)
 
 
-;; Use IDO for file-browsing only
+;; Use IDO for file-browsing
 
 
 (progn (ido-mode 'files)
@@ -965,6 +965,14 @@
       ido-use-filename-at-point 'guess
       ido-use-url-at-point t
       ido-max-work-directory-list 100)
+
+
+;; Allow spaces in input, enchance pre-editing
+
+
+(bind-keys '("M-j" ido-take-first-match
+             "SPC" self-insert-command)
+           ido-common-completion-map)
 
 
 ;; Ensure proper (i.e. old-fashioned) IDO fallback file-selection command:
@@ -1439,25 +1447,10 @@ Example input:
 ;; Custom completion style for shell commands
 
 
-(add-to-list 'completion-category-overrides '(shell-command (styles substring)))
-
-
-(defun completing-read-shell-command (prompt choices &optional hist initial-input)
-  (completing-read prompt
-                   (lambda (string pred action)
-                     (if (eq action 'metadata)
-                         '(metadata (display-sort-function . identity)
-                                    (cycle-sort-function . identity)
-                                    (category . shell-command))
-                       (complete-with-action
-                        action choices string pred)))
-                   nil nil initial-input hist))
-
-
 (defun read-string-shell-command (f &rest args)
   (if shell-command-history
-      (completing-read-shell-command
-       (car args) shell-command-history 'shell-command-history (cadr args))
+      (ido-completing-read
+       (car args) shell-command-history nil nil nil 'shell-command-history (cadr args))
     (read-string (car args) (cadr args) 'shell-command-history)))
 
 
@@ -1710,7 +1703,7 @@ Example input:
 (defun comint-browse-command-history ()
   (interactive)
   (let* ((history (ring-elements comint-input-ring))
-         (command (completing-read-shell-command "Command history: " history))
+         (command (ido-completing-read "Command history: " history))
          (i (cl-position command history :test #'equal)))
     (setq-local comint-input-ring-index i)
     (comint-delete-input)
