@@ -938,7 +938,10 @@
          (initial-input (cadr args))
          (history (cond ((consp history) (car history))
                         ((symbolp history) history))))
-    (if (and history (boundp history) (listp (symbol-value history)))
+    (if (and history
+             (boundp history)
+             (not (eq history 'junk-hist))
+             (listp (symbol-value history)))
         (completing-read prompt (symbol-value history) nil nil initial-input history)
       (apply f args))))
 
