@@ -972,8 +972,6 @@
 
 (bind-keys '("M-j" ido-take-first-match
              "SPC" self-insert-command
-             "C-p" ido-prev-match
-             "C-n" ido-next-match
              "<down>" ido-next-match
              "<up>" ido-prev-match)
            ido-common-completion-map)
