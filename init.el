@@ -967,11 +967,15 @@
       ido-max-work-directory-list 100)
 
 
-;; Allow spaces in input, enchance pre-editing
+;; Better IDO keybindings
 
 
 (bind-keys '("M-j" ido-take-first-match
-             "SPC" self-insert-command)
+             "SPC" self-insert-command
+             "C-p" ido-prev-match
+             "C-n" ido-next-match
+             "<down>" ido-prev-match
+             "<up>" ido-next-match)
            ido-common-completion-map)
 
 
