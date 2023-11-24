@@ -1454,7 +1454,7 @@ Example input:
 (defun read-string-shell-command (f &rest args)
   (if shell-command-history
       (ido-completing-read
-       (car args) shell-command-history nil nil nil 'shell-command-history (cadr args))
+       (car args) shell-command-history nil nil (cadr args) 'shell-command-history)
     (read-string (car args) (cadr args) 'shell-command-history)))
 
 
