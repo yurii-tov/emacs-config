@@ -1266,14 +1266,14 @@
 ;; ========
 
 
-(progn (require 'ox-md)
-       (require 'org-tempo))
+(setq org-startup-truncated nil
+      org-adapt-indentation t)
 
 
-(setq org-startup-truncated nil)
+(require 'org-tempo)
 
 
-(setq org-agenda-files (list org-directory))
+;; Capture
 
 
 (setq org-capture-templates
@@ -1300,10 +1300,19 @@
 (setq org-refile-allow-creating-parent-nodes 'confirm)
 
 
+;; Export
+
+
+(require 'ox-md)
+
+
 (setq org-export-with-section-numbers 0
       org-export-preserve-breaks t
       org-export-with-toc nil
       org-export-with-sub-superscripts nil)
+
+
+;; Checklist enhancements
 
 
 (defun org-insert-checklist-status ()
@@ -1322,7 +1331,10 @@
 (define-key org-mode-map (kbd "C-c C-/") 'org-insert-checklist-status)
 
 
-;; agenda
+;; Agenda
+
+
+(setq org-agenda-files (list org-directory))
 
 
 (defun try-switch-to-agenda (f &rest args)
