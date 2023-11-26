@@ -60,13 +60,13 @@
         ("melpa" . "https://melpa.org/packages/")))
 
 
-(let ((packages '(cider
-                  slime
-                  groovy-mode
+(let ((packages '(ido-vertical-mode
+                  ligature
                   clojure-mode
+                  cider
                   powershell
-                  ido-vertical-mode
-                  ligature))
+                  groovy-mode
+                  slime))
       refreshed)
   (dolist (p packages)
     (unless (package-installed-p p)
