@@ -267,18 +267,9 @@
                 ("*" "\*\*+")
                 ("." "\.\.+")
                 ("+" "\+\++"))
-              (mapcan (lambda (stripes) (mapcan (lambda (x)
-                                                  (list x
-                                                        (format "%s>" x)
-                                                        (format "<%s" x)
-                                                        (format "%s>>" x)
-                                                        (format "<<%s" x)
-                                                        (format "<%s>" x)
-                                                        (format "<<%s>>" x)))
-                                                stripes))
-                      (cl-loop for x from 4 upto 100
-                               collect (list (make-string x ?=)
-                                             (make-string x ?-))))))
+              (mapcan (lambda (x) (cl-loop for i from 4 upto 100
+                                           collect (make-string i x)))
+                      '(?= ?-))))
   (global-ligature-mode t))
 
 
