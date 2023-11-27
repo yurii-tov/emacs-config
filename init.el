@@ -276,9 +276,9 @@
                       (cl-loop for x from 4 upto 100
                                collect (list (make-string x ?=)
                                              (make-string x ?-))))
-              (cl-loop for x from 4 upto 100 collect (make-string x ?*))
-              (cl-loop for x from 4 upto 100 collect (make-string x ?.))
-              (cl-loop for x from 4 upto 100 collect (make-string x ?+))))
+              (mapcan (lambda (x)
+                        (cl-loop for i from 4 upto 100 collect (make-string i x)))
+                      '(?* ?. ?+))))
   (global-ligature-mode t))
 
 
