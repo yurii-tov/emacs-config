@@ -173,8 +173,7 @@
                       "e" enumerate-lines
                       "r" reverse-region
                       "w" whitespace-cleanup
-                      "p" (lambda () (interactive) (wrap-with-text "(" ")" t))
-                      "M-p" wrap-with-text
+                      "p" wrap-with-text
                       "," (lambda () (interactive) (wrap-with-text "[" "]" t))
                       "M-," (lambda () (interactive) (wrap-with-text "{" "}" t))
                       "." (lambda () (interactive) (wrap-with-text "\"" "\""))
@@ -215,6 +214,7 @@
              "M-=" count-words
              "M-q" hippie-expand
              "C-v" scroll-up-5-lines
+             "M-9" (lambda () (interactive) (wrap-with-text "(" ")" t))
              "M-v" scroll-down-5-lines
              "M-i" reformat-region
              "M-u" force-revert-buffer
