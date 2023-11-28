@@ -237,7 +237,8 @@
              "C-c p" copy-file-name-to-clipboard
              "C-c h" hexl-mode
              "C-c c" org-capture
-             "C-c a" org-agenda)
+             "C-c a" org-agenda
+             "C-c w" tail)
            global-map)
 
 
