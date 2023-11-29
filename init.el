@@ -187,6 +187,7 @@
 
 (define-custom-keymap insert-map "C-x i"
                       "e" emoji-insert
+                      "E" emoji-list
                       "f" insert-file
                       "j" insert-path
                       "a" insert-fortune
