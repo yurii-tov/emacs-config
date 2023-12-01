@@ -1766,7 +1766,9 @@ Example input:
 
 
 (bind-keys '("M-p" comint-previous-input-prefixed
-             "M-n" comint-next-input-prefixed)
+             "M-n" comint-next-input-prefixed
+             "<up>" comint-previous-input-prefixed
+             "<down>" comint-next-input-prefixed)
            comint-mode-map)
 
 
