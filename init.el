@@ -2583,5 +2583,6 @@ Process .+
 
 
 (let ((site-file (expand-file-name "site.el" user-emacs-directory)))
-  (when (file-exists-p site-file)
-    (load-file site-file)))
+  (if (file-exists-p site-file)
+      (load-file site-file)
+    (with-temp-buffer (write-file site-file))))
