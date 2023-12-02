@@ -937,7 +937,7 @@
            icomplete-minibuffer-map)
 
 
-(setq completion-auto-select 'second-tab)
+(setq completion-auto-select t)
 
 
 ;; Enhance read-string with history completion
