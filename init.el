@@ -160,7 +160,7 @@
 
 
 (define-custom-keymap text-transform-map "M-c"
-                      "c" upcase-char
+                      "c" toggle-char-case
                       "M-c" duplicate-dwim
                       "o" sort-lines     "M-o" shuffle-lines
                       "s" replace-string "M-s" replace-regexp
@@ -862,6 +862,14 @@
                          (line-end-position)))
     (beginning-of-line))
   (kill-line))
+
+
+(defun toggle-char-case ()
+  (interactive)
+  (save-excursion
+    (if (char-uppercase-p (following-char))
+        (downcase-region (point) (1+ (point)))
+      (upcase-region (point) (1+ (point))))))
 
 
 (defun make-scratch-buffer ()
