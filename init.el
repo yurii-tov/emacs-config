@@ -999,6 +999,11 @@
            ido-common-completion-map)
 
 
+(bind-keys '("<down>" ido-next-match
+             "<up>" ido-prev-match)
+           ido-file-dir-completion-map)
+
+
 ;; Ensure proper (i.e. old-fashioned) IDO fallback file-selection command:
 
 
