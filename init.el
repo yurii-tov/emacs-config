@@ -1786,6 +1786,22 @@ Example input:
            comint-mode-map)
 
 
+;; displaying working directory in buffer list
+
+
+(defun switch-to-buffer-annotate-comint-wd (f &rest args)
+  (let ((completion-extra-properties
+         '(:annotation-function
+           (lambda (x)
+             (with-current-buffer x
+               (when (derived-mode-p 'comint-mode)
+                 (concat " " default-directory)))))))
+    (apply f args)))
+
+
+(advice-add 'read-buffer-to-switch :around #'switch-to-buffer-annotate-comint-wd)
+
+
 ;; =====
 ;; shell
 ;; =====
