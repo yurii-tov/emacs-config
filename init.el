@@ -517,7 +517,8 @@
       dired-recursive-copies 'always
       dired-recursive-deletes 'always
       dired-dwim-target t
-      dired-hide-details-hide-symlink-targets nil)
+      dired-hide-details-hide-symlink-targets nil
+      dired-kill-when-opening-new-dired-buffer t)
 
 
 (setq find-ls-option '("-exec ls -ldh {} +" . "-ldh"))
