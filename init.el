@@ -531,7 +531,8 @@
 
 (defun customize-dired-keys ()
   (bind-keys '("C-c C-o" dired-open-in-external-app
-               "/" dired-hide-details-mode)))
+               "/" dired-hide-details-mode
+               "l" dired-up-directory)))
 
 
 (add-hook 'dired-mode-hook 'customize-dired-keys)
