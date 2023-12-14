@@ -32,6 +32,12 @@
 (setq default-input-method 'russian-computer)
 
 
+;; monday-based weeks in calendar
+
+
+(setq calendar-week-start-day 1)
+
+
 ;; shutdown
 
 
