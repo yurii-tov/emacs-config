@@ -1310,22 +1310,22 @@
 
 (setq org-capture-templates
       `(("w" "Work" entry
-         (file+headline "work.org" "📨 inbox")
+         (file+headline "work.org" "In")
          "* TODO %?\n")
         ("f" "Fun" entry
-         (file+headline "fun.org" "📨 inbox")
+         (file+headline "fun.org" "In")
          "* TODO %?\n")
         ("a" "Art" entry
-         (file+headline "art.org" "📨 inbox")
+         (file+headline "art.org" "In")
          "* TODO %?\n")
         ("l" "Life" entry
-         (file+headline "life.org" "📨 inbox")
+         (file+headline "life.org" "In")
          "* TODO %?\n")
         ("m" "Math" entry
-         (file+headline "math.org" "📨 inbox")
+         (file+headline "math.org" "In")
          "* TODO %?\n")
         ("c" "Computer" entry
-         (file+headline "computer.org" "📨 inbox")
+         (file+headline "computer.org" "In")
          "* TODO %?\n")))
 
 
