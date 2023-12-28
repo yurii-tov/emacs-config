@@ -1044,21 +1044,6 @@
 (advice-add 'ido-complete :after #'ido-jump-to-completions)
 
 
-;; Update ido-work-directory-list when visiting any file/directory
-
-
-(defun ido-record-visited-wd (f &rest args)
-  (let* ((r (apply f args)))
-    (prog1 r
-      (dolist (b (if (listp r) r (list r)))
-        (with-current-buffer b
-          (unless (equal (car ido-work-directory-list) default-directory)
-            (ido-record-work-directory default-directory)))))))
-
-
-(advice-add 'find-file-noselect :around 'ido-record-visited-wd)
-
-
 ;; Various "Wide find file" fixes
 
 
