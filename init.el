@@ -760,7 +760,7 @@
 (defun join-lines ()
   (interactive)
   (if (region-active-p)
-      (let ((separator (read-string "Join with: " nil 'region-separators))
+      (let ((separator (read-string "Join with: "))
             (text (buffer-substring (region-beginning)
                                     (region-end))))
         (setq text (split-string text "\n" t " *"))
@@ -777,7 +777,7 @@
 
 (defun break-line ()
   (interactive)
-  (let ((separator (read-string "Break with: " nil 'region-separators))
+  (let ((separator (read-string "Break with: "))
         (text (buffer-substring
                (line-beginning-position)
                (line-end-position))))
