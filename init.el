@@ -68,6 +68,7 @@
 
 (let ((packages '(ido-vertical-mode
                   ligature
+                  ef-themes
                   clojure-mode
                   cider
                   powershell
