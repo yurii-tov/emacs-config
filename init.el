@@ -1492,6 +1492,23 @@ Example input:
 (advice-add 'read-shell-command :around #'read-string-shell-command)
 
 
+;; shell-command now operates on selected region
+
+
+(defun shell-command-dwim (f &rest args)
+  (if (use-region-p)
+      (shell-command-on-region (region-beginning)
+                               (region-end)
+                               (car
+                                args)
+                               nil
+                               current-prefix-arg)
+    (apply f args)))
+
+
+(advice-add 'shell-command :around #'shell-command-dwim)
+
+
 ;; async-shell-command
 
 
