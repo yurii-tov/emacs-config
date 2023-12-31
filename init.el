@@ -1499,8 +1499,7 @@ Example input:
   (if (use-region-p)
       (shell-command-on-region (region-beginning)
                                (region-end)
-                               (car
-                                args)
+                               (car args)
                                nil
                                current-prefix-arg)
     (apply f args)))
