@@ -2513,7 +2513,7 @@ Process .+
          (translation (string-trim (shell-command-to-string command))))
     (if (zerop (length translation))
         (message "Can't find translation for '%s'" query)
-      (message "%s =>\n%s" query translation))))
+      (message "%s =>\n%s" (propertize query 'face 'bold) translation))))
 
 
 ;; ==========================
