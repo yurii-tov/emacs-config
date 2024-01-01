@@ -1628,7 +1628,7 @@ Example input:
 (advice-add 'async-shell-command :around 'async-shell-command-setup-echo)
 
 
-;;;; dont popup output buffer when universal arg provided
+;;;; don't popup output buffer when universal arg provided
 
 
 (defun async-shell-command-disable-popup (f &rest args)
