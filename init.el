@@ -1628,6 +1628,22 @@ Example input:
 (advice-add 'async-shell-command :around 'async-shell-command-setup-echo)
 
 
+;;;; dont popup output buffer when universal arg provided
+
+
+(defun async-shell-command-disable-popup (f &rest args)
+  (if current-prefix-arg
+      (let (r)
+        (save-window-excursion (setq r (apply f args)))
+        (prog1 r
+          (message "Running command: %s"
+                   (propertize (car args) 'face 'compilation-info))))
+    (apply f args)))
+
+
+(advice-add 'async-shell-command :around #'async-shell-command-disable-popup))
+
+
 ;; ===========
 ;; comint-mode
 ;; ===========
