@@ -1641,7 +1641,7 @@ Example input:
     (apply f args)))
 
 
-(advice-add 'async-shell-command :around #'async-shell-command-disable-popup))
+(advice-add 'async-shell-command :around #'async-shell-command-disable-popup)
 
 
 ;; ===========
