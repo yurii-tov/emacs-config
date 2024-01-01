@@ -1256,7 +1256,8 @@
            ("Tramp" (name . "^\\*tramp.*$"))
            ("System" (or (name . "^\\*scratch\\*$")
                          (name . "^\\*Messages\\*$"))))))
-  (ibuffer-switch-to-saved-filter-groups "default"))
+  (ibuffer-switch-to-saved-filter-groups "default")
+  (hl-line-mode))
 
 
 (add-hook 'ibuffer-mode-hook 'ibuffer-setup)
