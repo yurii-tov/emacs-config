@@ -560,6 +560,13 @@
 (add-hook 'dired-hide-details-mode-hook 'dired-custom-highlight)
 
 
+(defun dired-disable-ffap ()
+  (setq-local ido-use-filename-at-point nil))
+
+
+(add-hook 'dired-mode-hook 'dired-disable-ffap)
+
+
 ;;;; set custom names for "find" buffers
 
 
