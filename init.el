@@ -1632,8 +1632,12 @@ Example input:
 ;;;; don't popup output buffer when universal arg provided
 
 
+(defvar *async-shell-command-disable-popup* nil)
+
+
 (defun async-shell-command-disable-popup (f &rest args)
-  (if current-prefix-arg
+  (if (or *async-shell-command-disable-popup*
+          (and current-prefix-arg (called-interactively-p)))
       (let (r)
         (save-window-excursion (setq r (apply f args)))
         (prog1 r
