@@ -2520,8 +2520,12 @@ Process .+
   (let* ((default-directory (read-directory-name "Serve directory: "))
          (socket (read-string "Address: " "0.0.0.0:5555"))
          (command (apply 'format "python -m http.server -b %s %s" (split-string socket ":")))
-         (buffer (format "*python-server:%s*" socket)))
-    (async-shell-command command buffer)))
+         (buffer (format "*python-server:%s*" socket))
+         (*async-shell-command-disable-popup* t))
+    (async-shell-command command buffer)
+    (message "Serving %s at %s"
+             (propertize default-directory 'face 'bold-italic)
+             (propertize socket 'face 'bold))))
 
 
 ;; ================================
