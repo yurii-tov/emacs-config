@@ -408,13 +408,12 @@
 
 
 (setq-default mode-line-format
-              `((:eval (propertize (symbol-name buffer-file-coding-system)
-                                   'face 'fixed-pitch-serif))
+              `((:eval (symbol-name buffer-file-coding-system))
                 (:eval (propertize (format " %s"
                                            (if current-input-method-title
                                                (downcase current-input-method-title)
                                              "  "))
-                                   'face '(mode-line-emphasis fixed-pitch-serif)))
+                                   'face 'mode-line-emphasis))
                 ,(if (and (not window-system) system-type-is-windows)
                      'mode-line-modified
                    '(:eval (let ((ro buffer-read-only)
