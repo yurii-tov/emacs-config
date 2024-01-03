@@ -421,7 +421,7 @@
                 (:eval (format " %s"
                                (if current-input-method-title
                                    (propertize current-input-method-title
-                                               'face 'mode-line-highlight)
+                                               'face 'fixed-pitch-serif)
                                  "  ")))
                 ,(unless (and (not window-system) system-type-is-windows)
                    '(:eval (if (get-buffer-process (current-buffer))
