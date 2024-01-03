@@ -179,8 +179,7 @@
                       "i" invert-chars
                       "e" enumerate-lines
                       "r" reverse-region
-                      "w" whitespace-cleanup
-                      "p" wrap-with-text
+                      "w" wrap-with-text
                       "," (lambda () (interactive) (wrap-with-text "[" "]" t))
                       "M-," (lambda () (interactive) (wrap-with-text "{" "}" t))
                       "." (lambda () (interactive) (wrap-with-text "\"" "\""))
@@ -801,13 +800,10 @@
   "Wraps current word (or region) with given bracket-like strings
    (e.g. brackets/quotes/apostrophes/parens etc.).
    When rectangle selection is in effect, applies wrapping on each *line* of that selection"
-  (interactive (split-string (read-string "Wrap with: "
-                                          (unless (bound-and-true-p wrap-with-text-history)
-                                            (format "%s$%s"
-                                                    (propertize "?" 'face 'read-multiple-choice-face)
-                                                    (propertize "?" 'face 'read-multiple-choice-face)))
-                                          'wrap-with-text-history)
-                             "\\$"))
+  (interactive (split-string (read-string (format "Wrap with arbitrary text (e.g. %s ): "
+                                                  (propertize "<- * ->" 'face 'font-lock-comment-face))
+                                          nil nil "<- * ->")
+                             "\\*"))
   (cond (rectangle-mark-mode
          (let* ((bounds (list (region-beginning) (region-end)))
                 (lines (mapcar #'string-trim-right
@@ -823,13 +819,13 @@
                                                           b2)))
                                               (cdr lines)))
                                 "\n"))))
-        ((region-active-p)
+        ((use-region-p)
          (let ((s (region-beginning))
                (e (region-end)))
            (goto-char s)
            (insert b1)
            (goto-char e)
-           (forward-char)
+           (forward-char (length b2))
            (insert b2)
            (when lisp-style-p (goto-char (1+ s)))))
         ((and lisp-style-p (looking-at "[\[({]"))
