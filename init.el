@@ -678,7 +678,7 @@
 
 (defun reformat-region (start end)
   "Reindent selected region, untabify it, cleanup whitespaces"
-  (interactive (if (region-active-p)
+  (interactive (if (use-region-p)
                    (list (region-beginning)
                          (region-end))
                  (list (point-min)
@@ -695,7 +695,7 @@
 
 
 (defun fill-region-justify (start end)
-  (interactive (if (region-active-p)
+  (interactive (if (use-region-p)
                    (list (region-beginning)
                          (region-end))
                  (list (point-min)
@@ -767,7 +767,7 @@
 
 (defun join-lines ()
   (interactive)
-  (if (region-active-p)
+  (if (use-region-p)
       (let ((separator (read-string "Join with: "))
             (text (buffer-substring (region-beginning)
                                     (region-end))))
@@ -2627,7 +2627,7 @@ Process .+
 
 (defun browse-url-or-search (query)
   (interactive (list (read-string "URL/search query: "
-                                  (when (region-active-p)
+                                  (when (use-region-p)
                                     (buffer-substring (region-beginning)
                                                       (region-end)))
                                   'browser-query-history)))
