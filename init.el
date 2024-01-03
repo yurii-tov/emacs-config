@@ -408,7 +408,13 @@
 
 
 (setq-default mode-line-format
-              `((:eval (symbol-name buffer-file-coding-system))
+              `((:eval (propertize (symbol-name buffer-file-coding-system)
+                                   'face 'fixed-pitch))
+                (:eval (propertize (format " %s"
+                                           (if current-input-method-title
+                                               current-input-method-title
+                                             "  "))
+                                   'face 'fixed-pitch))
                 ,(if (and (not window-system) system-type-is-windows)
                      'mode-line-modified
                    '(:eval (let ((ro buffer-read-only)
@@ -418,11 +424,6 @@
                                            (ro "🔒")
                                            (m "✒")
                                            (t "  "))))))
-                (:eval (format " %s"
-                               (if current-input-method-title
-                                   (propertize current-input-method-title
-                                               'face 'fixed-pitch-serif)
-                                 "  ")))
                 ,(unless (and (not window-system) system-type-is-windows)
                    '(:eval (if (get-buffer-process (current-buffer))
                                (propertize " •" 'face 'compilation-mode-line-run)
