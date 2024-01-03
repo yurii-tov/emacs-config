@@ -408,7 +408,8 @@
 
 
 (setq-default mode-line-format
-              `((:eval (symbol-name buffer-file-coding-system))
+              `((:eval (propertize (symbol-name buffer-file-coding-system)
+                                   'face '(:slant italic)))
                 (:eval (propertize (format " %s"
                                            (if current-input-method-title
                                                (downcase current-input-method-title)
