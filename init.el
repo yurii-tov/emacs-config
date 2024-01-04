@@ -581,6 +581,10 @@
   (mapc #'open-in-external-app (dired-get-marked-files)))
 
 
+(defun zip-file-p (filename)
+  (string-match-p ".\\(zip\\|epub\\)$" filename))
+
+
 (defun dired-archive ()
   (interactive)
   (let* ((output (file-truename (read-file-name "Add file(s) to archive: ")))
@@ -592,7 +596,7 @@
                                                            "/\\1/"
                                                            output)))
          (zip-command (format "zip -r '%s' %s" output files))
-         (command (if (string-match-p ".zip$" output)
+         (command (if (zip-file-p output)
                       zip-command
                     tar-command)))
     (shell-command command)))
@@ -608,7 +612,7 @@
                                                         output-dir)
                               archive))
          (zip-command (format "unzip '%s' -d '%s'" archive output-dir))
-         (command (if (string-match-p ".zip$" archive)
+         (command (if (zip-file-p archive)
                       zip-command
                     tar-command)))
     (shell-command command)))
