@@ -249,6 +249,9 @@
              "M-=" count-words
              "M-q" hippie-expand
              "C-v" scroll-up-5-lines
+             "M-1" shell-command
+             "M-!" async-shell-command
+             "M-2" shell
              "M-9" (lambda () (interactive) (wrap-with-text "(" ")" t))
              "M-v" scroll-down-5-lines
              "M-i" reformat-region
@@ -259,8 +262,6 @@
              "M-l" (lambda () (interactive) (move-line 'up))
              "C-M-l" (lambda () (interactive) (move-line 'down))
              "C-x m" make-scratch-buffer
-             "C-x j" async-shell-command
-             "C-x C-j" shell
              "C-x u" reopen-with-sudo
              "C-x C-b" ibuffer
              "C-x l" hl-line-mode
