@@ -537,10 +537,45 @@
   (mapc #'open-in-external-app (dired-get-marked-files)))
 
 
+(defun dired-archive ()
+  (interactive)
+  (let* ((output (file-truename (read-file-name "Add file(s) to archive: ")))
+         (files (string-join (mapcar (lambda (x) (format "'%s'" (file-relative-name x)))
+                                     (dired-get-marked-files))
+                             " "))
+         (tar-command (format "tar -vcz %s -f '%s'" files (replace-regexp-in-string
+                                                           "^\\([a-zA-Z]\\):/"
+                                                           "/\\1/"
+                                                           output)))
+         (zip-command (format "zip -r '%s' %s" output files))
+         (command (if (string-match-p ".zip$" output)
+                      zip-command
+                    tar-command)))
+    (shell-command command)))
+
+
+(defun dired-extract-archive ()
+  (interactive)
+  (let* ((output-dir (read-directory-name "Extract to: "))
+         (archive (file-relative-name (car (dired-get-marked-files))))
+         (tar-command (format "tar -xvzC '%s' < '%s'"
+                              (replace-regexp-in-string "^\\([a-zA-Z]\\):/"
+                                                        "/\\1/"
+                                                        output-dir)
+                              archive))
+         (zip-command (format "unzip '%s' -d '%s'" archive output-dir))
+         (command (if (string-match-p ".zip$" archive)
+                      zip-command
+                    tar-command)))
+    (shell-command command)))
+
+
 (defun customize-dired-keys ()
   (bind-keys '("o" dired-open-in-external-app
                "/" dired-hide-details-mode
-               "l" dired-up-directory)))
+               "l" dired-up-directory
+               "a" dired-archive
+               "A" dired-extract-archive)))
 
 
 (add-hook 'dired-mode-hook 'customize-dired-keys)
@@ -1931,7 +1966,7 @@ Example input:
 
 ;; reconnect
 
-
+;; wtf is going on?
 (defun sql-setup-reconnect ()
   (let ((process (get-buffer-process (current-buffer))))
     (setq-local process-specs
