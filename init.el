@@ -570,12 +570,23 @@
     (shell-command command)))
 
 
+(defun dired-flatten-directory ()
+  "Run find program on selected directory"
+  (interactive)
+  (let ((directory (file-truename (car (dired-get-marked-files)))))
+    (if (file-directory-p directory)
+        (progn (kill-buffer)
+               (find-dired directory ""))
+      (message "This command works only for directories"))))
+
+
 (defun customize-dired-keys ()
   (bind-keys '("o" dired-open-in-external-app
                "/" dired-hide-details-mode
                "l" dired-up-directory
                "a" dired-archive
-               "A" dired-extract-archive)))
+               "A" dired-extract-archive
+               "f" dired-flatten-directory)))
 
 
 (add-hook 'dired-mode-hook 'customize-dired-keys)
