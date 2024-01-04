@@ -256,6 +256,7 @@
              "M-v" scroll-down-5-lines
              "M-i" reformat-region
              "M-u" force-revert-buffer
+             "M-j" switch-to-buffer
              "C-=" text-scale-increase
              "C-M-=" text-scale-decrease
              "C-+" (lambda () (interactive) (text-scale-set 0))
