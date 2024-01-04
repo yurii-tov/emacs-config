@@ -262,6 +262,8 @@
              "C-+" (lambda () (interactive) (text-scale-set 0))
              "M-l" (lambda () (interactive) (move-line 'up))
              "C-M-l" (lambda () (interactive) (move-line 'down))
+             "C-x b" bookmark-set
+             "C-x j" bookmark-jump
              "C-x m" make-scratch-buffer
              "C-x u" reopen-with-sudo
              "C-x C-b" ibuffer
