@@ -237,6 +237,7 @@
              "C-x C-b" ibuffer
              "C-x l" hl-line-mode
              "C-x C-l" display-line-numbers-mode
+             "C-x C-k" kill-buffer-and-window
              "C-c j" cider-start-map
              "C-c s" run-ssh-session
              "C-c S" ssh-tunnel
