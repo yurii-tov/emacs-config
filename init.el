@@ -110,6 +110,17 @@
       (warn "msys2 not found. Expected location is %s" msys))))
 
 
+;; fix kill-buffer-and-window "single window" case
+
+
+(defun kill-buffer-and-window-fix (f &rest args)
+  (if (> (length (window-list)) 1)
+      (apply f args)
+    (kill-buffer)))
+
+
+(advice-add 'kill-buffer-and-window :around #'kill-buffer-and-window-fix)
+
 
 ;; ==================
 ;; global keybindings
