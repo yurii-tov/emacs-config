@@ -410,11 +410,11 @@
 (setq-default mode-line-format
               `((:eval (propertize (symbol-name buffer-file-coding-system)
                                    'face '(:slant italic)))
-                (:eval (propertize (format " %s"
-                                           (if current-input-method-title
-                                               (downcase current-input-method-title)
-                                             "  "))
-                                   'face 'mode-line-emphasis))
+                (:eval (format " %s"
+                               (if current-input-method-title
+                                   (propertize (downcase current-input-method-title)
+                                               'face 'mode-line-emphasis)
+                                 "  ")))
                 ,(if (and (not window-system) system-type-is-windows)
                      'mode-line-modified
                    '(:eval (let ((ro buffer-read-only)
