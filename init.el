@@ -259,11 +259,12 @@
              "M-k" kill-line-to-indentation
              "M-=" count-words
              "M-q" hippie-expand
+             "M-2" make-scratch-buffer
              "C-v" scroll-up-5-lines
+             "M-v" scroll-down-5-lines
              "M-1" shell-command
              "M-!" async-shell-command
              "M-9" (lambda () (interactive) (wrap-with-text "(" ")" t))
-             "M-v" scroll-down-5-lines
              "M-i" reformat-region
              "M-u" force-revert-buffer
              "M-j" switch-to-buffer
@@ -275,7 +276,6 @@
              "C-x C-j" shell
              "C-x b" bookmark-set
              "C-x j" bookmark-jump
-             "C-x m" make-scratch-buffer
              "C-x u" reopen-with-sudo
              "C-x C-b" ibuffer
              "C-x l" hl-line-mode
