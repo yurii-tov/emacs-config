@@ -190,13 +190,7 @@
                       "i" invert-chars
                       "e" enumerate-lines
                       "r" reverse-region
-                      "w" wrap-with-text
-                      "," (lambda () (interactive) (wrap-with-text "[" "]" t))
-                      "M-," (lambda () (interactive) (wrap-with-text "{" "}" t))
-                      "." (lambda () (interactive) (wrap-with-text "\"" "\""))
-                      "M-." (lambda () (interactive) (wrap-with-text "'" "'"))
-                      "/" (lambda () (interactive) (wrap-with-text "*" "*"))
-                      "M-/" (lambda () (interactive) (wrap-with-text "<" ">")))
+                      "w" wrap-with-text)
 
 
 ;; inserting things
@@ -259,12 +253,15 @@
              "M-k" kill-line-to-indentation
              "M-=" count-words
              "M-q" hippie-expand
-             "M-2" make-scratch-buffer
              "C-v" scroll-up-5-lines
              "M-v" scroll-down-5-lines
              "M-1" shell-command
              "M-!" async-shell-command
+             "M-2" (lambda () (interactive)
+                     (insert-brackets '("\"\"" "''" "**") 134217778))
              "M-9" (lambda () (interactive) (wrap-with-text "(" ")" t))
+             "M-h" (lambda () (interactive) (wrap-with-text "[" "]" t))
+             "M-H" (lambda () (interactive) (wrap-with-text "{" "}" t))
              "M-i" reformat-region
              "M-u" force-revert-buffer
              "M-j" switch-to-buffer
@@ -276,6 +273,7 @@
              "C-x C-j" shell
              "C-x b" bookmark-set
              "C-x j" bookmark-jump
+             "C-x m" make-scratch-buffer
              "C-x u" reopen-with-sudo
              "C-x C-b" ibuffer
              "C-x l" hl-line-mode
@@ -895,52 +893,84 @@
   "Wraps current word (or region) with given bracket-like strings
    (e.g. brackets/quotes/apostrophes/parens etc.).
    When rectangle selection is in effect, applies wrapping on each *line* of that selection"
-  (interactive (split-string (read-string (format "Wrap with arbitrary text (e.g. %s ): "
-                                                  (propertize "<- * ->" 'face 'font-lock-comment-face))
-                                          nil nil "<- * ->")
-                             "\\*"))
-  (cond (rectangle-mark-mode
-         (let* ((bounds (list (region-beginning) (region-end)))
-                (lines (mapcar #'string-trim-right
-                               (split-string (apply #'buffer-substring bounds) "\n")))
-                (col (save-excursion (goto-char (car bounds)) (current-column))))
-           (apply #'delete-region bounds)
-           (insert (string-join (cons (format "%s%s%s" b1 (car lines) b2)
-                                      (mapcar (lambda (x)
-                                                (let ((offset (min col (length x))))
-                                                  (format "%s%s" (concat (substring x 0 offset)
-                                                                         b1
-                                                                         (substring x offset))
-                                                          b2)))
-                                              (cdr lines)))
-                                "\n"))))
-        ((use-region-p)
-         (let ((s (region-beginning))
-               (e (region-end)))
-           (goto-char s)
-           (insert b1)
-           (goto-char e)
-           (forward-char (length b2))
-           (insert b2)
-           (when lisp-style-p (goto-char (1+ s)))))
-        ((and lisp-style-p (looking-at "[\[({]"))
-         (insert b1)
-         (forward-sexp)
-         (insert b2)
-         (backward-char)
-         (backward-sexp))
-        ((or (eobp) (looking-at "[\](){}<>*\s\n.,;:\[\"']"))
-         (insert b1)
-         (insert b2)
-         (backward-char))
-        (t (forward-word)
-           (backward-word)
-           (insert b1)
-           (forward-word)
-           (insert b2)
-           (when lisp-style-p
-             (backward-char)
-             (backward-word)))))
+  (interactive (let* ((s (read-string (format "Wrap with arbitrary brackets (use %s char if needed): "
+                                              (propertize "?" 'face 'font-lock-builtin-face))
+                                      nil nil))
+                      (bs (split-string s "\\?")))
+                 (if (> (length bs) 1) bs
+                   (list (substring s 0 (/ (length s) 2))
+                         (substring s (/ (length s) 2) (length s))))))
+  (let* (b1-pos
+         b2-pos
+         (insert-b1 (lambda () (setq b1-pos (point)) (insert b1)))
+         (insert-b2 (lambda () (setq b2-pos (point)) (insert b2))))
+    (cond (rectangle-mark-mode
+           (let* ((bounds (list (region-beginning) (region-end)))
+                  (lines (mapcar #'string-trim-right
+                                 (split-string (apply #'buffer-substring bounds) "\n")))
+                  (col (save-excursion (goto-char (car bounds)) (current-column))))
+             (apply #'delete-region bounds)
+             (insert (string-join (cons (format "%s%s%s" b1 (car lines) b2)
+                                        (mapcar (lambda (x)
+                                                  (let ((offset (min col (length x))))
+                                                    (format "%s%s" (concat (substring x 0 offset)
+                                                                           b1
+                                                                           (substring x offset))
+                                                            b2)))
+                                                (cdr lines)))
+                                  "\n"))))
+          ((use-region-p)
+           (let ((s (region-beginning))
+                 (e (region-end)))
+             (goto-char s)
+             (funcall insert-b1)
+             (goto-char e)
+             (forward-char (length b2))
+             (funcall insert-b2)
+             (when lisp-style-p (goto-char (1+ s)))))
+          ((and lisp-style-p (looking-at "[\[({]"))
+           (funcall insert-b1)
+           (forward-sexp)
+           (funcall insert-b2)
+           (backward-char)
+           (backward-sexp))
+          ((or (eobp) (looking-at "[\](){}<>*\s\n.,;:\[\"']"))
+           (funcall insert-b1)
+           (funcall insert-b2)
+           (backward-char))
+          (t (forward-word)
+             (backward-word)
+             (funcall insert-b1)
+             (forward-word)
+             (funcall insert-b2)
+             (when lisp-style-p
+               (backward-char)
+               (backward-word))))
+    (list b1-pos b2-pos)))
+
+
+(defun insert-brackets (brackets keybinding)
+  (when (not rectangle-mark-mode)
+    (let* ((positions (wrap-with-text (substring (car brackets) 0 1)
+                                      (substring (car brackets) 1 2)
+                                      t))
+           (p1 (car positions))
+           (p2 (cadr positions))
+           (i 0)
+           key)
+      (while (= (setq key (read-key)) keybinding)
+        (let* ((bs (nth (mod (cl-incf i) (length brackets)) brackets))
+               (b1 (aref bs 0))
+               (b2 (aref bs 1)))
+          (save-excursion
+            (goto-char p1)
+            (delete-char 1)
+            (insert b1)
+            (goto-char p2)
+            (delete-char 1)
+            (insert b2))
+          (forward-char)))
+      (push key unread-command-events))))
 
 
 (defun move-line (direction)
