@@ -259,9 +259,9 @@
              "M-!" async-shell-command
              "M-2" (lambda () (interactive)
                      (insert-brackets '("\"\"" "''" "**") 134217778))
-             "M-0" (lambda () (interactive)
-                     (insert-brackets '("[]" "{}") 134217776))
              "M-9" (lambda () (interactive) (wrap-with-text "(" ")" t))
+             "M-0" (lambda () (interactive) (wrap-with-text "[" "]" t))
+             "M-)" (lambda () (interactive) (wrap-with-text "{" "}" t))
              "M-i" reformat-region
              "M-u" force-revert-buffer
              "M-j" switch-to-buffer
