@@ -67,6 +67,7 @@
 
 
 (let ((packages '(ido-vertical-mode
+                  spacious-padding
                   ligature
                   ef-themes
                   clojure-mode
@@ -338,6 +339,12 @@
        ("+" ">")
        ("+" "\\++")))
   (global-ligature-mode t))
+
+
+;; spacious-padding
+
+
+(spacious-padding-mode 1)
 
 
 ;; remove noisy stuff
