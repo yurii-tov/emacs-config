@@ -1335,6 +1335,7 @@
 (defun ibuffer-setup ()
   ;; keybindings
   (local-unset-key (kbd "M-o"))
+  (local-unset-key (kbd "M-j"))
   ;; autoupdate
   (ibuffer-auto-mode 1)
   ;; filter groups
