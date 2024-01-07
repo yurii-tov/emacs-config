@@ -450,27 +450,31 @@
 
 
 (setq-default mode-line-format
-              `((:eval (propertize (symbol-name buffer-file-coding-system)
-                                   'face '(:slant italic)))
-                (:eval (format " %s"
-                               (if current-input-method-title
-                                   (propertize (downcase current-input-method-title)
-                                               'face 'mode-line-emphasis)
-                                 "  ")))
+              `(" "
+                (:eval (if (member buffer-file-coding-system
+                                   '(utf-8-unix prefer-utf-8-unix mule-utf-8-unix))
+                           ""
+                         (format "%s " (propertize
+                                        (symbol-name buffer-file-coding-system)
+                                        'face '(:slant italic)))))
+                (:eval (if current-input-method-title
+                           (format "%s " (propertize
+                                          (downcase current-input-method-title)
+                                          'face 'mode-line-emphasis))
+                         ""))
                 ,(if (and (not window-system) system-type-is-windows)
                      'mode-line-modified
                    '(:eval (let ((ro buffer-read-only)
                                  (m (and (buffer-file-name) (buffer-modified-p))))
-                             (format " %s"
-                                     (cond ((and m ro) "🔏")
-                                           (ro "🔒")
-                                           (m "✒")
-                                           (t "  "))))))
+                             (cond ((and m ro) "🔏 ")
+                                   (ro "🔒 ")
+                                   (m "✒ ")
+                                   (t "")))))
                 ,(unless (and (not window-system) system-type-is-windows)
                    '(:eval (if (get-buffer-process (current-buffer))
-                               (propertize " •" 'face 'compilation-mode-line-run)
+                               (propertize "• " 'face 'compilation-mode-line-run)
                              "")))
-                " " mode-line-buffer-identification
+                ,(propertize "%b" 'face 'mode-line-buffer-id)
                 " %l:%C"
                 (:eval (when (use-region-p) (format " %s" (modeline-selection-stats))))))
 
