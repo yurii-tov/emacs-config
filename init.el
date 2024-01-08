@@ -483,7 +483,7 @@
                                (propertize "• " 'face 'compilation-mode-line-run)
                              "")))
                 ,(propertize "%b" 'face 'mode-line-buffer-id)
-                " %l:%C"
+                ,(propertize " %l:%C" 'face 'shadow)
                 (:eval (when (use-region-p) (format " %s" (modeline-selection-stats))))))
 
 
