@@ -273,6 +273,7 @@
              "C-M-l" (lambda () (interactive) (move-line 'down))
              "C-x C-j" shell
              "C-x b" bookmark-set
+             "C-x B" bookmark-delete
              "C-x j" bookmark-jump
              "C-x m" make-scratch-buffer
              "C-x u" reopen-with-sudo
