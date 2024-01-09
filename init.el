@@ -361,7 +361,8 @@
        (when (fboundp 'toggle-scroll-bar)
          (toggle-scroll-bar -1))
        (blink-cursor-mode 0)
-       (tool-bar-mode -1))
+       (tool-bar-mode -1)
+       (menu-bar-mode -1))
 
 
 ;; maximize window on startup
