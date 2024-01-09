@@ -283,7 +283,6 @@
              "C-x C-k" kill-buffer-and-window
              "C-c j" cider-start-map
              "C-c s" run-ssh-session
-             "C-c S" ssh-tunnel
              "C-c d" serve-directory
              "C-c v" capture-video
              "C-c p" copy-file-name-to-clipboard
@@ -2024,13 +2023,6 @@ Example input:
          (default-directory (format "/sshx:%s:" x))
          (explicit-shell-file-name "/bin/bash"))
     (shell (format "*ssh-%s*" x))))
-
-
-(defun ssh-tunnel (params)
-  (interactive (list (read-string "Run ssh tunnel: " nil 'ssh-tunnel-history)))
-  (let* ((default-directory "~")
-         (*async-shell-command-disable-popup* t))
-    (async-shell-command (format "ssh -Nv %s" params))))
 
 
 ;; ==========
