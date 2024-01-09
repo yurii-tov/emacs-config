@@ -459,7 +459,10 @@
 (setq-default mode-line-format
               `(" "
                 (:eval (if (member buffer-file-coding-system
-                                   '(utf-8-unix prefer-utf-8-unix mule-utf-8-unix))
+                                   '(utf-8-unix
+                                     prefer-utf-8-unix
+                                     undecided-unix
+                                     mule-utf-8-unix))
                            ""
                          (format "%s " (propertize
                                         (symbol-name buffer-file-coding-system)
