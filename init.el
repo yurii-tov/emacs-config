@@ -111,18 +111,6 @@
       (warn "msys2 not found. Expected location is %s" msys))))
 
 
-;; fix kill-buffer-and-window "single window" case
-
-
-(defun kill-buffer-and-window-fix (f &rest args)
-  (if (> (length (window-list)) 1)
-      (apply f args)
-    (kill-buffer)))
-
-
-(advice-add 'kill-buffer-and-window :around #'kill-buffer-and-window-fix)
-
-
 ;; ==================
 ;; global keybindings
 ;; ==================
@@ -275,7 +263,6 @@
              "C-x b" bookmark-set
              "C-x B" bookmark-delete
              "C-x j" bookmark-jump
-             "C-x m" make-scratch-buffer
              "C-x u" reopen-with-sudo
              "C-x C-b" ibuffer
              "C-x l" hl-line-mode
@@ -501,6 +488,58 @@
 (defun scroll-up-5-lines ()
   (interactive)
   (scroll-up-command 5))
+
+
+;; =======
+;; buffers
+;; =======
+
+
+;; fix kill-buffer-and-window "single window" case
+
+
+(defun kill-buffer-and-window-fix (f &rest args)
+  (if (> (length (window-list)) 1)
+      (apply f args)
+    (kill-buffer)))
+
+
+(advice-add 'kill-buffer-and-window :around #'kill-buffer-and-window-fix)
+
+
+;; When in "switch to buffer" menu, bind M-j to "make new scratch buffer" action
+;; Therefore, given the switch-to-buffer keybinding is M-j,
+;; we got convenient M-j M-j global shortcut
+
+
+(defun switch-to-buffer-make-scratch-buffer ()
+  (interactive)
+  (let ((b (generate-new-buffer "*scratch*")))
+    (with-current-buffer b
+      (org-mode))
+    (insert (buffer-name b)))
+  (exit-minibuffer))
+
+
+(advice-add 'read-buffer-to-switch
+            :around
+            (lambda (f &rest args)
+              (minibuffer-with-setup-hook
+                  (:append (lambda ()
+                             (use-local-map (copy-keymap (current-local-map)))
+                             (local-set-key
+                              (kbd "M-j")
+                              'switch-to-buffer-make-scratch-buffer)))
+                (apply f args))))
+
+
+;; better unique buffer names
+
+
+(require 'uniquify)
+
+
+(setq uniquify-buffer-name-style 'forward)
 
 
 ;; =====
@@ -735,15 +774,6 @@
                         host (concat host "|sudo:" host) (file-remote-p file))))
           (find-file (concat prefix (file-remote-p file 'localname))))
       (find-file (concat "/sudo::" file)))))
-
-
-;; better unique buffer names
-
-
-(require 'uniquify)
-
-
-(setq uniquify-buffer-name-style 'forward)
 
 
 ;; ===========
@@ -1023,13 +1053,6 @@
     (if (char-uppercase-p (following-char))
         (downcase-region (point) (1+ (point)))
       (upcase-region (point) (1+ (point))))))
-
-
-(defun make-scratch-buffer ()
-  (interactive)
-  (let* ((name (generate-new-buffer-name "*scratch*")))
-    (switch-to-buffer name)
-    (org-mode)))
 
 
 ;; hippie-expand
