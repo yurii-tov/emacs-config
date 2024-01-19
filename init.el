@@ -175,7 +175,6 @@
                       "j" join-lines     "M-j" break-line
                       "k" flush-lines    "M-k" keep-lines
                       "u" delete-duplicate-lines
-                      "q" fill-region-justify
                       "i" invert-chars
                       "e" enumerate-lines
                       "r" reverse-region
@@ -260,6 +259,7 @@
              "M-l" (lambda () (interactive) (move-line 'up))
              "C-M-l" (lambda () (interactive) (move-line 'down))
              "C-x C-j" shell
+             "C-x C-p" fill-region-justify
              "C-x b" bookmark-set
              "C-x B" bookmark-delete
              "C-x j" bookmark-jump
