@@ -2822,7 +2822,9 @@ Process .+
                       (format "Download %s from YouTube: "
                               (if current-prefix-arg "audio" "video")))))
   (let* ((*async-shell-command-disable-popup* t)
-         (default-directory "c:/Users/jurys/Downloads/")
+         (default-directory (if system-type-is-windows
+                                (expand-file-name "Downloads" (getenv "USERPROFILE"))
+                              "~"))
          (yt (executable-find "yt-dlp"))
          (command-download-video
           (format "%s -f mp4 '%s'" yt link))
