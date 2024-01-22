@@ -276,7 +276,8 @@
              "C-c h" hexl-mode
              "C-c c" org-capture
              "C-c a" org-agenda
-             "C-c w" tail)
+             "C-c w" tail
+             "C-c y" youtube-download)
            global-map)
 
 
@@ -2809,6 +2810,28 @@ Process .+
       (lambda (x)
         (browse-url-or-search x)
         (add-to-history 'browser-query-history x)))
+
+
+;; =======================
+;; youtube-dlp integration
+;; =======================
+
+
+(defun youtube-download (link)
+  (interactive (list (read-string
+                      (format "Download %s from YouTube: "
+                              (if current-prefix-arg "audio" "video")))))
+  (let* ((*async-shell-command-disable-popup* t)
+         (default-directory "c:/Users/jurys/Downloads/")
+         (yt (executable-find "yt-dlp"))
+         (command-download-video
+          (format "%s -f mp4 '%s'" yt link))
+         (command-download-audio
+          (format "%s -x --audio-quality 0 --audio-format mp3 '%s'" yt link))
+         (command (if current-prefix-arg
+                      command-download-audio
+                    command-download-video)))
+    (async-shell-command command "*youtube-download*")))
 
 
 ;; ===========================
