@@ -2785,6 +2785,10 @@ Process .+
 ;; GUI browser
 
 
+(setq search-engines
+      '(("wb". "https://www.wildberries.ru/catalog/0/search.aspx?search=%s")))
+
+
 (defun browse-url-or-search (query)
   (interactive (list (read-string "URL/search query: "
                                   (when (use-region-p)
@@ -2793,14 +2797,21 @@ Process .+
                                   'browser-query-history)))
   (let ((browse-url-browser-function (if (display-graphic-p)
                                          'browse-url-default-browser
-                                       'eww-browse-url)))
-    (if (string-match-p "^[a-zA-Z0-9]+://" query)
-        (browse-url query)
-      (browse-url (format "%s?q=%s"
-                          (if (display-graphic-p)
-                              "https://duckduckgo.com"
-                            "https://html.duckduckgo.com/html/")
-                          query)))))
+                                       'eww-browse-url))
+        (ddg (concat (if (display-graphic-p)
+                         "https://duckduckgo.com"
+                       "https://html.duckduckgo.com/html/")
+                     "?q=%s")))
+    (cond ((string-match-p "^[a-zA-Z0-9]+://" query)
+           (browse-url query))
+          ((string-prefix-p "!" query)
+           (let* ((engine (cdr (assoc query search-engines
+                                      (lambda (a b) (string-prefix-p (format "!%s " a) b)))))
+                  (query (if engine
+                             (replace-regexp-in-string "^!.+? " "" query)
+                           query)))
+             (browse-url (format (or engine ddg) query))))
+          (t (browse-url (format ddg query))))))
 
 
 (require 'ffap)
