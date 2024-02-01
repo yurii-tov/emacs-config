@@ -174,6 +174,7 @@
                       "l" upcase-dwim    "M-l" downcase-dwim
                       "j" join-lines     "M-j" break-line
                       "k" flush-lines    "M-k" keep-lines
+                      "p" fill-region-justify
                       "u" delete-duplicate-lines
                       "i" invert-chars
                       "e" enumerate-lines
@@ -253,13 +254,13 @@
              "M-i" reformat-region
              "M-u" force-revert-buffer
              "M-j" switch-to-buffer
+             "M-`" shell
              "C-=" text-scale-increase
              "C-M-=" text-scale-decrease
              "C-+" (lambda () (interactive) (text-scale-set 0))
              "M-l" (lambda () (interactive) (move-line 'up))
              "C-M-l" (lambda () (interactive) (move-line 'down))
-             "C-x C-j" shell
-             "C-x C-p" fill-region-justify
+             "C-x C-j" project-find-file
              "C-x b" bookmark-set
              "C-x B" bookmark-delete
              "C-x j" bookmark-jump
