@@ -1683,13 +1683,16 @@ Example input:
 
 
 (defun async-shell-command-read-wd (f &rest args)
-  (let ((default-directory (if (called-interactively-p)
-                               (read-directory-name
-                                (format "Run %s at: "
-                                        (propertize (reverse (string-truncate-left
-                                                              (reverse (car args)) 20))
-                                                    'face 'bold)))
-                             default-directory)))
+  (let* ((project (project-current))
+         (project-dir (when project (project-root project)))
+         (default-directory (if (called-interactively-p)
+                                (read-directory-name
+                                 (format "Run %s at: "
+                                         (propertize (reverse (string-truncate-left
+                                                               (reverse (car args)) 20))
+                                                     'face 'bold))
+                                 project-dir)
+                              default-directory)))
     (apply f args)))
 
 
