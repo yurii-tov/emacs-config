@@ -418,17 +418,17 @@
 ;; color themes
 
 
-(defun apply-color-theme (theme)
-  "Enhanced version of load-theme. Disable any of previously loaded themes"
-  (interactive
-   (list (intern (completing-read
-                  "theme: "
-                  (mapcar #'symbol-name
-                          (custom-available-themes))))))
-  (when window-system
-    (dolist (theme custom-enabled-themes)
-      (disable-theme theme))
-    (load-theme theme)))
+(advice-add 'load-theme
+            :around
+            (lambda (f &rest args)
+              (interactive (list
+                            (intern (completing-read "Load custom theme: "
+                                                     (mapcar #'symbol-name
+                                                             (custom-available-themes))))
+                            nil nil))
+              (dolist (theme custom-enabled-themes)
+                (disable-theme theme))
+              (apply f args)))
 
 
 ;; better modeline
