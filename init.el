@@ -1802,21 +1802,19 @@ Example input:
 (advice-add 'async-shell-command :around 'async-shell-command-setup-echo)
 
 
-;;;; don't popup output buffer when universal arg provided
-
-
-(defvar *async-shell-command-disable-popup* nil)
+;;;; never display output buffer, but promote it in switch-to-buffer menu
 
 
 (defun async-shell-command-disable-popup (f &rest args)
-  (if (or *async-shell-command-disable-popup*
-          (and current-prefix-arg (called-interactively-p)))
-      (let (r)
-        (save-window-excursion (setq r (apply f args)))
-        (prog1 r
-          (message "Running command: %s"
-                   (propertize (car args) 'face 'compilation-info))))
-    (apply f args)))
+  (let (r)
+    (save-window-excursion
+      (setq r (apply f args))
+      (switch-to-buffer (if (windowp r)
+                            (window-buffer r)
+                          (process-buffer r))))
+    (prog1 r
+      (message "Running command: %s"
+               (propertize (car args) 'face 'compilation-info)))))
 
 
 (advice-add 'async-shell-command :around #'async-shell-command-disable-popup)
@@ -2693,8 +2691,7 @@ Process .+
   (let* ((default-directory (read-directory-name "Serve directory: "))
          (socket (read-string "Address: " "0.0.0.0:5555"))
          (command (apply 'format "python -m http.server -b %s %s" (split-string socket ":")))
-         (buffer (format "*python-server:%s*" socket))
-         (*async-shell-command-disable-popup* t))
+         (buffer (format "*python-server:%s*" socket)))
     (async-shell-command command buffer)
     (message "Serving %s at %s"
              (propertize default-directory 'face 'bold-italic)
@@ -2836,8 +2833,7 @@ Process .+
   (interactive (list (read-string
                       (format "Download %s from YouTube: "
                               (if current-prefix-arg "audio" "video")))))
-  (let* ((*async-shell-command-disable-popup* t)
-         (default-directory (if system-type-is-windows
+  (let* ((default-directory (if system-type-is-windows
                                 (expand-file-name "Downloads" (getenv "USERPROFILE"))
                               "~"))
          (yt (executable-find "yt-dlp"))
