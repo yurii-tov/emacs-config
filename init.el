@@ -1802,7 +1802,8 @@ Example input:
 (advice-add 'async-shell-command :around 'async-shell-command-setup-echo)
 
 
-;;;; never display output buffer, but promote it in switch-to-buffer menu
+;;;; don't display output buffer, but promote it in switch-to-buffer menu
+;;;; add some useful output to *Messages*
 
 
 (defun async-shell-command-disable-popup (f &rest args)
