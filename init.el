@@ -1690,7 +1690,7 @@ Example input:
                                  (format "Run %s at: "
                                          (propertize (reverse (string-truncate-left
                                                                (reverse (car args)) 20))
-                                                     'face 'bold))
+                                                     'face 'compilation-info))
                                  project-dir)
                               default-directory)))
     (apply f args)))
