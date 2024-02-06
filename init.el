@@ -1808,8 +1808,7 @@ Example input:
 (defun async-shell-command-disable-popup (f &rest args)
   (let (r b)
     (save-window-excursion
-      (setq r (apply f args))
-      (prog1 r
+      (prog1 (setq r (apply f args))
         (setq b (if (windowp r)
                     (window-buffer r)
                   (process-buffer r)))
