@@ -1809,24 +1809,26 @@ Example input:
   (let (r b)
     (save-window-excursion
       (setq r (apply f args))
-      (setq b (if (windowp r)
-                  (window-buffer r)
-                (process-buffer r)))
-      (switch-to-buffer b)
-      (when (get-buffer-process (current-buffer))
-        (set-process-sentinel
-         (get-process (get-buffer-process (current-buffer)))
-         `(lambda (p e)
-            (with-current-buffer ,b
-              (message "%s\n%s"
-                       (buffer-substring (point-min) (point-max))
-                       (propertize (format "[%s] %s"
-                                           (string-trim-right e)
-                                           ,(car args))
-                                   'face 'shadow)))))))
-    (prog1 r
-      (message "Running command: %s"
-               (propertize (car args) 'face 'compilation-info)))))
+      (prog1 r
+        (setq b (if (windowp r)
+                    (window-buffer r)
+                  (process-buffer r)))
+        (switch-to-buffer b)
+        (message "Running command %s at %s"
+                 (propertize (car args) 'face 'compilation-info)
+                 (propertize default-directory 'face 'completions-annotations))
+        (when (get-buffer-process (current-buffer))
+          (set-process-sentinel
+           (get-process (get-buffer-process (current-buffer)))
+           `(lambda (p e)
+              (unless (equal (current-buffer) ,b)
+                (with-current-buffer ,b
+                  (message "%s\n%s"
+                           (buffer-substring (point-min) (point-max))
+                           (propertize (format "[%s] %s"
+                                               (string-trim-right e)
+                                               ,(car args))
+                                       'face 'shadow)))))))))))
 
 
 (advice-add 'async-shell-command :around #'async-shell-command-disable-popup)
