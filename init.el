@@ -1378,7 +1378,7 @@
   (setq ibuffer-saved-filter-groups
         '(("default"
            ("Dired" (mode . dired-mode))
-           ("Shell" (and (name . "^\\*\\([bzs]?a?sh\\|powershell\\|shell\\).*\\*")
+           ("Shell" (and (name . "^\\*\\([bz]?a?sh\\|powershell\\|shell\\|ssh-\\).*\\*")
                          (mode . shell-mode)))
            ("Process" (mode . shell-mode))
            ("Text" (and (not (name . "^\\*.*\\*$"))
