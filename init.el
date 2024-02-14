@@ -1377,7 +1377,7 @@
   ;; filter groups
   (setq ibuffer-saved-filter-groups
         '(("default"
-           ("Dired" (mode . dired-mode))
+           ("Directory" (mode . dired-mode))
            ("Shell" (and (name . "^\\*\\([bz]?a?sh\\|powershell\\|.*-?shell\\|ssh-\\).*\\*")
                          (mode . shell-mode)))
            ("Process" (mode . shell-mode))
@@ -1386,7 +1386,7 @@
                         (or (derived-mode . text-mode)
                             (mode . fundamental-mode)
                             (derived-mode . conf-mode))))
-           ("Docs" (mode . doc-view-mode))
+           ("Document" (mode . doc-view-mode))
            ("Org-mode" (or (mode . org-mode)
                            (name . "^\\*Org .*$")))
            ("SQL" (or (mode . sql-mode)
