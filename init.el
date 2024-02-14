@@ -2033,13 +2033,10 @@ Example input:
               (and (get-buffer "*shell*")
                    (not (get-buffer-process "*shell*"))
                    (kill-buffer "*shell*"))
-              (let* ((wd (if (called-interactively-p)
-                             (read-directory-name "Run shell at: ")
-                           default-directory))
-                     (n (if (file-remote-p wd) "sh" (file-name-base shell-file-name)))
+              (let* ((n (if (file-remote-p default-directory)
+                            "sh" (file-name-base shell-file-name)))
                      (b (or (car args) (generate-new-buffer-name (format "*%s*" n)))))
                 (switch-to-buffer b)
-                (cd wd)
                 (apply f (cons b (cdr args)))
                 (use-local-map (copy-keymap (current-local-map)))
                 (local-set-key
@@ -2688,8 +2685,7 @@ Process .+
 (advice-add 'powershell
             :around
             (lambda (f &rest args)
-              (let ((*comint-histfile-id* "powershell")
-                    (default-directory (read-directory-name "Run powershell at: ")))
+              (let ((*comint-histfile-id* "powershell"))
                 (prog1 (apply f args)
                   (set-buffer-process-coding-system 'cp866-dos 'cp866-dos)))))
 
