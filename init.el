@@ -231,6 +231,14 @@
                       "s" kmacro-start-macro
                       "x" kmacro-to-register)
 
+;; project
+
+
+(bind-keys '("SPC" project-dired
+             "l" project-vcs-log)
+           project-prefix-map)
+
+
 ;; misc
 
 
@@ -2063,6 +2071,29 @@ Example input:
          (default-directory (format "/sshx:%s:" x))
          (explicit-shell-file-name "/bin/bash"))
     (shell (format "*ssh-%s*" x))))
+
+
+;; =======
+;; project
+;; =======
+
+
+(setq project-switch-commands
+      '((project-dired "Open project root")
+        (project-vcs-log "View VCS history")
+        (project-shell "Shell")
+        (project-find-file "Find file")
+        (project-find-regexp "Find regexp")))
+
+
+(defun project-vcs-log ()
+  (interactive)
+  (let ((default-directory (project-root (project-current t))))
+    (let (b)
+      (save-window-excursion
+        (vc-print-root-log)
+        (setq b (current-buffer)))
+      (switch-to-buffer b))))
 
 
 ;; ==========
