@@ -2080,6 +2080,7 @@ Example input:
 
 (setq project-switch-commands
       '((project-dired "Open project root")
+        (project-find-dir "Find directory")
         (project-vcs-log "View VCS history")
         (project-shell "Shell")
         (project-find-file "Find file")
