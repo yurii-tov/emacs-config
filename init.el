@@ -2749,7 +2749,7 @@ Process .+
   (interactive)
   (let* ((default-directory "~")
          (query (or query (read-string "Translate: " (word-at-point))))
-         (en-ru `((command . ,(concat "bash -c \"curl -sL '%s"
+         (en-ru `((command . ,(concat "bash -c \"curl -sL -A 'Mozilla/1.0' '%s"
                                       "' | sed -rn '/span class=.trans/ {s:.*<span.*>(.*[^ ]) *<.span>.*:\\1:g ; p}'"
                                       " | sort | uniq\""))
                   (link . ,(format "https://dictionary.cambridge.org/search/direct/?datasetsearch=english-russian&q=%s"
