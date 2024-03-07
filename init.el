@@ -1114,6 +1114,21 @@
 (advice-add 'set-mark-command :around 'multiline-edit)
 
 
+;; enable hex mode on regions
+
+
+(defun wrap-hexl-mode (f &rest args)
+  (if (use-region-p)
+      (shell-command-on-region
+       (region-beginning)
+       (region-end)
+       "hexdump -C")
+    (apply f args)))
+
+
+(advice-add 'hexl-mode :around 'wrap-hexl-mode)
+
+
 ;; ================================
 ;; completion frameworks (IDO etc.)
 ;; ================================
