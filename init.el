@@ -235,6 +235,7 @@
 
 
 (bind-keys '("SPC" project-dired
+             "a" project-async-shell-command
              "l" project-vcs-log)
            project-prefix-map)
 
@@ -2095,6 +2096,7 @@ Example input:
 
 (setq project-switch-commands
       '((project-dired "Open project root")
+        (project-async-shell-command "Async shell command")
         (project-find-dir "Find directory")
         (project-vcs-log "View VCS history")
         (project-shell "Shell")
