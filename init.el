@@ -584,7 +584,7 @@
 
 (defun force-revert-buffer ()
   (interactive)
-  (message "Force revert buffer '%s'" (buffer-name))
+  (message "Force reverting buffer '%s'..." (buffer-name))
   (revert-buffer nil t t))
 
 
