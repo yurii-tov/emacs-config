@@ -1626,6 +1626,47 @@ Example input:
       (goto-char (1- (org-table-end))))))
 
 
+;; permutations
+
+
+(defun permutations (xs)
+  "Example:
+=> (permutations '(a b c))
+=> ((a b c)
+    (a c b)
+    (b a c)
+    (b c a)
+    (c a b)
+    (c b a))"
+  (when xs
+    (if (cdr xs)
+        (mapcan (lambda (x)
+                  (mapcar (lambda (y) (cons x y))
+                          (permutations (remove x xs))))
+                xs)
+      (list xs))))
+
+
+(defun org-table-permutations ()
+  "Replace one-row table with permutations of its row
+Example input:
+| A | B | C |
+|---+---+---|
+| a | b | c |"
+  (interactive)
+  (when (org-table-p)
+    (let* ((table (remove 'hline (org-table-to-lisp)))
+           (header (car table))
+           (perms (permutations (cadr table)))
+           (table-perms (append (cl-list* 'hline header 'hline perms)
+                                '(hline))))
+      (delete-region (org-table-begin) (org-table-end))
+      (insert (format "%s\n" (orgtbl-to-orgtbl
+                              table-perms
+                              nil)))
+      (goto-char (1- (org-table-end))))))
+
+
 ;; allpairs integration
 
 
