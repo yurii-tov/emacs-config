@@ -562,8 +562,9 @@
            (lambda (x)
              (with-current-buffer x
                (when (or (buffer-file-name)
-                         (member major-mode '(dired-mode cider-repl-mode))
-                         (derived-mode-p 'comint-mode))
+                         (eq major-mode 'dired-mode)
+                         (derived-mode-p 'comint-mode)
+                         (get-buffer-process (current-buffer)))
                  (concat " " default-directory)))))))
     (apply f args)))
 
