@@ -553,6 +553,24 @@
 (setq uniquify-buffer-name-style 'forward)
 
 
+;; displaying working directory in buffer list
+
+
+(defun switch-to-buffer-annotate-wd (f &rest args)
+  (let ((completion-extra-properties
+         '(:annotation-function
+           (lambda (x)
+             (with-current-buffer x
+               (when (or (buffer-file-name)
+                         (member major-mode '(dired-mode cider-repl-mode))
+                         (derived-mode-p 'comint-mode))
+                 (concat " " default-directory)))))))
+    (apply f args)))
+
+
+(advice-add 'read-buffer-to-switch :around #'switch-to-buffer-annotate-wd)
+
+
 ;; =====
 ;; files
 ;; =====
@@ -2063,22 +2081,6 @@ Example input:
              "<up>" comint-previous-input-prefixed
              "<down>" comint-next-input-prefixed)
            comint-mode-map)
-
-
-;; displaying working directory in buffer list
-
-
-(defun switch-to-buffer-annotate-comint-wd (f &rest args)
-  (let ((completion-extra-properties
-         '(:annotation-function
-           (lambda (x)
-             (with-current-buffer x
-               (when (derived-mode-p 'comint-mode)
-                 (concat " " default-directory)))))))
-    (apply f args)))
-
-
-(advice-add 'read-buffer-to-switch :around #'switch-to-buffer-annotate-comint-wd)
 
 
 ;; =====
