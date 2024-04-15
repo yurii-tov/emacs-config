@@ -556,16 +556,29 @@
 ;; displaying working directory in buffer list
 
 
+(defun shrink-path (path bound)
+  (if (<= (length path) bound)
+      path
+    (let ((split (file-name-split path)))
+      (while (and (> (length split) 2)
+                  (> (length (apply #'concat split)) bound))
+        (setq split (cons (car split) (cddr split))))
+      (string-join (cons (car split) (cons "…" (cdr split)))
+                   "/"))))
+
+
 (defun switch-to-buffer-annotate-wd (f &rest args)
   (let ((completion-extra-properties
          '(:annotation-function
            (lambda (x)
              (with-current-buffer x
-               (when (or (buffer-file-name)
-                         (eq major-mode 'dired-mode)
-                         (derived-mode-p 'comint-mode)
-                         (get-buffer-process (current-buffer)))
-                 (concat " " default-directory)))))))
+               (let (dired-p)
+                 (when (or (buffer-file-name)
+                           (setq dired-p (eq major-mode 'dired-mode))
+                           (derived-mode-p 'comint-mode)
+                           (get-buffer-process (current-buffer)))
+                   (concat " "
+                           (shrink-path (directory-file-name default-directory) 50)))))))))
     (apply f args)))
 
 
