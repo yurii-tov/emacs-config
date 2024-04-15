@@ -559,10 +559,14 @@
 (defun shrink-path (path bound)
   (if (<= (length path) bound)
       path
-    (let ((split (file-name-split path)))
+    (let* ((split (file-name-split path))
+           (lengths (mapcar #'length split))
+           (i (1- (length split))))
       (while (and (> (length split) 2)
-                  (> (length (apply #'concat split)) bound))
-        (setq split (cons (car split) (cddr split))))
+                  (> (+ i (apply #'+ lengths)) bound))
+        (setq split (cons (car split) (cddr split))
+              lengths (cons (car lengths) (cddr lengths))
+              i (1- i)))
       (string-join (cons (car split) (cons "…" (cdr split)))
                    "/"))))
 
