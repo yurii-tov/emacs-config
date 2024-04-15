@@ -576,13 +576,7 @@
          '(:annotation-function
            (lambda (x)
              (with-current-buffer x
-               (let (dired-p)
-                 (when (or (buffer-file-name)
-                           (setq dired-p (eq major-mode 'dired-mode))
-                           (derived-mode-p 'comint-mode)
-                           (get-buffer-process (current-buffer)))
-                   (concat " "
-                           (shrink-path (directory-file-name default-directory) 50)))))))))
+               (concat " " (shrink-path (directory-file-name default-directory) 50)))))))
     (apply f args)))
 
 
