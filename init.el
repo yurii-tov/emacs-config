@@ -572,11 +572,13 @@
 
 
 (defun switch-to-buffer-annotate-wd (f &rest args)
-  (let ((completion-extra-properties
-         '(:annotation-function
-           (lambda (x)
-             (with-current-buffer x
-               (concat " " (shrink-path (directory-file-name default-directory) 50)))))))
+  (let* ((total-width (* (window-width) 0.75))
+         (completion-extra-properties
+          `(:annotation-function
+            (lambda (x)
+              (with-current-buffer x
+                (concat " " (shrink-path (directory-file-name default-directory)
+                                         (- ,total-width (length x)))))))))
     (apply f args)))
 
 
