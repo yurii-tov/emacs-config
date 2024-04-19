@@ -390,7 +390,7 @@
 ;; line numbers / line highlight indication in "programming" modes
 
 
-(dolist (x '(prog-mode-hook sgml-mode-hook conf-mode-hook))
+(dolist (x '(prog-mode-hook sgml-mode-hook conf-mode-hook log-view-mode-hook))
   (add-hook x 'display-line-numbers-mode)
   (add-hook x 'hl-line-mode))
 
