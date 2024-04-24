@@ -2979,8 +2979,20 @@ Process .+
       nov-text-width 70)
 
 
-(bind-keys '("j" (lambda () (interactive) (scroll-up-command 1))
-             "k" (lambda () (interactive) (scroll-down-command 1)))
+(defun nov-scroll-up-1 ()
+  (interactive)
+  (scroll-up-command 1))
+
+
+(defun nov-scroll-down-1 ()
+  (interactive)
+  (scroll-down-command 1))
+
+
+(bind-keys '("<down>" nov-scroll-up-1
+             "<up>" nov-scroll-down-1
+             "<left>" nov-previous-document
+             "<right>" nov-next-document)
            nov-mode-map)
 
 
