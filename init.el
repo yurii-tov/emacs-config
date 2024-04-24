@@ -74,7 +74,8 @@
                   cider
                   powershell
                   groovy-mode
-                  slime))
+                  slime
+                  nov))
       refreshed)
   (dolist (p packages)
     (unless (package-installed-p p)
@@ -1442,7 +1443,8 @@
                         (or (derived-mode . text-mode)
                             (mode . fundamental-mode)
                             (derived-mode . conf-mode))))
-           ("Document" (mode . doc-view-mode))
+           ("Document" (or (mode . doc-view-mode)
+                           (mode . nov-mode)))
            ("Org-mode" (or (mode . org-mode)
                            (name . "^\\*Org .*$")))
            ("SQL" (or (mode . sql-mode)
@@ -2960,6 +2962,26 @@ Process .+
                       command-download-audio
                     command-download-video)))
     (async-shell-command command "*youtube-download*")))
+
+
+;; ===========
+;; epub reader
+;; ===========
+
+
+(require 'nov)
+
+
+(add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
+
+
+(setq nov-variable-pitch t
+      nov-text-width 70)
+
+
+(bind-keys '("j" (lambda () (interactive) (scroll-up-command 1))
+             "k" (lambda () (interactive) (scroll-down-command 1)))
+           nov-mode-map)
 
 
 ;; ===========================
