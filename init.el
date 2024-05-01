@@ -2851,14 +2851,27 @@ Process .+
 ;; ==========================
 
 
-(defun capture-video (file)
-  (interactive "FCapture mp4 video to file: ")
+(defun capture-video ()
+  (interactive)
   (let ((ffmpeg (or (executable-find "ffmpeg")
                     (error "Unable to find ffmpeg executable in exec-path")))
-        (default-directory (file-name-directory (file-truename file))))
-    (async-shell-command
-     (format "%s -y -f gdigrab -i desktop -framerate 30 -pix_fmt yuv420p %s" ffmpeg file)
-     (format "*ffmpeg capture → %s*" file))))
+        (buffer-name "*video-capture*"))
+    (if (get-buffer-process buffer-name)
+        (with-current-buffer buffer-name
+          (message "Captured: %s" (propertize capture-file-name 'face 'font-lock-constant-face))
+          (kill-new capture-file-name)
+          (kill-buffer))
+      (let* ((capture-file-name (read-file-name "Capture video to file: "))
+             (default-directory (file-name-directory capture-file-name)))
+        (async-shell-command
+         (format "%s -y -f gdigrab -i desktop -framerate 30 -pix_fmt yuv420p %s"
+                 ffmpeg
+                 (car (last (file-name-split capture-file-name))))
+         buffer-name)
+        (with-current-buffer buffer-name
+          (setq-local capture-file-name capture-file-name))
+        (message "Capturing video to file: %s"
+                 (propertize capture-file-name 'face 'font-lock-constant-face))))))
 
 
 ;; =======
