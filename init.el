@@ -3011,6 +3011,16 @@ Process .+
            nov-mode-map)
 
 
+(defun nov-font-setup ()
+  (face-remap-add-relative
+   'variable-pitch
+   :family "Droid Sans"
+   :height 1.0))
+
+
+(add-hook 'nov-mode-hook 'nov-font-setup)
+
+
 ;; ===========================
 ;; load site-specific settings
 ;; ===========================
