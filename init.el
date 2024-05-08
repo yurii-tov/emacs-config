@@ -409,12 +409,20 @@
   (not (null (member font-name (font-family-list)))))
 
 
-(defun apply-font (my-font)
+(defun set-global-font (my-font)
   (interactive
    (list (completing-read
-          "Font face: "
+          "Set global font: "
           (cl-remove-duplicates (font-family-list) :test #'equal))))
   (set-face-attribute 'default nil :font my-font))
+
+
+(defun set-buffer-font (font)
+  (interactive
+   (list (completing-read
+          "Set buffer font: "
+          (cl-remove-duplicates (font-family-list) :test #'equal))))
+  (face-remap-add-relative 'default :family font))
 
 
 ;; enable emojis on Windows
