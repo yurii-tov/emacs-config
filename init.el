@@ -3019,11 +3019,19 @@ Process .+
            nov-mode-map)
 
 
-(defun nov-font-setup ()
+(defun nov-set-font (font)
+  (interactive
+   (list (completing-read
+          "Font: "
+          (cl-remove-duplicates (font-family-list) :test #'equal))))
   (face-remap-add-relative
    'variable-pitch
-   :family "Droid Sans"
+   :family font
    :height 1.0))
+
+
+(defun nov-font-setup ()
+  (nov-set-font "Droid Sans"))
 
 
 (add-hook 'nov-mode-hook 'nov-font-setup)
