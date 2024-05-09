@@ -2997,7 +2997,8 @@ Process .+
 
 
 (setq nov-variable-pitch t
-      nov-text-width 70)
+      nov-text-width 70
+      nov-font "Droid Sans")
 
 
 (defun nov-scroll-up-1 ()
@@ -3019,19 +3020,23 @@ Process .+
            nov-mode-map)
 
 
+(defun nov-font-setup ()
+  (face-remap-add-relative
+   'variable-pitch
+   :family nov-font
+   :height 1.0))
+
+
 (defun nov-set-font (font)
   (interactive
    (list (completing-read
           "Font: "
           (cl-remove-duplicates (font-family-list) :test #'equal))))
-  (face-remap-add-relative
-   'variable-pitch
-   :family font
-   :height 1.0))
-
-
-(defun nov-font-setup ()
-  (nov-set-font "Droid Sans"))
+  (setq nov-font font)
+  (dolist (b (buffer-list))
+    (with-current-buffer b
+      (when (eq major-mode 'nov-mode)
+        (nov-font-setup)))))
 
 
 (add-hook 'nov-mode-hook 'nov-font-setup)
