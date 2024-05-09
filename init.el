@@ -3027,6 +3027,9 @@ Process .+
    :height 1.0))
 
 
+(add-hook 'nov-mode-hook 'nov-font-setup)
+
+
 (defun nov-set-font (font)
   (interactive
    (list (completing-read
@@ -3037,9 +3040,6 @@ Process .+
     (with-current-buffer b
       (when (eq major-mode 'nov-mode)
         (nov-font-setup)))))
-
-
-(add-hook 'nov-mode-hook 'nov-font-setup)
 
 
 ;; ===========================
