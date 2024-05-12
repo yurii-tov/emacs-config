@@ -3013,6 +3013,10 @@ Process .+
 
 (bind-keys '("j" nov-scroll-up-1
              "k" nov-scroll-down-1
+             "h" nov-previous-document
+             "l" nov-next-document
+             "p" nov-history-back
+             "n" nov-history-forward
              "<down>" nov-scroll-up-1
              "<up>" nov-scroll-down-1
              "<left>" nov-previous-document
