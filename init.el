@@ -279,6 +279,8 @@
              "C-x l" hl-line-mode
              "C-x C-l" display-line-numbers-mode
              "C-x C-k" kill-buffer-and-window
+             "C-h C-h" describe-symbol
+             "C-h h" describe-symbol
              "C-c j" cider-start-map
              "C-c s" run-ssh-session
              "C-c d" serve-directory
