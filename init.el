@@ -70,6 +70,7 @@
                   spacious-padding
                   ligature
                   ef-themes
+                  company
                   clojure-mode
                   cider
                   powershell
@@ -845,6 +846,20 @@
 
 
 (add-to-list 'completion-styles 'initials t)
+
+
+;; company (IDE-like dropdowns)
+
+
+(setq-default company-idle-delay 0.05
+              company-require-match nil
+              company-minimum-prefix-length 0
+              company-frontends '(company-pseudo-tooltip-frontend
+                                  company-preview-frontend))
+
+
+(dolist (x '(prog-mode-hook sgml-mode-hook))
+  (add-hook x 'company-mode))
 
 
 ;; use spaces for indentation
