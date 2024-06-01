@@ -839,29 +839,6 @@
 (require 'rect)
 
 
-;; auto-completion with TAB
-
-
-(setq tab-always-indent 'complete)
-
-
-(add-to-list 'completion-styles 'initials t)
-
-
-;; company (IDE-like dropdowns)
-
-
-(setq-default company-idle-delay 0.05
-              company-require-match nil
-              company-minimum-prefix-length 0
-              company-frontends '(company-pseudo-tooltip-frontend
-                                  company-preview-frontend))
-
-
-(dolist (x '(prog-mode-hook sgml-mode-hook))
-  (add-hook x 'company-mode))
-
-
 ;; use spaces for indentation
 
 
@@ -1124,31 +1101,6 @@
       (upcase-region (point) (1+ (point))))))
 
 
-;; hippie-expand
-
-
-(setq hippie-expand-try-functions-list
-      ;; try expand to...
-      '(try-expand-dabbrev ;; thing from current buffer
-        try-expand-line
-        try-expand-list
-        try-complete-file-name-partially ;; filename
-        try-complete-file-name
-        try-expand-dabbrev-visible ;; thing from visible buffers
-        try-expand-dabbrev-from-kill ;; thing from kill-ring
-        try-expand-whole-kill
-        try-expand-all-abbrevs ;; abbrev expansion (see `list-abbrevs')
-        try-expand-dabbrev-all-buffers ;; thing from all buffers
-        try-expand-line-all-buffers
-        try-expand-list-all-buffers))
-
-
-;; disable prompt about saving abbrevs
-
-
-(setq save-abbrevs nil)
-
-
 (defun insert-fortune ()
   (interactive)
   (insert (fortune)))
@@ -1188,9 +1140,9 @@
 (advice-add 'hexl-mode :around 'wrap-hexl-mode)
 
 
-;; ================================
-;; completion frameworks (IDO etc.)
-;; ================================
+;; ===========================================
+;; Minibuffer completion frameworks (IDO etc.)
+;; ===========================================
 
 
 ;; Use fido-mode as default completion method
@@ -1386,6 +1338,59 @@
     (if dir
         (setq ido-work-directory-index i))
     dir))
+
+
+;; =============================
+;; Completion/expansion at point
+;; =============================
+
+
+;; auto-completion with TAB
+
+
+(setq tab-always-indent 'complete)
+
+
+(add-to-list 'completion-styles 'initials t)
+
+
+;; company (IDE-like dropdowns)
+
+
+(setq-default company-idle-delay 0.05
+              company-require-match nil
+              company-minimum-prefix-length 0
+              company-frontends '(company-pseudo-tooltip-frontend
+                                  company-preview-frontend))
+
+
+(dolist (x '(prog-mode-hook sgml-mode-hook))
+  (add-hook x 'company-mode))
+
+
+;; hippie-expand
+
+
+(setq hippie-expand-try-functions-list
+      ;; try expand to...
+      '(try-expand-dabbrev ;; thing from current buffer
+        try-expand-line
+        try-expand-list
+        try-complete-file-name-partially ;; filename
+        try-complete-file-name
+        try-expand-dabbrev-visible ;; thing from visible buffers
+        try-expand-dabbrev-from-kill ;; thing from kill-ring
+        try-expand-whole-kill
+        try-expand-all-abbrevs ;; abbrev expansion (see `list-abbrevs')
+        try-expand-dabbrev-all-buffers ;; thing from all buffers
+        try-expand-line-all-buffers
+        try-expand-list-all-buffers))
+
+
+;; disable prompt about saving abbrevs
+
+
+(setq save-abbrevs nil)
 
 
 ;; =======
