@@ -1358,10 +1358,9 @@
 
 
 (setq-default company-idle-delay 0.05
-              company-require-match nil
-              company-minimum-prefix-length 0
               company-frontends '(company-pseudo-tooltip-frontend
-                                  company-preview-frontend))
+                                  company-preview-frontend
+                                  company-echo-metadata-frontend))
 
 
 (dolist (x '(prog-mode-hook sgml-mode-hook))
