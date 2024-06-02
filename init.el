@@ -2135,19 +2135,18 @@ Example input:
 
 
 (defun setup-comint-completion ()
-  (dolist (x '(comint-c-a-p-replace-by-expanded-history
-               shell-command-completion
-               shell-c-a-p-replace-by-expanded-directory
-               pcomplete-completions-at-point))
+  (dolist (x (append '(comint-c-a-p-replace-by-expanded-history
+                       shell-command-completion
+                       shell-c-a-p-replace-by-expanded-directory
+                       pcomplete-completions-at-point)
+                     (unless (file-remote-p default-directory)
+                       ;; In remote shells, company's filename
+                       ;; completion does not work
+                       ;; Therefore, we should use fallback
+                       '(shell-filename-completion
+                         comint-filename-completion))))
     (setq-local comint-dynamic-complete-functions
-                (remove x comint-dynamic-complete-functions)))
-  ;; In remote shells, company's filename completion does not work
-  ;; Therefore, we should use fallback
-  (unless (file-remote-p default-directory)
-    (dolist (x '(shell-filename-completion
-                 comint-filename-completion))
-      (setq-local comint-dynamic-complete-functions
-                  (remove x comint-dynamic-complete-functions)))))
+                (remove x comint-dynamic-complete-functions))))
 
 
 (add-hook 'comint-mode-hook 'setup-comint-completion)
