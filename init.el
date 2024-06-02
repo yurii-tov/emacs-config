@@ -1360,14 +1360,14 @@
 (setq-default company-idle-delay 0.0
               company-require-match nil
               company-minimum-prefix-length 0
-              company-backends '(company-capf company-keywords)
+              company-backends '(company-capf company-keywords company-files)
               company-frontends '(company-pseudo-tooltip-unless-just-one-frontend
                                   company-preview-frontend
                                   company-echo-metadata-frontend))
 
 
-(dolist (x '(prog-mode-hook sgml-mode-hook))
-  (add-hook x 'company-mode))
+(progn (setq company-global-modes '(not cider-repl-mode))
+       (global-company-mode))
 
 
 ;; hippie-expand
@@ -2129,6 +2129,28 @@ Example input:
              "<up>" comint-previous-input-prefixed
              "<down>" comint-next-input-prefixed)
            comint-mode-map)
+
+
+;; Remove unneeded completion-at-point functions
+
+
+(defun setup-comint-completion ()
+  (dolist (x '(comint-c-a-p-replace-by-expanded-history
+               shell-command-completion
+               shell-c-a-p-replace-by-expanded-directory
+               pcomplete-completions-at-point))
+    (setq-local comint-dynamic-complete-functions
+                (remove x comint-dynamic-complete-functions)))
+  ;; In remote shells, company's filename completion does not work
+  ;; Therefore, we should use fallback
+  (unless (file-remote-p default-directory)
+    (dolist (x '(shell-filename-completion
+                 comint-filename-completion))
+      (setq-local comint-dynamic-complete-functions
+                  (remove x comint-dynamic-complete-functions)))))
+
+
+(add-hook 'comint-mode-hook 'setup-comint-completion)
 
 
 ;; =====
