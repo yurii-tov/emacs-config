@@ -1360,6 +1360,7 @@
 (setq-default company-idle-delay 0.0
               company-require-match nil
               company-minimum-prefix-length 0
+              company-tooltip-offset-display 'lines
               company-backends '(company-capf company-keywords company-files)
               company-frontends '(company-pseudo-tooltip-unless-just-one-frontend
                                   company-preview-frontend
