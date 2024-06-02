@@ -1366,8 +1366,7 @@
                                   company-echo-metadata-frontend))
 
 
-(progn (setq company-global-modes '(not cider-repl-mode))
-       (global-company-mode))
+(global-company-mode)
 
 
 ;; hippie-expand
