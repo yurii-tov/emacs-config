@@ -1365,8 +1365,10 @@
                                   company-echo-metadata-frontend))
 
 
-(dolist (x '(prog-mode-hook sgml-mode-hook))
-  (add-hook x 'company-mode))
+(global-company-mode)
+
+
+(add-hook 'comint-mode-hook (lambda () (company-mode -1)))
 
 
 ;; hippie-expand
