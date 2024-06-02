@@ -1360,9 +1360,7 @@
 (setq-default company-idle-delay 0.0
               company-require-match nil
               company-minimum-prefix-length 0
-              company-backends '(company-capf
-                                 company-keywords
-                                 company-files)
+              company-backends '(company-capf company-keywords)
               company-frontends '(company-pseudo-tooltip-unless-just-one-frontend
                                   company-preview-frontend
                                   company-echo-metadata-frontend))
