@@ -2135,9 +2135,7 @@ Example input:
 
 
 (defun setup-comint-completion ()
-  (dolist (x (append '(comint-c-a-p-replace-by-expanded-history
-                       shell-command-completion
-                       shell-c-a-p-replace-by-expanded-directory
+  (dolist (x (append '(shell-command-completion
                        pcomplete-completions-at-point)
                      (unless (file-remote-p default-directory)
                        ;; In remote shells, company's filename
