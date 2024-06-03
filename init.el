@@ -2127,19 +2127,23 @@ Example input:
 
 
 (defun setup-comint-completion ()
-  (dolist (x (append '(shell-command-completion
-                       pcomplete-completions-at-point)
-                     (unless (file-remote-p default-directory)
-                       ;; In remote shells, company's filename
-                       ;; completion does not work
-                       ;; Therefore, we should use fallback
-                       '(shell-filename-completion
-                         comint-filename-completion))))
+  (dolist (x '(shell-command-completion
+               pcomplete-completions-at-point))
     (setq-local comint-dynamic-complete-functions
                 (remove x comint-dynamic-complete-functions))))
 
 
 (add-hook 'comint-mode-hook 'setup-comint-completion)
+
+
+;; In local buffers we give priority to Company's filename completion.
+;; In remote (where it does not work) we continue with standard one
+
+
+(advice-add 'comint-filename-completion
+            :around (lambda (f &rest args)
+                      (when (file-remote-p default-directory)
+                        (apply f args))))
 
 
 ;; =====
