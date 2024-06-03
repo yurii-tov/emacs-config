@@ -1361,7 +1361,9 @@
               company-require-match nil
               company-minimum-prefix-length 0
               company-tooltip-offset-display 'lines
-              company-backends '(company-capf company-keywords company-files)
+              company-backends '(company-files
+                                 company-capf
+                                 (company-keywords company-abbrev))
               company-frontends '(company-pseudo-tooltip-unless-just-one-frontend
                                   company-preview-frontend
                                   company-echo-metadata-frontend))
@@ -1395,7 +1397,6 @@
         try-expand-dabbrev-visible ;; thing from visible buffers
         try-expand-dabbrev-from-kill ;; thing from kill-ring
         try-expand-whole-kill
-        try-expand-all-abbrevs ;; abbrev expansion (see `list-abbrevs')
         try-expand-dabbrev-all-buffers ;; thing from all buffers
         try-expand-line-all-buffers
         try-expand-list-all-buffers))
