@@ -1363,7 +1363,7 @@
               company-tooltip-offset-display 'lines
               company-backends '(company-files
                                  company-capf
-                                 (company-keywords company-abbrev))
+                                 (company-abbrev company-keywords :separate))
               company-frontends '(company-pseudo-tooltip-unless-just-one-frontend
                                   company-preview-frontend
                                   company-echo-metadata-frontend))
