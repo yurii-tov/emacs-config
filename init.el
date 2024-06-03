@@ -250,7 +250,6 @@
              "C-2" split-window-below
              "C-3" split-window-right
              "C-0" delete-window
-             "<tab>" company-indent-or-complete-common
              "M-k" kill-line-to-indentation
              "M-=" count-words
              "M-q" hippie-expand
@@ -1346,7 +1345,16 @@
 ;; =============================
 
 
-;; company (IDE-like dropdowns)
+;; Use tab for completion
+
+
+(setq tab-always-indent 'complete)
+
+
+(add-to-list 'completion-styles 'initials t)
+
+
+;; Company (IDE-like dropdowns)
 
 
 (setq-default company-idle-delay 0.0
@@ -1360,6 +1368,18 @@
 
 
 (global-company-mode)
+
+
+(defun company-setup-tab-completion ()
+  (let ((m (current-local-map)))
+    (when m
+      (use-local-map (copy-keymap m))
+      (local-set-key
+       (kbd "<tab>")
+       'company-indent-or-complete-common))))
+
+
+(add-hook 'company-mode-hook 'company-setup-tab-completion)
 
 
 ;; hippie-expand
