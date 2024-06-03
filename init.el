@@ -250,6 +250,7 @@
              "C-2" split-window-below
              "C-3" split-window-right
              "C-0" delete-window
+             "<tab>" company-indent-or-complete-common
              "M-k" kill-line-to-indentation
              "M-=" count-words
              "M-q" hippie-expand
@@ -1343,15 +1344,6 @@
 ;; =============================
 ;; Completion/expansion at point
 ;; =============================
-
-
-;; auto-completion with TAB
-
-
-(setq tab-always-indent 'complete)
-
-
-(add-to-list 'completion-styles 'initials t)
 
 
 ;; company (IDE-like dropdowns)
