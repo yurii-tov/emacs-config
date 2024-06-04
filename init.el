@@ -1374,7 +1374,7 @@
 
 (defun company-setup-tab-completion ()
   (let ((m (current-local-map)))
-    (when m
+    (when (and (not (member major-mode '(org-mode))) m)
       (use-local-map (copy-keymap m))
       (local-set-key
        (kbd "<tab>")
