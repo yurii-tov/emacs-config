@@ -1372,7 +1372,9 @@
 
 (defun company-setup-tab-completion ()
   (let ((m (current-local-map)))
-    (when (and (not (member major-mode '(org-mode))) m)
+    (when (and (not buffer-read-only)
+               (not (member major-mode '(org-mode)))
+               m)
       (use-local-map (copy-keymap m))
       (local-set-key
        (kbd "<tab>")
