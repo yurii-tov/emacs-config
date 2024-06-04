@@ -1357,9 +1357,7 @@
 ;; Company (IDE-like dropdowns)
 
 
-(setq-default company-idle-delay 0.0
-              company-require-match nil
-              company-minimum-prefix-length 0
+(setq-default company-require-match nil
               company-tooltip-offset-display 'lines
               company-backends '(company-files
                                  company-capf
