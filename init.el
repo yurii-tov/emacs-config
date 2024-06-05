@@ -2124,11 +2124,11 @@ Example input:
     (prefix (replace-regexp-in-string
              comint-prompt-regexp ""
              (company-grab-line (concat comint-prompt-regexp ".*"))))
-    (candidates (cl-remove-duplicates
-                 (cl-remove-if-not
-                  (lambda (x) (string-prefix-p arg x t))
-                  (ring-elements comint-input-ring))
-                 :test #'equal))))
+    (candidates (cl-remove-if-not
+                 (lambda (x) (string-prefix-p arg x t))
+                 (ring-elements comint-input-ring)))
+    (sorted t)
+    (duplicates t)))
 
 
 (defun comint-setup-company-completion ()
