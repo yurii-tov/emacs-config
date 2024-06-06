@@ -2138,8 +2138,7 @@ Example input:
 
 (defun comint-setup-company-completion ()
   (setq-local company-backends
-              '(company-abbrev
-                company-capf
+              '(company-capf
                 company-files
                 company-comint-hist-completion)))
 
@@ -2212,13 +2211,6 @@ Example input:
          (default-directory (format "/sshx:%s:" x))
          (explicit-shell-file-name "/bin/bash"))
     (shell (format "*ssh-%s*" x))))
-
-
-;; Handy abbrevs
-
-
-(define-abbrev-table 'shell-mode-abbrev-table
-  '(("for" "for x in $(seq 42); do echo $x; done")))
 
 
 ;; =======
