@@ -2129,23 +2129,18 @@ Example input:
 
 
 (defun comint-cleanup-capf ()
-  (dolist (x '(shell-command-completion
-               pcomplete-completions-at-point))
+  (dolist (x (append '(comint-c-a-p-replace-by-expanded-history
+                       shell-c-a-p-replace-by-expanded-directory
+                       comint-filename-completion
+                       shell-command-completion
+                       pcomplete-completions-at-point)
+                     (unless (file-remote-p default-directory)
+                       '(shell-filename-completion))))
     (setq-local comint-dynamic-complete-functions
                 (remove x comint-dynamic-complete-functions))))
 
 
 (add-hook 'comint-mode-hook 'comint-cleanup-capf)
-
-
-;; In local buffers we give priority to Company's filename completion.
-;; In remote (where it does not work) we continue with standard one
-
-
-(advice-add 'comint-filename-completion
-            :around (lambda (f &rest args)
-                      (when (file-remote-p default-directory)
-                        (apply f args))))
 
 
 ;; =====
