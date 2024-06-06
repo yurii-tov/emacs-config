@@ -250,6 +250,7 @@
              "C-2" split-window-below
              "C-3" split-window-right
              "C-0" delete-window
+             "M-/" company-other-backend
              "M-k" kill-line-to-indentation
              "M-=" count-words
              "M-q" hippie-expand
