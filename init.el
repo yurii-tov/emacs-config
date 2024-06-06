@@ -1364,7 +1364,15 @@
 
 (setq-default company-minimum-prefix-length 1
               company-idle-delay 0
-              company-tooltip-offset-display 'lines)
+              company-tooltip-offset-display 'lines
+              company-backends '(company-files
+                                 company-capf
+                                 (company-dabbrev-code
+                                  company-abbrev
+                                  company-keywords
+                                  company-gtags
+                                  company-etags)
+                                 company-dabbrev))
 
 
 (dotimes (n 10)
