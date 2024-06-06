@@ -1358,13 +1358,17 @@
 ;; Company (IDE-like dropdowns)
 
 
+(progn (global-company-mode)
+       (company-tng-mode))
+
+
 (setq-default company-minimum-prefix-length 1
               company-idle-delay 0
               company-tooltip-offset-display 'lines)
 
 
-(progn (global-company-mode)
-       (company-tng-mode))
+(dotimes (n 10)
+  (define-key company-active-map (kbd (format "M-%d" n)) nil))
 
 
 (defun company-setup-tab-completion ()
