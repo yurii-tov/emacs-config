@@ -1358,17 +1358,13 @@
 ;; Company (IDE-like dropdowns)
 
 
-(setq-default company-require-match nil
-              company-tooltip-offset-display 'lines
-              company-backends '(company-files
-                                 company-capf
-                                 (company-abbrev company-keywords :separate))
-              company-frontends '(company-pseudo-tooltip-unless-just-one-frontend
-                                  company-preview-frontend
-                                  company-echo-metadata-frontend))
+(setq-default company-minimum-prefix-length 1
+              company-idle-delay 0
+              company-tooltip-offset-display 'lines)
 
 
-(global-company-mode)
+(progn (global-company-mode)
+       (company-tng-mode))
 
 
 (defun company-setup-tab-completion ()
