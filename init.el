@@ -2128,6 +2128,10 @@ Example input:
     (candidates (cl-remove-if-not
                  (lambda (x) (string-prefix-p arg x t))
                  (ring-elements comint-input-ring)))
+    (post-completion (let ((i (cl-position arg
+                                           (ring-elements comint-input-ring)
+                                           :test #'equal)))
+                       (setq-local comint-input-ring-index i)))
     (sorted t)
     (duplicates t)))
 
