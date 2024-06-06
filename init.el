@@ -2104,9 +2104,10 @@ Example input:
   (interactive (list 'interactive))
   (cl-case command
     (interactive (company-begin-backend 'company-comint-history))
-    (prefix (replace-regexp-in-string
-             comint-prompt-regexp ""
-             (company-grab-line (concat comint-prompt-regexp ".*"))))
+    (prefix (and (eobp)
+                 (replace-regexp-in-string
+                  comint-prompt-regexp ""
+                  (company-grab-line (concat comint-prompt-regexp ".*")))))
     (candidates (cl-remove-if-not
                  (lambda (x) (string-prefix-p arg x t))
                  (ring-elements comint-input-ring)))
