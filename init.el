@@ -2097,6 +2097,23 @@ Example input:
 (bind-keys '("C-c C-k" comint-kill-subjob) comint-mode-map)
 
 
+;; browsing comint-input-ring
+
+
+(defun comint-browse-command-history ()
+  (interactive)
+  (let* ((history (ring-elements comint-input-ring))
+         (command (ido-completing-read "Command history: " history))
+         (i (cl-position command history :test #'equal)))
+    (setq-local comint-input-ring-index i)
+    (comint-delete-input)
+    (insert command)
+    (comint-send-input)))
+
+
+(bind-keys '("M-r" comint-browse-command-history) comint-mode-map)
+
+
 ;; Company completion
 
 
