@@ -1365,6 +1365,7 @@
 (setq-default company-minimum-prefix-length 1
               company-idle-delay 0
               company-tooltip-offset-display 'lines
+              company-files-chop-trailing-slash nil
               company-backends '(company-files
                                  company-capf
                                  (company-dabbrev-code
