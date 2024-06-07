@@ -2158,17 +2158,24 @@ Example input:
 ;; Company completion
 
 
+(defun set-company-history-candidates ()
+  (let ((prefix (replace-regexp-in-string
+                 comint-prompt-regexp ""
+                 (company-grab-line (concat comint-prompt-regexp ".*")))))
+    (and (setq-local company-history-candidates
+                     (cl-remove-if-not
+                      (lambda (x) (string-prefix-p prefix x t))
+                      (ring-elements comint-input-ring)))
+         prefix)))
+
+
 (defun company-comint-hist-completion (command &optional arg &rest _ignored)
   (interactive (list 'interactive))
   (cl-case command
     (interactive (company-begin-backend 'company-comint-history))
     (prefix (and (eobp)
-                 (replace-regexp-in-string
-                  comint-prompt-regexp ""
-                  (company-grab-line (concat comint-prompt-regexp ".*")))))
-    (candidates (cl-remove-if-not
-                 (lambda (x) (string-prefix-p arg x t))
-                 (ring-elements comint-input-ring)))
+                 (set-company-history-candidates)))
+    (candidates company-history-candidates)
     (post-completion (let ((i (cl-position arg
                                            (ring-elements comint-input-ring)
                                            :test #'equal)))
