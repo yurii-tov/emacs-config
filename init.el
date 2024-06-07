@@ -1389,7 +1389,7 @@
   (let ((m (current-local-map)))
     (when (and m
                (not buffer-read-only)
-               (not (member major-mode '(org-mode))))
+               (not (string-prefix-p "org-" (symbol-name major-mode))))
       (use-local-map (copy-keymap m))
       (local-set-key
        (kbd "<tab>")
