@@ -1376,10 +1376,12 @@
 
 
 (progn (dotimes (n 10)
-         (define-key company-active-map (kbd (format "M-%d" n)) nil))
+         (define-key company-active-map
+                     (kbd (format "M-%d" n)) nil))
        (dolist (x (list company-active-map
                         company-search-map))
-         (bind-keys '("M-p" nil "M-n" nil) x)))
+         (bind-keys '("M-p" nil "M-n" nil) x))
+       (define-key company-search-map (kbd "SPC") nil))
 
 
 (defun company-setup-tab-completion ()
