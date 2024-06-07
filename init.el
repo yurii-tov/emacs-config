@@ -1375,8 +1375,10 @@
                                  company-dabbrev))
 
 
-(dotimes (n 10)
-  (define-key company-active-map (kbd (format "M-%d" n)) nil))
+(progn (dotimes (n 10)
+         (define-key company-active-map (kbd (format "M-%d" n)) nil))
+       (bind-keys '("M-p" nil "M-n" nil)
+                  company-active-map))
 
 
 (defun company-setup-tab-completion ()
