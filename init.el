@@ -1377,8 +1377,9 @@
 
 (progn (dotimes (n 10)
          (define-key company-active-map (kbd (format "M-%d" n)) nil))
-       (bind-keys '("M-p" nil "M-n" nil)
-                  company-active-map))
+       (dolist (x (list company-active-map
+                        company-search-map))
+         (bind-keys '("M-p" nil "M-n" nil) x)))
 
 
 (defun company-setup-tab-completion ()
