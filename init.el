@@ -2177,9 +2177,9 @@ Example input:
 
 (defun comint-setup-company-completion ()
   (setq-local company-backends
-              '(company-capf
-                company-files
-                company-comint-hist-completion)))
+              '(company-comint-hist-completion
+                company-capf
+                company-files)))
 
 
 (add-hook 'comint-mode-hook 'comint-setup-company-completion)
