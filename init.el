@@ -273,6 +273,7 @@
              "M-l" (lambda () (interactive) (move-line 'up))
              "C-M-l" (lambda () (interactive) (move-line 'down))
              "C-x C-j" project-find-file
+             "C-x C-p" project-repeat-asc
              "C-x b" bookmark-set
              "C-x B" bookmark-delete
              "C-x j" bookmark-jump
@@ -2289,6 +2290,14 @@ Example input:
         (vc-print-root-log)
         (setq b (current-buffer)))
       (switch-to-buffer b))))
+
+
+(defun project-repeat-asc ()
+  (interactive)
+  (let* ((project (project-current))
+         (default-directory (when project (project-root project))))
+    (when default-directory
+      (async-shell-command (car shell-command-history)))))
 
 
 ;; ==========
