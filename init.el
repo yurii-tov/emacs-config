@@ -237,7 +237,7 @@
 
 
 (bind-keys '("SPC" project-dired
-             "a" project-async-shell-command
+             "b" project-build
              "l" project-vcs-log)
            project-prefix-map)
 
@@ -272,8 +272,6 @@
              "C-+" (lambda () (interactive) (text-scale-set 0))
              "M-l" (lambda () (interactive) (move-line 'up))
              "C-M-l" (lambda () (interactive) (move-line 'down))
-             "C-x C-j" project-find-file
-             "C-x C-p" project-repeat-asc
              "C-x b" bookmark-set
              "C-x B" bookmark-delete
              "C-x j" bookmark-jump
@@ -282,6 +280,8 @@
              "C-x l" hl-line-mode
              "C-x C-l" display-line-numbers-mode
              "C-x C-k" kill-buffer-and-window
+             "C-x C-j" project-find-file
+             "C-x C-p" project-build
              "C-c j" cider-start-map
              "C-c s" run-ssh-session
              "C-c d" serve-directory
@@ -2274,7 +2274,7 @@ Example input:
 
 (setq project-switch-commands
       '((project-dired "Open project root")
-        (project-async-shell-command "Async shell command")
+        (project-build "Build")
         (project-find-dir "Find directory")
         (project-vcs-log "View VCS history")
         (project-shell "Shell")
@@ -2292,12 +2292,19 @@ Example input:
       (switch-to-buffer b))))
 
 
-(defun project-repeat-asc ()
+(setq project-build-commands nil)
+
+
+(defun project-build ()
   (interactive)
-  (let* ((project (project-current))
-         (default-directory (when project (project-root project))))
-    (when default-directory
-      (async-shell-command (car shell-command-history)))))
+  (let* ((project (project-current t))
+         (default-directory (project-root project))
+         (command (cdr (assoc project project-build-commands #'equal))))
+    (when (or (not command) current-prefix-arg)
+      (setq command (read-shell-command "Build command: "))
+      (push (cons project command)
+            project-build-commands))
+    (async-shell-command command)))
 
 
 ;; ==========
