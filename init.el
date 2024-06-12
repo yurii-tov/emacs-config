@@ -851,6 +851,12 @@
 (delete-selection-mode t)
 
 
+;; more informative char inspector
+
+
+(setq what-cursor-show-names t)
+
+
 ;; duplicating text
 
 
