@@ -1987,14 +1987,16 @@ Example input:
           (set-process-sentinel
            (get-process (get-buffer-process (current-buffer)))
            `(lambda (p e)
-              (unless (equal (current-buffer) ,b)
-                (with-current-buffer ,b
-                  (message "%s\n%s"
-                           (buffer-substring (point-min) (point-max))
-                           (propertize (format "[%s] %s"
-                                               (string-trim-right e)
-                                               ,(car args))
-                                       'face 'shadow)))))))))))
+              (let ((e (string-trim-right e)))
+                (unless (equal (current-buffer) ,b)
+                  (with-current-buffer ,b
+                    (message "%s\n%s"
+                             (buffer-substring (point-min) (point-max))
+                             (propertize (format "[%s] %s" e ,(car args))
+                                         'face (cond ((equal e "finished") 'success)
+                                                     ((string-match "exited abnormally.*" e)
+                                                      'error)
+                                                     (t 'shadow))))))))))))))
 
 
 (advice-add 'async-shell-command :around #'async-shell-command-disable-popup)
