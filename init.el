@@ -71,7 +71,6 @@
                   ligature
                   ef-themes
                   company
-                  clojure-mode
                   cider
                   powershell
                   groovy-mode
