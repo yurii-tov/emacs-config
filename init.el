@@ -71,6 +71,7 @@
                   ligature
                   ef-themes
                   company
+                  rust-mode
                   cider
                   powershell
                   groovy-mode
