@@ -2201,8 +2201,7 @@ Example input:
 (defun comint-setup-company-completion ()
   (setq-local company-backends
               '(company-comint-hist-completion
-                company-capf
-                company-files)))
+                company-capf)))
 
 
 (add-hook 'comint-mode-hook 'comint-setup-company-completion)
@@ -2212,13 +2211,10 @@ Example input:
 
 
 (defun comint-cleanup-capf ()
-  (dolist (x (append '(comint-c-a-p-replace-by-expanded-history
-                       shell-c-a-p-replace-by-expanded-directory
-                       comint-filename-completion
-                       shell-command-completion
-                       pcomplete-completions-at-point)
-                     (unless (file-remote-p default-directory)
-                       '(shell-filename-completion))))
+  (dolist (x '(comint-c-a-p-replace-by-expanded-history
+               shell-c-a-p-replace-by-expanded-directory
+               shell-command-completion
+               pcomplete-completions-at-point))
     (setq-local comint-dynamic-complete-functions
                 (remove x comint-dynamic-complete-functions))))
 
