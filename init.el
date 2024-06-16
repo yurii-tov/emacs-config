@@ -1265,7 +1265,7 @@
     (minibuffer-keyboard-quit)))
 
 
-(bind-keys '("C-k" ido-insert-path)
+(bind-keys '("C-v" ido-insert-path)
            ido-file-dir-completion-map)
 
 
