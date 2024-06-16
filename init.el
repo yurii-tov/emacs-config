@@ -1242,6 +1242,7 @@
 
 (defun ido-insert-path ()
   (interactive)
+  "Insert the (possibly relative) path of the selected file/directory"
   (let* ((fname (expand-file-name (ido-name (car ido-matches))
                                   ido-current-directory))
          (fname (or (file-remote-p fname 'localname) fname)))
