@@ -191,7 +191,6 @@
                       "e" emoji-insert
                       "E" emoji-list
                       "f" insert-file
-                      "j" insert-path
                       "a" insert-fortune
                       "b" insert-buffer
                       "i" insert-char)
@@ -1112,11 +1111,6 @@
   (insert (fortune)))
 
 
-(defun insert-path ()
-  (interactive)
-  (insert (read-file-name "Insert path: ")))
-
-
 ;; When rectangular region is selected, C-SPC activates multiline editing
 
 
@@ -1243,6 +1237,34 @@
 
 
 (bind-keys '("C-c C-o" ido-open-in-external-app)
+           ido-file-dir-completion-map)
+
+
+(defun ido-insert-path ()
+  (interactive)
+  (let* ((fname (expand-file-name (ido-name (car ido-matches))
+                                  ido-current-directory))
+         (fname (or (file-remote-p fname 'localname) fname)))
+    (run-with-timer
+     0.1 nil
+     `(lambda () (let ((path (if (string-prefix-p default-directory ,fname)
+                                 (file-relative-name
+                                  (substring ,fname (length default-directory)))
+                               ,fname))
+                       (p2 (point))
+                       (p1 (save-excursion
+                             (or (and (re-search-backward
+                                       "\s" (line-beginning-position) t)
+                                      (1+ (point)))
+                                 (line-beginning-position)))))
+                   (when (string-prefix-p (buffer-substring p1 p2) path)
+                     (delete-region p1 p2))
+                   (insert path))
+        (keyboard-quit)))
+    (minibuffer-keyboard-quit)))
+
+
+(bind-keys '("C-k" ido-insert-path)
            ido-file-dir-completion-map)
 
 
