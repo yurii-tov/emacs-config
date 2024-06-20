@@ -2682,41 +2682,43 @@ Process .+
 ;; =====
 
 
-(setq clang-format (executable-find "clang-format"))
-
-
-(when clang-format
-  (defun clang-pretty-print-buffer ()
-    (interactive)
-    (let* ((shell-file-name "sh")
-           (extension (or (file-name-extension (or (buffer-file-name) ""))
-                          (replace-regexp-in-string "-mode" "" (symbol-name major-mode))))
-           (java-p (equal extension "java"))
-           (style (if java-p
-                      "'{BasedOnStyle: Chromium, ContinuationIndentWidth: 4, MaxEmptyLinesToKeep: 2}'"
-                    "WebKit")))
-      (shell-command-on-region (point-min)
-                               (point-max)
-                               (format "%s --assume-filename=.%s --style=%s"
-                                       clang-format
-                                       extension
-                                       style)
-                               (current-buffer)
-                               t)
-      (when java-p
-        (save-excursion
-          (while (re-search-forward "\\(
+(defun clang-pretty-print-buffer ()
+  (interactive)
+  (let* ((clang-format (or (executable-find "clang-format")
+                           (error "Unable to find clang-format")))
+         (shell-file-name "sh")
+         (extension (or (file-name-extension (or (buffer-file-name) ""))
+                        (replace-regexp-in-string "-mode" "" (symbol-name major-mode))))
+         (java-p (equal extension "java"))
+         (style (if java-p
+                    "'{BasedOnStyle: Chromium, ContinuationIndentWidth: 4, MaxEmptyLinesToKeep: 2}'"
+                  "WebKit")))
+    (shell-command-on-region (point-min)
+                             (point-max)
+                             (format "%s --assume-filename=.%s --style=%s"
+                                     clang-format
+                                     extension
+                                     style)
+                             (current-buffer)
+                             t)
+    (when java-p
+      (save-excursion
+        (while (re-search-forward "\\(
  *\\)->" nil t)
-            (replace-match " ->\\1  ")
-            (save-excursion
-              (backward-up-list)
-              (let ((s (point)))
-                (forward-sexp)
-                (indent-rigidly s (point) -3))))))))
-  (defun enable-clang-pretty-print-buffer ()
-    (local-set-key (kbd "C-c C-p") 'clang-pretty-print-buffer))
-  (dolist (x '(c-mode-common-hook js-mode-hook))
-    (add-hook x 'enable-clang-pretty-print-buffer)))
+          (replace-match " ->\\1  ")
+          (save-excursion
+            (backward-up-list)
+            (let ((s (point)))
+              (forward-sexp)
+              (indent-rigidly s (point) -3))))))))
+
+
+(defun enable-clang-pretty-print-buffer ()
+  (local-set-key (kbd "C-c C-p") 'clang-pretty-print-buffer))
+
+
+(dolist (x '(c-mode-common-hook js-mode-hook))
+  (add-hook x 'enable-clang-pretty-print-buffer))
 
 
 ;; =====
