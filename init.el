@@ -2010,7 +2010,7 @@ Example input:
            (get-process (get-buffer-process (current-buffer)))
            `(lambda (p e)
               (let ((e (string-trim-right e)))
-                (unless (equal (current-buffer) ,b)
+                (unless (member ,b (mapcar #'window-buffer (window-list)))
                   (with-current-buffer ,b
                     (message "%s\n%s"
                              (buffer-substring (point-min) (point-max))
