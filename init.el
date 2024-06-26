@@ -262,7 +262,7 @@
              "M-9" (lambda () (interactive) (wrap-with-text "(" ")" t))
              "M-0" (lambda () (interactive) (wrap-with-text "[" "]" t))
              "M-)" (lambda () (interactive) (wrap-with-text "{" "}" t))
-             "M-i" reformat-region
+             "M-i" reindent-region
              "M-u" force-revert-buffer
              "M-j" switch-to-buffer
              "M-`" shell
@@ -864,7 +864,7 @@
 ;; reindenting / cleaning up
 
 
-(defun reformat-region (start end)
+(defun reindent-region (start end)
   "Reindent selected region, untabify it, cleanup whitespaces"
   (interactive (if (use-region-p)
                    (list (region-beginning)
@@ -2801,7 +2801,7 @@ Process .+
                                (format "%s --format -" xmllint)
                                (current-buffer)
                                t)
-      (reformat-region (point-min)
+      (reindent-region (point-min)
                        (point-max)))))
 
 
