@@ -2834,7 +2834,7 @@ Process .+
 ;; ====
 
 
-(add-to-list 'pretty-printers '(js-json-mode . json-pretty-print-buffer)))
+(add-to-list 'pretty-printers '(js-json-mode . json-pretty-print-buffer))
 
 
 ;; =======
