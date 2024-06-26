@@ -2714,7 +2714,7 @@ Process .+
 
 
 (defun enable-clang-pretty-print-buffer ()
-  (local-set-key (kbd "C-c C-p") 'clang-pretty-print-buffer))
+  (local-set-key (kbd "M-p") 'clang-pretty-print-buffer))
 
 
 (dolist (x '(c-mode-common-hook js-mode-hook))
@@ -2806,7 +2806,7 @@ Process .+
 
 
 (with-eval-after-load 'sgml-mode
-  (define-key sgml-mode-map (kbd "C-c C-p") 'xml-pretty-print-buffer))
+  (define-key sgml-mode-map (kbd "M-p") 'xml-pretty-print-buffer))
 
 
 ;; =======
