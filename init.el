@@ -1139,6 +1139,24 @@
 (advice-add 'hexl-mode :around 'wrap-hexl-mode)
 
 
+;; Enable pretty-printing "programming" modes buffers
+
+
+(defun pretty-print-buffer ()
+  (interactive)
+  (if (boundp 'pretty-print-buffer-fn)
+      (apply pretty-print-buffer-fn nil)
+    (error (format "No pretty-print-buffer-fn defined for %s" major-mode))))
+
+
+(defun setup-pretty-print-buffer ()
+  (local-set-key (kbd "M-p") 'pretty-print-buffer))
+
+
+(dolist (x '(prog-mode-hook sgml-mode-hook conf-mode-hook))
+  (add-hook x 'setup-pretty-print-buffer))
+
+
 ;; ===========================================
 ;; Minibuffer completion frameworks (IDO etc.)
 ;; ===========================================
@@ -2714,7 +2732,7 @@ Process .+
 
 
 (defun enable-clang-pretty-print-buffer ()
-  (local-set-key (kbd "M-p") 'clang-pretty-print-buffer))
+  (setq-local pretty-print-buffer-fn 'clang-pretty-print-buffer))
 
 
 (dolist (x '(c-mode-common-hook js-mode-hook))
@@ -2805,8 +2823,8 @@ Process .+
                        (point-max)))))
 
 
-(with-eval-after-load 'sgml-mode
-  (define-key sgml-mode-map (kbd "M-p") 'xml-pretty-print-buffer))
+(add-hook 'sgml-mode-hook
+          (lambda () (setq-local pretty-print-buffer-fn 'xml-pretty-print-buffer)))
 
 
 ;; =======
