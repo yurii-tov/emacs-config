@@ -2823,8 +2823,11 @@ Process .+
                        (point-max)))))
 
 
-(add-hook 'sgml-mode-hook
-          (lambda () (setq-local pretty-print-buffer-fn 'xml-pretty-print-buffer)))
+(defun setup-xml-buffer-pprint ()
+  (setq-local pretty-print-buffer-fn 'xml-pretty-print-buffer))
+
+
+(add-hook 'sgml-mode-hook 'setup-xml-buffer-pprint)
 
 
 ;; =======
