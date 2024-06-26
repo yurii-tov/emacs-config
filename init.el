@@ -1142,11 +1142,14 @@
 ;; Enable pretty-printing "programming" modes buffers
 
 
+(setq pretty-printers nil)
+
+
 (defun pretty-print-buffer ()
   (interactive)
-  (if (boundp 'pretty-print-buffer-fn)
-      (apply pretty-print-buffer-fn nil)
-    (error (format "No pretty-print-buffer-fn defined for %s" major-mode))))
+  (let ((f (cdr (assoc major-mode pretty-printers))))
+    (message "Reformatting buffer...")
+    (when f (apply f nil))))
 
 
 (defun setup-pretty-print-buffer ()
@@ -2711,14 +2714,16 @@ Process .+
          (style (if java-p
                     "'{BasedOnStyle: Chromium, ContinuationIndentWidth: 4, MaxEmptyLinesToKeep: 2}'"
                   "WebKit")))
-    (shell-command-on-region (point-min)
-                             (point-max)
-                             (format "%s --assume-filename=.%s --style=%s"
-                                     clang-format
-                                     extension
-                                     style)
-                             (current-buffer)
-                             t)
+    (let ((p (point)))
+      (shell-command-on-region (point-min)
+                               (point-max)
+                               (format "%s --assume-filename=.%s --style=%s"
+                                       clang-format
+                                       extension
+                                       style)
+                               (current-buffer)
+                               t)
+      (goto-char p))
     (when java-p
       (save-excursion
         (while (re-search-forward "\\(
@@ -2731,12 +2736,8 @@ Process .+
               (indent-rigidly s (point) -3))))))))
 
 
-(defun enable-clang-pretty-print-buffer ()
-  (setq-local pretty-print-buffer-fn 'clang-pretty-print-buffer))
-
-
-(dolist (x '(c-mode-common-hook js-mode-hook))
-  (add-hook x 'enable-clang-pretty-print-buffer))
+(dolist (x '(c-mode js-mode java-mode))
+  (add-to-list 'pretty-printers (cons x 'clang-pretty-print-buffer)))
 
 
 ;; =====
@@ -2814,20 +2815,26 @@ Process .+
   (let ((shell-file-name "sh")
         (xmllint (executable-find "xmllint")))
     (when xmllint
-      (shell-command-on-region (point-min)
-                               (point-max)
-                               (format "%s --format -" xmllint)
-                               (current-buffer)
-                               t)
-      (reindent-region (point-min)
-                       (point-max)))))
+      (let ((p (point)))
+        (shell-command-on-region (point-min)
+                                 (point-max)
+                                 (format "%s --format -" xmllint)
+                                 (current-buffer)
+                                 t)
+        (reindent-region (point-min)
+                         (point-max))
+        (goto-char p)))))
 
 
-(defun setup-xml-buffer-pprint ()
-  (setq-local pretty-print-buffer-fn 'xml-pretty-print-buffer))
+(add-to-list 'pretty-printers '(sgml-mode . xml-pretty-print-buffer))
 
 
-(add-hook 'sgml-mode-hook 'setup-xml-buffer-pprint)
+;; ====
+;; JSON
+;; ====
+
+
+(add-to-list 'pretty-printers '(js-json-mode . json-pretty-print-buffer)))
 
 
 ;; =======
