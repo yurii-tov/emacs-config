@@ -1148,9 +1148,10 @@
 (defun pretty-print-buffer ()
   (interactive)
   (let ((f (cdr (assoc major-mode pretty-printers))))
-    (when f
-      (message "Reformatting buffer...")
-      (apply f nil))))
+    (if f
+        (progn (message "Reformatting buffer...")
+               (apply f nil))
+      (error (format "Don't have any pprint function for %s" major-mode)))))
 
 
 (defun setup-pretty-print-buffer ()
