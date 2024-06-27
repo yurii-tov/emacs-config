@@ -1586,6 +1586,7 @@
                           (name . "^\\*cider-.*$")))
            ("Emacs Lisp" (or (mode . emacs-lisp-mode)
                              (mode . inferior-emacs-lisp-mode)))
+           ("Rust" (mode . rust-mode))
            ("Email" (mode . message-mode))
            ("EWW" (or (mode . eww-buffers-mode)
                       (mode . eww-mode)
