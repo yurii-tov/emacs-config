@@ -1148,8 +1148,9 @@
 (defun pretty-print-buffer ()
   (interactive)
   (let ((f (cdr (assoc major-mode pretty-printers))))
-    (message "Reformatting buffer...")
-    (when f (apply f nil))))
+    (when f
+      (message "Reformatting buffer...")
+      (apply f nil))))
 
 
 (defun setup-pretty-print-buffer ()
@@ -2723,17 +2724,17 @@ Process .+
                                        style)
                                (current-buffer)
                                t)
-      (goto-char p))
-    (when java-p
-      (save-excursion
-        (while (re-search-forward "\\(
+      (when java-p
+        (save-excursion
+          (while (re-search-forward "\\(
  *\\)->" nil t)
-          (replace-match " ->\\1  ")
-          (save-excursion
-            (backward-up-list)
-            (let ((s (point)))
-              (forward-sexp)
-              (indent-rigidly s (point) -3))))))))
+            (replace-match " ->\\1  ")
+            (save-excursion
+              (backward-up-list)
+              (let ((s (point)))
+                (forward-sexp)
+                (indent-rigidly s (point) -3))))))
+      (goto-char p))))
 
 
 (dolist (x '(c-mode js-mode java-mode))
