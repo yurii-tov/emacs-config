@@ -3009,6 +3009,10 @@ Process .+
 (add-to-list 'pretty-printers '(rust-mode . rust-format-buffer))
 
 
+(with-eval-after-load 'rust-mode
+  (add-hook 'rust-mode-hook 'eglot-ensure))
+
+
 ;; ===============================
 ;; Serving directories with Python
 ;; ===============================
