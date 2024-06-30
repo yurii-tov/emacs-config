@@ -2992,6 +2992,14 @@ Process .+
                   (set-buffer-process-coding-system 'cp866-dos 'cp866-dos)))))
 
 
+;; ====
+;; Rust
+;; ====
+
+
+(add-to-list 'pretty-printers '(rust-mode . rust-format-buffer))
+
+
 ;; ===============================
 ;; Serving directories with Python
 ;; ===============================
