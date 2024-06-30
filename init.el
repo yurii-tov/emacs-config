@@ -72,6 +72,7 @@
                   ef-themes
                   company
                   rust-mode
+                  markdown-mode
                   cider
                   powershell
                   groovy-mode
@@ -1163,6 +1164,12 @@
 
 (dolist (x '(prog-mode-hook sgml-mode-hook conf-mode-hook))
   (add-hook x 'setup-pretty-print-buffer))
+
+
+;; ElDoc (documentation voewer)
+
+
+(setq eldoc-echo-area-use-multiline-p nil)
 
 
 ;; ===========================================
