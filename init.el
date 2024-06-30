@@ -249,7 +249,6 @@
              "C-2" split-window-below
              "C-3" split-window-right
              "C-0" delete-window
-             "M-/" describe-symbol
              "M-k" kill-line-to-indentation
              "M-=" count-words
              "M-q" hippie-expand
@@ -281,6 +280,8 @@
              "C-x C-k" kill-buffer-and-window
              "C-x C-j" project-find-file
              "C-x C-p" project-build
+             "C-h C-h" describe-symbol
+             "C-h h" describe-symbol
              "C-c j" cider-start-map
              "C-c s" run-ssh-session
              "C-c d" serve-directory
