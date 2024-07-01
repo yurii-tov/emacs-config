@@ -1172,6 +1172,12 @@
 (setq eldoc-echo-area-use-multiline-p nil)
 
 
+;; Eglot (lsp client)
+
+
+(setq eglot-autoshutdown t)
+
+
 ;; ===========================================
 ;; Minibuffer completion frameworks (IDO etc.)
 ;; ===========================================
