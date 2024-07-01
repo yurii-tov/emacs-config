@@ -1152,14 +1152,14 @@
 (defun pretty-print-buffer ()
   (interactive)
   (let ((f (cdr (assoc major-mode pretty-printers))))
-    (if f
-        (progn (message "Reformatting buffer...")
+    (if (and f (not (use-region-p)))
+        (progn (message "Reformatting with %s" f)
                (apply f nil))
-      (error (format "Don't have any pprint function for %s" major-mode)))))
+      (call-interactively 'reindent-region))))
 
 
 (defun setup-pretty-print-buffer ()
-  (local-set-key (kbd "M-p") 'pretty-print-buffer))
+  (local-set-key (kbd "M-i") 'pretty-print-buffer))
 
 
 (dolist (x '(prog-mode-hook sgml-mode-hook conf-mode-hook))
