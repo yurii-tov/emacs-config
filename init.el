@@ -1166,7 +1166,7 @@
   (add-hook x 'setup-pretty-print-buffer))
 
 
-;; ElDoc (documentation voewer)
+;; ElDoc (documentation viewer)
 
 
 (setq eldoc-echo-area-use-multiline-p nil)
