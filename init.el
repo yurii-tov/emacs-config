@@ -266,8 +266,6 @@
              "M-u" force-revert-buffer
              "M-j" switch-to-buffer
              "M-`" shell
-             "M-?" eldoc-print-current-symbol-info
-             "M-/" eglot-code-actions
              "C-=" text-scale-increase
              "C-M-=" text-scale-decrease
              "C-+" (lambda () (interactive) (text-scale-set 0))
@@ -1176,6 +1174,17 @@
 
 
 (setq eglot-autoshutdown t)
+
+
+(progn (define-prefix-command 'ide-actions)
+       (bind-keys '("M-p" eldoc-print-current-symbol-info
+                    "n" eglot-rename
+                    "f" flymake-show-project-diagnostics
+                    "b" flymake-show-buffer-diagnostics)
+                  ide-actions)
+       (bind-keys '("M-p" ide-actions
+                    "M-/" eglot-code-actions)
+                  eglot-mode-map))
 
 
 ;; ===========================================
