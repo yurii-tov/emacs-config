@@ -1605,6 +1605,7 @@
                       (name . "^\\*eww[ -].*$")))
            ("Image" (mode . image-mode))
            ("Tramp" (name . "^\\*tramp.*$"))
+           ("IDE" (name . "^\\*\\(EGLOT\\|codeium\\).*$"))
            ("System" (or (name . "^\\*scratch\\*$")
                          (name . "^\\*Messages\\*$"))))))
   (ibuffer-switch-to-saved-filter-groups "default")
