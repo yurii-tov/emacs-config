@@ -1182,13 +1182,13 @@
 
 (with-eval-after-load 'eglot
   (progn (define-prefix-command 'ide-actions)
-         (bind-keys '("M-/" eglot-code-actions
-                      "/" eldoc-print-current-symbol-info
+         (bind-keys '("M-p" eldoc-print-current-symbol-info
                       "n" eglot-rename
-                      "g" flymake-show-project-diagnostics
-                      "f" flymake-show-buffer-diagnostics)
+                      "f" flymake-show-buffer-diagnostics
+                      "g" flymake-show-project-diagnostics)
                     ide-actions)
-         (define-key eglot-mode-map (kbd "M-/") 'ide-actions)))
+         (define-key eglot-mode-map (kbd "M-/") 'eglot-code-actions)
+         (define-key eglot-mode-map (kbd "M-p") 'ide-actions)))
 
 
 ;; ===========================================
