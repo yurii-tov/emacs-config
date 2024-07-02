@@ -284,6 +284,7 @@
              "C-h C-h" describe-symbol
              "C-h h" describe-symbol
              "C-c j" cider-start-map
+             "C-c i" ielm
              "C-c s" run-ssh-session
              "C-c d" serve-directory
              "C-c v" capture-video
@@ -1183,7 +1184,10 @@
          (bind-keys '("M-p" eldoc-print-current-symbol-info
                       "n" eglot-rename
                       "f" flymake-show-buffer-diagnostics
-                      "g" flymake-show-project-diagnostics)
+                      "g" flymake-show-project-diagnostics
+                      "SPC" eglot-code-action-organize-imports
+                      "x" eglot-code-action-extract
+                      "c" eglot-code-action-inline)
                     ide-actions)
          (define-key eglot-mode-map (kbd "M-/") 'eglot-code-actions)
          (define-key eglot-mode-map (kbd "M-p") 'ide-actions))
@@ -2958,6 +2962,9 @@ Process .+
 
 
 (add-hook 'java-mode-hook 'java-setup-keybindings)
+
+
+(add-hook 'java-mode-hook 'eglot-ensure)
 
 
 ;; =======
