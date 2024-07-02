@@ -1164,13 +1164,17 @@
   (add-hook x 'setup-pretty-print-buffer))
 
 
+;; ============================
 ;; ElDoc (documentation viewer)
+;; ============================
 
 
 (setq eldoc-echo-area-use-multiline-p nil)
 
 
-;; Eglot (lsp client)
+;; ===
+;; LSP
+;; ===
 
 
 (setq eglot-autoshutdown t)
@@ -1178,14 +1182,13 @@
 
 (with-eval-after-load 'eglot
   (progn (define-prefix-command 'ide-actions)
-         (bind-keys '("M-p" eldoc-print-current-symbol-info
+         (bind-keys '("M-/" eglot-code-actions
+                      "/" eldoc-print-current-symbol-info
                       "n" eglot-rename
-                      "M-f" flymake-show-project-diagnostics
+                      "g" flymake-show-project-diagnostics
                       "f" flymake-show-buffer-diagnostics)
                     ide-actions)
-         (bind-keys '("M-p" ide-actions
-                      "M-/" eglot-code-actions)
-                    eglot-mode-map)))
+         (define-key eglot-mode-map (kbd "M-/") 'ide-actions)))
 
 
 ;; ===========================================
