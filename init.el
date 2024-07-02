@@ -1449,13 +1449,11 @@
               company-idle-delay 0
               company-tooltip-offset-display 'lines
               company-files-chop-trailing-slash nil
-              company-backends '(company-capf
+              company-backends '((company-abbrev
+                                  company-capf)
                                  company-files
                                  (company-dabbrev-code
-                                  company-abbrev
-                                  company-keywords
-                                  company-gtags
-                                  company-etags)
+                                  company-keywords)
                                  company-dabbrev))
 
 
