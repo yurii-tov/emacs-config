@@ -1186,8 +1186,8 @@
                       "f" flymake-show-buffer-diagnostics
                       "g" flymake-show-project-diagnostics
                       "SPC" eglot-code-action-organize-imports
-                      "x" eglot-code-action-extract
-                      "c" eglot-code-action-inline)
+                      "j" eglot-code-action-extract
+                      "k" eglot-code-action-inline)
                     ide-actions)
          (define-key eglot-mode-map (kbd "M-/") 'eglot-code-actions)
          (define-key eglot-mode-map (kbd "M-p") 'ide-actions))
