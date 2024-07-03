@@ -1193,10 +1193,7 @@
          (define-key eglot-mode-map (kbd "M-p") 'ide-actions))
 
   ;; Do not clutter company settings
-  (add-to-list 'eglot-stay-out-of 'company)
-
-  ;; Automatically shutdown server when all project buffers are closed
-  (setq eglot-autoshutdown t))
+  (add-to-list 'eglot-stay-out-of 'company))
 
 
 ;; ===========================================
