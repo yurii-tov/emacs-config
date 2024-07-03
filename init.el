@@ -1180,18 +1180,15 @@
 
 (with-eval-after-load 'eglot
   ;; Keybindings
-  (progn (define-prefix-command 'ide-actions)
-         (bind-keys '("M-p" eldoc-print-current-symbol-info
-                      "n" eglot-rename
-                      "f" flymake-show-buffer-diagnostics
-                      "g" flymake-show-project-diagnostics
-                      "SPC" eglot-code-action-organize-imports
-                      "j" eglot-code-action-extract
-                      "k" eglot-code-action-inline)
-                    ide-actions)
-         (define-key eglot-mode-map (kbd "M-/") 'eglot-code-actions)
-         (define-key eglot-mode-map (kbd "M-p") 'ide-actions))
-
+  (bind-keys '("M-/" eglot-code-actions
+               "M-p" eldoc-print-current-symbol-info
+               "C-c C-n" eglot-rename
+               "C-c C-i" flymake-show-buffer-diagnostics
+               "C-c C-o" flymake-show-project-diagnostics
+               "C-c C-SPC" eglot-code-action-organize-imports
+               "C-c C-j" eglot-code-action-extract
+               "C-c C-k" eglot-code-action-inline)
+             eglot-mode-map)
   ;; Do not clutter company settings
   (add-to-list 'eglot-stay-out-of 'company))
 
@@ -2936,7 +2933,8 @@ Process .+
     ("sof" "System.out.printf(\"\");")
     ("sf" "String.format(\"\");")
     ("fori" "for (int i = 0; i < 42; i++) {\n\n}")
-    ("try" "try {\n\n} catch (Exception e) {\nthrow new RuntimeException(e);\n}")))
+    ("try" "try {\n\n} catch (Exception e) {\nthrow new RuntimeException(e);\n}")
+    ("ae" "Assert.assertEquals(exp, act);")))
 
 
 (defun copy-java-class-full-name ()
