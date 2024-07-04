@@ -1181,10 +1181,10 @@
 (with-eval-after-load 'eglot
   ;; Keybindings
   (bind-keys '("M-/" eglot-code-actions
-               "M-p" eldoc-print-current-symbol-info
+               "C-c C-i" eldoc-print-current-symbol-info
                "C-c C-n" eglot-rename
-               "C-c C-i" flymake-show-buffer-diagnostics
-               "C-c C-o" flymake-show-project-diagnostics
+               "C-c C-o" flymake-show-buffer-diagnostics
+               "C-c C-p" flymake-show-project-diagnostics
                "C-c C-SPC" eglot-code-action-organize-imports
                "C-c C-j" eglot-code-action-extract
                "C-c C-k" eglot-code-action-inline)
