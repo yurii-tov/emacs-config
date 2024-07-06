@@ -1205,9 +1205,6 @@
               'fix-eglot-completion-at-point))
 
 
-
-
-
 ;; =============================================
 ;; Codeium
 ;; See https://github.com/Exafunction/codeium.el
@@ -1234,8 +1231,9 @@
 (defun setup-codeium ()
   (setq-local company-backends
               (cl-list* (car company-backends)
+                        (cadr company-backends)
                         'company-codeium
-                        (cdr company-backends))))
+                        (cddr company-backends))))
 
 
 (let ((codeium-file "~/.emacs.d/codeium.el/codeium.el"))
@@ -1499,10 +1497,10 @@
               company-idle-delay 0
               company-tooltip-offset-display 'lines
               company-files-chop-trailing-slash nil
-              company-backends '((company-capf
+              company-backends '(company-files
+                                 (company-capf
                                   company-abbrev
                                   :separate)
-                                 company-files
                                  (company-dabbrev-code
                                   company-keywords)
                                  company-dabbrev))
