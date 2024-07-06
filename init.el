@@ -1193,6 +1193,40 @@
   (add-to-list 'eglot-stay-out-of 'company))
 
 
+;; =============================================
+;; Codeium
+;; See https://github.com/Exafunction/codeium.el
+;; =============================================
+
+
+(defun set-company-codeium-candidates ()
+  (let ((codeium-completion-data (codeium-completion-at-point)))
+    (when codeium-completion-data
+      (prog1 (buffer-substring (car codeium-completion-data)
+                               (cadr codeium-completion-data))
+        (setq codeium-candidates (caddr codeium-completion-data))))))
+
+
+(defun company-codeium (command &optional arg &rest _ignored)
+  (interactive (list 'interactive))
+  (cl-case command
+    (interactive (company-begin-backend 'company-codeium))
+    (prefix (set-company-codeium-candidates))
+    (candidates codeium-candidates)
+    (kind 'magic)))
+
+
+(defun setup-codeium ()
+  (setq-local company-backends (cons 'company-codeium company-backends)))
+
+
+(let ((codeium-file "~/.emacs.d/codeium.el/codeium.el"))
+  (when (file-exists-p codeium-file)
+    (load codeium-file)
+    (dolist (x '(prog-mode-hook sgml-mode-hook conf-mode-hook))
+      (add-hook x 'setup-codeium))))
+
+
 ;; ===========================================
 ;; Minibuffer completion frameworks (IDO etc.)
 ;; ===========================================
