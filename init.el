@@ -1515,6 +1515,32 @@
 (add-hook 'company-mode-hook 'company-setup-tab-completion)
 
 
+;; Fix ill-behaving company-dabbrev-code completion
+
+
+(defun set-company-abbrev-candidates ()
+  (let* ((prefix (company-grab-symbol))
+         (candidates (and prefix
+                          (nconc
+                           (delete "" (all-completions prefix global-abbrev-table))
+                           (delete "" (all-completions prefix local-abbrev-table))))))
+    (when candidates
+      (prog1 prefix
+        (setq-local company-abbrev-candidates candidates)))))
+
+
+(defun company-abbrev (command &optional arg &rest _ignored)
+  (interactive (list 'interactive))
+  (cl-case command
+    (interactive (company-begin-backend 'company-abbrev
+                                        'company-abbrev-insert))
+    (prefix (set-company-abbrev-candidates))
+    (candidates company-abbrev-candidates)
+    (kind 'snippet)
+    (meta (abbrev-expansion arg))
+    (post-completion (expand-abbrev))))
+
+
 ;; hippie-expand
 
 
