@@ -1178,6 +1178,12 @@
 ;; ===
 
 
+(defun fix-eglot-completion-at-point (f &rest args)
+  (let ((r (apply f args)))
+    (when r
+      (append r '(:exclusive no)))))
+
+
 (with-eval-after-load 'eglot
   ;; Keybindings
   (bind-keys '("M-/" eglot-code-actions
@@ -1189,8 +1195,17 @@
                "C-c C-j" eglot-code-action-extract
                "C-c C-k" eglot-code-action-inline)
              eglot-mode-map)
+
   ;; Do not clutter company settings
-  (add-to-list 'eglot-stay-out-of 'company))
+  (add-to-list 'eglot-stay-out-of 'company)
+
+  ;; Fix ill-behaving eglot completer
+  (advice-add 'eglot-completion-at-point
+              :around
+              'fix-eglot-completion-at-point))
+
+
+
 
 
 ;; =============================================
