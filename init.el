@@ -1405,6 +1405,20 @@
 (add-to-list 'completion-styles 'initials t)
 
 
+;; Fix ill-behaving CAPF completion
+
+
+(defun fix-capf-exclusiveness (f &rest args)
+  (let ((fn (car args)))
+    (apply f (cons (lambda ()
+                     (let ((r (funcall fn)))
+                       (when r (append r '(:exclusive no)))))
+                   (cdr args)))))
+
+
+(advice-add 'completion--capf-wrapper :around 'fix-capf-exclusiveness)
+
+
 ;; =============
 ;; hippie-expand
 ;; =============
@@ -1510,12 +1524,6 @@
 ;; ===
 
 
-(defun fix-eglot-completion-at-point (f &rest args)
-  (let ((r (apply f args)))
-    (when r
-      (append r '(:exclusive no)))))
-
-
 (with-eval-after-load 'eglot
   ;; Keybindings
   (bind-keys '("M-/" eglot-code-actions
@@ -1532,12 +1540,7 @@
   (add-to-list 'eglot-stay-out-of 'company)
 
   ;; Auto-shutdown the server
-  (setq eglot-autoshutdown t)
-
-  ;; Fix ill-behaving eglot completer
-  (advice-add 'eglot-completion-at-point
-              :around
-              'fix-eglot-completion-at-point))
+  (setq eglot-autoshutdown t))
 
 
 ;; =============================================
