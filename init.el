@@ -2817,11 +2817,12 @@ Process .+
 ;; =====
 
 
+(setq clang-format (executable-find "clang-format"))
+
+
 (defun clang-pretty-print-buffer ()
   (interactive)
-  (let* ((clang-format (or (executable-find "clang-format")
-                           (error "Unable to find clang-format")))
-         (shell-file-name "sh")
+  (let* ((shell-file-name "sh")
          (extension (or (file-name-extension (or (buffer-file-name) ""))
                         (replace-regexp-in-string "-mode" "" (symbol-name major-mode))))
          (java-p (equal extension "java"))
@@ -2850,8 +2851,9 @@ Process .+
       (goto-char p))))
 
 
-(dolist (x '(c-mode js-mode java-mode))
-  (add-to-list 'pretty-printers (cons x 'clang-pretty-print-buffer)))
+(when clang-format
+  (dolist (x '(c-mode js-mode java-mode))
+    (add-to-list 'pretty-printers (cons x 'clang-pretty-print-buffer))))
 
 
 ;; =====
