@@ -1165,84 +1165,6 @@
   (add-hook x 'setup-pretty-print-buffer))
 
 
-;; ============================
-;; ElDoc (documentation viewer)
-;; ============================
-
-
-(setq eldoc-echo-area-use-multiline-p nil)
-
-
-;; ===
-;; LSP
-;; ===
-
-
-(defun fix-eglot-completion-at-point (f &rest args)
-  (let ((r (apply f args)))
-    (when r
-      (append r '(:exclusive no)))))
-
-
-(with-eval-after-load 'eglot
-  ;; Keybindings
-  (bind-keys '("M-/" eglot-code-actions
-               "C-c C-i" eldoc-print-current-symbol-info
-               "C-c C-n" eglot-rename
-               "C-c C-o" flymake-show-buffer-diagnostics
-               "C-c C-p" flymake-show-project-diagnostics
-               "C-c C-SPC" eglot-code-action-organize-imports
-               "C-c C-j" eglot-code-action-extract
-               "C-c C-k" eglot-code-action-inline)
-             eglot-mode-map)
-
-  ;; Do not clutter company settings
-  (add-to-list 'eglot-stay-out-of 'company)
-
-  ;; Fix ill-behaving eglot completer
-  (advice-add 'eglot-completion-at-point
-              :around
-              'fix-eglot-completion-at-point))
-
-
-;; =============================================
-;; Codeium
-;; See https://github.com/Exafunction/codeium.el
-;; =============================================
-
-
-(defun set-company-codeium-candidates ()
-  (let ((codeium-completion-data (codeium-completion-at-point)))
-    (when codeium-completion-data
-      (prog1 (buffer-substring (car codeium-completion-data)
-                               (cadr codeium-completion-data))
-        (setq codeium-candidates (caddr codeium-completion-data))))))
-
-
-(defun company-codeium (command &optional arg &rest _ignored)
-  (interactive (list 'interactive))
-  (cl-case command
-    (interactive (company-begin-backend 'company-codeium))
-    (prefix (set-company-codeium-candidates))
-    (candidates codeium-candidates)
-    (kind 'magic)))
-
-
-(defun setup-codeium ()
-  (setq-local company-backends
-              (cl-list* (car company-backends)
-                        (cadr company-backends)
-                        'company-codeium
-                        (cddr company-backends))))
-
-
-(let ((codeium-file "~/.emacs.d/codeium.el/codeium.el"))
-  (when (file-exists-p codeium-file)
-    (load codeium-file)
-    (dolist (x '(prog-mode-hook sgml-mode-hook conf-mode-hook))
-      (add-hook x 'setup-codeium))))
-
-
 ;; ===========================================
 ;; Minibuffer completion frameworks (IDO etc.)
 ;; ===========================================
@@ -1472,12 +1394,9 @@
     dir))
 
 
-;; =============================
-;; Completion/expansion at point
-;; =============================
-
-
-;; Use tab for completion
+;; ====================
+;; Completions at point
+;; ====================
 
 
 (setq tab-always-indent 'complete)
@@ -1486,7 +1405,35 @@
 (add-to-list 'completion-styles 'initials t)
 
 
-;; Company (IDE-like dropdowns)
+;; =============
+;; hippie-expand
+;; =============
+
+
+(setq hippie-expand-try-functions-list
+      ;; try expand to...
+      '(try-expand-dabbrev ;; thing from current buffer
+        try-expand-line
+        try-expand-list
+        try-complete-file-name-partially ;; filename
+        try-complete-file-name
+        try-expand-dabbrev-visible ;; thing from visible buffers
+        try-expand-dabbrev-from-kill ;; thing from kill-ring
+        try-expand-whole-kill
+        try-expand-dabbrev-all-buffers ;; thing from all buffers
+        try-expand-line-all-buffers
+        try-expand-list-all-buffers))
+
+
+;; disable prompt about saving abbrevs
+
+
+(setq save-abbrevs nil)
+
+
+;; =======
+;; Company
+;; =======
 
 
 (progn (global-company-mode)
@@ -1558,28 +1505,82 @@
     (post-completion (expand-abbrev))))
 
 
-;; hippie-expand
+;; ===
+;; LSP
+;; ===
 
 
-(setq hippie-expand-try-functions-list
-      ;; try expand to...
-      '(try-expand-dabbrev ;; thing from current buffer
-        try-expand-line
-        try-expand-list
-        try-complete-file-name-partially ;; filename
-        try-complete-file-name
-        try-expand-dabbrev-visible ;; thing from visible buffers
-        try-expand-dabbrev-from-kill ;; thing from kill-ring
-        try-expand-whole-kill
-        try-expand-dabbrev-all-buffers ;; thing from all buffers
-        try-expand-line-all-buffers
-        try-expand-list-all-buffers))
+(defun fix-eglot-completion-at-point (f &rest args)
+  (let ((r (apply f args)))
+    (when r
+      (append r '(:exclusive no)))))
 
 
-;; disable prompt about saving abbrevs
+(with-eval-after-load 'eglot
+  ;; Keybindings
+  (bind-keys '("M-/" eglot-code-actions
+               "C-c C-i" eldoc-print-current-symbol-info
+               "C-c C-n" eglot-rename
+               "C-c C-o" flymake-show-buffer-diagnostics
+               "C-c C-p" flymake-show-project-diagnostics
+               "C-c C-SPC" eglot-code-action-organize-imports
+               "C-c C-j" eglot-code-action-extract
+               "C-c C-k" eglot-code-action-inline)
+             eglot-mode-map)
+
+  ;; Do not clutter company settings
+  (add-to-list 'eglot-stay-out-of 'company)
+
+  ;; Fix ill-behaving eglot completer
+  (advice-add 'eglot-completion-at-point
+              :around
+              'fix-eglot-completion-at-point))
 
 
-(setq save-abbrevs nil)
+;; =============================================
+;; Codeium
+;; See https://github.com/Exafunction/codeium.el
+;; =============================================
+
+
+(defun set-company-codeium-candidates ()
+  (let ((codeium-completion-data (codeium-completion-at-point)))
+    (when codeium-completion-data
+      (prog1 (buffer-substring (car codeium-completion-data)
+                               (cadr codeium-completion-data))
+        (setq codeium-candidates (caddr codeium-completion-data))))))
+
+
+(defun company-codeium (command &optional arg &rest _ignored)
+  (interactive (list 'interactive))
+  (cl-case command
+    (interactive (company-begin-backend 'company-codeium))
+    (prefix (set-company-codeium-candidates))
+    (candidates codeium-candidates)
+    (kind 'magic)))
+
+
+(defun setup-codeium ()
+  (setq-local company-backends
+              (cl-list* (car company-backends)
+                        (cadr company-backends)
+                        'company-codeium
+                        (cddr company-backends))))
+
+
+(let ((codeium-file "~/.emacs.d/codeium.el/codeium.el"))
+  (when (file-exists-p codeium-file)
+    (load codeium-file)
+    (dolist (x '(prog-mode-hook sgml-mode-hook conf-mode-hook))
+      (add-hook x 'setup-codeium))))
+
+
+;; ============================
+;; ElDoc (documentation viewer)
+;; ============================
+
+
+(setq eldoc-echo-area-use-multiline-p nil)
 
 
 ;; =======
