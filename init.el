@@ -1531,6 +1531,9 @@
   ;; Do not clutter company settings
   (add-to-list 'eglot-stay-out-of 'company)
 
+  ;; Auto-shutdown the server
+  (setq eglot-autoshutdown t)
+
   ;; Fix ill-behaving eglot completer
   (advice-add 'eglot-completion-at-point
               :around
