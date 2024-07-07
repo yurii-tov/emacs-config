@@ -1479,7 +1479,7 @@
 (add-hook 'company-mode-hook 'company-setup-tab-completion)
 
 
-;; Fix ill-behaving company-dabbrev-code completion
+;; Fix ill-behaving company-abbrev completion
 
 
 (defun set-company-abbrev-candidates ()
