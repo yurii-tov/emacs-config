@@ -1547,7 +1547,7 @@
   (let ((codeium-completion-data (codeium-completion-at-point)))
     (when codeium-completion-data
       (prog1 (buffer-substring (car codeium-completion-data)
-                               (cadr codeium-completion-data))
+                               (point))
         (setq codeium-candidates (caddr codeium-completion-data))))))
 
 
