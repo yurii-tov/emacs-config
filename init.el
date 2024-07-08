@@ -1605,6 +1605,21 @@
 (setq eldoc-echo-area-use-multiline-p nil)
 
 
+;; Fix CR+LF issue
+
+
+(defun fix-eldoc (f &rest args)
+  (let ((b (apply f args)))
+    (prog1 b
+      (with-current-buffer b
+        (let ((inhibit-read-only t))
+          (goto-char 1)
+          (replace-string "" ""))))))
+
+
+(advice-add 'eldoc--format-doc-buffer :around 'fix-eldoc)
+
+
 ;; =======
 ;; isearch
 ;; =======
