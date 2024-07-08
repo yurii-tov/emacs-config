@@ -1466,17 +1466,27 @@
                                   company-dabbrev
                                   :separate)))
 
+;; Keybindings
 
-(progn (dotimes (n 10)
-         (define-key company-active-map
-                     (kbd (format "M-%d" n)) nil))
-       (dolist (x (list company-active-map
-                        company-search-map))
-         (bind-keys '("M-p" nil
-                      "M-n" nil
-                      "M-SPC" company-other-backend)
-                    x))
-       (define-key company-search-map (kbd "SPC") nil))
+
+(progn
+  ;; Disable M-digit keybindings
+  (dotimes (n 10)
+    (define-key company-active-map
+                (kbd (format "M-%d" n)) nil))
+
+  ;; (Un)bind some things
+  (dolist (x (list company-active-map
+                   company-search-map))
+    (bind-keys '("M-p" nil
+                 "M-n" nil
+                 "M-SPC" company-other-backend
+                 "C-f" company-files-go-deeper)
+               x))
+  (define-key company-search-map (kbd "SPC") nil))
+
+
+;; Force completion by TAB
 
 
 (defun company-setup-tab-completion ()
@@ -1491,6 +1501,19 @@
 
 
 (add-hook 'company-mode-hook 'company-setup-tab-completion)
+
+
+;; Enhance filesystem navigation
+
+
+(defun company-files-go-deeper ()
+  (interactive)
+  (let ((fname (company-files--grab-existing-name)))
+    (company-complete-selection)
+    (if fname
+        (progn (company-complete-selection)
+               (call-interactively 'company-complete))
+      (forward-char))))
 
 
 ;; Fix ill-behaving backends
