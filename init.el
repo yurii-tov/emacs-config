@@ -1458,15 +1458,13 @@
               company-idle-delay 0
               company-tooltip-offset-display 'lines
               company-files-chop-trailing-slash nil
-              company-transformers '(company-sort-by-occurrence)
               company-backends '(company-files
                                  (company-capf
                                   company-abbrev
                                   :separate)
                                  (company-keywords
-                                  company-dabbrev-code
-                                  :separate)
-                                 company-dabbrev))
+                                  company-dabbrev
+                                  :separate)))
 
 
 (progn (dotimes (n 10)
