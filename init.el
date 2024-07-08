@@ -1531,7 +1531,7 @@
     (t (apply f args))))
 
 
-(dolist (x '(company-abbrev company-dabbrev-code company-dabbrev company-keywords))
+(dolist (x '(company-abbrev company-dabbrev company-keywords))
   (advice-add x :around 'fix-company-backend))
 
 
