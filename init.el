@@ -1613,8 +1613,10 @@
     (prog1 b
       (with-current-buffer b
         (let ((inhibit-read-only t))
-          (goto-char 1)
-          (replace-string "" ""))))))
+          (save-excursion
+            (goto-char 1)
+            (while (re-search-forward "" nil t)
+              (replace-match ""))))))))
 
 
 (advice-add 'eldoc--format-doc-buffer :around 'fix-eldoc)
