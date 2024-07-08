@@ -1280,7 +1280,7 @@
                        (p2 (point))
                        (p1 (save-excursion
                              (or (and (re-search-backward
-                                       "\s" (line-beginning-position) t)
+                                       "[\s\"]" (line-beginning-position) t)
                                       (1+ (point)))
                                  (line-beginning-position)))))
                    (when (string-prefix-p (buffer-substring p1 p2) path)
