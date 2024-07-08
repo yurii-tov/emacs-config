@@ -3301,6 +3301,18 @@ Process .+
     (async-shell-command command "*youtube-download*")))
 
 
+;; =======
+;; AI Chat
+;; =======
+
+
+(let ((ddg-ai-chat-dir "~/.emacs.d/ddg-ai-chat/target/release/"))
+  (when (file-exists-p ddg-ai-chat-dir)
+    (add-to-list 'exec-path ddg-ai-chat-dir)
+    (load "~/.emacs.d/ddg-ai-chat/ddg-ai.el")
+    (define-key search-map "a" 'ask-ddg-ai)))
+
+
 ;; ===========
 ;; epub reader
 ;; ===========
