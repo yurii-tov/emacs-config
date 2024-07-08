@@ -1568,10 +1568,7 @@
 
 (defun setup-codeium ()
   (setq-local company-backends
-              (cl-list* (car company-backends)
-                        (cadr company-backends)
-                        'company-codeium
-                        (cddr company-backends))))
+              (append company-backends '(company-codeium))))
 
 
 (let ((codeium-file "~/.emacs.d/codeium.el/codeium.el"))
