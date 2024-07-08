@@ -1498,13 +1498,13 @@
 
 (defun fix-company-backend (f &rest args)
   (cl-case (car args)
-    ('prefix (let ((prefix (funcall f 'prefix)))
-               (setq-local fix-company-backend-candidates nil)
-               (and prefix
-                    (setq-local fix-company-backend-candidates
-                                (funcall f 'candidates prefix))
-                    prefix)))
-    ('candidates fix-company-backend-candidates)
+    (prefix (let ((prefix (funcall f 'prefix)))
+              (setq-local fix-company-backend-candidates nil)
+              (and prefix
+                   (setq-local fix-company-backend-candidates
+                               (funcall f 'candidates prefix))
+                   prefix)))
+    (candidates fix-company-backend-candidates)
     (t (apply f args))))
 
 
