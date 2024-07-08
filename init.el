@@ -1462,8 +1462,9 @@
                                  (company-capf
                                   company-abbrev
                                   :separate)
-                                 (company-dabbrev-code
-                                  company-keywords)
+                                 (company-keywords
+                                  company-dabbrev-code
+                                  :separate)
                                  company-dabbrev))
 
 
