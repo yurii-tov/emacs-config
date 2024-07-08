@@ -1493,30 +1493,23 @@
 (add-hook 'company-mode-hook 'company-setup-tab-completion)
 
 
-;; Fix ill-behaving company-abbrev completion
+;; Fix ill-behaving backends
 
 
-(defun set-company-abbrev-candidates ()
-  (let* ((prefix (company-grab-symbol))
-         (candidates (and prefix
-                          (nconc
-                           (delete "" (all-completions prefix global-abbrev-table))
-                           (delete "" (all-completions prefix local-abbrev-table))))))
-    (when candidates
-      (prog1 prefix
-        (setq-local company-abbrev-candidates candidates)))))
+(defun fix-company-backend (f &rest args)
+  (cl-case (car args)
+    ('prefix (let ((prefix (funcall f 'prefix)))
+               (setq-local fix-company-backend-candidates nil)
+               (and prefix
+                    (setq-local fix-company-backend-candidates
+                                (funcall f 'candidates prefix))
+                    prefix)))
+    ('candidates fix-company-backend-candidates)
+    (t (apply f args))))
 
 
-(defun company-abbrev (command &optional arg &rest _ignored)
-  (interactive (list 'interactive))
-  (cl-case command
-    (interactive (company-begin-backend 'company-abbrev
-                                        'company-abbrev-insert))
-    (prefix (set-company-abbrev-candidates))
-    (candidates company-abbrev-candidates)
-    (kind 'snippet)
-    (meta (abbrev-expansion arg))
-    (post-completion (expand-abbrev))))
+(dolist (x '(company-abbrev company-dabbrev-code company-dabbrev company-keywords))
+  (advice-add x :around 'fix-company-backend)))
 
 
 ;; ===
