@@ -1516,7 +1516,9 @@
       (forward-char))))
 
 
-;; Fix ill-behaving backends
+;; Fix backends
+;; - Prevent completion on empty prefix
+;; - Disallow empty candidates list
 
 
 (defun fix-company-backend (f &rest args)
@@ -1524,6 +1526,7 @@
     (prefix (let ((prefix (funcall f 'prefix)))
               (setq-local fix-company-backend-candidates nil)
               (and prefix
+                   (not (string-empty-p prefix))
                    (setq-local fix-company-backend-candidates
                                (funcall f 'candidates prefix))
                    prefix)))
