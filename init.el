@@ -1410,9 +1410,9 @@
 
 (defun fix-capf-exclusiveness (f &rest args)
   (let ((fn (car args)))
-    (apply f (cons (lambda ()
-                     (let ((r (funcall fn)))
-                       (when r (append r '(:exclusive no)))))
+    (apply f (cons `(lambda ()
+                      (let ((r (funcall ',fn)))
+                        (when r (append r '(:exclusive no)))))
                    (cdr args)))))
 
 
