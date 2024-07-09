@@ -1582,7 +1582,8 @@
     (interactive (company-begin-backend 'company-codeium))
     (prefix (set-company-codeium-candidates))
     (candidates codeium-candidates)
-    (kind 'magic)))
+    (kind 'magic)
+    (annotation " Codeium")))
 
 
 (defun setup-codeium ()
