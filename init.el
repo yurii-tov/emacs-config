@@ -1480,8 +1480,11 @@
                    company-search-map))
     (bind-keys '("M-p" nil
                  "M-n" nil
-                 "M-SPC" company-other-backend
-                 "C-f" company-files-go-deeper)
+                 "C-p" nil
+                 "C-n" nil
+                 "C-j" company-select-next-or-abort
+                 "C-k" company-select-previous-or-abort
+                 "C-l" company-go-deeper)
                x))
   (define-key company-search-map (kbd "SPC") nil))
 
@@ -1503,17 +1506,16 @@
 (add-hook 'company-mode-hook 'company-setup-tab-completion)
 
 
-;; Enhance filesystem navigation
+;; Switching backends / FS levels
 
 
-(defun company-files-go-deeper ()
+(defun company-go-deeper ()
   (interactive)
   (let ((fname (company-files--grab-existing-name)))
     (company-complete-selection)
     (if fname
-        (progn (company-complete-selection)
-               (call-interactively 'company-complete))
-      (forward-char))))
+        (call-interactively 'company-files)
+      (company-other-backend))))
 
 
 ;; Fix backends
