@@ -2397,6 +2397,9 @@ Example input:
   (setq-local company-backends
               '((company-capf
                  company-comint-hist-completion
+                 :separate)
+                (company-keywords
+                 company-dabbrev
                  :separate))))
 
 
