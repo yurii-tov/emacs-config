@@ -1481,7 +1481,7 @@
                    company-search-map))
     (bind-keys '("M-p" nil
                  "M-n" nil
-                 "C-j" company-other-backend
+                 "M-f" company-other-backend
                  "C-f" company-files-go-deeper)
                x))
   (define-key company-search-map (kbd "SPC") nil))
