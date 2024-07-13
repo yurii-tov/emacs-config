@@ -2910,25 +2910,6 @@ Process .+
     (add-to-list 'pretty-printers (cons x 'clang-pretty-print-buffer))))
 
 
-;; =====
-;; ctags
-;; =====
-
-
-(defun create-tags-file ()
-  (interactive)
-  (let ((ctags (or (executable-find "ctags")
-                   (error "Unable to find ctags executable in exec-path")))
-        (default-directory (read-directory-name "Create ctags file at: ")))
-    (async-shell-command (format "time %s -eR --verbose=yes" ctags) "*ctags*")))
-
-
-(define-custom-keymap ctags-keymap "M-s c"
-                      "v" visit-tags-table
-                      "s" select-tags-table
-                      "c" create-tags-file)
-
-
 ;; ===
 ;; xml
 ;; ===
