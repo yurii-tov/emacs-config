@@ -1562,6 +1562,23 @@
   (setq eglot-autoshutdown t))
 
 
+;; =======
+;; Flymake
+;; =======
+
+
+(require 'flymake)
+
+
+(defun flymake-add-indicators ()
+  (setq-local mode-line-format
+              (append mode-line-format
+                      '(" " (:eval (flymake--mode-line-counters))))))
+
+
+(add-hook 'flymake-mode-hook 'flymake-add-indicators)
+
+
 ;; =============================================
 ;; Codeium
 ;; See https://github.com/Exafunction/codeium.el
