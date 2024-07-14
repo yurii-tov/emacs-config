@@ -1569,16 +1569,12 @@
 ;; =======
 
 
-(require 'flymake)
-
-
-(defun flymake-add-indicators ()
-  (setq-local mode-line-format
-              (append mode-line-format
-                      '(" " (:eval (flymake--mode-line-counters))))))
-
-
-(add-hook 'flymake-mode-hook 'flymake-add-indicators)
+(with-eval-after-load 'flymake
+  (defun flymake-add-indicators ()
+    (setq-local mode-line-format
+                (append mode-line-format
+                        '(" " (:eval (flymake--mode-line-counters))))))
+  (add-hook 'flymake-mode-hook 'flymake-add-indicators))
 
 
 ;; =============================================
