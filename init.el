@@ -1793,7 +1793,28 @@
       org-adapt-indentation t)
 
 
-(require 'org-tempo)
+;; Abbrevs
+
+
+(define-abbrev-table 'org-mode-abbrev-table
+  '(("example" "#+begin_example
+
+#+end_example")
+    ("source" "#+begin_src
+
+#+end_src")
+    ("bash" "#+begin_src bash :results output
+
+#+end_src")
+    ("python" "#+begin_src python :results output
+
+#+end_src")
+    ("emacs-lisp" "#+begin_src emacs-lisp
+
+#+end_src")
+    ("powershell" "#+begin_src powershell
+
+#+end_src")))
 
 
 ;; Capture
