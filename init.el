@@ -293,7 +293,8 @@
              "C-c c" org-capture
              "C-c a" org-agenda
              "C-c w" tail
-             "C-c y" youtube-download)
+             "C-c y" youtube-download
+             "C-c l" eglot)
            global-map)
 
 
@@ -3092,9 +3093,6 @@ Process .+
 
 
 (add-hook 'java-mode-hook 'java-setup-keybindings)
-
-
-(add-hook 'java-mode-hook 'eglot-ensure)
 
 
 ;; =======
