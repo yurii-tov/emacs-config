@@ -1796,35 +1796,6 @@
       org-adapt-indentation t)
 
 
-(defun org-insert-code-block ()
-  (interactive)
-  (let* ((params '(("bash" ":results output")
-                   ("python" ":results output")))
-         (v (read-string "Insert code block: " nil 'org-code-block-history))
-         (params (cadr (assoc v params #'equal)))
-         (block (if (string-empty-p v)
-                    "#+begin_example\n\n#+end_example"
-                  "#+begin_src\n\n#+end_src"))
-         region)
-    (when (use-region-p)
-      (setq region (buffer-substring (region-beginning) (region-end)))
-      (delete-region (region-beginning) (region-end)))
-    (insert block)
-    (re-search-backward "#+")
-    (backward-char)
-    (unless (string-empty-p v)
-      (backward-char)
-      (insert (concat " " v))
-      (when params
-        (insert (concat " " params)))
-      (forward-char))
-    (when region
-      (insert region))))
-
-
-(define-key org-mode-map (kbd "M-/") 'org-insert-code-block)
-
-
 ;; Capture
 
 
@@ -1911,6 +1882,35 @@
    (shell . t)
    (python . t)
    (lisp . t)))
+
+
+(defun org-insert-code-block ()
+  (interactive)
+  (let* ((params '(("bash" ":results output")
+                   ("python" ":results output")))
+         (v (read-string "Insert code block: " nil 'org-code-block-history))
+         (params (cadr (assoc v params #'equal)))
+         (block (if (string-empty-p v)
+                    "#+begin_example\n\n#+end_example"
+                  "#+begin_src\n\n#+end_src"))
+         region)
+    (when (use-region-p)
+      (setq region (buffer-substring (region-beginning) (region-end)))
+      (delete-region (region-beginning) (region-end)))
+    (insert block)
+    (re-search-backward "#+")
+    (backward-char)
+    (unless (string-empty-p v)
+      (backward-char)
+      (insert (concat " " v))
+      (when params
+        (insert (concat " " params)))
+      (forward-char))
+    (when region
+      (insert region))))
+
+
+(define-key org-mode-map (kbd "M-/") 'org-insert-code-block)
 
 
 ;; cartesian product from org tables
