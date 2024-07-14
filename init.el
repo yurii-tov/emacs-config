@@ -1809,7 +1809,7 @@
     ("python" "#+begin_src python :results output
 
 #+end_src")
-    ("emacs-lisp" "#+begin_src emacs-lisp
+    ("elisp" "#+begin_src emacs-lisp
 
 #+end_src")
     ("powershell" "#+begin_src powershell
