@@ -1789,32 +1789,40 @@
 ;; ========
 
 
+(require 'org)
+
+
 (setq org-startup-truncated nil
       org-adapt-indentation t)
 
 
-;; Abbrevs
+(defun org-insert-code-block ()
+  (interactive)
+  (let* ((params '(("bash" ":results output")
+                   ("python" ":results output")))
+         (v (read-string "Insert code block: " nil 'org-code-block-history))
+         (params (cadr (assoc v params #'equal)))
+         (block (if (string-empty-p v)
+                    "#+begin_example\n\n#+end_example"
+                  "#+begin_src\n\n#+end_src"))
+         region)
+    (when (use-region-p)
+      (setq region (buffer-substring (region-beginning) (region-end)))
+      (delete-region (region-beginning) (region-end)))
+    (insert block)
+    (re-search-backward "#+")
+    (backward-char)
+    (unless (string-empty-p v)
+      (backward-char)
+      (insert (concat " " v))
+      (when params
+        (insert (concat " " params)))
+      (forward-char))
+    (when region
+      (insert region))))
 
 
-(define-abbrev-table 'org-mode-abbrev-table
-  '(("example" "#+begin_example
-
-#+end_example")
-    ("source" "#+begin_src
-
-#+end_src")
-    ("bash" "#+begin_src bash :results output
-
-#+end_src")
-    ("python" "#+begin_src python :results output
-
-#+end_src")
-    ("elisp" "#+begin_src emacs-lisp
-
-#+end_src")
-    ("powershell" "#+begin_src powershell
-
-#+end_src")))
+(define-key org-mode-map (kbd "M-/") 'org-insert-code-block)
 
 
 ;; Capture
