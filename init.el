@@ -2039,16 +2039,6 @@ Example input:
           (goto-char (1- (org-table-end))))))))
 
 
-;; Preload org-mode at startup
-
-
-(defun preload-org-mode ()
-  (with-temp-buffer (org-mode)))
-
-
-(add-hook 'emacs-startup-hook 'preload-org-mode)
-
-
 ;; ==============
 ;; shell commands
 ;; ==============
