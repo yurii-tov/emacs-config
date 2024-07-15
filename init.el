@@ -1886,10 +1886,13 @@
 
 (defun org-insert-code-block ()
   (interactive)
-  (let* ((params '(("bash" ":results output")
-                   ("python" ":results output")))
-         (v (read-string "Insert code block: " nil 'org-code-block-history))
-         (params (cadr (assoc v params #'equal)))
+  (let* ((v (minibuffer-with-setup-hook
+                (:append (lambda ()
+                           (use-local-map (copy-keymap (current-local-map)))
+                           (local-set-key
+                            (kbd "M-/")
+                            'exit-minibuffer)))
+              (read-string "Insert code block: " nil 'org-code-block-history)))
          (block (if (string-empty-p v)
                     "#+begin_example\n\n#+end_example"
                   "#+begin_src\n\n#+end_src"))
@@ -1903,8 +1906,6 @@
     (unless (string-empty-p v)
       (backward-char)
       (insert (concat " " v))
-      (when params
-        (insert (concat " " params)))
       (forward-char))
     (when region
       (insert region))))
