@@ -1901,13 +1901,13 @@
       (setq region (buffer-substring (region-beginning) (region-end)))
       (delete-region (region-beginning) (region-end)))
     (insert (car block))
-    (call-interactively 'org-return)
+    (org-return)
     (insert (cadr block))
     (previous-line)
     (end-of-line)
     (unless (string-empty-p v)
       (insert (concat " " v)))
-    (call-interactively 'org-return)
+    (org-return)
     (when region
       (insert region))))
 
