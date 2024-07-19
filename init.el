@@ -1459,6 +1459,7 @@
               company-idle-delay 0
               company-tooltip-offset-display 'lines
               company-files-chop-trailing-slash nil
+              company-dabbrev-downcase nil
               company-backends '(company-files
                                  (company-capf
                                   company-abbrev
