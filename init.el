@@ -2414,10 +2414,11 @@ Example input:
 
 
 (defun set-company-history-candidates ()
-  (let ((prefix (replace-regexp-in-string
-                 comint-prompt-regexp ""
-                 (company-grab-line (concat comint-prompt-regexp ".*")))))
-    (and (setq-local company-history-candidates
+  (let* ((line (company-grab-line (concat comint-prompt-regexp ".*")))
+         (prefix (when line
+                   (replace-regexp-in-string comint-prompt-regexp "" line))))
+    (and prefix
+         (setq-local company-history-candidates
                      (cl-remove-if-not
                       (lambda (x) (string-prefix-p prefix x t))
                       (ring-elements comint-input-ring)))
