@@ -1460,11 +1460,11 @@
               company-tooltip-offset-display 'lines
               company-files-chop-trailing-slash nil
               company-dabbrev-downcase nil
+              company-transformers '(delete-consecutive-dups)
               company-backends '(company-files
                                  (company-capf
                                   company-abbrev
-                                  :separate)
-                                 (company-keywords
+                                  company-keywords
                                   company-dabbrev
                                   :separate)))
 
@@ -2444,8 +2444,7 @@ Example input:
   (setq-local company-backends
               '((company-capf
                  company-comint-hist-completion
-                 :separate)
-                (company-keywords
+                 company-keywords
                  company-dabbrev
                  :separate))))
 
