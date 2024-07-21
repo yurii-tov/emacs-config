@@ -1904,6 +1904,7 @@
     (insert (car block))
     (org-return)
     (insert (cadr block))
+    (indent-for-tab-command)
     (previous-line)
     (end-of-line)
     (unless (string-empty-p v)
