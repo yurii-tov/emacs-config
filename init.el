@@ -77,6 +77,7 @@
                   powershell
                   groovy-mode
                   slime
+                  slime-company
                   nov))
       refreshed)
   (dolist (p packages)
@@ -3161,10 +3162,20 @@ Process .+
               'eww-browse-url))
 
 
-(add-hook 'lisp-mode-hook 'use-eww-for-cl-hyperspec-lookup)
+(defun common-lisp-setup-company ()
+  (require 'slime-company)
+  (setq-local company-backends
+              '(company-files
+                (company-slime
+                 company-abbrev
+                 company-keywords
+                 company-dabbrev
+                 :separate))))
 
 
-(add-hook 'slime-repl-mode-hook 'use-eww-for-cl-hyperspec-lookup)
+(dolist (m '(lisp-mode-hook slime-repl-mode-hook))
+  (add-hook m 'use-eww-for-cl-hyperspec-lookup)
+  (add-hook m 'common-lisp-setup-company))
 
 
 ;; ======
