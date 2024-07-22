@@ -1413,7 +1413,10 @@
   (let ((fn (car args)))
     (apply f (cons `(lambda ()
                       (let ((r (funcall ',fn)))
-                        (when r (append r '(:exclusive no)))))
+                        (when r
+                          (if (sequencep r)
+                              (append r '(:exclusive no))
+                            r))))
                    (cdr args)))))
 
 
