@@ -3156,9 +3156,6 @@ Process .+
              '("\\.cl\\'" . common-lisp-mode))
 
 
-(setq slime-contribs '(slime-fancy))
-
-
 (defun use-eww-for-cl-hyperspec-lookup ()
   (setq-local browse-url-browser-function
               'eww-browse-url))
