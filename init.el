@@ -2566,12 +2566,13 @@ Example input:
 
 (defun project-build ()
   (interactive)
-  (let* ((project (project-current t))
-         (default-directory (project-root project))
-         (command (cdr (assoc project project-build-commands #'equal))))
+  (let* ((default-directory (project-root (project-current t)))
+         (existing (assoc default-directory project-build-commands #'equal))
+         (command (cdr existing)))
     (when (or (not command) current-prefix-arg)
+      (setq project-build-commands (remove existing project-build-commands))
       (setq command (read-shell-command "Build command: "))
-      (push (cons project command)
+      (push (cons default-directory command)
             project-build-commands))
     (async-shell-command command)))
 
