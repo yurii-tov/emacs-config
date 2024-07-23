@@ -267,6 +267,8 @@
              "M-u" force-revert-buffer
              "M-j" switch-to-buffer
              "M-`" shell
+             "M-p" project-find-file
+             "M-P" project-find-file
              "C-=" text-scale-increase
              "C-M-=" text-scale-decrease
              "C-+" (lambda () (interactive) (text-scale-set 0))
@@ -280,7 +282,6 @@
              "C-x l" hl-line-mode
              "C-x C-l" display-line-numbers-mode
              "C-x C-k" kill-buffer-and-window
-             "C-x C-j" project-find-file
              "C-x C-p" project-build
              "C-h C-h" describe-symbol
              "C-h h" describe-symbol
