@@ -657,7 +657,8 @@
 
 (defun tail (file)
   (interactive "fTail file: ")
-  (let ((default-directory (file-name-directory file)))
+  (let ((default-directory (file-name-directory file))
+        (*async-shell-command-disable-popup* nil))
     (async-shell-command (concat "tail -f " (file-relative-name file)))))
 
 
@@ -2216,31 +2217,36 @@ Example input:
 ;;;; add some useful output to *Messages*
 
 
+(defvar *async-shell-command-disable-popup* t)
+
+
 (defun async-shell-command-disable-popup (f &rest args)
-  (let (r b)
-    (save-window-excursion
-      (prog1 (setq r (apply f args))
-        (setq b (if (windowp r)
-                    (window-buffer r)
-                  (process-buffer r)))
-        (switch-to-buffer b)
-        (message "Running command %s at %s"
-                 (propertize (car args) 'face 'compilation-info)
-                 (propertize default-directory 'face 'completions-annotations))
-        (when (get-buffer-process (current-buffer))
-          (set-process-sentinel
-           (get-process (get-buffer-process (current-buffer)))
-           `(lambda (p e)
-              (let ((e (string-trim-right e)))
-                (unless (member ,b (mapcar #'window-buffer (window-list)))
-                  (with-current-buffer ,b
-                    (message "%s\n%s"
-                             (buffer-substring (point-min) (point-max))
-                             (propertize (format "[%s] %s" e ,(car args))
-                                         'face (cond ((equal e "finished") 'success)
-                                                     ((string-match "exited abnormally.*" e)
-                                                      'error)
-                                                     (t 'shadow))))))))))))))
+  (if *async-shell-command-disable-popup*
+      (let (r b)
+        (save-window-excursion
+          (prog1 (setq r (apply f args))
+            (setq b (if (windowp r)
+                        (window-buffer r)
+                      (process-buffer r)))
+            (switch-to-buffer b)
+            (message "Running command %s at %s"
+                     (propertize (car args) 'face 'compilation-info)
+                     (propertize default-directory 'face 'completions-annotations))
+            (when (get-buffer-process (current-buffer))
+              (set-process-sentinel
+               (get-process (get-buffer-process (current-buffer)))
+               `(lambda (p e)
+                  (let ((e (string-trim-right e)))
+                    (unless (member ,b (mapcar #'window-buffer (window-list)))
+                      (with-current-buffer ,b
+                        (message "%s\n%s"
+                                 (buffer-substring (point-min) (point-max))
+                                 (propertize (format "[%s] %s" e ,(car args))
+                                             'face (cond ((equal e "finished") 'success)
+                                                         ((string-match "exited abnormally.*" e)
+                                                          'error)
+                                                         (t 'shadow)))))))))))))
+    (apply f args)))
 
 
 (advice-add 'async-shell-command :around #'async-shell-command-disable-popup)
