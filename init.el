@@ -267,7 +267,6 @@
              "M-u" force-revert-buffer
              "M-j" switch-to-buffer
              "M-`" shell
-             "M-p" project-find-file
              "M-P" project-find-file
              "C-=" text-scale-increase
              "C-M-=" text-scale-decrease
