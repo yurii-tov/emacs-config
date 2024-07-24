@@ -2090,7 +2090,9 @@ Example input:
 (advice-add 'shell-command :around #'shell-command-dwim)
 
 
+;; ===================
 ;; async-shell-command
+;; ===================
 
 
 (defun async-shell-command-read-wd (f &rest args)
@@ -2118,7 +2120,7 @@ Example input:
 (advice-add 'async-shell-command :around 'async-shell-command-record-wd)
 
 
-;;;; enable restarting
+;; enable restarting
 
 
 (defun command-to-buffer-name (command)
@@ -2157,7 +2159,7 @@ Example input:
 (advice-add 'async-shell-command :around 'async-shell-command-setup-restart)
 
 
-;;;; descriptive names
+;; descriptive names
 
 
 (defun async-shell-command-setup-buffer-name (f &rest args)
@@ -2170,7 +2172,7 @@ Example input:
 (advice-add 'async-shell-command :around 'async-shell-command-setup-buffer-name)
 
 
-;;;; histfile
+;; histfile
 
 
 (defun async-shell-command-setup-histfile (r)
@@ -2188,7 +2190,7 @@ Example input:
 (advice-add 'async-shell-command :filter-return 'async-shell-command-setup-histfile)
 
 
-;;;; output command/wd
+;; output command/wd
 
 
 (require 'compile)
@@ -2213,8 +2215,38 @@ Example input:
 (advice-add 'async-shell-command :around 'async-shell-command-setup-echo)
 
 
-;;;; don't display output buffer, but promote it in switch-to-buffer menu
-;;;; add some useful output to *Messages*
+;; Log ASC termination
+
+
+(defun async-shell-command-log-termination (f &rest args)
+  "When ASC finishes, report its termination status and output"
+  (let (r b)
+    (prog1 (setq r (apply f args))
+      (setq b (if (windowp r)
+                  (window-buffer r)
+                (process-buffer r)))
+      (with-current-buffer b
+        (when (get-buffer-process (current-buffer))
+          (set-process-sentinel
+           (get-process (get-buffer-process (current-buffer)))
+           `(lambda (p e)
+              (let ((e (string-trim-right e)))
+                (unless (member ,b (mapcar #'window-buffer (window-list)))
+                  (with-current-buffer ,b
+                    (message "%s\n%s"
+                             (buffer-substring (point-min) (point-max))
+                             (propertize (format "[%s] %s" e ,(car args))
+                                         'face (cond ((equal e "finished") 'success)
+                                                     ((string-match "exited abnormally.*" e)
+                                                      'error)
+                                                     (t 'shadow))))))))))))))
+
+
+(advice-add 'async-shell-command :around #'async-shell-command-log-termination)
+
+
+;; don't display output buffer, but promote it in switch-to-buffer menu
+;; add some useful output to *Messages*
 
 
 (defvar *async-shell-command-disable-popup* t)
@@ -2231,21 +2263,7 @@ Example input:
             (switch-to-buffer b)
             (message "Running command %s at %s"
                      (propertize (car args) 'face 'compilation-info)
-                     (propertize default-directory 'face 'completions-annotations))
-            (when (get-buffer-process (current-buffer))
-              (set-process-sentinel
-               (get-process (get-buffer-process (current-buffer)))
-               `(lambda (p e)
-                  (let ((e (string-trim-right e)))
-                    (unless (member ,b (mapcar #'window-buffer (window-list)))
-                      (with-current-buffer ,b
-                        (message "%s\n%s"
-                                 (buffer-substring (point-min) (point-max))
-                                 (propertize (format "[%s] %s" e ,(car args))
-                                             'face (cond ((equal e "finished") 'success)
-                                                         ((string-match "exited abnormally.*" e)
-                                                          'error)
-                                                         (t 'shadow)))))))))))))
+                     (propertize default-directory 'face 'completions-annotations)))))
     (apply f args)))
 
 
