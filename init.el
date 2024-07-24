@@ -1149,9 +1149,9 @@
       (call-interactively 'reindent-region))))
 
 
-;; ===========================================
-;; Minibuffer completion frameworks (IDO etc.)
-;; ===========================================
+;; =====================
+;; Minibuffer completion
+;; =====================
 
 
 ;; Use fido-mode as default completion method
