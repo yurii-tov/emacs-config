@@ -234,6 +234,7 @@
                       "s" kmacro-start-macro
                       "x" kmacro-to-register)
 
+
 ;; project
 
 
@@ -377,10 +378,10 @@
 (add-hook 'emacs-startup-hook 'toggle-frame-maximized)
 
 
-;; show fortune instead of stupid default message
+;; better "welcome" message
 
 
-(defun insert-scratch-fortune ()
+(defun welcome ()
   (let* ((f (fortune)))
     (when f
       (with-current-buffer "*scratch*"
@@ -392,7 +393,7 @@
         (newline 3)))))
 
 
-(add-hook 'emacs-startup-hook 'insert-scratch-fortune)
+(add-hook 'emacs-startup-hook 'welcome)
 
 
 ;; line highlight indication in "programming" modes
@@ -1098,11 +1099,6 @@
     (if (char-uppercase-p (following-char))
         (downcase-region (point) (1+ (point)))
       (upcase-region (point) (1+ (point))))))
-
-
-(defun insert-fortune ()
-  (interactive)
-  (insert (fortune)))
 
 
 ;; When rectangular region is selected, C-SPC activates multiline editing
@@ -3311,6 +3307,11 @@ Process .+
       (goto-char e)
       (buffer-substring
        (+ 2 (or (search-backward-regexp "^%$" nil t) 1)) e))))
+
+
+(defun insert-fortune ()
+  (interactive)
+  (insert (fortune)))
 
 
 ;; ============
