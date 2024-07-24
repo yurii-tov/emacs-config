@@ -263,7 +263,7 @@
              "M-9" (lambda () (interactive) (wrap-with-text "(" ")" t))
              "M-0" (lambda () (interactive) (wrap-with-text "[" "]" t))
              "M-)" (lambda () (interactive) (wrap-with-text "{" "}" t))
-             "M-i" reindent-region
+             "M-i" pretty-print-buffer
              "M-u" force-revert-buffer
              "M-j" switch-to-buffer
              "M-`" shell
@@ -1141,7 +1141,7 @@
 (advice-add 'hexl-mode :around 'wrap-hexl-mode)
 
 
-;; Enable pretty-printing "programming" modes buffers
+;; Enable pretty-printing buffers with custom functions
 
 
 (setq pretty-printers nil)
@@ -1154,14 +1154,6 @@
         (progn (message "Reformatting with %s" f)
                (apply f nil))
       (call-interactively 'reindent-region))))
-
-
-(defun setup-pretty-print-buffer ()
-  (local-set-key (kbd "M-i") 'pretty-print-buffer))
-
-
-(dolist (x '(prog-mode-hook sgml-mode-hook conf-mode-hook))
-  (add-hook x 'setup-pretty-print-buffer))
 
 
 ;; ===========================================
