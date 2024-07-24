@@ -635,9 +635,6 @@
   (revert-buffer nil t t))
 
 
-;; open file(s) in external app
-
-
 (defun open-in-external-app (&optional file-name)
   (interactive)
   (let ((open-file
@@ -652,9 +649,6 @@
     (funcall open-file file-name)))
 
 
-;; track file with 'tail' program
-
-
 (defun tail (file)
   (interactive "fTail file: ")
   (let ((default-directory (file-name-directory file))
@@ -662,7 +656,32 @@
     (async-shell-command (concat "tail -f " (file-relative-name file)))))
 
 
+(defun reopen-with-sudo ()
+  (interactive)
+  (let ((file (or (buffer-file-name) default-directory)))
+    (kill-buffer)
+    (if (file-remote-p file)
+        (let* ((host (file-remote-p file 'host))
+               (prefix (replace-regexp-in-string
+                        host (concat host "|sudo:" host) (file-remote-p file))))
+          (find-file (concat prefix (file-remote-p file 'localname))))
+      (find-file (concat "/sudo::" file)))))
+
+
+(defun copy-file-name-to-clipboard ()
+  "Copy the current file name(s) to the clipboard"
+  (interactive)
+  (let ((names (if (equal major-mode 'dired-mode)
+                   (string-join (dired-get-marked-files) "\n")
+                 (buffer-file-name))))
+    (when names
+      (kill-new names)
+      (message "Name copied to clipboard: %s" names))))
+
+
+;; =====
 ;; dired
+;; =====
 
 
 (require 'ls-lisp)
@@ -768,7 +787,7 @@
 (add-hook 'dired-mode-hook 'dired-disable-ffap)
 
 
-;;;; set custom names for "find" buffers
+;; set custom names for "find" buffers
 
 
 (defun find-dired-setup-buffer (f &rest args)
@@ -793,20 +812,6 @@
 (advice-add 'find-dired :around #'find-dired-setup-buffer)
 
 
-;; copy full names of files to clipboard
-
-
-(defun copy-file-name-to-clipboard ()
-  "Copy the current file name(s) to the clipboard"
-  (interactive)
-  (let ((names (if (equal major-mode 'dired-mode)
-                   (string-join (dired-get-marked-files) "\n")
-                 (buffer-file-name))))
-    (when names
-      (kill-new names)
-      (message "Name copied to clipboard: %s" names))))
-
-
 ;; force scp usage when copying files with dired
 
 
@@ -817,18 +822,6 @@
 
 
 (advice-add 'dired-copy-file :around #'dired-copy-force-scp)
-
-
-(defun reopen-with-sudo ()
-  (interactive)
-  (let ((file (or (buffer-file-name) default-directory)))
-    (kill-buffer)
-    (if (file-remote-p file)
-        (let* ((host (file-remote-p file 'host))
-               (prefix (replace-regexp-in-string
-                        host (concat host "|sudo:" host) (file-remote-p file))))
-          (find-file (concat prefix (file-remote-p file 'localname))))
-      (find-file (concat "/sudo::" file)))))
 
 
 ;; ===========
