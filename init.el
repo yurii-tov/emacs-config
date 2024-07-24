@@ -382,15 +382,13 @@
 
 
 (defun welcome ()
-  (let* ((f (fortune)))
-    (when f
-      (with-current-buffer "*scratch*"
-        (delete-region (point-min) (point-max))
-        (insert (replace-regexp-in-string "\n" "" (emacs-version)))
-        (newline 3)
-        (insert f)
-        (comment-region (point-min) (point-max))
-        (newline 3)))))
+  (with-current-buffer "*scratch*"
+    (delete-region (point-min) (point-max))
+    (insert (replace-regexp-in-string "\n" "" (emacs-version)))
+    (newline 3)
+    (insert-fortune)
+    (comment-region (point-min) (point-max))
+    (newline 3)))
 
 
 (add-hook 'emacs-startup-hook 'welcome)
