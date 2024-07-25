@@ -1239,8 +1239,7 @@
     (minibuffer-keyboard-quit)))
 
 
-(bind-keys '("C-c C-o" ido-open-in-external-app)
-           ido-file-dir-completion-map)
+(define-key ido-file-completion-map (kbd "C-o") 'ido-open-in-external-app)
 
 
 (defun ido-insert-path ()
