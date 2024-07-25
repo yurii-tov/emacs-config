@@ -736,7 +736,7 @@
                                                         "/\\1/"
                                                         output-dir)
                               archive))
-         (zip-command (format "unzip '%s' -d '%s'" archive output-dir))
+         (zip-command (format "unzip -o '%s' -d '%s'" archive output-dir))
          (command (if (string-match-p ".tar.gz$" archive)
                       tar-command
                     zip-command)))
