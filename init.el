@@ -1504,7 +1504,8 @@
 
 (defun fix-company-backend (f &rest args)
   (cl-case (car args)
-    (prefix (let ((prefix (funcall f 'prefix)))
+    (prefix (let* ((prefix (funcall f 'prefix))
+                   (prefix (if (listp prefix) (car prefix) prefix)))
               (setq-local fix-company-backend-candidates nil)
               (and prefix
                    (not (string-empty-p prefix))
