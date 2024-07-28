@@ -2216,13 +2216,14 @@ Example input:
                          (not (member ,b (mapcar #'window-buffer (window-list)))))
                 (let ((e (string-trim-right e)))
                   (with-current-buffer ,b
-                    (message "%s\n%s"
-                             (buffer-substring (point-min) (point-max))
-                             (propertize (format "[%s] %s" e ,(car args))
-                                         'face (cond ((equal e "finished") 'success)
-                                                     ((string-match "exited abnormally.*" e)
-                                                      'error)
-                                                     (t 'shadow))))))))))))))
+                    (message
+                     "%s\n%s"
+                     (buffer-substring (point-min) (point-max))
+                     (propertize (format "[%s] %s" e ,(car args))
+                                 'face (cond ((equal e "finished") 'success)
+                                             ((string-match "exited abnormally.*" e)
+                                              'error)
+                                             (t 'shadow))))))))))))))
 
 
 (advice-add 'async-shell-command :around #'async-shell-command-log-termination)
