@@ -2212,8 +2212,9 @@ Example input:
           (set-process-sentinel
            (get-process (get-buffer-process (current-buffer)))
            `(lambda (p e)
-              (let ((e (string-trim-right e)))
-                (unless (member ,b (mapcar #'window-buffer (window-list)))
+              (when (and (get-buffer ,b)
+                         (not (member ,b (mapcar #'window-buffer (window-list)))))
+                (let ((e (string-trim-right e)))
                   (with-current-buffer ,b
                     (message "%s\n%s"
                              (buffer-substring (point-min) (point-max))
