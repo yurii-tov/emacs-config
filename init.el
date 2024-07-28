@@ -1511,10 +1511,11 @@
                                  ((and (stringp result)
                                        (not (string-empty-p result)))
                                   result))))
+              (message "backend: %s" company-backend)
               (when prefix
                 (setq-local fix-company-backend-candidates
                             (funcall f 'candidates prefix)))
-              (when (or prefix (symbolp result))
+              (when (or fix-company-backend-candidates (symbolp result))
                 result)))
     (candidates fix-company-backend-candidates)
     (t (apply f args))))
