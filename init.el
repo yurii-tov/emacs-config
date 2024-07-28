@@ -2212,8 +2212,7 @@ Example input:
           (set-process-sentinel
            (get-process (get-buffer-process (current-buffer)))
            `(lambda (p e)
-              (when (and (get-buffer ,b)
-                         (not (member ,b (mapcar #'window-buffer (window-list)))))
+              (unless (member ,b (mapcar #'window-buffer (window-list)))
                 (let ((e (string-trim-right e)))
                   (with-current-buffer ,b
                     (message
