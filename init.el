@@ -2213,16 +2213,19 @@ Example input:
            (get-process (get-buffer-process (current-buffer)))
            `(lambda (p e)
               (unless (member ,b (mapcar #'window-buffer (window-list)))
-                (let ((e (string-trim-right e)))
-                  (with-current-buffer ,b
-                    (message
-                     "%s\n%s"
-                     (buffer-substring (point-min) (point-max))
-                     (propertize (format "[%s] %s" e ,(car args))
-                                 'face (cond ((equal e "finished") 'success)
-                                             ((string-match "exited abnormally.*" e)
-                                              'error)
-                                             (t 'shadow))))))))))))))
+                (let ((e (string-trim-right e))
+                      (output (ignore-errors
+                                (with-current-buffer ,b
+                                  (concat (buffer-substring (point-min) (point-max))
+                                          "\n")))))
+                  (message
+                   "%s%s"
+                   (or output "")
+                   (propertize (format "[%s] %s" e ,(car args))
+                               'face (cond ((equal e "finished") 'success)
+                                           ((string-match "exited abnormally.*" e)
+                                            'error)
+                                           (t 'shadow)))))))))))))
 
 
 (advice-add 'async-shell-command :around #'async-shell-command-log-termination)
