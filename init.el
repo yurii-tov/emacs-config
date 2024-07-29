@@ -71,6 +71,7 @@
                   ligature
                   ef-themes
                   company
+                  yasnippet
                   rust-mode
                   markdown-mode
                   cider
@@ -1425,6 +1426,14 @@
 (setq save-abbrevs nil)
 
 
+;; =========
+;; Yasnippet
+;; =========
+
+
+(yas-global-mode 1)
+
+
 ;; =======
 ;; Company
 ;; =======
@@ -1546,7 +1555,10 @@
   (add-to-list 'eglot-stay-out-of 'company)
 
   ;; Auto-shutdown the server
-  (setq eglot-autoshutdown t))
+  (setq eglot-autoshutdown t)
+
+  ;; Fix snippets + company-tng
+  (advice-remove #'eglot--snippet-expansion-fn #'ignore))
 
 
 ;; =======
