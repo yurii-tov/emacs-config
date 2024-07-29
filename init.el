@@ -1479,7 +1479,7 @@
   (define-key company-tng-map (kbd "RET") 'company-tng-expand-snippet))
 
 
-;; Expanding snippets in company-tng
+;; RET key will (almost) properly expand snippets in company-tng
 
 
 (defun company-tng-expand-snippet ()
