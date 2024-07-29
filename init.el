@@ -72,6 +72,7 @@
                   ef-themes
                   company
                   yasnippet
+                  yasnippet-snippets
                   rust-mode
                   markdown-mode
                   cider
@@ -1403,6 +1404,13 @@
 ;; =============
 ;; hippie-expand
 ;; =============
+
+
+(defun hippie-expand-yasnippet (f &rest args)
+  (or (yas-expand) (apply f args)))
+
+
+(advice-add 'hippie-expand :around 'hippie-expand-yasnippet))
 
 
 (setq hippie-expand-try-functions-list
