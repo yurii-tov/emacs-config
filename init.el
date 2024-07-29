@@ -1500,7 +1500,7 @@
                (not (string-prefix-p "org-" (symbol-name major-mode))))
       (use-local-map (copy-keymap m))
       (local-set-key
-       (kbd "<tab>")
+       (kbd "TAB")
        'company-indent-or-complete-common))))
 
 
