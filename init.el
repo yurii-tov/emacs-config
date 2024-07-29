@@ -1460,6 +1460,7 @@
               company-transformers '(delete-consecutive-dups)
               company-backends '(company-files
                                  (company-capf
+                                  company-yasnippet
                                   company-abbrev
                                   company-keywords
                                   company-dabbrev
