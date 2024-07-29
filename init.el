@@ -1437,6 +1437,7 @@
 (setq-default company-minimum-prefix-length 1
               company-idle-delay 0
               company-tooltip-offset-display 'lines
+              company-selection-wrap-around t
               company-files-chop-trailing-slash nil
               company-dabbrev-downcase nil
               company-transformers '(delete-consecutive-dups)
