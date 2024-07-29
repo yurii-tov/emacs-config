@@ -1475,7 +1475,19 @@
                  "M-f" company-other-backend
                  "C-f" company-files-go-deeper)
                x))
-  (define-key company-search-map (kbd "SPC") nil))
+  (define-key company-search-map (kbd "SPC") nil)
+  (define-key company-tng-map (kbd "RET") 'company-tng-expand-snippet))
+
+
+;; Expanding snippets in company-tng
+
+
+(defun company-tng-expand-snippet ()
+  (interactive)
+  (company-complete)
+  (let ((ret-fn (key-binding (kbd "RET"))))
+    (unless (eq ret-fn 'newline)
+      (call-interactively ret-fn))))
 
 
 ;; Force completion by TAB
