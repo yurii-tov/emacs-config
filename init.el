@@ -1484,9 +1484,11 @@
 
 (defun company-tng-expand-snippet ()
   (interactive)
-  (company-complete)
   (let ((ret-fn (key-binding (kbd "RET"))))
-    (unless (eq ret-fn 'newline)
+    (if company-selection
+        (progn (company-complete)
+               (unless (eq ret-fn 'newline)
+                 (call-interactively ret-fn)))
       (call-interactively ret-fn))))
 
 
