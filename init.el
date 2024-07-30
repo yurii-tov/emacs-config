@@ -1422,12 +1422,6 @@
         try-expand-list-all-buffers))
 
 
-;; disable prompt about saving abbrevs
-
-
-(setq save-abbrevs nil)
-
-
 ;; =========
 ;; Yasnippet
 ;; =========
@@ -1460,7 +1454,6 @@
               company-backends '(company-files
                                  (company-capf
                                   company-yasnippet
-                                  company-abbrev
                                   company-keywords
                                   company-dabbrev
                                   :separate)))
@@ -1558,7 +1551,7 @@
     (t (apply f args))))
 
 
-(dolist (x '(company-abbrev company-dabbrev company-keywords company-yasnippet))
+(dolist (x '(company-dabbrev company-keywords company-yasnippet))
   (advice-add x :around 'fix-company-backend))
 
 
@@ -2465,6 +2458,7 @@ Example input:
 (defun comint-setup-company-completion ()
   (setq-local company-backends
               '((company-capf
+                 company-yasnippet
                  company-comint-hist-completion
                  company-keywords
                  company-dabbrev
@@ -2994,39 +2988,6 @@ Process .+
 (setq sgml-basic-offset 4)
 
 
-(define-abbrev-table 'sgml-mode-abbrev-table
-  '(("html" "<!DOCTYPE html>
-<html>
-<head>
-    <title>html</title>
-    <meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">
-</head>
-<body>
-
-
-</body>
-</html>")
-    ("a" "<a href=\"?\">?</a>")
-    ("img" "<img src=\"?\"/>")
-    ("table" "<table>
-<tr><th>?</th><th>?</th></tr>
-<tr><td>?</td><td>?</td></tr>
-</table>")
-    ("tablecss" "table {
-               border: 1px solid #ccc;
-               border-collapse:collapse;
-               font-family: 'Segoe UI', sans-serif;
-               font-size: 80%;
-               width:100%;
-       }
-
-       table td, table th {
-               padding: 1ex;
-               border: 1px solid #ccc;
-               <!-- text-align:center; -->
-       }")))
-
-
 ;; reindent xml buffer with xmllint
 
 
@@ -3076,27 +3037,6 @@ Process .+
 (add-hook 'c-mode-common-hook 'c-customize-keybindings)
 
 
-(define-abbrev-table 'c-mode-abbrev-table
-  '(("main" "#include <stdio.h>\n\n\nint main(int argc, char **argv)
-{
-     printf(\"%s\\n\", \"hello world\");
-     return 0;
-}")
-    ("mainv" "#include <stdio.h>\n\n\nint main(void)
-{
-     printf(\"%s\\n\", \"hello world\");
-     return 0;
-}")
-    ("pr" "printf(\"%d\\n\", 42);")
-    ("fori" "for (int i = 0; i < 42; i++)\n{\n\n}")
-    ("whl" "while ()\n{\n\n}")
-    ("whlc" "int c;\nwhile ((c = getchar()) != '\\n')\n{\n\n}")
-    ("iff" "if (i == 42)\n{\n\n}")
-    ("ife" "if (i == 42)\n{\n\n} else {\n\n}")
-    ("eif" "else if (i == 99) {\n\n}")
-    ("fun" "void f()\n{\n\n}")))
-
-
 ;; ====
 ;; java
 ;; ====
@@ -3104,24 +3044,6 @@ Process .+
 
 (add-hook 'java-mode-hook
           (lambda () (c-set-style "user")))
-
-
-(define-abbrev-table 'java-mode-abbrev-table
-  '(("psvm" "public static void main(String[] args) {
-
-
-}")
-    ("hw" "public class Main {
-    public static void main(String[] args) {
-        System.out.println(\"Hello world!\");
-    }
-}")
-    ("sout" "System.out.println(\"\");")
-    ("sof" "System.out.printf(\"\");")
-    ("sf" "String.format(\"\");")
-    ("fori" "for (int i = 0; i < 42; i++) {\n\n}")
-    ("try" "try {\n\n} catch (Exception e) {\nthrow new RuntimeException(e);\n}")
-    ("ae" "Assert.assertEquals(exp, act);")))
 
 
 (defun copy-java-class-full-name ()
@@ -3182,7 +3104,7 @@ Process .+
   (setq-local company-backends
               '(company-files
                 (company-slime
-                 company-abbrev
+                 company-yasnippet
                  company-keywords
                  company-dabbrev
                  :separate))))
@@ -3191,16 +3113,6 @@ Process .+
 (dolist (m '(lisp-mode-hook slime-repl-mode-hook))
   (add-hook m 'use-eww-for-cl-hyperspec-lookup)
   (add-hook m 'common-lisp-setup-company))
-
-
-;; ======
-;; Python
-;; ======
-
-
-(define-abbrev-table 'python-mode-abbrev-table
-  '(("main" "if __name__ == '__main__':\n")
-    ("fori" "for x in xs:\n")))
 
 
 ;; ==========
