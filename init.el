@@ -1523,11 +1523,13 @@
 
 (defun company-files-go-deeper ()
   (interactive)
-  (company-complete-selection)
-  (let ((fname (company-files--grab-existing-name)))
-    (if fname
-        (call-interactively 'company-files)
-      (forward-char))))
+  (if company-selection
+      (progn (company-complete-selection)
+             (let ((fname (company-files--grab-existing-name)))
+               (if fname
+                   (call-interactively 'company-files)
+                 (forward-char))))
+    (forward-char)))
 
 
 ;; Fix backends
