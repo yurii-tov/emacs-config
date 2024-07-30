@@ -1476,16 +1476,15 @@
                  "M-f" company-other-backend
                  "C-f" company-files-go-deeper)
                x))
-  (define-key company-search-map (kbd "SPC") nil)
-  (define-key company-tng-map (kbd "RET") 'company-tng-ret))
+  (define-key company-tng-map (kbd "SPC") 'company-tng-expand))
 
 
 ;; Properly expand snippets with company-tng
 
 
-(defun company-tng-ret ()
+(defun company-tng-expand ()
   (interactive)
-  (let ((ret-fn (key-binding (kbd "RET"))))
+  (let ((c (key-binding (kbd "SPC"))))
     (if company-selection
         (let ((p (point)))
           (company-complete)
@@ -1493,8 +1492,8 @@
                  (l (- p (- (length m) (length (buffer-substring p (point))))))
                  (s (buffer-substring (max 1 l) (point))))
             (when (equal m s)
-              (call-interactively ret-fn))))
-      (call-interactively ret-fn))))
+              (call-interactively c))))
+      (call-interactively c))))
 
 
 ;; Force completion by TAB
