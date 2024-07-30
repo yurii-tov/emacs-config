@@ -1406,16 +1406,10 @@
 ;; =============
 
 
-(defun hippie-expand-yasnippet (f &rest args)
-  (or (yas-expand) (apply f args)))
-
-
-(advice-add 'hippie-expand :around 'hippie-expand-yasnippet)
-
-
 (setq hippie-expand-try-functions-list
       ;; try expand to...
-      '(try-expand-dabbrev ;; thing from current buffer
+      '(yas-hippie-try-expand ;; snippet
+        try-expand-dabbrev ;; thing from current buffer
         try-expand-line
         try-expand-list
         try-complete-file-name-partially ;; filename
