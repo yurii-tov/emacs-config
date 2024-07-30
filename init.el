@@ -1484,19 +1484,23 @@
                  "C-f" company-files-go-deeper)
                x))
   (define-key company-search-map (kbd "SPC") nil)
-  (define-key company-tng-map (kbd "RET") 'company-tng-expand-snippet))
+  (define-key company-tng-map (kbd "RET") 'company-tng-ret))
 
 
-;; RET key will (almost) properly expand snippets in company-tng
+;; Properly expand snippets with company-tng
 
 
-(defun company-tng-expand-snippet ()
+(defun company-tng-ret ()
   (interactive)
   (let ((ret-fn (key-binding (kbd "RET"))))
     (if company-selection
-        (progn (company-complete)
-               (unless (eq ret-fn 'newline)
-                 (call-interactively ret-fn)))
+        (let ((p (point)))
+          (company-complete)
+          (let* ((m (car company-last-metadata))
+                 (l (- p (- (length m) (length (buffer-substring p (point))))))
+                 (s (buffer-substring (max 1 l) (point))))
+            (when (equal m s)
+              (call-interactively ret-fn))))
       (call-interactively ret-fn))))
 
 
