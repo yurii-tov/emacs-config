@@ -3456,7 +3456,7 @@ Process .+
   (when (file-exists-p ddg-ai-chat-dir)
     (add-to-list 'exec-path ddg-ai-chat-dir)
     (load "~/.emacs.d/ddg-ai-chat/ddg-ai.el")
-    (define-key search-map "a" 'ask-ddg-ai)))
+    (ddg-ai-chat-set-keybindings)))
 
 
 ;; ===========
