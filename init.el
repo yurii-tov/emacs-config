@@ -1442,6 +1442,11 @@
 (yas-global-mode 1)
 
 
+(bind-keys '("C-f" yas-next-field
+             "C-b" yas-prev-field)
+           yas-keymap)
+
+
 ;; =======
 ;; Company
 ;; =======
@@ -1523,13 +1528,14 @@
 
 (defun company-files-go-deeper ()
   (interactive)
-  (if company-selection
-      (progn (company-complete-selection)
-             (let ((fname (company-files--grab-existing-name)))
-               (if fname
-                   (call-interactively 'company-files)
-                 (forward-char))))
-    (forward-char)))
+  (let ((c (key-binding (kbd "C-f"))))
+    (if company-selection
+        (progn (company-complete-selection)
+               (let ((fname (company-files--grab-existing-name)))
+                 (if fname
+                     (call-interactively 'company-files)
+                   (call-interactively c))))
+      (call-interactively c))))
 
 
 ;; Fix backends
@@ -1554,7 +1560,7 @@
     (t (apply f args))))
 
 
-(dolist (x '(company-abbrev company-dabbrev company-keywords))
+(dolist (x '(company-abbrev company-dabbrev company-keywords company-yasnippet))
   (advice-add x :around 'fix-company-backend))
 
 
