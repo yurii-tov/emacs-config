@@ -1442,8 +1442,8 @@
 (yas-global-mode 1)
 
 
-(bind-keys '("C-f" yas-next-field
-             "C-b" yas-prev-field)
+(bind-keys '("C-j" yas-next-field
+             "C-M-j" yas-prev-field)
            yas-keymap)
 
 
