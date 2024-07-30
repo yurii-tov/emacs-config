@@ -1906,40 +1906,6 @@
    (lisp . t)))
 
 
-(defun org-insert-code-block ()
-  (interactive)
-  (let* ((v (minibuffer-with-setup-hook
-                (:append (lambda ()
-                           (use-local-map (copy-keymap (current-local-map)))
-                           (local-set-key
-                            (kbd "M-/")
-                            'exit-minibuffer)))
-              (read-string "Insert code block: " nil 'org-code-block-history)))
-         (block (if (string-empty-p v)
-                    '("#+begin_example" "#+end_example")
-                  '("#+begin_src" "#+end_src")))
-         (col (current-column))
-         region)
-    (when (use-region-p)
-      (setq region (buffer-substring (region-beginning) (region-end)))
-      (delete-region (region-beginning) (region-end)))
-    (insert (car block))
-    (newline-and-indent)
-    (insert (cadr block))
-    (previous-line)
-    (end-of-line)
-    (unless (string-empty-p v)
-      (insert (concat " " v)))
-    (newline)
-    (dotimes (i (+ 2 col))
-      (insert " "))
-    (when region
-      (insert region))))
-
-
-(define-key org-mode-map (kbd "M-/") 'org-insert-code-block)
-
-
 ;; cartesian product from org tables
 
 
