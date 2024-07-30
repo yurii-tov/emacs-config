@@ -1410,7 +1410,7 @@
   (or (yas-expand) (apply f args)))
 
 
-(advice-add 'hippie-expand :around 'hippie-expand-yasnippet))
+(advice-add 'hippie-expand :around 'hippie-expand-yasnippet)
 
 
 (setq hippie-expand-try-functions-list
