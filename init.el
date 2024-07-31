@@ -1487,9 +1487,8 @@
                  "M-n" nil
                  "M-f" company-other-backend
                  "C-f" company-files-go-deeper
-                 "SPC" nil)
-               x))
-  (define-key company-tng-map (kbd "SPC") 'company-tng-expand))
+                 "SPC" company-tng-expand)
+               x)))
 
 
 ;; Properly expand snippets with company-tng
