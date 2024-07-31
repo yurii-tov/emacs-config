@@ -1438,7 +1438,9 @@
 
 
 (bind-keys '("C-j" yas-next-field
-             "C-M-j" yas-prev-field)
+             "C-M-j" yas-prev-field
+             "TAB" nil
+             "<tab>" nil)
            yas-keymap)
 
 
