@@ -1435,6 +1435,11 @@
            yas-keymap)
 
 
+(bind-keys '("TAB" nil
+             "<tab>" nil)
+           yas-minor-mode-map)
+
+
 ;; =======
 ;; Company
 ;; =======
