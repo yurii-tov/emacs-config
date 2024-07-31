@@ -1573,7 +1573,7 @@
 
 (with-eval-after-load 'eglot
   ;; Keybindings
-  (bind-keys '("M-/" eglot-code-actions
+  (bind-keys '("M-p" eglot-code-actions
                "M-." xref-find-definitions
                "C-c C-i" eldoc-print-current-symbol-info
                "C-c C-n" eglot-rename
