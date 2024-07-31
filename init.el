@@ -1487,7 +1487,8 @@
                  "M-n" nil
                  "M-f" company-other-backend
                  "C-f" company-files-go-deeper
-                 "SPC" company-tng-expand)
+                 "SPC" company-tng-expand
+                 "M-q" hippie-expand)
                x)))
 
 
