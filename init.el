@@ -1504,8 +1504,10 @@
                  (l (- p (- (length m) (length (buffer-substring p (point))))))
                  (s (buffer-substring (max 1 l) (point))))
             (when (equal m s)
-              (call-interactively c))))
-      (call-interactively c))))
+              (call-interactively c)
+              (company-manual-begin))))
+      (call-interactively c)
+      (company-manual-begin))))
 
 
 ;; Force completion by TAB
