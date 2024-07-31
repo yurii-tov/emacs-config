@@ -1465,9 +1465,9 @@
               company-transformers '(delete-consecutive-dups)
               company-backends '(company-files
                                  (company-capf
-                                  company-yasnippet
                                   company-keywords
                                   company-dabbrev
+                                  company-yasnippet
                                   :separate)))
 
 
@@ -2471,10 +2471,10 @@ Example input:
 (defun comint-setup-company-completion ()
   (setq-local company-backends
               '((company-capf
-                 company-yasnippet
                  company-comint-hist-completion
                  company-keywords
                  company-dabbrev
+                 company-yasnippet
                  :separate))))
 
 
@@ -3117,9 +3117,9 @@ Process .+
   (setq-local company-backends
               '(company-files
                 (company-slime
-                 company-yasnippet
                  company-keywords
                  company-dabbrev
+                 company-yasnippet
                  :separate))))
 
 
