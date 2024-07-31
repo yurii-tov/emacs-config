@@ -104,17 +104,24 @@
 
 
 (when system-type-is-windows
-  (let ((msys "C:/tools/msys64"))
-    (if (file-exists-p msys)
-        (progn (setenv "PATH"
-                       (format "%1$s\\mingw64\\bin;%1$s\\usr\\bin;%s"
-                               (replace-regexp-in-string "/" "\\\\" msys)
-                               (getenv "PATH")))
-               (setenv "LC_ALL" "en_GB.UTF-8")
-               (add-to-list 'exec-path (format "%s/usr/bin" msys) t)
-               (add-to-list 'exec-path (format "%s/mingw64/bin" msys) t)
-               (setq shell-file-name "bash"))
-      (warn "msys2 not found. Expected location is %s" msys))))
+  (let ((msys "C:/tools/msys64")
+        (gpg (executable-find "gpg.exe"))
+        (fail-message "Unable to integrate MSYS:"))
+    (cond ((not (file-exists-p msys))
+           (warn "%s msys2 distribution not found (Expected location is %s)"
+                 fail-message msys))
+          ((not (and gpg (string-suffix-p "GnuPG/bin/gpg.exe" gpg)))
+           (warn "%s Gpg4Win not found%s"
+                 fail-message
+                 (if gpg (format " (found only %s in exec-path)" gpg) "")))
+          (t (setenv "PATH"
+                     (format "%1$s\\mingw64\\bin;%1$s\\usr\\bin;%s"
+                             (replace-regexp-in-string "/" "\\\\" msys)
+                             (getenv "PATH")))
+             (setenv "LC_ALL" "en_GB.UTF-8")
+             (add-to-list 'exec-path (format "%s/usr/bin" msys) t)
+             (add-to-list 'exec-path (format "%s/mingw64/bin" msys) t)
+             (setq shell-file-name "bash")))))
 
 
 ;; ==================
