@@ -1464,8 +1464,8 @@
               company-dabbrev-downcase nil
               company-transformers '(delete-consecutive-dups)
               company-backends '(company-files
-                                 (company-yasnippet
-                                  company-capf
+                                 (company-capf
+                                  company-yasnippet
                                   company-keywords
                                   company-dabbrev
                                   :separate)))
@@ -2470,8 +2470,8 @@ Example input:
 
 (defun comint-setup-company-completion ()
   (setq-local company-backends
-              '((company-yasnippet
-                 company-capf
+              '((company-capf
+                 company-yasnippet
                  company-comint-hist-completion
                  company-keywords
                  company-dabbrev
@@ -3116,8 +3116,8 @@ Process .+
   (require 'slime-company)
   (setq-local company-backends
               '(company-files
-                (company-yasnippet
-                 company-slime
+                (company-slime
+                 company-yasnippet
                  company-keywords
                  company-dabbrev
                  :separate))))
