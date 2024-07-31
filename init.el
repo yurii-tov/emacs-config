@@ -264,6 +264,7 @@
              "M-k" kill-line-to-indentation
              "M-=" count-words
              "M-q" hippie-expand
+             "M-/" project-find-file
              "C-v" scroll-up-5-lines
              "M-v" scroll-down-5-lines
              "M-1" shell-command
@@ -290,7 +291,6 @@
              "C-x l" hl-line-mode
              "C-x C-l" display-line-numbers-mode
              "C-x C-k" kill-buffer-and-window
-             "C-x C-j" project-find-file
              "C-x C-p" project-build
              "C-h C-h" describe-symbol
              "C-h h" describe-symbol
