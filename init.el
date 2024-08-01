@@ -1509,7 +1509,8 @@
             (when (equal m s)
               (call-interactively c)
               (company-manual-begin))))
-      (unless (yas-expand)
+      (unless (and (yas-expand)
+                   (not (company-abort)))
         (call-interactively c)
         (company-manual-begin)))))
 
