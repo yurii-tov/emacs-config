@@ -1,7 +1,7 @@
 # -*- mode: snippet -*-
-# name: fori
+# name: for
 # key: fori
 # --
-for (${1:Object el} : ${2:iterator}) {
+for (${1:int i = 0}; ${2:i < N}; ${3:i++}) {
     $0
 }
