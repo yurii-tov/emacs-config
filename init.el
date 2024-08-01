@@ -1490,14 +1490,14 @@
                  "M-n" nil
                  "M-f" company-other-backend
                  "C-f" company-files-go-deeper
-                 "SPC" company-tng-expand)
+                 "SPC" company-magic-space)
                x)))
 
 
 ;; Properly expand snippets with company-tng
 
 
-(defun company-tng-expand ()
+(defun company-magic-space ()
   (interactive)
   (let ((c (key-binding (kbd "SPC"))))
     (if company-selection
@@ -1509,9 +1509,9 @@
             (when (equal m s)
               (call-interactively c)
               (company-manual-begin))))
-      (or (yas-expand)
-          (call-interactively c)
-          (company-manual-begin)))))
+      (unless (yas-expand)
+        (call-interactively c)
+        (company-manual-begin)))))
 
 
 ;; Force completion by TAB
