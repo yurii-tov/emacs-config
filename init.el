@@ -166,11 +166,12 @@
            search-map)
 
 
-;; disable M-s overriding in all major modes
+;; disable some keys overriding in all major modes
 
 
 (defun disable-search-map-overriding ()
-  (local-unset-key (kbd "M-s")))
+  (local-unset-key (kbd "M-s"))
+  (local-unset-key (kbd "M-o")))
 
 
 (add-hook 'after-change-major-mode-hook 'disable-search-map-overriding)
