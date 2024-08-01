@@ -72,7 +72,6 @@
                   ef-themes
                   company
                   yasnippet
-                  yasnippet-snippets
                   rust-mode
                   markdown-mode
                   cider
