@@ -1,8 +1,10 @@
 # -*- mode: snippet -*-
-# name: file_class
-# key: file
+# name: Class with name of a file
+# key: fc
 # --
-public class ${1:`(file-name-base
+package ${1:example};
+
+public class ${2:`(file-name-base
                     (or (buffer-file-name)
                         (buffer-name)))`} {
   $0
