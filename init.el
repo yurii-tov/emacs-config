@@ -1490,8 +1490,7 @@
                  "M-n" nil
                  "M-f" company-other-backend
                  "C-f" company-files-go-deeper
-                 "SPC" company-tng-expand
-                 "M-q" hippie-expand)
+                 "SPC" company-tng-expand)
                x)))
 
 
@@ -1510,8 +1509,9 @@
             (when (equal m s)
               (call-interactively c)
               (company-manual-begin))))
-      (call-interactively c)
-      (company-manual-begin))))
+      (or (yas-expand)
+          (call-interactively c)
+          (company-manual-begin)))))
 
 
 ;; Force completion by TAB
