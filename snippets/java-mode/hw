@@ -1,0 +1,11 @@
+# -*- mode: snippet -*-
+# name: Hello, world!
+# key: hw
+# --
+package ${1:example};
+
+public class ${2:Main} {
+    public static void main(String[] args) {
+        System.out.println(${3:"Hello, World!"});
+    }
+}
