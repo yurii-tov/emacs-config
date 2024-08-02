@@ -1489,27 +1489,20 @@
                  "M-n" nil
                  "M-f" company-other-backend
                  "C-f" company-files-go-deeper
-                 "SPC" company-magic-space)
+                 "SPC" company-maybe-space)
                x)))
 
 
-;; Properly expand snippets with company-tng
+;; Properly expand snippets
 
 
-(defun company-magic-space ()
+(defun company-maybe-space ()
   (interactive)
-  (let ((c (key-binding (kbd "SPC"))))
-    (if company-selection
-        (let ((p (point)))
-          (company-complete)
-          (let* ((m (car company-last-metadata))
-                 (l (- p (- (length m) (length (buffer-substring p (point))))))
-                 (s (buffer-substring (max 1 l) (point))))
-            (when (equal m s)
-              (call-interactively c)
-              (company-manual-begin))))
-      (call-interactively c)
-      (company-manual-begin))))
+  (when (or (not company-selection)
+            (not (progn (company-complete)
+                        (when yas--active-field-overlay
+                          (overlay-buffer yas--active-field-overlay)))))
+    (call-interactively 'self-insert-command)))
 
 
 ;; Force completion by TAB
