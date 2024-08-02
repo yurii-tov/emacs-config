@@ -1508,10 +1508,8 @@
             (when (equal m s)
               (call-interactively c)
               (company-manual-begin))))
-      (unless (and (yas-expand)
-                   (not (company-abort)))
-        (call-interactively c)
-        (company-manual-begin)))))
+      (call-interactively c)
+      (company-manual-begin))))
 
 
 ;; Force completion by TAB
