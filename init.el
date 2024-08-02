@@ -1489,6 +1489,7 @@
                  "M-n" nil
                  "M-f" company-other-backend
                  "C-f" company-files-go-deeper
+                 "M-q" hippie-expand
                  "SPC" company-magic-space)
                x)))
 
