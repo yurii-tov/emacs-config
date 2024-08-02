@@ -1489,14 +1489,15 @@
                  "M-n" nil
                  "M-f" company-other-backend
                  "C-f" company-files-go-deeper
-                 "SPC" company-maybe-space)
+                 "SPC" company-expand-no-modify)
                x)))
 
 
 ;; Properly expand snippets
 
 
-(defun company-maybe-space ()
+(defun company-expand-no-modify ()
+  "When candidate is a snippet, expands it, and suppress any modifying"
   (interactive)
   (when (or (not company-selection)
             (let ((p (point)))
