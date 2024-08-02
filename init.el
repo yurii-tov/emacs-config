@@ -1499,9 +1499,14 @@
 (defun company-maybe-space ()
   (interactive)
   (when (or (not company-selection)
-            (not (progn (company-complete)
-                        (when yas--active-field-overlay
-                          (overlay-buffer yas--active-field-overlay)))))
+            (let ((p (point)))
+              (company-complete)
+              (let* ((m (car company-last-metadata))
+                     (pp (point))
+                     (l (- p (- (length m)
+                                (length (buffer-substring p pp)))))
+                     (s (buffer-substring (max 1 l) pp)))
+                (equal m s))))
     (call-interactively 'self-insert-command)))
 
 
