@@ -187,7 +187,7 @@
                       "l" upcase-dwim    "M-l" downcase-dwim
                       "j" join-lines     "M-j" break-line
                       "k" flush-lines    "M-k" keep-lines
-                      "p" fill-region-justify
+                      "p" fill-paragraph "M-p" fill-region-justify
                       "u" delete-duplicate-lines
                       "i" invert-chars
                       "e" enumerate-lines
