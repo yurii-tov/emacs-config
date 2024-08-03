@@ -3241,8 +3241,9 @@ Process .+
     (let* ((e (search-forward-regexp "^%$" nil t))
            (e (if e (- e 2) (point-max))))
       (goto-char e)
-      (buffer-substring
-       (+ 2 (or (search-backward-regexp "^%$" nil t) 1)) e))))
+      (let* ((s (search-backward-regexp "^%$" nil t))
+             (s (if s (+ 2 s) 1)))
+        (buffer-substring s e)))))
 
 
 (defun insert-fortune ()
