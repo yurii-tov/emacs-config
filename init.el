@@ -1515,11 +1515,16 @@
 
 
 (defun company-setup-tab-completion ()
-  (unless (or buffer-read-only
-              (eq (key-binding (kbd "TAB")) 'org-cycle))
-    (local-set-key
-     (kbd "TAB")
-     'company-indent-or-complete-common)))
+  (let ((m (current-local-map))
+        (b (key-binding (kbd "TAB"))))
+    (unless (or (not m)
+                buffer-read-only
+                (eq major-mode 'org-mode)
+                (eq b 'org-cycle))
+      (use-local-map (copy-keymap m))
+      (local-set-key
+       (kbd "TAB")
+       'company-indent-or-complete-common))))
 
 
 (add-hook 'company-mode-hook 'company-setup-tab-completion)
