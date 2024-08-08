@@ -1535,14 +1535,12 @@
 
 (defun company-files-go-deeper ()
   (interactive)
-  (let ((c (key-binding (kbd "C-f"))))
-    (if company-selection
-        (progn (company-complete-selection)
-               (let ((fname (company-files--grab-existing-name)))
-                 (if fname
-                     (call-interactively 'company-files)
-                   (call-interactively c))))
-      (call-interactively c))))
+  (if company-selection
+      (progn (company-complete-selection)
+             (if (looking-back "/")
+                 (company-manual-begin)
+               (call-interactively 'forward-char)))
+    (call-interactively 'forward-char)))
 
 
 ;; Fix backends
