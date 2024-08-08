@@ -1535,11 +1535,10 @@
 
 (defun company-files-go-deeper ()
   (interactive)
-  (if company-selection
-      (progn (company-complete-selection)
-             (if (looking-back "/")
-                 (company-manual-begin)
-               (call-interactively 'forward-char)))
+  (if (and company-selection
+           (progn (company-complete-selection)
+                  (looking-back "/")))
+      (company-manual-begin)
     (call-interactively 'forward-char)))
 
 
