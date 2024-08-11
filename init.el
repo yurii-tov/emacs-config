@@ -3221,9 +3221,12 @@ Process .+
       (let* ((capture-file-name (if arg
                                     (read-file-name "Capture video to file: ")
                                   capture-file-name))
-             (default-directory (file-name-directory capture-file-name)))
+             (default-directory (file-name-directory capture-file-name))
+             (command (if system-type-is-windows
+                          "%s -y -f gdigrab -i desktop -framerate 30 -pix_fmt yuv420p %s"
+                        "%s -y -f x11grab -i desktop -framerate 30 -pix_fmt yuv420p %s")))
         (async-shell-command
-         (format "%s -y -f gdigrab -i desktop -framerate 30 -pix_fmt yuv420p %s"
+         (format command
                  ffmpeg
                  (car (last (file-name-split capture-file-name))))
          buffer-name)
