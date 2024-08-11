@@ -3224,7 +3224,7 @@ Process .+
              (default-directory (file-name-directory capture-file-name))
              (command (if system-type-is-windows
                           "%s -y -f gdigrab -i desktop -framerate 30 -pix_fmt yuv420p %s"
-                        "%s -y -f x11grab -i desktop -framerate 30 -pix_fmt yuv420p %s")))
+                        "%s -y -f x11grab -i :0.0 -framerate 30 -pix_fmt yuv420p %s")))
         (async-shell-command
          (format command
                  ffmpeg
