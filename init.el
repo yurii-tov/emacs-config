@@ -780,6 +780,9 @@
 (add-hook 'dired-mode-hook 'hl-line-mode)
 
 
+(add-hook 'dired-mode-hook 'auto-revert-mode)
+
+
 (defun dired-custom-highlight ()
   (highlight-regexp " [0-9]+\\-[0-9][0-9]\\-[0-9][0-9] [0-9][0-9]:[0-9][0-9] "
                     'font-lock-string-face))
