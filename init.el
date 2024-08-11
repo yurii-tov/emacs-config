@@ -3205,17 +3205,22 @@ Process .+
 ;; ==========================
 
 
-(defun capture-video ()
-  (interactive)
+(defun capture-video (arg)
+  (interactive "P")
   (let ((ffmpeg (or (executable-find "ffmpeg")
                     (error "Unable to find ffmpeg executable in exec-path")))
-        (buffer-name "*video-capture*"))
+        (buffer-name "*video-capture*")
+        (capture-file-name (if system-type-is-windows
+                               (expand-file-name "Videos/v.mp4" (getenv "USERPROFILE"))
+                             "~/v.mp4")))
     (if (get-buffer-process buffer-name)
         (with-current-buffer buffer-name
           (message "Captured: %s" (propertize capture-file-name 'face 'font-lock-constant-face))
           (kill-new capture-file-name)
           (kill-buffer))
-      (let* ((capture-file-name (read-file-name "Capture video to file: "))
+      (let* ((capture-file-name (if arg
+                                    (read-file-name "Capture video to file: ")
+                                  capture-file-name))
              (default-directory (file-name-directory capture-file-name)))
         (async-shell-command
          (format "%s -y -f gdigrab -i desktop -framerate 30 -pix_fmt yuv420p %s"
