@@ -3220,7 +3220,7 @@ Process .+
         (with-current-buffer buffer-name
           (message "Captured: %s" (propertize capture-file-name 'face 'font-lock-constant-face))
           (kill-new capture-file-name)
-          (call-interactively 'comint-interrupt-subjob)
+          (comint-interrupt-subjob)
           (sit-for 1)
           (kill-buffer))
       (let* ((capture-file-name (if arg
