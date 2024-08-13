@@ -105,11 +105,12 @@
 (when system-type-is-windows
   (let ((msys "C:/tools/msys64")
         (gpg (executable-find "gpg.exe"))
+        (gpg-path (cl-find-if (lambda (x) (string-match "Gpg4win" x)) exec-path))
         (fail-message "Unable to integrate MSYS:"))
     (cond ((not (file-exists-p msys))
            (warn "%s msys2 distribution not found (Expected location is %s)"
                  fail-message msys))
-          ((not (and gpg (string-suffix-p "GnuPG/bin/gpg.exe" gpg)))
+          ((not (and gpg (string-suffix-p "GnuPG/bin/gpg.exe" gpg) gpg-path))
            (warn "%s Gpg4Win not found%s"
                  fail-message
                  (if gpg (format " (found only %s in exec-path)" gpg) "")))
@@ -118,8 +119,9 @@
                              (replace-regexp-in-string "/" "\\\\" msys)
                              (getenv "PATH")))
              (setenv "LC_ALL" "en_GB.UTF-8")
-             (add-to-list 'exec-path (format "%s/usr/bin" msys) t)
-             (add-to-list 'exec-path (format "%s/mingw64/bin" msys) t)
+             (add-to-list 'exec-path (format "%s/usr/bin" msys))
+             (add-to-list 'exec-path (format "%s/mingw64/bin" msys))
+             (setq exec-path (cons gpg-path (cl-remove gpg-path exec-path :test #'equal)))
              (setq shell-file-name "bash")))))
 
 
