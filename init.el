@@ -407,7 +407,10 @@
 ;; line highlight indication in "programming" modes
 
 
-(dolist (x '(prog-mode-hook sgml-mode-hook conf-mode-hook log-view-mode-hook))
+(dolist (x '(prog-mode-hook
+             sgml-mode-hook conf-mode-hook
+             log-view-mode-hook
+             org-agenda-mode-hook))
   (add-hook x 'hl-line-mode))
 
 
