@@ -749,10 +749,11 @@
                                                         "/\\1/"
                                                         output-dir)
                               archive))
-         (zip-command (format "7z x -y '%s' -o'%s'" archive output-dir))
-         (command (if (string-match-p ".tar.gz$" archive)
-                      tar-command
-                    zip-command)))
+         (zip-command (format "unzip -o '%s' -d '%s'" archive output-dir))
+         (7z-command (format "7z x -y '%s' -o'%s'" archive output-dir))
+         (command (cond ((string-match-p ".tar.gz$" archive) tar-command)
+                        ((string-match-p ".\\(rar\\|7z\\)$" archive) 7z-command)
+                        (t zip-command))))
     (async-shell-command command "*archiver*")))
 
 
