@@ -737,7 +737,7 @@
          (command (if (string-match-p ".tar.gz$" output)
                       tar-command
                     zip-command)))
-    (shell-command command)))
+    (async-shell-command command "*archiver*")))
 
 
 (defun dired-extract-archive ()
@@ -749,11 +749,11 @@
                                                         "/\\1/"
                                                         output-dir)
                               archive))
-         (zip-command (format "unzip -o '%s' -d '%s'" archive output-dir))
+         (zip-command (format "7z x -y '%s' -o'%s'" archive output-dir))
          (command (if (string-match-p ".tar.gz$" archive)
                       tar-command
                     zip-command)))
-    (shell-command command)))
+    (async-shell-command command "*archiver*")))
 
 
 (defun dired-flatten-directory ()
