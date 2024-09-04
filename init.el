@@ -1495,7 +1495,7 @@
                    company-search-map))
     (bind-keys '("M-p" nil
                  "M-n" nil
-                 "M-f" company-other-backend
+                 "M-SPC" company-other-backend
                  "C-f" company-files-go-deeper
                  "SPC" company-expand-no-modify)
                x)))
