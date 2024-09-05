@@ -790,7 +790,9 @@
 
 (defun dired-custom-highlight ()
   (highlight-regexp " [0-9]+\\-[0-9][0-9]\\-[0-9][0-9] [0-9][0-9]:[0-9][0-9] "
-                    'font-lock-doc-face))
+                    'font-lock-doc-face)
+  (highlight-regexp " [0-9]+\\(\\.[0-9]+\\)?\\(k\\|M\\|G\\)? "
+                    'font-lock-comment-face))
 
 
 (add-hook 'dired-hide-details-mode-hook 'dired-custom-highlight)
