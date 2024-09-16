@@ -740,20 +740,27 @@
     (async-shell-command command "*archiver*")))
 
 
-(defun dired-extract-archive ()
-  (interactive)
-  (let* ((output-dir (read-directory-name "Extract to: "))
-         (archive (file-relative-name (car (dired-get-marked-files))))
-         (tar-command (format "tar -xvzC '%s' < '%s'"
+(defun dired-extract-command (archive output-dir)
+  (let* ((tar-command (format "tar -xvzC '%s' < '%s'"
                               (replace-regexp-in-string "^\\([a-zA-Z]\\):/"
                                                         "/\\1/"
                                                         output-dir)
                               archive))
          (zip-command (format "unzip -o '%s' -d '%s'" archive output-dir))
-         (7z-command (format "7z x -y '%s' -o'%s'" archive output-dir))
-         (command (cond ((string-match-p ".tar.gz$" archive) tar-command)
-                        ((string-match-p ".\\(rar\\|7z\\)$" archive) 7z-command)
-                        (t zip-command))))
+         (7z-command (format "7z x -y '%s' -o'%s'" archive output-dir)))
+    (cond ((string-match-p ".tar.gz$" archive) tar-command)
+          ((string-match-p ".\\(rar\\|7z\\)$" archive) 7z-command)
+          (t zip-command))))
+
+
+(defun dired-extract-archive ()
+  (interactive)
+  (let* ((output-dir (read-directory-name "Extract to: "))
+         (commands (mapcar (lambda (x)
+                             (dired-extract-command (file-relative-name x)
+                                                    output-dir))
+                           (dired-get-marked-files)))
+         (command (string-join commands "; ")))
     (async-shell-command command "*archiver*")))
 
 
