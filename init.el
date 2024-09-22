@@ -488,7 +488,8 @@
                                    '(utf-8-unix
                                      prefer-utf-8-unix
                                      undecided-unix
-                                     mule-utf-8-unix))
+                                     mule-utf-8-unix
+                                     no-conversion))
                            ""
                          (format "%s " (propertize
                                         (symbol-name buffer-file-coding-system)
