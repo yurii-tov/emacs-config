@@ -1270,16 +1270,13 @@
 
 (defun ido-insert-path ()
   (interactive)
-  "Insert the (possibly relative) path of the selected file/directory"
+  "Insert path of selected file/directory"
   (let* ((fname (expand-file-name (ido-name (car ido-matches))
                                   ido-current-directory))
          (fname (or (file-remote-p fname 'localname) fname)))
     (run-with-timer
      0.1 nil
-     `(lambda () (let ((path (if (string-prefix-p default-directory ,fname)
-                                 (file-relative-name
-                                  (substring ,fname (length default-directory)))
-                               ,fname))
+     `(lambda () (let ((path ,fname)
                        (p2 (point))
                        (p1 (save-excursion
                              (or (and (re-search-backward
