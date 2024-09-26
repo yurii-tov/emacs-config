@@ -1,3 +1,7 @@
+Ты все время повторяешь себе: «Я бы и мог это сделать, да не хочу»,
+и это лишь иной способ сказать, что ничего-то ты не можешь.
+--- Ричард Фейнман
+%
 systemctl - Control the systemd system
 %
 Make love, not Emacs configuration
