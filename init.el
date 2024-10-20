@@ -1912,7 +1912,8 @@
 (defun try-switch-to-agenda (f &rest args)
   (let ((agenda-buffer "*Org Agenda*"))
     (if (get-buffer agenda-buffer)
-        (switch-to-buffer agenda-buffer)
+        (progn (switch-to-buffer agenda-buffer)
+               (org-agenda-redo-all))
       (apply f args))))
 
 
