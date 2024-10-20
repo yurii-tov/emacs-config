@@ -194,7 +194,7 @@
                       "i" invert-chars
                       "e" enumerate-lines
                       "r" reverse-region
-                      "w" wrap-with-text)
+                      "SPC" wrap-with-text)
 
 
 ;; inserting things
