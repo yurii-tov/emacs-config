@@ -1201,7 +1201,9 @@
                                ((symbolp history-arg) history-arg)))
          (history-value (and history-symbol
                              (not (member history-symbol
-                                          '(junk-hist org-read-date-history)))
+                                          '(string-rectangle-history
+                                            junk-hist
+                                            org-read-date-history)))
                              (boundp history-symbol)
                              (symbol-value history-symbol))))
     (if (and history-value
