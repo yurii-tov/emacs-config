@@ -1263,6 +1263,9 @@
        (advice-add 'ido-read-file-name :around #'ido-disable-icomplete))
 
 
+;; Various advanced commands
+
+
 (defun ido-open-in-external-app ()
   (interactive)
   (let ((fname (expand-file-name (ido-name (car ido-matches))
@@ -1312,6 +1315,9 @@
 
 (bind-keys '("C-v" ido-insert-path)
            ido-file-dir-completion-map)
+
+
+;; Auto-select buffer with completions
 
 
 (defun ido-jump-to-completions ()
