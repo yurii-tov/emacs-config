@@ -669,16 +669,20 @@
     (async-shell-command (concat "tail -f " (file-relative-name file)))))
 
 
+(defun sudoify (filename)
+  (if (file-remote-p filename)
+      (let* ((host (file-remote-p filename 'host))
+             (prefix (replace-regexp-in-string
+                      host (concat host "|sudo:") (file-remote-p filename))))
+        (concat prefix (file-remote-p filename 'localname)))
+    (concat "/sudo::" filename)))
+
+
 (defun reopen-with-sudo ()
   (interactive)
   (let ((file (or (buffer-file-name) default-directory)))
     (kill-buffer)
-    (if (file-remote-p file)
-        (let* ((host (file-remote-p file 'host))
-               (prefix (replace-regexp-in-string
-                        host (concat host "|sudo:" host) (file-remote-p file))))
-          (find-file (concat prefix (file-remote-p file 'localname))))
-      (find-file (concat "/sudo::" file)))))
+    (find-file (sudoify file))))
 
 
 (defun copy-file-name-to-clipboard ()
@@ -1269,6 +1273,19 @@
 
 
 (define-key ido-file-completion-map (kbd "C-o") 'ido-open-in-external-app)
+
+
+(defun ido-open-with-sudo ()
+  (interactive)
+  (ido-record-work-directory ido-current-directory)
+  (setq ido-current-directory (sudoify ido-current-directory))
+  (exit-minibuffer))
+
+
+(define-key ido-file-completion-map (kbd "C-x u") 'ido-open-with-sudo)
+
+
+(setq ido-work-directory-list-ignore-regexps '("[/|]sudo:"))
 
 
 (defun ido-insert-path ()
