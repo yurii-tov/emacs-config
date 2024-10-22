@@ -1322,6 +1322,27 @@
 (advice-add 'ido-complete :after #'ido-jump-to-completions)
 
 
+;; ido-record-work-directory fix
+
+
+(defun ido-wrap-record-work-directory (f &rest args)
+  "For directories (detected by empty string in ido-work-file-list),
+   record their *parent* directory, instead of the directory itself"
+  (if (equal "" (car ido-work-file-list))
+      (let* ((d (car ido-work-directory-list))
+             (_ (apply f args))
+             (dd (car ido-work-directory-list))
+             (d (unless (equal d dd) dd))
+             (d (when d (or (file-name-parent-directory d) d))))
+        (setq ido-work-file-list (cdr ido-work-file-list))
+        (when d
+          (setq ido-work-directory-list (cons d (cdr ido-work-directory-list)))))
+    (apply f args)))
+
+
+(advice-add 'ido-record-work-directory :around #'ido-wrap-record-work-directory)
+
+
 ;; Various "Wide find file" fixes
 
 
