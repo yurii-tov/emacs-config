@@ -1664,9 +1664,10 @@
 
 (with-eval-after-load 'flymake
   (defun flymake-add-indicators ()
-    (setq-local mode-line-format
-                (append mode-line-format
-                        '(" " (:eval (flymake--mode-line-counters))))))
+    (let ((setting '(" " (:eval (flymake--mode-line-counters)))))
+      (unless (cl-find (cadr setting) mode-line-format :test 'equal)
+        (setq-local mode-line-format
+                    (append mode-line-format setting)))))
   (add-hook 'flymake-mode-hook 'flymake-add-indicators))
 
 
