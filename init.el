@@ -3257,7 +3257,7 @@ Process .+
          (command (format (cdr (assoc 'command preset)) link))
          (translation (string-trim (shell-command-to-string command))))
     (if (zerop (length translation))
-        (message "Can't find translation for '%s'" query)
+        (prog1 nil (message "Can't find translation for '%s'" query))
       (message "%s =>\n%s"
                (propertize query 'face 'font-lock-constant-face)
                translation))))
