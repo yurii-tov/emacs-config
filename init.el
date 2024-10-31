@@ -3258,9 +3258,11 @@ Process .+
          (translation (string-trim (shell-command-to-string command))))
     (if (zerop (length translation))
         (prog1 nil (message "Can't find translation for '%s'" query))
-      (message "%s =>\n%s"
-               (propertize query 'face 'font-lock-constant-face)
-               translation))))
+      (if (called-interactively-p)
+          (message "%s =>\n%s"
+                   (propertize query 'face 'font-lock-constant-face)
+                   translation)
+        translation))))
 
 
 ;; ==========================
