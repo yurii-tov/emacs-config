@@ -3244,7 +3244,7 @@ Process .+
          (query (or query (read-string "Translate: " (word-at-point))))
          (en-ru `((command . ,(concat "bash -c \"curl -sL -A 'Mozilla/1.0' '%s"
                                       "' | sed -rn '/span class=.trans/ {s:.*<span.*>(.*[^ ]) *<.span>.*:\\1:g ; p}'"
-                                      " | head -5\""))
+                                      " | uniq | head -5\""))
                   (link . ,(format "https://dictionary.cambridge.org/search/direct/?datasetsearch=english-russian&q=%s"
                                    (url-encode-url query)))))
          (ru-en `((command . ,(concat "bash -c \"curl -sL '%s"
