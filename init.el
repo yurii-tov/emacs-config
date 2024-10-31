@@ -3244,11 +3244,11 @@ Process .+
          (query (or query (read-string "Translate: " (word-at-point))))
          (en-ru `((command . ,(concat "bash -c \"curl -sL -A 'Mozilla/1.0' '%s"
                                       "' | sed -rn '/span class=.trans/ {s:.*<span.*>(.*[^ ]) *<.span>.*:\\1:g ; p}'"
-                                      " | sort | uniq\""))
+                                      " | head -5\""))
                   (link . ,(format "https://dictionary.cambridge.org/search/direct/?datasetsearch=english-russian&q=%s"
                                    (url-encode-url query)))))
          (ru-en `((command . ,(concat "bash -c \"curl -sL '%s"
-                                      "' | grep -oP '(?<=class=.tl.>)[^<]+' | head -n 3\""))
+                                      "' | grep -oP '(?<=class=.tl.>)[^<]+' | head -5\""))
                   (link . ,(format "https://en.openrussian.org/ru/%s"
                                    (url-encode-url query)))))
          (preset (if (string-match "[a-zA-Z]" query)
@@ -3396,6 +3396,7 @@ Process .+
   (when (file-exists-p ddg-ai-chat-dir)
     (add-to-list 'exec-path ddg-ai-chat-dir)
     (load "~/.emacs.d/ddg-ai-chat/ddg-ai.el")
+    (setq ddg-ai-translate-word-fn 'translate-en-ru-online)
     (ddg-ai-chat-set-keybindings)))
 
 
