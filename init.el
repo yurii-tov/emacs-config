@@ -3111,16 +3111,17 @@ Process .+
   (interactive)
   (let ((shell-file-name "sh")
         (xmllint (executable-find "xmllint")))
-    (when xmllint
-      (let ((p (point)))
-        (shell-command-on-region (point-min)
-                                 (point-max)
-                                 (format "%s --format -" xmllint)
-                                 (current-buffer)
-                                 t)
-        (reindent-region (point-min)
-                         (point-max))
-        (goto-char p)))))
+    (unless xmllint
+      (error "xmllint executable not found. Install it with: sudo apt install libxml2-utils"))
+    (let ((p (point)))
+      (shell-command-on-region (point-min)
+                               (point-max)
+                               (format "%s --format -" xmllint)
+                               (current-buffer)
+                               t)
+      (reindent-region (point-min)
+                       (point-max))
+      (goto-char p))))
 
 
 (add-to-list 'pretty-printers '(sgml-mode . xml-pretty-print-buffer))
