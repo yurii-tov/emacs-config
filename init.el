@@ -3045,8 +3045,42 @@ Process .+
 
 
 (when clang-format
-  (dolist (x '(c-mode js-mode java-mode))
+  (dolist (x '(c-mode java-mode))
     (add-to-list 'pretty-printers (cons x 'clang-pretty-print-buffer))))
+
+
+;; ========
+;; Prettier
+;; ========
+
+
+(defun prettier-reformat-buffer ()
+  (interactive)
+  (let* ((p (point))
+         (shell-file-name "sh")
+         (fname (buffer-file-name)))
+    (unless (or fname (boundp 'prettier-parser))
+      (setq-local prettier-parser
+                  (completing-read "Use parser: "
+                                   (string-split (with-temp-buffer
+                                                   (insert (shell-command-to-string "prettier -h"))
+                                                   (goto-char 1)
+                                                   (buffer-substring (search-forward "--parser <")
+                                                                     (1- (search-forward ">"))))
+                                                 "|"))))
+    (shell-command-on-region (point-min)
+                             (point-max)
+                             (format "prettier %s"
+                                     (if fname
+                                         (format "--stdin-filepath %s" fname)
+                                       (format "--parser %s" prettier-parser)))
+                             (current-buffer)
+                             t)
+    (goto-char p)))
+
+
+(dolist (m '(js-mode mhtml-mode html-mode css-mode))
+  (add-to-list 'pretty-printers (cons m 'prettier-reformat-buffer)))
 
 
 ;; ===
@@ -3058,7 +3092,7 @@ Process .+
 
 
 (add-to-list 'auto-mode-alist
-             (cons (concat "\\." (regexp-opt '("xml" "xsd" "xslt" "xsl" "html" "htm" "wsdl" "xml.template" "xhtml" "jsp" "pom" "jmx") t) "\\'") 'sgml-mode))
+             (cons (concat "\\." (regexp-opt '("xml" "xsd" "xslt" "xsl" "wsdl" "xml.template" "pom" "jmx") t) "\\'") 'sgml-mode))
 
 
 (setq sgml-basic-offset 4)
