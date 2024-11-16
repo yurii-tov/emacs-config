@@ -3057,7 +3057,6 @@ Process .+
 (defun prettier-reformat-buffer ()
   (interactive)
   (let* ((p (point))
-         (shell-file-name "sh")
          (fname (buffer-file-name)))
     (unless (or fname (boundp 'prettier-parser))
       (setq-local prettier-parser
