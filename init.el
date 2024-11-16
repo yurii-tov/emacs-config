@@ -3054,19 +3054,25 @@ Process .+
 ;; ========
 
 
-(defun prettier-reformat-buffer ()
+(defun prettier ()
   (interactive)
   (let* ((p (point))
          (fname (buffer-file-name)))
+    (unless (executable-find "prettier")
+      (error "Prettier executable not found. Install it with: npm i -g prettier"))
     (unless (or fname (boundp 'prettier-parser))
-      (setq-local prettier-parser
-                  (completing-read "Use parser: "
-                                   (string-split (with-temp-buffer
-                                                   (insert (shell-command-to-string "prettier -h"))
-                                                   (goto-char 1)
-                                                   (buffer-substring (search-forward "--parser <")
-                                                                     (1- (search-forward ">"))))
-                                                 "|"))))
+      (let ((parsers (string-split (with-temp-buffer
+                                     (insert (shell-command-to-string "prettier -h"))
+                                     (goto-char 1)
+                                     (buffer-substring (search-forward "--parser <")
+                                                       (1- (search-forward ">"))))
+                                   "|")))
+        (setq-local prettier-parser
+                    (or (cl-find (replace-regexp-in-string "-mode" ""
+                                                           (symbol-name major-mode))
+                                 parsers :test #'equal)
+                        (completing-read "Use parser: " parsers)))
+        (message "Formatting using '%s' parser" prettier-parser)))
     (shell-command-on-region (point-min)
                              (point-max)
                              (format "prettier %s"
@@ -3079,7 +3085,7 @@ Process .+
 
 
 (dolist (m '(js-mode mhtml-mode html-mode css-mode))
-  (add-to-list 'pretty-printers (cons m 'prettier-reformat-buffer)))
+  (add-to-list 'pretty-printers (cons m 'prettier)))
 
 
 ;; ===
