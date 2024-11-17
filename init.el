@@ -1164,7 +1164,6 @@
 
 (setq pretty-printers
       '((js-json-mode . json-pretty-print-buffer)
-        (sgml-mode . xml-pretty-print-buffer)
         (rust-mode . rust-format-buffer)))
 
 
@@ -3012,11 +3011,12 @@ Process .+
 ;; =====
 
 
+(setq clang-format (executable-find "clang-format"))
+
+
 (defun clang-pretty-print-buffer ()
   (interactive)
-  (let* ((clang-format (or (executable-find "clang-format")
-                           (error "clang-format executable not found")))
-         (shell-file-name "sh")
+  (let* ((shell-file-name "sh")
          (extension (or (file-name-extension (or (buffer-file-name) ""))
                         (replace-regexp-in-string "-mode" "" (symbol-name major-mode))))
          (java-p (equal extension "java"))
@@ -3045,8 +3045,9 @@ Process .+
       (goto-char p))))
 
 
-(dolist (x '(c-mode java-mode))
-  (add-to-list 'pretty-printers (cons x 'clang-pretty-print-buffer)))
+(when clang-format
+  (dolist (x '(c-mode java-mode))
+    (add-to-list 'pretty-printers (cons x 'clang-pretty-print-buffer))))
 
 
 ;; ========
@@ -3054,13 +3055,14 @@ Process .+
 ;; ========
 
 
-(defun prettier ()
+(setq prettier (executable-find "prettier"))
+
+
+(defun prettier-pprint-buffer ()
   (interactive)
   (let* ((p (point))
          (fname (buffer-file-name))
-         (default-directory "~")
-         (prettier (or (executable-find "prettier")
-                       (error "Prettier executable not found"))))
+         (default-directory "~"))
     (unless (or fname (boundp 'prettier-parser))
       (let ((parsers (string-split (with-temp-buffer
                                      (insert (shell-command-to-string
@@ -3087,8 +3089,9 @@ Process .+
     (goto-char p)))
 
 
-(dolist (m '(js-mode mhtml-mode html-mode css-mode))
-  (add-to-list 'pretty-printers (cons m 'prettier)))
+(when prettier
+  (dolist (m '(js-mode mhtml-mode html-mode css-mode))
+    (add-to-list 'pretty-printers (cons m 'prettier-pprint-buffer))))
 
 
 ;; ===
@@ -3103,11 +3106,12 @@ Process .+
 (setq sgml-basic-offset 4)
 
 
+(setq xmllint (executable-find "xmllint"))
+
+
 (defun xml-pretty-print-buffer ()
   (interactive)
-  (let ((shell-file-name "sh")
-        (xmllint (or (executable-find "xmllint")
-                     (error "xmllint executable not found"))))
+  (let ((shell-file-name "sh"))
     (let ((p (point)))
       (shell-command-on-region (point-min)
                                (point-max)
@@ -3117,6 +3121,11 @@ Process .+
       (reindent-region (point-min)
                        (point-max))
       (goto-char p))))
+
+
+(when xmllint
+  (add-to-list 'pretty-printers
+               '(sgml-mode . xml-pretty-print-buffer)))
 
 
 ;; =======
