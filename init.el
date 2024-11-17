@@ -1162,7 +1162,10 @@
 ;; Enable pretty-printing buffers with custom functions
 
 
-(setq pretty-printers nil)
+(setq pretty-printers
+      '((js-json-mode . json-pretty-print-buffer)
+        (sgml-mode . xml-pretty-print-buffer)
+        (rust-mode . rust-format-buffer)))
 
 
 (defun pretty-print-buffer ()
@@ -3010,18 +3013,18 @@ Process .+
 ;; =====
 
 
-(setq clang-format (executable-find "clang-format"))
-
-
 (defun clang-pretty-print-buffer ()
   (interactive)
-  (let* ((shell-file-name "sh")
+  (let* ((clang-format (executable-find "clang-format"))
+         (shell-file-name "sh")
          (extension (or (file-name-extension (or (buffer-file-name) ""))
                         (replace-regexp-in-string "-mode" "" (symbol-name major-mode))))
          (java-p (equal extension "java"))
          (style (if java-p
                     "'{BasedOnStyle: Chromium, ContinuationIndentWidth: 4, MaxEmptyLinesToKeep: 2}'"
                   "WebKit")))
+    (unless clang-format
+      (error "clang-format executable not found"))
     (let ((p (point)))
       (shell-command-on-region (point-min)
                                (point-max)
@@ -3044,9 +3047,8 @@ Process .+
       (goto-char p))))
 
 
-(when clang-format
-  (dolist (x '(c-mode java-mode))
-    (add-to-list 'pretty-printers (cons x 'clang-pretty-print-buffer))))
+(dolist (x '(c-mode java-mode))
+  (add-to-list 'pretty-printers (cons x 'clang-pretty-print-buffer)))
 
 
 ;; ========
@@ -3094,17 +3096,11 @@ Process .+
 ;; ===
 
 
-;; use sgml mode for xml files
-
-
 (add-to-list 'auto-mode-alist
              (cons (concat "\\." (regexp-opt '("xml" "xsd" "xslt" "xsl" "wsdl" "xml.template" "pom" "jmx") t) "\\'") 'sgml-mode))
 
 
 (setq sgml-basic-offset 4)
-
-
-;; reindent xml buffer with xmllint
 
 
 (defun xml-pretty-print-buffer ()
@@ -3122,17 +3118,6 @@ Process .+
       (reindent-region (point-min)
                        (point-max))
       (goto-char p))))
-
-
-(add-to-list 'pretty-printers '(sgml-mode . xml-pretty-print-buffer))
-
-
-;; ====
-;; JSON
-;; ====
-
-
-(add-to-list 'pretty-printers '(js-json-mode . json-pretty-print-buffer))
 
 
 ;; =======
@@ -3243,17 +3228,6 @@ Process .+
               (let ((*comint-histfile-id* "powershell"))
                 (prog1 (apply f args)
                   (set-buffer-process-coding-system 'cp866-dos 'cp866-dos)))))
-
-
-;; ====
-;; Rust
-;; ====
-
-
-(add-to-list 'pretty-printers '(rust-mode . rust-format-buffer))
-
-
-(add-hook 'rust-mode-hook 'eglot-ensure)
 
 
 ;; ===============================
