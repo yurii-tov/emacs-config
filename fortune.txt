@@ -1,3 +1,80 @@
+A year spent in artificial intelligence is enough to make one believe in God.
+-- Alan Perlis
+%
+There are two ways to write error-free programs; only the third one works.
+-- Alan Perlis
+%
+Fools ignore complexity. Pragmatists suffer it. Some can avoid it. Geniuses remove it.
+-- Alan Perlis
+%
+Simplicity does not precede complexity, but follows it.
+-- Alan Perlis
+%
+It is better to have 100 functions operate on one data structure than to have 10 functions operate on 10 data structures.
+-- Alan Perlis
+%
+A language that doesn't affect the way you think about programming is not worth knowing.
+-- Alan Perlis
+%
+When someone says, "I want a programming language in which I need only say what I want done," give him a lollipop.
+-- Alan Perlis
+%
+To understand a program, you must become both the machine and the program.
+-- Alan Perlis
+%
+Don't have good ideas if you aren't willing to be responsible for them.
+-- Alan Perlis
+%
+One man's constant is another man's variable.
+-- Alan Perlis
+Alan J. Perlis (1975). “Introduction to computer science”
+%
+C programmers never die. They are just cast into void.
+-- Alan Perlis
+%
+You think you KNOW when you learn, are more sure when you can write, even more when you can teach, but certain when you can program.
+-- Alan Perlis
+%
+The best book on programming for the layman is Alice in Wonderland, but that's because it's the best book on anything for the layman.
+-- Alan Perlis
+%
+In the long run, every program becomes rococo, and then rubble.
+-- Alan Perlis
+%
+A programming language is low level when its programs require attention to the irrelevant.
+-- Alan Perlis
+%
+Optimization hinders evolution. Everything should be built top-down, except the first time. Simplicity does not precede complexity, but follows it.
+-- Alan Perlis
+%
+In man-machine symbiosis, it is man who must adjust: The machines can't.
+-- Alan Perlis
+%
+Programmers are not to be measured by their ingenuity and their logic but by the completeness of their case analysis.
+-- Alan Perlis
+%
+I think that it's extraordinarily important that we in computer science keep fun in computing. When it started out, it was an awful lot of fun. Of course, the paying customers got shafted every now and then, and after a while we began to take their complaints seriously. We began to feel as if we really were responsible for the successful, error-free perfect use of these machines. I don't think we are. I think we're responsible for stretching them, setting them off in new directions, and keeping fun in the house. I hope the field of computer science never loses its sense of fun.
+-- Alan Perlis
+"The Structure and Interpretation of Computer Programs". Textbook by Gerald Jay Sussman and Hal Abelson, 2nd edition, 1996.
+%
+Dealing with failure is easy: Work hard to improve. Success is also easy to handle: You've solved the wrong problem. Work hard to improve.
+-- Alan Perlis
+%
+Syntactic sugar causes cancer of the semicolon.
+-- Alan Perlis
+%
+Every program has (at least) two purposes: the one for which it was written and another for which it wasn't.
+-- Alan Perlis
+%
+If a listener nods his head when you're explaining your program, wake him up.
+-- Alan Perlis
+%
+In software systems it is often the early bird that makes the worm.
+-- Alan Perlis
+%
+In English every word can be verbed.
+-- Alan Perlis
+%
 Ты все время повторяешь себе: «Я бы и мог это сделать, да не хочу»,
 и это лишь иной способ сказать, что ничего-то ты не можешь.
 --- Ричард Фейнман
@@ -5,12 +82,6 @@
 systemctl - Control the systemd system
 %
 Make love, not Emacs configuration
-%
-Иной подобен рыцарю, запершемуся в своем замке.  Он вечно занят
-подготовкой к подвигам: затачивает меч, отжимается много раз от
-пола...  Но кругом кипит жизнь: драконы ждут чтобы их убили, принцессы
-ждут чтобы их спасли!  Не лучше ли броситься в бой, прорубая себе путь
-тупым мечом - и затачивая его по дороге?
 %
 Все лучшее, что в нас есть, определяется не свободой, а привязанностью
 %
