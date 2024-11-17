@@ -2090,9 +2090,8 @@ Example input:
 | a2 | b2 | c2 |
 | a3 |    |    |"
   (interactive)
-  (let ((allpairs (executable-find "allpairs")))
-    (unless allpairs
-      (message "Allpairs executable not found. You should get it from https://www.satisfice.com/download/allpairs and make it available in exec-path"))
+  (let ((allpairs (or (executable-find "allpairs")
+                      (error "Allpairs executable not found. You should get it from https://www.satisfice.com/download/allpairs and make it available in exec-path"))))
     (when (and (org-table-p) allpairs)
       (let ((tsv (make-temp-file "")))
         (org-table-export tsv "orgtbl-to-tsv")
@@ -3015,7 +3014,8 @@ Process .+
 
 (defun clang-pretty-print-buffer ()
   (interactive)
-  (let* ((clang-format (executable-find "clang-format"))
+  (let* ((clang-format (or (executable-find "clang-format")
+                           (error "clang-format executable not found")))
          (shell-file-name "sh")
          (extension (or (file-name-extension (or (buffer-file-name) ""))
                         (replace-regexp-in-string "-mode" "" (symbol-name major-mode))))
@@ -3023,8 +3023,6 @@ Process .+
          (style (if java-p
                     "'{BasedOnStyle: Chromium, ContinuationIndentWidth: 4, MaxEmptyLinesToKeep: 2}'"
                   "WebKit")))
-    (unless clang-format
-      (error "clang-format executable not found"))
     (let ((p (point)))
       (shell-command-on-region (point-min)
                                (point-max)
@@ -3062,7 +3060,7 @@ Process .+
          (fname (buffer-file-name))
          (default-directory "~"))
     (unless (executable-find "prettier")
-      (error "Prettier executable not found. Install it with: npm i -g prettier"))
+      (error "Prettier executable not found"))
     (unless (or fname (boundp 'prettier-parser))
       (let ((parsers (string-split (with-temp-buffer
                                      (insert (shell-command-to-string "prettier -h"))
@@ -3106,9 +3104,8 @@ Process .+
 (defun xml-pretty-print-buffer ()
   (interactive)
   (let ((shell-file-name "sh")
-        (xmllint (executable-find "xmllint")))
-    (unless xmllint
-      (error "xmllint executable not found. Install it with: sudo apt install libxml2-utils"))
+        (xmllint (or (executable-find "xmllint")
+                     (error "xmllint executable not found"))))
     (let ((p (point)))
       (shell-command-on-region (point-min)
                                (point-max)
@@ -3288,7 +3285,7 @@ Process .+
 (defun capture-video (arg)
   (interactive "P")
   (let ((ffmpeg (or (executable-find "ffmpeg")
-                    (error "Unable to find ffmpeg executable in exec-path")))
+                    (error "ffmpeg executable not found")))
         (buffer-name "*video-capture*")
         (capture-file-name (if system-type-is-windows
                                (expand-file-name "Videos/v.mp4" (getenv "USERPROFILE"))
