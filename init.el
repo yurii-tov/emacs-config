@@ -2621,9 +2621,9 @@ Example input:
 (add-hook 'sh-mode-hook 'sh-cleanup-capf)
 
 
-;; =======
-;; project
-;; =======
+;; ========
+;; Projects
+;; ========
 
 
 (setq project-switch-commands
@@ -2638,12 +2638,13 @@ Example input:
 
 (defun project-vcs-log ()
   (interactive)
-  (let ((default-directory (project-root (project-current t))))
-    (let (b)
-      (save-window-excursion
-        (vc-print-root-log)
-        (setq b (current-buffer)))
-      (switch-to-buffer b))))
+  (let (a b)
+    (save-window-excursion
+      (setq a (find-file (project-root (project-current t))))
+      (vc-print-root-log)
+      (kill-buffer a)
+      (setq b (current-buffer)))
+    (switch-to-buffer b)))
 
 
 (setq project-build-commands nil)
