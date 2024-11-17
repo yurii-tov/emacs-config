@@ -45,14 +45,17 @@
       confirm-kill-emacs 'y-or-n-p)
 
 
-;; built-in history facilities
+;; variables persistence across sessions (using savehist-mode)
 
 
-(savehist-mode 1)
-
-
-(setq savehist-additional-variables '(kill-ring search-ring regexp-search-ring)
+(setq savehist-additional-variables '(kill-ring
+                                      search-ring
+                                      regexp-search-ring
+                                      project-build-commands)
       history-delete-duplicates t)
+
+
+(add-hook 'emacs-startup-hook 'savehist-mode)
 
 
 ;; third-party packages
