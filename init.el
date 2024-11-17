@@ -3058,12 +3058,13 @@ Process .+
   (interactive)
   (let* ((p (point))
          (fname (buffer-file-name))
-         (default-directory "~"))
-    (unless (executable-find "prettier")
-      (error "Prettier executable not found"))
+         (default-directory "~")
+         (prettier (or (executable-find "prettier")
+                       (error "Prettier executable not found"))))
     (unless (or fname (boundp 'prettier-parser))
       (let ((parsers (string-split (with-temp-buffer
-                                     (insert (shell-command-to-string "prettier -h"))
+                                     (insert (shell-command-to-string
+                                              (format "%s -h" prettier)))
                                      (goto-char 1)
                                      (buffer-substring (search-forward "--parser <")
                                                        (1- (search-forward ">"))))
@@ -3076,7 +3077,8 @@ Process .+
         (message "Formatting using '%s' parser" prettier-parser)))
     (shell-command-on-region (point-min)
                              (point-max)
-                             (format "prettier %s"
+                             (format "%s %s"
+                                     prettier
                                      (if fname
                                          (format "--stdin-filepath %s" fname)
                                        (format "--parser %s" prettier-parser)))
