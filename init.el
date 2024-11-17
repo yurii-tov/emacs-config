@@ -3006,9 +3006,9 @@ Process .+
 (sql-set-product-feature 'sqlite :table-parser 'parse-sqlite-table)
 
 
-;; =====
-;; clang
-;; =====
+;; ============
+;; clang-format
+;; ============
 
 
 (setq clang-format (executable-find "clang-format"))
@@ -3046,7 +3046,7 @@ Process .+
 
 
 (when clang-format
-  (dolist (x '(c-mode java-mode))
+  (dolist (x '(c-mode java-mode js-mode))
     (add-to-list 'pretty-printers (cons x 'clang-pretty-print-buffer))))
 
 
