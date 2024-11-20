@@ -275,7 +275,7 @@
              "M-1" shell-command
              "M-!" async-shell-command
              "M-2" (lambda () (interactive)
-                     (insert-brackets '("\"\"" "''" "**" "<>") 134217778))
+                     (insert-brackets '("\"\"" "''" "``" "**" "<>") 134217778))
              "M-9" (lambda () (interactive) (wrap-with-text "(" ")" t))
              "M-0" (lambda () (interactive) (wrap-with-text "[" "]" t))
              "M-)" (lambda () (interactive) (wrap-with-text "{" "}" t))
