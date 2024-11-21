@@ -258,6 +258,12 @@
            project-prefix-map)
 
 
+;; VCS
+
+
+(define-key vc-prefix-map (kbd "p") 'vc-pull)
+
+
 ;; misc
 
 
