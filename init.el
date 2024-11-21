@@ -532,6 +532,13 @@
   (scroll-up-command 5))
 
 
+;; better-looking manpages
+
+
+(with-eval-after-load 'man
+  (add-hook 'man-common-hook 'visual-line-mode))
+
+
 ;; =======
 ;; buffers
 ;; =======
