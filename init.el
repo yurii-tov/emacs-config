@@ -2647,6 +2647,7 @@ Example input:
         (project-build "Build")
         (project-find-dir "Find directory")
         (project-vcs-log "View VCS history")
+        (project-vc-dir "View VCS status")
         (project-shell "Shell")
         (project-find-file "Find file")
         (project-find-regexp "Find regexp")))
