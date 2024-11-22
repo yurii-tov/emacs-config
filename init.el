@@ -2631,6 +2631,28 @@ Example input:
 (add-hook 'sh-mode-hook 'sh-cleanup-capf)
 
 
+;; ===
+;; VCS
+;; ===
+
+
+(defun vc-git-overrride (command)
+  `(lambda (f &rest args)
+     (if (eq 'Git (car (vc-deduce-fileset t)))
+         (progn
+           (message "Running %s..." (propertize ,command 'face 'compilation-info))
+           (shell-command ,command))
+       (apply f args))))
+
+
+(progn (advice-add 'vc-pull :around (vc-git-overrride "git pull"))
+       (advice-add 'vc-push :around (vc-git-overrride "git push")))
+
+
+(with-eval-after-load 'log-view
+  (bind-keys '("+" vc-pull "P" vc-push) log-view-mode-map))
+
+
 ;; ========
 ;; Projects
 ;; ========
