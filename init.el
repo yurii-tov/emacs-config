@@ -2649,9 +2649,6 @@ Example input:
        (advice-add 'vc-push :around (vc-git-overrride "git push")))
 
 
-(define-key vc-prefix-map (kbd "p") 'vc-pull)
-
-
 (defun vc-log-pull ()
   (interactive)
   (vc-pull)
@@ -2659,7 +2656,7 @@ Example input:
 
 
 (with-eval-after-load 'log-view
-  (bind-keys '("p" vc-log-pull "P" vc-push) log-view-mode-map))
+  (bind-keys '("+" vc-log-pull "P" vc-push) log-view-mode-map))
 
 
 ;; ========
