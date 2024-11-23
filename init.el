@@ -2658,8 +2658,14 @@ Example input:
   (revert-buffer))
 
 
+(defun vc-log-push ()
+  (interactive)
+  (vc-push)
+  (revert-buffer))
+
+
 (with-eval-after-load 'log-view
-  (bind-keys '("+" vc-log-pull "P" vc-push) log-view-mode-map))
+  (bind-keys '("+" vc-log-pull "P" vc-log-push) log-view-mode-map))
 
 
 ;; ========
