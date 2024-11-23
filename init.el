@@ -2636,17 +2636,20 @@ Example input:
 ;; ===
 
 
-(defun vc-git-overrride (command)
-  `(lambda (f &rest args)
-     (if (eq 'Git (car (vc-deduce-fileset t)))
-         (progn
-           (message "Running %s..." (propertize ,command 'face 'compilation-info))
-           (shell-command ,command))
-       (apply f args))))
+(setq vc-command-overrides
+      '((vc-pull . ((Git . "git pull")))
+        (vc-push . ((Git . "git push")))))
 
 
-(progn (advice-add 'vc-pull :around (vc-git-overrride "git pull"))
-       (advice-add 'vc-push :around (vc-git-overrride "git push")))
+(dolist (vc-command '(vc-pull vc-push))
+  (advice-add
+   vc-command :around
+   `(lambda (f &rest args)
+      (if-let ((command (cdr (assoc (car (vc-deduce-fileset t))
+                                    (assoc ',vc-command vc-command-overrides)))))
+          (progn (message "Running %s..." (propertize command 'face 'compilation-info))
+                 (shell-command command))
+        (apply f args)))))
 
 
 (defun vc-log-pull ()
