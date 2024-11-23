@@ -34,7 +34,6 @@ Fools ignore complexity. Pragmatists suffer it. Some can avoid it. Geniuses remo
 There are only two things wrong with C++:  The initial concept and the implementation.
 — Bertrand Meyer
 %
-A program is never less than 90%
 If you think technology can solve your security problems, then you don’t understand the problems and you don’t understand the technology.
 — Bruce Schneier
 %
@@ -53,7 +52,6 @@ As a rule, software systems do not work well until they have been used, and have
 In computing, turning the obvious into the useful is a living definition of the word "frustration".
 -- Alan Perlis
 %
-Pessimists, we’re told, look at a glass containing 50%
 Your most unhappy customers are your greatest source of learning.
 — Bill Gates
 %
@@ -174,7 +172,7 @@ It goes against the grain of modern education to teach children to program. What
 %
 The greatest enemy of knowledge is not ignorance, it is the illusion of knowledge.
 — Stephen Hawking
-% complete, and never more than 95%
+%
 We toast the Lisp programmer who pens his thoughts within nests of parentheses.
 -- Alan Perlis
 %
@@ -225,8 +223,6 @@ It was a joke, okay?  If we thought it would actually be used, we wouldn’t hav
 %
 Low-level programming is good for the programmer’s soul.
 — John Carmack
-% water and see it as half empty.  Optimists, in contrast, see it as half full.  Engineers, of course, understand the glass is twice as big as it needs to be.
-— Bob Lewis
 %
 Syntactic sugar causes cancer of the semicolon.
 -- Alan Perlis
@@ -239,8 +235,7 @@ The best book on programming for the layman is Alice in Wonderland, but that's b
 %
 I think it is inevitable that people program poorly. Training will not substantially help matters. We have to learn to live with it.
 -- Alan Perlis
-% air and 50%
-Less than 10%
+%
 Simplicity does not precede complexity, but follows it.
 -- Alan Perlis
 %
@@ -283,8 +278,6 @@ Learning French is trivial: the word for horse is cheval, and everything else fo
 %
 Imagination is more important than knowledge.  For knowledge is limited, whereas imagination embraces the entire world, stimulating progress, giving birth to evolution.
 — Albert Einstein
-% complete.
-— Terry Baker
 %
 In a room full of top software designers, if two agree on the same thing, that’s a majority.
 — Bill Curtis
@@ -361,7 +354,8 @@ There’s no obfuscated Perl contest because it’s pointless.
 %
 In a software project team of 10, there are probably 3 people who produce enough defects to make them net negative producers.
 — Gordon Schulmeyer
-%We are on the verge: Today our program proved Fermat's next-to-last theorem.
+%
+We are on the verge: Today our program proved Fermat's next-to-last theorem.
 -- Alan Perlis
 %
 Ты все время повторяешь себе: «Я бы и мог это сделать, да не хочу»,
@@ -396,8 +390,6 @@ I see little commercial potential for the Internet for at least ten years.
 %
 In software systems it is often the early bird that makes the worm.
 -- Alan Perlis
-% of the code has to do with the ostensible purpose of the system; the rest deals with input-output, data validation, data structure maintenance, and other housekeeping.
-— Mary Shaw
 %
 I think it’s a new feature.  Don’t tell anyone it was an accident.
 — Larry Wall
