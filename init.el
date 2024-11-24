@@ -1177,13 +1177,27 @@
         (rust-mode . rust-format-buffer)))
 
 
-(defun pretty-print-buffer ()
+(defun pretty-print-buffer (&optional command)
   (interactive)
-  (let ((f (cdr (assoc major-mode pretty-printers))))
-    (if (and f (not (use-region-p)))
-        (progn (message "Reformatting with %s" f)
-               (apply f nil))
-      (call-interactively 'reindent-region))))
+  (if command
+      (let ((shell-file-name "sh")
+            (p (point))
+            (b (current-buffer))
+            (s (buffer-substring (point-min) (point-max))))
+        (with-temp-buffer
+          (insert s)
+          (shell-command-on-region (point-min) (point-max) command nil t)
+          (let ((pprinted (buffer-substring (point-min) (point-max))))
+            (with-current-buffer b
+              (unless (string-equal pprinted s)
+                (erase-buffer)
+                (insert pprinted)
+                (goto-char p))))))
+    (let ((f (cdr (assoc major-mode pretty-printers))))
+      (if (and f (not (use-region-p)))
+          (progn (message "Reformatting with %s" f)
+                 (apply f nil))
+        (call-interactively 'reindent-region)))))
 
 
 ;; =====================
@@ -3065,33 +3079,26 @@ Process .+
 
 (defun clang-pretty-print-buffer ()
   (interactive)
-  (let* ((shell-file-name "sh")
-         (extension (or (file-name-extension (or (buffer-file-name) ""))
+  (let* ((extension (or (file-name-extension (or (buffer-file-name) ""))
                         (replace-regexp-in-string "-mode" "" (symbol-name major-mode))))
          (java-p (equal extension "java"))
          (style (if java-p
                     "'{BasedOnStyle: Chromium, ContinuationIndentWidth: 4, MaxEmptyLinesToKeep: 2}'"
                   "WebKit")))
-    (let ((p (point)))
-      (shell-command-on-region (point-min)
-                               (point-max)
-                               (format "%s --assume-filename=.%s --style=%s"
-                                       clang-format
-                                       extension
-                                       style)
-                               (current-buffer)
-                               t)
-      (when java-p
-        (save-excursion
-          (while (re-search-forward "\\(
+    (pretty-print-buffer (format "%s --assume-filename=.%s --style=%s"
+                                 clang-format
+                                 extension
+                                 style))
+    (when java-p
+      (save-excursion
+        (while (re-search-forward "\\(
  *\\)->" nil t)
-            (replace-match " ->\\1  ")
-            (save-excursion
-              (backward-up-list)
-              (let ((s (point)))
-                (forward-sexp)
-                (indent-rigidly s (point) -3))))))
-      (goto-char p))))
+          (replace-match " ->\\1  ")
+          (save-excursion
+            (backward-up-list)
+            (let ((s (point)))
+              (forward-sexp)
+              (indent-rigidly s (point) -3))))))))
 
 
 (when clang-format
@@ -3109,8 +3116,7 @@ Process .+
 
 (defun prettier-pprint-buffer ()
   (interactive)
-  (let* ((p (point))
-         (fname (buffer-file-name))
+  (let* ((fname (buffer-file-name))
          (default-directory "~"))
     (unless (or fname (boundp 'prettier-parser))
       (let ((parsers (string-split (with-temp-buffer
@@ -3126,16 +3132,11 @@ Process .+
                                  parsers :test #'equal)
                         (completing-read "Use parser: " parsers)))
         (message "Formatting using '%s' parser" prettier-parser)))
-    (shell-command-on-region (point-min)
-                             (point-max)
-                             (format "%s %s"
-                                     prettier
-                                     (if fname
-                                         (format "--stdin-filepath %s" fname)
-                                       (format "--parser %s" prettier-parser)))
-                             (current-buffer)
-                             t)
-    (goto-char p)))
+    (pretty-print-buffer (format "%s %s"
+                                 prettier
+                                 (if fname
+                                     (format "--stdin-filepath %s" fname)
+                                   (format "--parser %s" prettier-parser))))))
 
 
 (when prettier
@@ -3160,16 +3161,7 @@ Process .+
 
 (defun xml-pretty-print-buffer ()
   (interactive)
-  (let ((shell-file-name "sh"))
-    (let ((p (point)))
-      (shell-command-on-region (point-min)
-                               (point-max)
-                               (format "%s --format -" xmllint)
-                               (current-buffer)
-                               t)
-      (reindent-region (point-min)
-                       (point-max))
-      (goto-char p))))
+  (pretty-print-buffer (format "%s --format -" xmllint)))
 
 
 (when xmllint
