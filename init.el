@@ -2002,7 +2002,8 @@
  '((emacs-lisp . t)
    (shell . t)
    (python . t)
-   (lisp . t)))
+   (lisp . t)
+   (js . t)))
 
 
 ;; cartesian product from org tables
