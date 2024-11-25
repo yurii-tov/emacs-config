@@ -1189,15 +1189,17 @@
           (shell-command-on-region (point-min) (point-max) command nil t)
           (let ((pprinted (buffer-substring (point-min) (point-max))))
             (with-current-buffer b
-              (if (string-equal pprinted s)
-                  (message "Already well-formatted")
+              (unless (string-equal pprinted s)
                 (erase-buffer)
                 (insert pprinted)
                 (goto-char p))))))
     (let ((f (cdr (assoc major-mode pretty-printers))))
       (if (and f (not (use-region-p)))
           (progn (message "Reformatting with %s..." f)
-                 (apply f nil))
+                 (apply f nil)
+                 (if (buffer-modified-p)
+                     (message "Reformatting with %s...Done" f)
+                   (message "Already well-formatted")))
         (call-interactively 'reindent-region)))))
 
 
