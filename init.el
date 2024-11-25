@@ -959,6 +959,25 @@
                                       #'string-equal))))))))
 
 
+(defun fix-flush-lines (f &rest args)
+  "Fixes flush-lines in various ways. Now it:
+   - Operates on whole buffer instead of \"from current point\".
+   - Restores current position after flushing.
+   - When empty line provided, flushes empty lines"
+  (let* ((s (car args))
+         (args (if (string-empty-p s)
+                   (cons "^$" (cdr args))
+                 args)))
+    (if (use-region-p)
+        (apply f args)
+      (save-excursion
+        (apply f (append (list (car args) (point-min) (point-max))
+                         (cdddr args)))))))
+
+
+(advice-add 'flush-lines :around #'fix-flush-lines)
+
+
 (defun shuffle-lines ()
   (interactive)
   (apply #'shell-command-on-region
