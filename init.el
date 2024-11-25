@@ -978,6 +978,17 @@
 (advice-add 'flush-lines :around #'fix-flush-lines)
 
 
+(defun fix-sort-lines (f &rest args)
+  "Fixes sort-lines in various ways. Now it:
+   - Operates on whole buffer instead of \"from current point\""
+  (if (use-region-p)
+      (apply f args)
+    (apply f (list (car args) (point-min) (point-max)))))
+
+
+(advice-add 'sort-lines :around #'fix-sort-lines)
+
+
 (defun shuffle-lines ()
   (interactive)
   (apply #'shell-command-on-region
