@@ -989,6 +989,17 @@
 (advice-add 'sort-lines :around #'fix-sort-lines)
 
 
+(defun fix-reverse-region (f &rest args)
+  "Fixes reverse-region in various ways. Now it:
+   - Operates on whole buffer instead of \"from current point\""
+  (if (use-region-p)
+      (apply f args)
+    (apply f (list (point-min) (point-max)))))
+
+
+(advice-add 'reverse-region :around #'fix-reverse-region)
+
+
 (defun shuffle-lines ()
   (interactive)
   (apply #'shell-command-on-region
