@@ -896,46 +896,20 @@
 (setq duplicate-line-final-position -1)
 
 
-;; reindenting / cleaning up
-
-
-(defun reindent-region (start end)
-  "Reindent selected region, untabify it, cleanup whitespaces"
-  (interactive (if (use-region-p)
-                   (list (region-beginning)
-                         (region-end))
-                 (list (point-min)
-                       (point-max))))
-  (untabify start end)
-  (indent-region start end)
-  (whitespace-cleanup))
-
-
-;; making text nicely formatted, like in books
-
-
-(setq-default fill-column 80)
-
-
-(defun fill-region-justify (start end)
-  (interactive (if (use-region-p)
-                   (list (region-beginning)
-                         (region-end))
-                 (list (point-min)
-                       (point-max))))
-  (fill-region start end 'full))
-
-
 ;; Various brand-new text transforming commands
+
+
+(defun buffer-or-region ()
+  (if (use-region-p)
+      (list (region-beginning)
+            (region-end))
+    (list (point-min)
+          (point-max))))
 
 
 (defun invert-chars ()
   (interactive)
-  (let* ((bounds (if (use-region-p)
-                     (list (region-beginning)
-                           (region-end))
-                   (list (point-min)
-                         (point-max))))
+  (let* ((bounds (buffer-or-region))
          (region (apply #'buffer-substring bounds))
          (inversions (mapcan (lambda (x)
                                (when (string-match (nth 2 x) region)
@@ -996,11 +970,7 @@
   (interactive)
   (if rectangle-mark-mode
       (call-interactively 'rectangle-number-lines)
-    (let* ((bounds (if (use-region-p)
-                       (list (region-beginning)
-                             (region-end))
-                     (list (point-min)
-                           (point-max))))
+    (let* ((bounds (buffer-or-region))
            (lines (split-string (apply #'buffer-substring bounds)
                                 "\n" t " *")))
       (apply #'delete-region bounds)
@@ -1185,6 +1155,17 @@
   (advice-add x :around #'fix-flush-lines))
 
 
+;; making text nicely formatted, like in books
+
+
+(setq-default fill-column 80)
+
+
+(defun fill-region-justify (start end)
+  (interactive (buffer-or-region))
+  (fill-region start end 'full))
+
+
 ;; When rectangular region is selected, C-SPC activates multiline editing
 
 
@@ -1212,6 +1193,17 @@
 
 
 (advice-add 'hexl-mode :around 'wrap-hexl-mode)
+
+
+;; reindenting / cleaning up
+
+
+(defun reindent-region (start end)
+  "Reindent selected region, untabify it, cleanup whitespaces"
+  (interactive (buffer-or-region))
+  (untabify start end)
+  (indent-region start end)
+  (whitespace-cleanup))
 
 
 ;; Enable pretty-printing buffers with custom functions
