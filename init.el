@@ -936,20 +936,13 @@
                                       #'string-equal))))))))
 
 
-(defun shell-command-on-region-or-buffer (command)
-  (apply #'shell-command-on-region
-         (append (if (use-region-p)
-                     (list (region-beginning)
-                           (min (point-max) (1+ (region-end))))
-                   (list (point-min)
-                         (point-max)))
-                 (list command (current-buffer) t))))
-
-
 (defun shuffle-lines ()
   (interactive)
   (message "Shuffling lines...")
-  (shell-command-on-region-or-buffer "shuf"))
+  (let* ((bounds (buffer-or-region))
+         (s (car bounds))
+         (e (min (point-max) (1+ (cadr bounds)))))
+    (shell-command-on-region s e "shuf" nil t)))
 
 
 (defun sort-lines-bor ()
