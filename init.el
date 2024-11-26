@@ -975,7 +975,8 @@
                          (cdddr args)))))))
 
 
-(advice-add 'flush-lines :around #'fix-flush-lines)
+(dolist (x '(flush-lines keep-lines))
+  (advice-add x :around #'fix-flush-lines))
 
 
 (defun fix-sort-lines (f &rest args)
