@@ -926,6 +926,9 @@
   (fill-region start end 'full))
 
 
+;; Various brand-new text transforming commands
+
+
 (defun invert-chars ()
   (interactive)
   (let* ((bounds (if (use-region-p)
@@ -957,49 +960,6 @@
           (replace-match (cadr (assoc (buffer-substring (1- (point)) (point))
                                       (cdr inversion)
                                       #'string-equal))))))))
-
-
-(defun fix-flush-lines (f &rest args)
-  "Fixes flush-lines in various ways. Now it:
-   - Operates on whole buffer instead of \"from current point\".
-   - Restores current position after flushing.
-   - When empty line provided, flushes empty lines"
-  (let* ((s (car args))
-         (args (if (string-empty-p s)
-                   (cons "^$" (cdr args))
-                 args)))
-    (if (use-region-p)
-        (apply f args)
-      (save-excursion
-        (apply f (append (list (car args) (point-min) (point-max))
-                         (cdddr args)))))))
-
-
-(dolist (x '(flush-lines keep-lines))
-  (advice-add x :around #'fix-flush-lines))
-
-
-(defun fix-sort-lines (f &rest args)
-  "Fixes sort-lines. Now it:
-   - Operates on whole buffer instead of \"from current point\""
-  (if (use-region-p)
-      (apply f args)
-    (apply f (list (car args) (point-min) (point-max)))))
-
-
-(advice-add 'sort-lines :around #'fix-sort-lines)
-
-
-(defun fix-delete-duplicate-lines (f &rest args)
-  "Fixes delete-duplicate-lines. Now it:
-   - Operates on whole buffer instead of \"from current point\""
-  (if (use-region-p)
-      (apply f args)
-    (apply f (append (list (point-min) (point-max))
-                     (cddr args)))))
-
-
-(advice-add 'delete-duplicate-lines :around #'fix-delete-duplicate-lines)
 
 
 (defun shuffle-lines ()
@@ -1181,6 +1141,52 @@
     (if (char-uppercase-p (following-char))
         (downcase-region (point) (1+ (point)))
       (upcase-region (point) (1+ (point))))))
+
+
+;; Various fixes for out-of-the-box text transforming commands
+
+
+(defun fix-flush-lines (f &rest args)
+  "Fixes flush-lines in various ways. Now it:
+   - Operates on whole buffer instead of \"from current point\".
+   - Restores current position after flushing.
+   - When empty line provided, flushes empty lines"
+  (let* ((s (car args))
+         (args (if (string-empty-p s)
+                   (cons "^$" (cdr args))
+                 args)))
+    (if (use-region-p)
+        (apply f args)
+      (save-excursion
+        (apply f (append (list (car args) (point-min) (point-max))
+                         (cdddr args)))))))
+
+
+(dolist (x '(flush-lines keep-lines))
+  (advice-add x :around #'fix-flush-lines))
+
+
+(defun fix-sort-lines (f &rest args)
+  "Fixes sort-lines. Now it:
+   - Operates on whole buffer instead of \"from current point\""
+  (if (use-region-p)
+      (apply f args)
+    (apply f (list (car args) (point-min) (point-max)))))
+
+
+(advice-add 'sort-lines :around #'fix-sort-lines)
+
+
+(defun fix-delete-duplicate-lines (f &rest args)
+  "Fixes delete-duplicate-lines. Now it:
+   - Operates on whole buffer instead of \"from current point\""
+  (if (use-region-p)
+      (apply f args)
+    (apply f (append (list (point-min) (point-max))
+                     (cddr args)))))
+
+
+(advice-add 'delete-duplicate-lines :around #'fix-delete-duplicate-lines)
 
 
 ;; When rectangular region is selected, C-SPC activates multiline editing
