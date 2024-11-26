@@ -187,12 +187,12 @@
 (define-custom-keymap text-transform-map "M-c"
                       "c" toggle-char-case
                       "M-c" duplicate-dwim
-                      "o" sort-lines-dwim "M-o" shuffle-lines
-                      "s" replace-string  "M-s" replace-regexp
-                      "l" upcase-dwim     "M-l" downcase-dwim
-                      "j" join-lines      "M-j" break-line
-                      "k" flush-lines     "M-k" keep-lines
-                      "p" fill-paragraph  "M-p" fill-region-justify
+                      "o" sort-lines-bor "M-o" shuffle-lines
+                      "s" replace-string "M-s" replace-regexp
+                      "l" upcase-dwim    "M-l" downcase-dwim
+                      "j" join-lines     "M-j" break-line
+                      "k" flush-lines    "M-k" keep-lines
+                      "p" fill-paragraph "M-p" fill-region-justify
                       "u" uniq-lines
                       "i" invert-chars
                       "e" enumerate-lines
@@ -948,22 +948,23 @@
 
 (defun shuffle-lines ()
   (interactive)
+  (message "Shuffling lines...")
   (shell-command-on-region-or-buffer "shuf"))
 
 
-(defun sort-lines-dwim ()
+(defun sort-lines-bor ()
   (interactive)
-  (shell-command-on-region-or-buffer "sort"))
+  (apply #'sort-lines (cons nil (buffer-or-region))))
 
 
 (defun uniq-lines ()
   (interactive)
-  (shell-command-on-region-or-buffer "sort -u"))
+  (apply #'delete-duplicate-lines (buffer-or-region)))
 
 
 (defun reverse-lines ()
   (interactive)
-  (shell-command-on-region-or-buffer "tac"))
+  (apply #'reverse-region (buffer-or-region)))
 
 
 (defun enumerate-lines ()
