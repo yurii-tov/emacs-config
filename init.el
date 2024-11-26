@@ -953,6 +953,7 @@
 
 
 (defun sort-lines-bor ()
+  "Sorts lines in Buffer Or Region (if selected)"
   (interactive)
   (apply #'sort-lines (cons nil (buffer-or-region))))
 
