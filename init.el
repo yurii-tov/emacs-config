@@ -1166,29 +1166,6 @@
   (advice-add x :around #'fix-flush-lines))
 
 
-(defun fix-sort-lines (f &rest args)
-  "Fixes sort-lines. Now it:
-   - Operates on whole buffer instead of \"from current point\""
-  (if (use-region-p)
-      (apply f args)
-    (apply f (list (car args) (point-min) (point-max)))))
-
-
-(advice-add 'sort-lines :around #'fix-sort-lines)
-
-
-(defun fix-delete-duplicate-lines (f &rest args)
-  "Fixes delete-duplicate-lines. Now it:
-   - Operates on whole buffer instead of \"from current point\""
-  (if (use-region-p)
-      (apply f args)
-    (apply f (append (list (point-min) (point-max))
-                     (cddr args)))))
-
-
-(advice-add 'delete-duplicate-lines :around #'fix-delete-duplicate-lines)
-
-
 ;; When rectangular region is selected, C-SPC activates multiline editing
 
 
