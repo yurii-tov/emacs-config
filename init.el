@@ -187,16 +187,16 @@
 (define-custom-keymap text-transform-map "M-c"
                       "c" toggle-char-case
                       "M-c" duplicate-dwim
-                      "o" sort-lines     "M-o" shuffle-lines
-                      "s" replace-string "M-s" replace-regexp
-                      "l" upcase-dwim    "M-l" downcase-dwim
-                      "j" join-lines     "M-j" break-line
-                      "k" flush-lines    "M-k" keep-lines
-                      "p" fill-paragraph "M-p" fill-region-justify
-                      "u" delete-duplicate-lines
+                      "o" sort-lines-dwim "M-o" shuffle-lines
+                      "s" replace-string  "M-s" replace-regexp
+                      "l" upcase-dwim     "M-l" downcase-dwim
+                      "j" join-lines      "M-j" break-line
+                      "k" flush-lines     "M-k" keep-lines
+                      "p" fill-paragraph  "M-p" fill-region-justify
+                      "u" uniq-lines
                       "i" invert-chars
                       "e" enumerate-lines
-                      "r" reverse-region
+                      "r" reverse-lines
                       "SPC" wrap-with-text)
 
 
@@ -962,15 +962,34 @@
                                       #'string-equal))))))))
 
 
-(defun shuffle-lines ()
-  (interactive)
+(defun shell-command-on-region-or-buffer (command)
   (apply #'shell-command-on-region
          (append (if (use-region-p)
                      (list (region-beginning)
-                           (region-end))
+                           (min (point-max) (1+ (region-end))))
                    (list (point-min)
                          (point-max)))
-                 (list "shuf" (current-buffer) t))))
+                 (list command (current-buffer) t))))
+
+
+(defun shuffle-lines ()
+  (interactive)
+  (shell-command-on-region-or-buffer "shuf"))
+
+
+(defun sort-lines-dwim ()
+  (interactive)
+  (shell-command-on-region-or-buffer "sort"))
+
+
+(defun uniq-lines ()
+  (interactive)
+  (shell-command-on-region-or-buffer "sort -u"))
+
+
+(defun reverse-lines ()
+  (interactive)
+  (shell-command-on-region-or-buffer "tac"))
 
 
 (defun enumerate-lines ()
