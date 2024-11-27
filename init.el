@@ -1164,6 +1164,10 @@
 ;; Multiline editing
 
 
+(dolist (x (number-sequence ?\  ?~))
+  (define-key rectangle-mark-mode-map (kbd (char-to-string x)) 'ignore))
+
+
 (bind-keys '("w" wrap-with-text
              "s" string-rectangle)
            rectangle-mark-mode-map)
