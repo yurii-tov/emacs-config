@@ -1169,7 +1169,7 @@
 
 
 (bind-keys '("w" wrap-with-text
-             "s" string-rectangle)
+             "SPC" string-rectangle)
            rectangle-mark-mode-map)
 
 
