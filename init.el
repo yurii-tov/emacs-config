@@ -1164,15 +1164,15 @@
 ;; When rectangular region is selected, C-SPC activates multiline editing
 
 
-(defun multiline-edit (f &rest args)
-  (if rectangle-mark-mode
-      (if current-prefix-arg
-          (call-interactively 'wrap-with-text)
-        (call-interactively 'string-rectangle))
-    (apply f args)))
+(defun multiline-edit-dwim ()
+  (interactive)
+  (if (zerop (car (rectangle-dimensions (region-beginning)
+                                        (region-end))))
+      (call-interactively 'string-rectangle)
+    (call-interactively 'wrap-with-text)))
 
 
-(advice-add 'set-mark-command :around 'multiline-edit)
+(define-key rectangle-mark-mode-map (kbd "C-SPC") 'multiline-edit-dwim)
 
 
 ;; enable hex mode on regions
