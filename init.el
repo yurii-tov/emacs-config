@@ -3125,6 +3125,7 @@ Process .+
                                  style))
     (when java-p
       (save-excursion
+        (beginning-of-buffer)
         (while (re-search-forward "\\(
  *\\)->" nil t)
           (replace-match " ->\\1  ")
