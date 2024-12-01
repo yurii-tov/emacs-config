@@ -3167,7 +3167,7 @@ Process .+
                                  parsers :test #'equal)
                         (completing-read "Use parser: " parsers)))
         (message "Formatting using '%s' parser" prettier-parser)))
-    (pretty-print-buffer (format "%s --tab-width 4 %s%s"
+    (pretty-print-buffer (format "%s --no-color --tab-width 4 %s%s"
                                  prettier
                                  (if (eq major-mode 'java-mode)
                                      (format "--plugin %s "
