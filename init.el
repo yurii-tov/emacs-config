@@ -3167,16 +3167,15 @@ Process .+
                                  parsers :test #'equal)
                         (completing-read "Use parser: " parsers)))
         (message "Formatting using '%s' parser" prettier-parser)))
-    (pretty-print-buffer (format "%s --tab-width 4 --print-width 90 --plugin %s %s"
+    (pretty-print-buffer (format "%s %s"
                                  prettier
-                                 (expand-file-name "npm/node_modules/prettier-plugin-java/dist/index.js" "~")
                                  (if fname
                                      (format "--stdin-filepath %s" fname)
                                    (format "--parser %s" prettier-parser))))))
 
 
 (when prettier
-  (dolist (m '(js-mode java-mode mhtml-mode html-mode css-mode))
+  (dolist (m '(js-mode mhtml-mode html-mode css-mode))
     (add-to-list 'pretty-printers (cons m 'prettier-pprint-buffer))))
 
 
