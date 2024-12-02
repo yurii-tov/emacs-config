@@ -3171,7 +3171,10 @@ Process .+
                                  prettier
                                  (if (eq major-mode 'java-mode)
                                      (format "--plugin %s "
-                                             (expand-file-name "npm/node_modules/prettier-plugin-java/dist/index.js" "~"))
+                                             (expand-file-name
+                                              "prettier-plugin-java/dist/index.js"
+                                              (string-trim
+                                               (shell-command-to-string "npm root -g"))))
                                    "")
                                  (if fname
                                      (format "--stdin-filepath %s" fname)
