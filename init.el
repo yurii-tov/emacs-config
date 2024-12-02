@@ -1698,12 +1698,12 @@
   (bind-keys '("M-p" eglot-code-actions
                "M-." xref-find-definitions
                "C-c C-i" eldoc-print-current-symbol-info
-               "C-c C-n" eglot-rename
                "C-c C-o" flymake-show-buffer-diagnostics
                "C-c C-p" flymake-show-project-diagnostics
-               "C-c C-SPC" eglot-code-action-organize-imports
                "C-c C-j" eglot-code-action-extract
-               "C-c C-k" eglot-code-action-inline)
+               "C-c C-k" eglot-rename
+               "C-c C-l" eglot-code-action-organize-imports
+               "C-c C-n" eglot-code-action-inline)
              eglot-mode-map)
 
   ;; Do not clutter company settings
