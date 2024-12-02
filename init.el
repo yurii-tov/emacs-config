@@ -3203,7 +3203,7 @@ Process .+
 
 (defun xml-pretty-print-buffer ()
   (interactive)
-  (pretty-print-buffer (format "%s --format -" xmllint)))
+  (pretty-print-buffer (format "%s --format - | sed 's:\\(^  *\\):\\1\\1:'" xmllint)))
 
 
 (when xmllint
