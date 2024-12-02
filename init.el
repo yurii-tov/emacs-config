@@ -3115,25 +3115,9 @@ Process .+
   (interactive)
   (let* ((extension (or (file-name-extension (or (buffer-file-name) ""))
                         (replace-regexp-in-string "-mode" "" (symbol-name major-mode))))
-         (java-p (equal extension "java"))
-         (style (if java-p
-                    "'{BasedOnStyle: Chromium, ContinuationIndentWidth: 4, MaxEmptyLinesToKeep: 2}'"
-                  "WebKit")))
-    (pretty-print-buffer (format "%s --assume-filename=.%s --style=%s"
-                                 clang-format
-                                 extension
-                                 style))
-    (when java-p
-      (save-excursion
-        (beginning-of-buffer)
-        (while (re-search-forward "\\(
- *\\)->" nil t)
-          (replace-match " ->\\1  ")
-          (save-excursion
-            (backward-up-list)
-            (let ((s (point)))
-              (forward-sexp)
-              (indent-rigidly s (point) -3))))))))
+         (style "'{BasedOnStyle: Chromium, ContinuationIndentWidth: 4, MaxEmptyLinesToKeep: 1}'"))
+    (pretty-print-buffer
+     (format "%s --assume-filename=.%s --style=%s" clang-format extension style))))
 
 
 (when clang-format
