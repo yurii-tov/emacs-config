@@ -3152,9 +3152,12 @@ Process .+
 
 (defun prettier-pprint-folder (directory)
   (interactive "DReformat files in: ")
-  (let ((default-directory directory))
+  (let ((default-directory directory)
+        (pattern (if current-prefix-arg
+                     (read-string "Pattern: " "./**/*")
+                   "./**/*")))
     (message "Formatting '%s'..." directory)
-    (shell-command "prettier --write --no-color --ignore-unknown ./**/*")))
+    (shell-command (format "prettier --write --no-color --ignore-unknown %s" pattern))))
 
 
 (defun prettier-pprint-buffer ()
