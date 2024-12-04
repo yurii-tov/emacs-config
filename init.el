@@ -3151,7 +3151,7 @@ Process .+
   (let* ((target (format "%s**/%s" directory pattern))
          (command (format "%s --write %s %s"
                           prettier
-                          (prettier-options (string-match-p "java" pattern))
+                          (prettier-options t)
                           target)))
     (message "Formatting '%s'..." target)
     (shell-command command)
