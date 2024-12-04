@@ -3134,14 +3134,25 @@ Process .+
 
 
 (defun prettier-options (&optional with-java-plugin-p)
-  (format "%s--ignore-unknown --no-color --print-width 100 --tab-width 4"
-          (if with-java-plugin-p
-              (format "--plugin %s "
-                      (expand-file-name
-                       "prettier-plugin-java/dist/index.js"
-                       (string-trim
-                        (shell-command-to-string "npm root -g"))))
-            "")))
+  (let ((config-file (expand-file-name ".prettierrc"
+                                       (if system-type-is-windows
+                                           (getenv "USERPROFILE")
+                                         "~"))))
+    (when (or (not (file-exists-p config-file))
+              current-prefix-arg)
+      (with-temp-buffer
+        (insert "{\"printWidth\":100, \"overrides\":[{\"files\":\"*.java\",\"options\":{\"tabWidth\":4}}]}")
+        (json-pretty-print-buffer)
+        (write-file config-file))
+      (message "Config written: %s" config-file))
+    (format "%s--ignore-unknown --no-color"
+            (if with-java-plugin-p
+                (format "--plugin %s "
+                        (expand-file-name
+                         "prettier-plugin-java/dist/index.js"
+                         (string-trim
+                          (shell-command-to-string "npm root -g"))))
+              ""))))
 
 
 (defun prettier-pprint-folder (directory pattern)
