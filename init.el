@@ -3133,6 +3133,31 @@ Process .+
 (setq prettier (executable-find "prettier"))
 
 
+(defun prettier-options (&optional with-java-plugin-p)
+  (format "%s--ignore-unknown --no-color --print-width 100 --tab-width 4"
+          (if with-java-plugin-p
+              (format "--plugin %s "
+                      (expand-file-name
+                       "prettier-plugin-java/dist/index.js"
+                       (string-trim
+                        (shell-command-to-string "npm root -g"))))
+            "")))
+
+
+(defun prettier-pprint-folder (directory pattern)
+  (interactive (list (read-directory-name "Directory: ")
+                     (read-string "Files to format: " nil
+                                  'prettier-files-history)))
+  (let* ((target (format "%s**/%s" directory pattern))
+         (command (format "%s --write %s %s"
+                          prettier
+                          (prettier-options (string-match-p "java" pattern))
+                          target)))
+    (message "Formatting '%s'..." target)
+    (shell-command command)
+    (message "Formatting '%s'... Done" target)))
+
+
 (defun prettier-pprint-buffer ()
   (interactive)
   (let* ((fname (buffer-file-name))
@@ -3151,15 +3176,9 @@ Process .+
                                  parsers :test #'equal)
                         (completing-read "Use parser: " parsers)))
         (message "Formatting using '%s' parser" prettier-parser)))
-    (pretty-print-buffer (format "%s --no-color --print-width 100 --tab-width 4 %s%s"
+    (pretty-print-buffer (format "%s %s %s"
                                  prettier
-                                 (if (eq major-mode 'java-mode)
-                                     (format "--plugin %s "
-                                             (expand-file-name
-                                              "prettier-plugin-java/dist/index.js"
-                                              (string-trim
-                                               (shell-command-to-string "npm root -g"))))
-                                   "")
+                                 (prettier-options (eq major-mode 'java-mode))
                                  (if fname
                                      (format "--stdin-filepath %s" fname)
                                    (format "--parser %s" prettier-parser))))))
