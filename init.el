@@ -3133,27 +3133,24 @@ Process .+
 (setq prettier (executable-find "prettier"))
 
 
-(defun prettier-options (&optional with-java-plugin-p)
-  (let ((config-file (expand-file-name ".prettierrc"
-                                       (if system-type-is-windows
-                                           (getenv "USERPROFILE")
-                                         "~"))))
-    (when (or (not (file-exists-p config-file))
-              current-prefix-arg)
-      (with-temp-buffer
-        (insert (json-encode '((printWidth . 100)
-                               (overrides . (((files . "*.java")
-                                              (options . ((tabWidth . 4)))))))))
-        (json-pretty-print-buffer)
-        (write-file config-file)))
-    (format "%s--ignore-unknown --no-color"
-            (if with-java-plugin-p
-                (format "--plugin %s "
-                        (expand-file-name
-                         "prettier-plugin-java/dist/index.js"
-                         (string-trim
-                          (shell-command-to-string "npm root -g"))))
-              ""))))
+(defun prettier-write-options ()
+  (interactive)
+  (let* ((config-file (expand-file-name ".prettierrc"
+                                        (if system-type-is-windows
+                                            (getenv "USERPROFILE")
+                                          "~")))
+         (java-plugin (expand-file-name
+                       "prettier-plugin-java/dist/index.js"
+                       (string-trim
+                        (shell-command-to-string "npm root -g"))))
+         (config `((printWidth . 100)
+                   (overrides . (((files . "*.java")
+                                  (options . ((tabWidth . 4)
+                                              (plugins . (,java-plugin))))))))))
+    (with-temp-buffer
+      (insert (json-encode config))
+      (json-pretty-print-buffer)
+      (write-file config-file))))
 
 
 (defun prettier-pprint-folder (directory pattern)
@@ -3161,10 +3158,7 @@ Process .+
                      (read-string "Files to format: " nil
                                   'prettier-files-history)))
   (let* ((target (format "%s**/%s" directory pattern))
-         (command (format "%s --write %s %s"
-                          prettier
-                          (prettier-options t)
-                          target)))
+         (command (format "%s --write --ignore-unknown %s" prettier target)))
     (message "Formatting '%s'..." target)
     (shell-command command)
     (message "Formatting '%s'... Done" target)))
@@ -3188,15 +3182,15 @@ Process .+
                                  parsers :test #'equal)
                         (completing-read "Use parser: " parsers)))
         (message "Formatting using '%s' parser" prettier-parser)))
-    (pretty-print-buffer (format "%s %s %s"
+    (pretty-print-buffer (format "%s --no-color %s"
                                  prettier
-                                 (prettier-options (eq major-mode 'java-mode))
                                  (if fname
                                      (format "--stdin-filepath %s" fname)
                                    (format "--parser %s" prettier-parser))))))
 
 
 (when prettier
+  (prettier-write-options)
   (dolist (m '(js-mode java-mode mhtml-mode html-mode css-mode))
     (add-to-list 'pretty-printers (cons m 'prettier-pprint-buffer))))
 
