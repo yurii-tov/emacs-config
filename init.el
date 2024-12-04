@@ -3130,9 +3130,6 @@ Process .+
 ;; ========
 
 
-(setq prettier (executable-find "prettier"))
-
-
 (defun prettier-write-options ()
   (interactive)
   (let* ((config-file (expand-file-name ".prettierrc"
@@ -3166,8 +3163,7 @@ Process .+
          (default-directory "~"))
     (unless (or fname (boundp 'prettier-parser))
       (let ((parsers (string-split (with-temp-buffer
-                                     (insert (shell-command-to-string
-                                              (format "%s -h" prettier)))
+                                     (insert (shell-command-to-string "prettier -h"))
                                      (goto-char 1)
                                      (buffer-substring (search-forward "--parser <")
                                                        (1- (search-forward ">"))))
@@ -3178,8 +3174,7 @@ Process .+
                                  parsers :test #'equal)
                         (completing-read "Use parser: " parsers)))
         (message "Formatting using '%s' parser" prettier-parser)))
-    (pretty-print-buffer (format "%s --no-color %s"
-                                 prettier
+    (pretty-print-buffer (format "prettier --no-color %s"
                                  (if fname
                                      (format "--stdin-filepath %s" fname)
                                    (format "--parser %s" prettier-parser))))))
@@ -3190,7 +3185,7 @@ Process .+
   (prettier-pprint-folder (project-root (project-current t))))
 
 
-(when prettier
+(when (executable-find "prettier")
   (prettier-write-options)
   (add-to-list 'project-switch-commands
                '(project-prettier-reformat "Reformat project with Prettier")
