@@ -3153,12 +3153,12 @@ Process .+
       (write-file config-file))))
 
 
-(defun prettier-pprint-folder (directory pattern)
-  (interactive (list (read-directory-name "Directory: ")
-                     (read-string "Files to format: " nil
-                                  'prettier-files-history)))
-  (let* ((target (format "%s**/%s" directory pattern))
-         (command (format "%s --write --ignore-unknown %s" prettier target)))
+(defun prettier-pprint-folder (directory)
+  (interactive "DReformat files in: ")
+  (let* ((pattern (if current-prefix-arg (read-string "Pattern: ") "*"))
+         (target (format "%s**/%s" directory pattern))
+         (command (format "%s --write --no-color --ignore-unknown %s" prettier target))
+         (default-directory "~"))
     (message "Formatting '%s'..." target)
     (shell-command command)
     (message "Formatting '%s'... Done" target)))
