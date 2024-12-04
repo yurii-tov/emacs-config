@@ -3189,8 +3189,17 @@ Process .+
                                    (format "--parser %s" prettier-parser))))))
 
 
+(defun project-prettier-reformat ()
+  (interactive)
+  (prettier-pprint-folder (project-root (project-current t))))
+
+
 (when prettier
   (prettier-write-options)
+  (add-to-list 'project-switch-commands
+               '(project-prettier-reformat "Reformat project with Prettier")
+               t)
+  (define-key project-prefix-map (kbd "i") 'project-prettier-reformat)
   (dolist (m '(js-mode java-mode mhtml-mode html-mode css-mode))
     (add-to-list 'pretty-printers (cons m 'prettier-pprint-buffer))))
 
