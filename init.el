@@ -3141,7 +3141,9 @@ Process .+
     (when (or (not (file-exists-p config-file))
               current-prefix-arg)
       (with-temp-buffer
-        (insert "{\"printWidth\":100, \"overrides\":[{\"files\":\"*.java\",\"options\":{\"tabWidth\":4}}]}")
+        (insert (json-encode '((printWidth . 100)
+                               (overrides . (((files . "*.java")
+                                              (options . ((tabWidth . 4)))))))))
         (json-pretty-print-buffer)
         (write-file config-file)))
     (format "%s--ignore-unknown --no-color"
