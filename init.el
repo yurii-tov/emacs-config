@@ -3143,8 +3143,7 @@ Process .+
       (with-temp-buffer
         (insert "{\"printWidth\":100, \"overrides\":[{\"files\":\"*.java\",\"options\":{\"tabWidth\":4}}]}")
         (json-pretty-print-buffer)
-        (write-file config-file))
-      (message "Config written: %s" config-file))
+        (write-file config-file)))
     (format "%s--ignore-unknown --no-color"
             (if with-java-plugin-p
                 (format "--plugin %s "
