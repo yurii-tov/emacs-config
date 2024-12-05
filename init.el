@@ -2754,7 +2754,7 @@ Example input:
          (existing (assoc default-directory project-build-commands #'equal))
          (command (cdr existing)))
     (when (or (not command) current-prefix-arg)
-      (setq command (read-shell-command "Build command: " command))
+      (setq command (read-string "Build command: " command 'build-command-history))
       (setq project-build-commands (remove existing project-build-commands))
       (push (cons default-directory command)
             project-build-commands))
