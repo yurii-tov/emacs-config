@@ -254,7 +254,8 @@
 
 (bind-keys '("SPC" project-dired
              "b" project-build
-             "l" project-vcs-log)
+             "l" project-vcs-log
+             "i" project-reformat)
            project-prefix-map)
 
 
@@ -2729,7 +2730,8 @@ Example input:
         (project-vc-dir "View VCS status")
         (project-shell "Shell")
         (project-find-file "Find file")
-        (project-find-regexp "Find regexp")))
+        (project-find-regexp "Find regexp")
+        (project-reformat "Reformat project files")))
 
 
 (defun project-vcs-log ()
@@ -2757,6 +2759,22 @@ Example input:
       (push (cons default-directory command)
             project-build-commands))
     (async-shell-command command)))
+
+
+(defun project-reformat ()
+  (interactive)
+  (let* ((default-directory (project-root (project-current t)))
+         (command (cdr (cl-find-if (lambda (x) (file-exists-p (car x)))
+                                   '(("Cargo.toml" . "cargo fmt"))))))
+    (cond (command (let ((msg (format "Running %s on %s..."
+                                      (propertize command 'face 'compilation-info)
+                                      default-directory)))
+                     (message msg)
+                     (shell-command command)
+                     (message "%sDone" msg)))
+          ((executable-find "prettier")
+           (prettier-pprint-folder default-directory))
+          (t (error "There is no formatting tools available")))))
 
 
 ;; ==========
@@ -3156,7 +3174,7 @@ Process .+
         (pattern (if current-prefix-arg
                      (read-string "Pattern: " "./**/*")
                    "./**/*")))
-    (message "Formatting '%s'..." directory)
+    (message "Formatting '%s' with Prettier..." directory)
     (shell-command (format "prettier --write --no-color --ignore-unknown %s" pattern))))
 
 
@@ -3183,17 +3201,8 @@ Process .+
                                    (format "--parser %s" prettier-parser))))))
 
 
-(defun project-prettier-reformat ()
-  (interactive)
-  (prettier-pprint-folder (project-root (project-current t))))
-
-
 (when (executable-find "prettier")
   (prettier-write-options)
-  (add-to-list 'project-switch-commands
-               '(project-prettier-reformat "Reformat project with Prettier")
-               t)
-  (define-key project-prefix-map (kbd "i") 'project-prettier-reformat)
   (dolist (m '(js-mode java-mode mhtml-mode html-mode css-mode))
     (add-to-list 'pretty-printers (cons m 'prettier-pprint-buffer))))
 
