@@ -2724,13 +2724,13 @@ Example input:
 
 (setq project-switch-commands
       '((project-dired "Open project root")
-        (project-build "Build")
-        (project-find-dir "Find directory")
-        (project-vcs-log "View VCS history")
-        (project-vc-dir "View VCS status")
-        (project-shell "Shell")
         (project-find-file "Find file")
+        (project-find-dir "Find directory")
         (project-find-regexp "Find regexp")
+        (project-vc-dir "View VCS status")
+        (project-vcs-log "View VCS history")
+        (project-shell "Shell")
+        (project-build "Build")
         (project-reformat "Reformat project files")))
 
 
