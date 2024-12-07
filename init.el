@@ -415,15 +415,21 @@
 (add-hook 'emacs-startup-hook 'welcome)
 
 
-;; line highlight indication
+;; highlight current line
 
 
-(dolist (x '(prog-mode-hook
-             sgml-mode-hook
-             conf-mode-hook
-             log-view-mode-hook
-             org-agenda-mode-hook))
-  (add-hook x 'hl-line-mode))
+(global-hl-line-mode)
+
+
+(defun disable-hl-line-mode ()
+  (hl-line-mode 'toggle))
+
+
+(dolist (x '(org-mode-hook
+             comint-mode-hook
+             vc-git-log-edit-mode-hook
+             cider-repl-mode-hook))
+  (add-hook x 'disable-hl-line-mode))
 
 
 ;; highlight parentheses
@@ -811,9 +817,6 @@
 
 
 (add-hook 'dired-mode-hook 'dired-hide-details-mode)
-
-
-(add-hook 'dired-mode-hook 'hl-line-mode)
 
 
 (add-hook 'dired-mode-hook 'auto-revert-mode)
@@ -1936,8 +1939,7 @@
            ("IDE" (name . "^\\*EGLOT.*$"))
            ("System" (or (name . "^\\*scratch\\*$")
                          (name . "^\\*Messages\\*$"))))))
-  (ibuffer-switch-to-saved-filter-groups "default")
-  (hl-line-mode))
+  (ibuffer-switch-to-saved-filter-groups "default"))
 
 
 (add-hook 'ibuffer-mode-hook 'ibuffer-setup)
