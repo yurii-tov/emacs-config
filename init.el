@@ -92,14 +92,21 @@
       (package-install p))))
 
 
-;; file for auto-saving customization data
+;; site-specific customizations
 
 
-(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(progn (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+       (load custom-file t))
 
 
-(when (file-exists-p custom-file)
-  (load-file custom-file))
+(defun load-site-settings ()
+  (let ((site-file (expand-file-name "site.el" user-emacs-directory)))
+    (if (file-exists-p site-file)
+        (load-file site-file)
+      (with-temp-buffer (write-file site-file)))))
+
+
+(add-hook 'emacs-startup-hook 'load-site-settings)
 
 
 ;; enable unix'y things from MSYS2
@@ -3597,14 +3604,3 @@ Process .+
     (with-current-buffer b
       (when (eq major-mode 'nov-mode)
         (nov-font-setup)))))
-
-
-;; ===========================
-;; load site-specific settings
-;; ===========================
-
-
-(let ((site-file (expand-file-name "site.el" user-emacs-directory)))
-  (if (file-exists-p site-file)
-      (load-file site-file)
-    (with-temp-buffer (write-file site-file))))
