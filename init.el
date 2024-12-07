@@ -3228,9 +3228,6 @@ Process .+
              (cons (concat "\\." (regexp-opt '("xml" "xsd" "xslt" "xsl" "wsdl" "xml.template" "pom" "jmx") t) "\\'") 'sgml-mode))
 
 
-(setq sgml-basic-offset 4)
-
-
 (setq xmllint (executable-find "xmllint"))
 
 
