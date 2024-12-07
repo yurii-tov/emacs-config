@@ -1272,7 +1272,8 @@
 
 (bind-keys '("C-j" icomplete-fido-exit
              "M-j" icomplete-force-complete
-             "SPC" self-insert-command)
+             "SPC" self-insert-command
+             "?" self-insert-command)
            icomplete-minibuffer-map)
 
 
@@ -1324,6 +1325,7 @@
 
 (bind-keys '("M-j" ido-take-first-match
              "SPC" self-insert-command
+             "?" self-insert-command
              "M-SPC" ido-toggle-prefix
              "C-p" ido-prev-match
              "C-n" ido-next-match
