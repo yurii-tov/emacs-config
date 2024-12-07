@@ -1030,9 +1030,10 @@
   "Wraps current word (or region) with given bracket-like strings
    (e.g. brackets/quotes/apostrophes/parens etc.).
    When rectangle selection is in effect, applies wrapping on each *line* of that selection"
-  (interactive (let* ((s (read-string (format "Wrap with arbitrary brackets (use %s char if needed): "
-                                              (propertize "?" 'face 'font-lock-builtin-face))
-                                      nil nil))
+  (interactive (let* ((s (read-string
+                          (format "Wrap with arbitrary brackets (use %s char if needed): "
+                                  (propertize "?" 'face 'font-lock-builtin-face))
+                          nil nil))
                       (bs (split-string s "\\?")))
                  (if (> (length bs) 1) bs
                    (list (substring s 0 (/ (length s) 2))
@@ -1047,15 +1048,16 @@
                                  (split-string (apply #'buffer-substring bounds) "\n")))
                   (col (save-excursion (goto-char (car bounds)) (current-column))))
              (apply #'delete-region bounds)
-             (insert (string-join (cons (format "%s%s%s" b1 (car lines) b2)
-                                        (mapcar (lambda (x)
-                                                  (let ((offset (min col (length x))))
-                                                    (format "%s%s" (concat (substring x 0 offset)
-                                                                           b1
-                                                                           (substring x offset))
-                                                            b2)))
-                                                (cdr lines)))
-                                  "\n"))))
+             (insert (string-join
+                      (cons (format "%s%s%s" b1 (car lines) b2)
+                            (mapcar (lambda (x)
+                                      (let ((offset (min col (length x))))
+                                        (format "%s%s" (concat (substring x 0 offset)
+                                                               b1
+                                                               (substring x offset))
+                                                b2)))
+                                    (cdr lines)))
+                      "\n"))))
           ((use-region-p)
            (let ((s (region-beginning))
                  (e (region-end)))
