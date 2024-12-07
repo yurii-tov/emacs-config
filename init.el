@@ -884,11 +884,11 @@
               css-indent-offset 2)
 
 
-(defun setup-html-mode ()
+(defun html-setup-offset ()
   (setq-local sgml-basic-offset 2))
 
 
-(add-hook 'html-mode-hook 'setup-html-mode)
+(add-hook 'html-mode-hook 'html-setup-offset)
 
 
 ;; overwrite selected text
