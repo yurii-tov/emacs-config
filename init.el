@@ -873,10 +873,22 @@
 (require 'rect)
 
 
-;; use spaces for indentation
+;; indentation
 
 
 (setq-default indent-tabs-mode nil)
+
+
+(setq-default sgml-basic-offset 4
+              js-indent-level 2
+              css-indent-offset 2)
+
+
+(defun setup-html-mode ()
+  (setq-local sgml-basic-offset 2))
+
+
+(add-hook 'html-mode-hook 'setup-html-mode)
 
 
 ;; overwrite selected text
