@@ -291,6 +291,7 @@
              "M-u" force-revert-buffer
              "M-j" switch-to-buffer
              "M-`" shell
+             "M-g" goto-line
              "C-=" text-scale-increase
              "C-M-=" text-scale-decrease
              "C-+" (lambda () (interactive) (text-scale-set 0))
