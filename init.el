@@ -2655,9 +2655,6 @@ Example input:
 (require 'shell)
 
 
-;; M-x shell enhancements
-
-
 (advice-add 'shell
             :around
             (lambda (f &rest args)
@@ -2668,16 +2665,19 @@ Example input:
                             "sh" (file-name-base shell-file-name)))
                      (b (or (car args) (generate-new-buffer-name (format "*%s*" n)))))
                 (switch-to-buffer b)
-                (apply f (cons b (cdr args)))
-                (use-local-map (copy-keymap (current-local-map)))
-                (local-set-key
-                 (kbd "C-c C-j")
-                 (lambda () (interactive)
-                   (comint-save-history)
-                   (when (get-buffer-process (current-buffer))
-                     (comint-kill-subjob)
-                     (sit-for 1))
-                   (shell (buffer-name)))))))
+                (apply f (cons b (cdr args))))))
+
+
+(defun shell-restart ()
+  (interactive)
+  (comint-save-history)
+  (when (get-buffer-process (current-buffer))
+    (comint-kill-subjob)
+    (sit-for 1))
+  (shell (buffer-name)))
+
+
+(define-key shell-mode-map (kbd "C-c C-j") 'shell-restart)
 
 
 ;; Ssh sessions
