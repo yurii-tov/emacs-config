@@ -2657,18 +2657,14 @@ Example input:
 (advice-add 'shell
             :around
             (lambda (f &rest args)
-              (let* ((n "*shell*")
-                     (b (or (car args)
-                            (cl-find-if (lambda (x)
-                                          (and (string-prefix-p n x)
-                                               (equal (file-name-as-directory default-directory)
-                                                      (with-current-buffer x
-                                                        (file-name-as-directory
-                                                         default-directory)))))
-                                        (mapcar #'buffer-name (buffer-list)))
-                            (generate-new-buffer-name n))))
-                (switch-to-buffer b)
-                (apply f (cons b (cdr args))))))
+              (let* ((name "*shell*")
+                     (buffer (or (car args)
+                                 (and (get-buffer name)
+                                      (not (get-buffer-process name))
+                                      name)
+                                 (generate-new-buffer-name name))))
+                (switch-to-buffer buffer)
+                (apply f (cons buffer (cdr args))))))
 
 
 (defun shell-restart ()
