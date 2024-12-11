@@ -2662,9 +2662,10 @@ Example input:
                      (b (or (car args)
                             (cl-find-if (lambda (x)
                                           (and (string-prefix-p n x)
-                                               (equal default-directory
+                                               (equal (file-name-as-directory default-directory)
                                                       (with-current-buffer x
-                                                        default-directory))))
+                                                        (file-name-as-directory
+                                                         default-directory)))))
                                         (mapcar #'buffer-name (buffer-list)))
                             (generate-new-buffer-name n))))
                 (switch-to-buffer b)
