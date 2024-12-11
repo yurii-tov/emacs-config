@@ -290,7 +290,7 @@
              "M-i" pretty-print-buffer
              "M-u" force-revert-buffer
              "M-j" switch-to-buffer
-             "M-`" shell
+             "M-`" shell-maybe-project
              "M-g" goto-line
              "C-=" text-scale-increase
              "C-M-=" text-scale-decrease
@@ -2705,6 +2705,16 @@ Example input:
 
 
 (add-hook 'sh-mode-hook 'sh-cleanup-capf)
+
+
+;; Take project context into account
+
+
+(defun shell-maybe-project ()
+  (interactive)
+  (if (project-current)
+      (project-shell)
+    (shell)))
 
 
 ;; ===
