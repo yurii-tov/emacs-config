@@ -260,6 +260,7 @@
 
 
 (bind-keys '("SPC" project-dired
+             "`" project-shell
              "b" project-build
              "l" project-vcs-log
              "i" project-reformat)
