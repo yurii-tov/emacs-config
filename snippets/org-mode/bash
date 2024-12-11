@@ -2,6 +2,6 @@
 # name: bash code block
 # key: bash
 # --
-#+begin_src bash :result output
+#+begin_src bash :results output
   $1
 #+end_src
