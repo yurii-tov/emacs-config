@@ -2658,12 +2658,15 @@ Example input:
 (advice-add 'shell
             :around
             (lambda (f &rest args)
-              (and (get-buffer "*shell*")
-                   (not (get-buffer-process "*shell*"))
-                   (kill-buffer "*shell*"))
-              (let* ((n (if (file-remote-p default-directory)
-                            "sh" (file-name-base shell-file-name)))
-                     (b (or (car args) (generate-new-buffer-name (format "*%s*" n)))))
+              (let* ((n "*shell*")
+                     (b (or (car args)
+                            (cl-find-if (lambda (x)
+                                          (and (string-prefix-p n x)
+                                               (equal default-directory
+                                                      (with-current-buffer x
+                                                        default-directory))))
+                                        (mapcar #'buffer-name (buffer-list)))
+                            (generate-new-buffer-name n))))
                 (switch-to-buffer b)
                 (apply f (cons b (cdr args))))))
 
