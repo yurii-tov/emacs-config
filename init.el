@@ -2662,6 +2662,14 @@ Example input:
                                  (and (get-buffer name)
                                       (not (get-buffer-process name))
                                       name)
+                                 (cl-find-if (lambda (x)
+                                               (and (string-prefix-p name x)
+                                                    (equal (file-name-as-directory
+                                                            default-directory)
+                                                           (with-current-buffer x
+                                                             (file-name-as-directory
+                                                              default-directory)))))
+                                             (mapcar #'buffer-name (buffer-list)))
                                  (generate-new-buffer-name name))))
                 (switch-to-buffer buffer)
                 (apply f (cons buffer (cdr args))))))
