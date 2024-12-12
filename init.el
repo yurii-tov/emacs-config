@@ -3,6 +3,40 @@
 ;; ======
 
 
+;; third-party packages
+
+
+(require 'package)
+
+
+(setq package-archives
+      '(("gnu" . "https://elpa.gnu.org/packages/")
+        ("melpa" . "https://melpa.org/packages/")))
+
+
+(let ((packages '(ido-vertical-mode
+                  spacious-padding
+                  ligature
+                  ef-themes
+                  company
+                  yasnippet
+                  rust-mode
+                  markdown-mode
+                  cider
+                  powershell
+                  groovy-mode
+                  slime
+                  slime-company
+                  nov))
+      refreshed)
+  (dolist (p packages)
+    (unless (package-installed-p p)
+      (unless refreshed
+        (package-refresh-contents)
+        (setq refreshed t))
+      (package-install p))))
+
+
 ;; 'are we on windows?'-shortcut
 
 
@@ -56,40 +90,6 @@
 
 
 (add-hook 'emacs-startup-hook 'savehist-mode)
-
-
-;; third-party packages
-
-
-(require 'package)
-
-
-(setq package-archives
-      '(("gnu" . "https://elpa.gnu.org/packages/")
-        ("melpa" . "https://melpa.org/packages/")))
-
-
-(let ((packages '(ido-vertical-mode
-                  spacious-padding
-                  ligature
-                  ef-themes
-                  company
-                  yasnippet
-                  rust-mode
-                  markdown-mode
-                  cider
-                  powershell
-                  groovy-mode
-                  slime
-                  slime-company
-                  nov))
-      refreshed)
-  (dolist (p packages)
-    (unless (package-installed-p p)
-      (unless refreshed
-        (package-refresh-contents)
-        (setq refreshed t))
-      (package-install p))))
 
 
 ;; site-specific customizations
