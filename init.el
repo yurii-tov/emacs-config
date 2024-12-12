@@ -2654,25 +2654,31 @@ Example input:
 (require 'shell)
 
 
-(advice-add 'shell
-            :around
-            (lambda (f &rest args)
-              (let* ((name "*shell*")
-                     (buffer (or (car args)
-                                 (and (get-buffer name)
-                                      (not (get-buffer-process name))
-                                      name)
-                                 (cl-find-if (lambda (x)
-                                               (and (string-prefix-p name x)
-                                                    (equal (file-name-as-directory
-                                                            default-directory)
-                                                           (with-current-buffer x
-                                                             (file-name-as-directory
-                                                              default-directory)))))
-                                             (mapcar #'buffer-name (buffer-list)))
-                                 (generate-new-buffer-name name))))
-                (switch-to-buffer buffer)
-                (apply f (cons buffer (cdr args))))))
+(defun shell-find-same-dir-buffer (name)
+  (let ((current-dir default-directory))
+    (cl-find-if (lambda (x)
+                  (and (or (string-prefix-p name x)
+                           (string-suffix-p "-shell*" x))
+                       (with-current-buffer x
+                         (apply #'equal
+                                (mapcar (lambda (d)
+                                          (file-name-as-directory
+                                           (expand-file-name
+                                            (file-name-as-directory d))))
+                                        (list default-directory current-dir))))))
+                (mapcar #'buffer-name (buffer-list)))))
+
+
+(defun setup-shell-buffer (f &rest args)
+  (let* ((name "*shell*")
+         (buffer (or (car args)
+                     (shell-find-same-dir-buffer name)
+                     (generate-new-buffer-name name))))
+    (switch-to-buffer buffer)
+    (apply f (cons buffer (cdr args)))))
+
+
+(advice-add 'shell :around #'setup-shell-buffer)
 
 
 (defun shell-restart ()
