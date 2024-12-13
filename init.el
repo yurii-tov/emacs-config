@@ -2658,7 +2658,8 @@ Example input:
   (let ((current-dir default-directory))
     (cl-find-if (lambda (x)
                   (and (or (string-prefix-p name x)
-                           (string-suffix-p "-shell*" x))
+                           (string-suffix-p "-shell*" x)
+                           (string-prefix-p "*ssh-" x))
                        (with-current-buffer x
                          (apply #'equal
                                 (mapcar (lambda (d)
