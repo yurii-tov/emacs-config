@@ -301,8 +301,8 @@
              "C-x B" bookmark-delete
              "C-x j" bookmark-jump
              "C-x u" reopen-with-sudo
+             "C-x l" eglot
              "C-x C-b" ibuffer
-             "C-x l" hl-line-mode
              "C-x C-l" display-line-numbers-mode
              "C-x C-k" kill-buffer-and-window
              "C-x C-p" project-build
@@ -317,8 +317,7 @@
              "C-c h" hexl-mode
              "C-c c" org-capture
              "C-c a" org-agenda
-             "C-c w" tail
-             "C-c l" eglot)
+             "C-c w" tail)
            global-map)
 
 
