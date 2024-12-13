@@ -2682,18 +2682,6 @@ Example input:
 (advice-add 'shell :around #'setup-shell-buffer)
 
 
-(defun shell-restart ()
-  (interactive)
-  (comint-save-history)
-  (when (get-buffer-process (current-buffer))
-    (comint-kill-subjob)
-    (sit-for 1))
-  (shell (buffer-name)))
-
-
-(define-key shell-mode-map (kbd "C-c C-j") 'shell-restart)
-
-
 ;; Ssh sessions
 
 
