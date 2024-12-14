@@ -3160,6 +3160,9 @@ Process .+
 (sql-set-product-feature 'interbase :table-parser 'parse-isql-table)
 
 
+(setq sql-interbase-login-params '(user password (database :file)))
+
+
 ;; sqlite
 
 
