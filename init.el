@@ -433,12 +433,6 @@
   (add-hook x 'disable-hl-line-mode))
 
 
-;; highlight parentheses
-
-
-(show-paren-mode)
-
-
 ;; fonts
 
 
