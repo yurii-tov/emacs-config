@@ -2682,6 +2682,10 @@ Example input:
 (advice-add 'shell :around #'setup-shell-buffer)
 
 
+(setq shell-prompt-pattern "^[^#$%>
+]*#?[#$%>] *")
+
+
 ;; Ssh sessions
 
 
