@@ -309,6 +309,7 @@
              "C-h C-h" describe-symbol
              "C-h h" describe-symbol
              "C-c j" cider-start-map
+             "C-c k" sql-connect
              "C-c i" ielm
              "C-c s" run-ssh-session
              "C-c d" serve-directory
