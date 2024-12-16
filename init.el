@@ -885,16 +885,9 @@
 (setq-default indent-tabs-mode nil)
 
 
-(setq-default sgml-basic-offset 4
+(setq-default sgml-basic-offset 2
               js-indent-level 2
               css-indent-offset 2)
-
-
-(defun html-setup-offset ()
-  (setq-local sgml-basic-offset 2))
-
-
-(add-hook 'html-mode-hook 'html-setup-offset)
 
 
 ;; overwrite selected text
@@ -3284,7 +3277,7 @@ Process .+
 
 (defun xml-pretty-print-buffer ()
   (interactive)
-  (pretty-print-buffer (format "%s --format - | sed 's:\\(^  *\\):\\1\\1:'" xmllint)))
+  (pretty-print-buffer (format "%s --format -" xmllint)))
 
 
 (when xmllint
