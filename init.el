@@ -21,6 +21,7 @@
                   company
                   yasnippet
                   rust-mode
+                  ripgrep
                   markdown-mode
                   cider
                   powershell
@@ -171,8 +172,9 @@
 ;; extending global search map
 
 
-(bind-keys '("f" find-dired
-             "g" rgrep
+(bind-keys `("f" find-dired
+             "g" ,(if (executable-find "rg")
+                      'ripgrep-regexp 'rgrep)
              "s" browse-url-or-search
              "t" translate-en-ru-online)
            search-map)
