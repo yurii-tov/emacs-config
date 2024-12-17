@@ -47,7 +47,8 @@
 
 
 (progn (require 'cl-lib)
-       (require 'subr-x))
+       (require 'subr-x)
+       (require 'compile))
 
 
 ;; encoding
@@ -492,9 +493,6 @@
                 'face 'mode-line-emphasis)))
 
 
-(require 'compile)
-
-
 (setq-default mode-line-format
               `(" "
                 (:eval (if (member buffer-file-coding-system
@@ -800,13 +798,28 @@
       (message "This command works only for directories"))))
 
 
+(defun dired-calculate-size ()
+  (interactive)
+  (let* ((files (mapcar #'file-relative-name
+                        (dired-get-marked-files)))
+         (args (mapcar (lambda (x) (format "'%s'" x)) files)))
+    (message "Calculating size of %s..."
+             (string-join (mapcar (lambda (x)
+                                    (propertize x 'face 'compilation-info))
+                                  files)
+                          ", "))
+    (message (shell-command-to-string
+              (format "du -hsc %s" (string-join args  " "))))))
+
+
 (defun customize-dired-keys ()
   (bind-keys '("o" dired-open-in-external-app
                "/" dired-hide-details-mode
                "l" dired-up-directory
                "a" dired-archive
                "A" dired-extract-archive
-               "f" dired-flatten-directory)))
+               "f" dired-flatten-directory
+               "s" dired-calculate-size)))
 
 
 (add-hook 'dired-mode-hook 'customize-dired-keys)
@@ -2325,9 +2338,6 @@ Example input:
 
 
 ;; output command/wd
-
-
-(require 'compile)
 
 
 (defun async-shell-command-setup-echo (f &rest args)
