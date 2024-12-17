@@ -665,6 +665,7 @@
 (defun force-revert-buffer ()
   (interactive)
   (message "Force reverting buffer '%s'..." (buffer-name))
+  (yas-exit-all-snippets)
   (revert-buffer nil t t))
 
 
