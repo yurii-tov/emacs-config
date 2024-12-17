@@ -808,8 +808,10 @@
                                     (propertize x 'face 'compilation-info))
                                   files)
                           ", "))
-    (message (shell-command-to-string
-              (format "du -hsc %s" (string-join args  " "))))))
+    (shell-command
+     (format "du -hs%s %s"
+             (if (> (length args) 1) "c" "")
+             (string-join args  " ")))))
 
 
 (defun customize-dired-keys ()
