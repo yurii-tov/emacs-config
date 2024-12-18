@@ -2817,7 +2817,7 @@ Example input:
 
 
 (defun project-try-file (dir)
-  (cl-loop for pattern in '("*.iml" "pom.xml" "package.json")
+  (cl-loop for pattern in '("*.iml" "pom.xml" "package.json" ".project")
            for project-file = (locate-dominating-file
                                dir
                                (lambda (d)
@@ -2832,18 +2832,7 @@ Example input:
   (cdr project))
 
 
-(defun project-detect (dir)
-  "Combined method for project detection to handle nested projects.
-   Examines project files and version control system.
-   When both methods points to the same directory, gives priority to VCS"
-  (let ((a (project-try-vc dir))
-        (b (project-try-file dir)))
-    (cond ((and a b (apply #'equal (mapcar #'project-root (list a b)))) a)
-          ((and a b (apply #'string-prefix-p (mapcar #'project-root (list a b)))) b)
-          (t (or a b)))))
-
-
-(setq project-find-functions '(project-detect))
+(setq project-find-functions '(project-try-vc project-try-file))
 
 
 ;; ==========
