@@ -2817,13 +2817,7 @@ Example input:
 
 
 (defun project-try-file (dir)
-  (cl-loop for pattern in '("*.iml" ; Java / IntelliJ IDEA
-                            "pom.xml"
-                            "build.gradle"
-                            "project.clj" ; Clojure
-                            "Cargo.toml" ; Rust
-                            "package.json"; Javascript
-                            )
+  (cl-loop for pattern in '("*.iml" "pom.xml" "package.json")
            for project-file = (locate-dominating-file
                                dir
                                (lambda (d)
@@ -2845,7 +2839,7 @@ Example input:
   (let ((a (project-try-vc dir))
         (b (project-try-file dir)))
     (cond ((and a b (apply #'equal (mapcar #'project-root (list a b)))) a)
-          ((and a b (apply #'string-suffix-p (mapcar #'project-root (list a b)))) b)
+          ((and a b (apply #'string-prefix-p (mapcar #'project-root (list a b)))) b)
           (t (or a b)))))
 
 
