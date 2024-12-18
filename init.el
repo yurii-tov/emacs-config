@@ -2842,7 +2842,18 @@ Example input:
   (cdr project))
 
 
-(setq project-find-functions '(project-try-vc project-find-project-file))
+(defun project-detect (dir)
+  "Combined method for project detection to handle nested projects.
+   Examines project files and version control system.
+   When both methods points to the same directory, gives priority to VCS"
+  (let ((a (project-find-project-file dir))
+        (b (project-try-vc dir)))
+    (cond ((and a b (apply #'equal (mapcar #'project-root (list a b)))) b)
+          ((and a b) a)
+          (t (or a b)))))
+
+
+(setq project-find-functions '(project-detect))
 
 
 ;; ==========
