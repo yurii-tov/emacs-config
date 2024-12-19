@@ -2813,6 +2813,40 @@ Example input:
           (t (error "There is no formatting tools available")))))
 
 
+;; Better project root detection
+
+
+(defun project-try-file (dir)
+  (cl-loop for pattern in '("pom.xml" ; Java
+                            "*.iml"
+                            "build.xml"
+                            "build.gradle"
+                            "project.clj" ; Clojure
+                            "Cargo.toml" ; Rust
+                            "go.mod" ; Go
+                            "Makefile" ; C/C++
+                            "requirements.txt" ; Python
+                            "package.json"; Javascript
+                            "*.dlrproj" ; Weird stuff
+                            "project.el" ; Explicit marker
+                            )
+           for project-file = (locate-dominating-file
+                               dir
+                               (lambda (d)
+                                 (car (file-expand-wildcards
+                                       (expand-file-name pattern d)))))
+           when project-file
+           return (cons 'project-file
+                        (file-name-directory project-file))))
+
+
+(cl-defmethod project-root ((project (head project-file)))
+  (cdr project))
+
+
+(setq project-find-functions '(project-try-vc project-try-file))
+
+
 ;; ==========
 ;; SQL client
 ;; ==========
