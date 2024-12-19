@@ -2813,6 +2813,9 @@ Example input:
           (t (error "There is no formatting tools available")))))
 
 
+(add-hook 'emacs-startup-hook 'project-forget-zombie-projects)
+
+
 ;; Better project root detection
 
 
