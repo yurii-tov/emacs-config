@@ -542,11 +542,11 @@
   (scroll-up-command 5))
 
 
-;; better-looking manpages
+;; word wrap in modes which doesn't wrap by default
 
 
-(with-eval-after-load 'man
-  (add-hook 'man-common-hook 'visual-line-mode))
+(dolist (x '(man-common-hook eww-after-render-hook))
+  (add-hook x 'visual-line-mode))
 
 
 ;; =======
@@ -3536,9 +3536,6 @@ Process .+
 
 
 ;; eww
-
-
-(add-hook 'eww-after-render-hook 'visual-line-mode)
 
 
 (with-eval-after-load 'eww
