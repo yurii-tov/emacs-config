@@ -2824,14 +2824,16 @@ Example input:
                             "*.iml"
                             "build.xml"
                             "build.gradle"
+                            ".project"
                             "project.clj" ; Clojure
+                            "deps.edn"
                             "Cargo.toml" ; Rust
                             "go.mod" ; Go
                             "Makefile" ; C/C++
                             "requirements.txt" ; Python
+                            "venv"
                             "package.json"; Javascript
-                            "*.dlrproj" ; Weird stuff
-                            "project.el" ; Explicit marker
+                            "*.dlrproj" ; Weird things
                             )
            for project-file = (locate-dominating-file
                                dir
