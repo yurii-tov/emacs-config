@@ -3538,6 +3538,9 @@ Process .+
 ;; eww
 
 
+(add-hook 'eww-after-render-hook 'visual-line-mode)
+
+
 (with-eval-after-load 'eww
   ;; Setup download directory
   (when system-type-is-windows
