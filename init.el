@@ -545,8 +545,7 @@
 ;; word wrap in modes which doesn't wrap by default
 
 
-(dolist (x '(man-common-hook eww-after-render-hook))
-  (add-hook x 'visual-line-mode))
+(add-hook 'man-common-hook 'visual-line-mode)
 
 
 ;; =======
