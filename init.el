@@ -1672,8 +1672,7 @@
         (b (key-binding (kbd "TAB"))))
     (unless (or (not m)
                 buffer-read-only
-                (eq major-mode 'org-mode)
-                (eq b 'org-cycle))
+                (member b '(org-cycle next-completion)))
       (use-local-map (copy-keymap m))
       (local-set-key
        (kbd "TAB")
