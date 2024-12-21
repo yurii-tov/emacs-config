@@ -68,6 +68,16 @@
 (setq default-input-method 'russian-computer)
 
 
+(defun windows-fix-args-encoding (f &rest args)
+  (let ((coding-system-for-write 'cp1251-dos))
+    (apply f args)))
+
+
+(when system-type-is-windows
+  (dolist (x '(call-shell-region compilation-start))
+    (advice-add x :around 'windows-fix-args-encoding)))
+
+
 ;; monday-based weeks in calendar
 
 
