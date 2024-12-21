@@ -69,7 +69,7 @@
 
 
 (defun windows-fix-args-encoding (f &rest args)
-  (let ((coding-system-for-write 'cp1251-dos))
+  (let ((coding-system-for-write 'cp1251-unix))
     (apply f args)))
 
 
