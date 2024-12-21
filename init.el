@@ -96,8 +96,7 @@
 
 (setq savehist-additional-variables '(kill-ring
                                       search-ring
-                                      regexp-search-ring
-                                      project-build-commands)
+                                      regexp-search-ring)
       history-delete-duplicates t)
 
 
@@ -273,7 +272,6 @@
 
 
 (bind-keys '("SPC" project-dired
-             "b" project-build
              "l" project-vcs-log
              "i" project-reformat)
            project-prefix-map)
@@ -318,7 +316,8 @@
              "C-x C-b" ibuffer
              "C-x C-l" display-line-numbers-mode
              "C-x C-k" kill-buffer-and-window
-             "C-x C-p" project-build
+             "C-x ." compile
+             "C-x C-." recompile
              "C-h C-h" describe-symbol
              "C-h h" describe-symbol
              "C-c j" cider-start-map
@@ -2774,7 +2773,7 @@ Example input:
         (project-vc-dir "View VCS status")
         (project-vcs-log "View VCS history")
         (project-shell "Shell")
-        (project-build "Build")
+        (project-compile "Compile")
         (project-reformat "Reformat project files")))
 
 
@@ -2787,22 +2786,6 @@ Example input:
       (kill-buffer a)
       (setq b (current-buffer)))
     (switch-to-buffer b)))
-
-
-(setq project-build-commands nil)
-
-
-(defun project-build ()
-  (interactive)
-  (let* ((default-directory (project-root (project-current t)))
-         (existing (assoc default-directory project-build-commands #'equal))
-         (command (cdr existing)))
-    (when (or (not command) current-prefix-arg)
-      (setq command (read-string "Build command: " command 'build-command-history))
-      (setq project-build-commands (remove existing project-build-commands))
-      (push (cons default-directory command)
-            project-build-commands))
-    (async-shell-command command)))
 
 
 (defun project-reformat ()
