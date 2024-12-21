@@ -2843,6 +2843,32 @@ Example input:
 (setq project-find-functions '(project-try-vc project-try-file))
 
 
+;; =======
+;; Compile
+;; =======
+
+
+(defun compile-maybe-project (f &rest args)
+  (let* ((project (project-current))
+         (default-directory (if project
+                                (project-root project)
+                              default-directory)))
+    (apply f args)))
+
+
+(advice-add 'compile :around 'compile-maybe-project)
+
+
+(require 'ansi-color)
+
+
+(defun compilation-enable-ascii-codes ()
+  (ansi-color-apply-on-region (point-min) (point-max)))
+
+
+(add-hook 'compilation-filter-hook 'compilation-enable-ascii-codes)
+
+
 ;; ==========
 ;; SQL client
 ;; ==========
