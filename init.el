@@ -3209,7 +3209,7 @@ Process .+
   (interactive)
   (let* ((extension (or (file-name-extension (or (buffer-file-name) ""))
                         (replace-regexp-in-string "-mode" "" (symbol-name major-mode))))
-         (style "'{BasedOnStyle: Chromium, ContinuationIndentWidth: 4, MaxEmptyLinesToKeep: 1}'"))
+         (style "'{IndentWidth: 4}'"))
     (pretty-print-buffer
      (format "%s --assume-filename=.%s --style=%s" clang-format extension style))))
 
