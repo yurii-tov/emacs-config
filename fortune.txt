@@ -1290,3 +1290,5 @@ systemctl - Control the systemd system
 %Все лучшее, что в нас есть, определяется не свободой, а привязанностью
 %
 Плохо что ли? Хорошо!
+%
+There's never enough time to do all the nothing you want
