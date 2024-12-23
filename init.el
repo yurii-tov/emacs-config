@@ -74,8 +74,7 @@
 
 
 (when system-type-is-windows
-  (dolist (x '(call-shell-region compilation-start))
-    (advice-add x :around 'windows-fix-args-encoding)))
+  (advice-add 'compilation-start :around 'windows-fix-args-encoding))
 
 
 ;; monday-based weeks in calendar
