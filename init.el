@@ -2869,6 +2869,9 @@ Example input:
 (add-hook 'compilation-filter-hook 'compilation-enable-ascii-codes)
 
 
+(setq compilation-scroll-output t)
+
+
 ;; ==========
 ;; SQL client
 ;; ==========
