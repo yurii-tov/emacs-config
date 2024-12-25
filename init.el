@@ -555,7 +555,10 @@
 ;; word wrap in modes which doesn't wrap by default
 
 
-(add-hook 'man-common-hook 'visual-line-mode)
+(dolist (x '(man-common-hook
+             flymake-diagnostics-buffer-mode-hook
+             flymake-project-diagnostics-mode-hook))
+  (add-hook x 'visual-line-mode))
 
 
 ;; =======
