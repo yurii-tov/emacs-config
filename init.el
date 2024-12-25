@@ -1766,13 +1766,14 @@
 ;; =======
 
 
-(with-eval-after-load 'flymake
-  (defun flymake-add-indicators ()
-    (let ((setting '(" " (:eval (flymake--mode-line-counters)))))
-      (unless (equal (cadr setting) (car (last mode-line-format)))
-        (setq-local mode-line-format
-                    (append mode-line-format setting)))))
-  (add-hook 'flymake-mode-hook 'flymake-add-indicators))
+(defun flymake-add-indicators ()
+  (let ((setting '(" " (:eval (flymake--mode-line-counters)))))
+    (unless (equal (cadr setting) (car (last mode-line-format)))
+      (setq-local mode-line-format
+                  (append mode-line-format setting)))))
+
+
+(add-hook 'flymake-mode-hook 'flymake-add-indicators)
 
 
 ;; =============================================
