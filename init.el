@@ -273,8 +273,7 @@
 
 (bind-keys '("SPC" project-dired
              "l" project-vcs-log
-             "i" project-reformat
-             "a" project-async-shell-command)
+             "i" project-reformat)
            project-prefix-map)
 
 
@@ -2779,7 +2778,6 @@ Example input:
         (project-vc-dir "View VCS status")
         (project-vcs-log "View VCS history")
         (project-shell "Shell")
-        (project-async-shell-command "Run async shell command")
         (project-compile "Compile")
         (project-reformat "Reformat project files")))
 
