@@ -3277,8 +3277,8 @@ Process .+
   (interactive "DReformat files in: ")
   (let ((default-directory directory)
         (pattern (if current-prefix-arg
-                     (read-string "Pattern: " "./**/*")
-                   "./**/*")))
+                     (read-string "Pattern: " "./*")
+                   "./*")))
     (message "Formatting '%s' with Prettier..." directory)
     (shell-command (format "prettier --write --no-color --ignore-unknown %s" pattern))))
 
