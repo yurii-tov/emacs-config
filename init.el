@@ -1746,6 +1746,8 @@
                "C-c C-i" eldoc-print-current-symbol-info
                "C-c C-o" flymake-show-buffer-diagnostics
                "C-c C-p" flymake-show-project-diagnostics
+               "C-," flymake-goto-prev-error
+               "C-." flymake-goto-next-error
                "C-c C-j" eglot-code-action-extract
                "C-c C-k" eglot-rename
                "C-c C-l" eglot-code-action-organize-imports
