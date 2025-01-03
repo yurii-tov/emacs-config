@@ -1749,9 +1749,9 @@
                "C-," flymake-goto-prev-error
                "C-." flymake-goto-next-error
                "C-c C-j" eglot-code-action-extract
-               "C-c C-k" eglot-rename
+               "C-c C-k" eglot-code-action-inline
                "C-c C-l" eglot-code-action-organize-imports
-               "C-c C-n" eglot-code-action-inline)
+               "C-c C-n" eglot-rename)
              eglot-mode-map)
 
   ;; Do not clutter company settings
