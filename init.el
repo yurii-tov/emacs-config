@@ -1855,7 +1855,7 @@
   (let ((b (apply f args)))
     (prog1 b
       (with-current-buffer b
-        (let ((m (current-local-map)))
+        (when-let (m (current-local-map))
           (use-local-map (copy-keymap m))
           (local-set-key
            (kbd "RET")
