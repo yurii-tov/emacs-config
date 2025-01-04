@@ -1840,6 +1840,31 @@
 (advice-add 'eldoc--format-doc-buffer :around 'fix-eldoc)
 
 
+;; Fix link navigation
+
+
+(defun eldoc-open-url-at-point ()
+  (interactive)
+  (if-let (url (get-text-property (point) 'help-echo))
+      (progn (message "Opening doc: %s..." url)
+             (browse-url-or-search url))
+    (message "No references at point")))
+
+
+(defun eldoc-bind-keys (f &rest args)
+  (let ((b (apply f args)))
+    (prog1 b
+      (with-current-buffer b
+        (let ((m (current-local-map)))
+          (use-local-map (copy-keymap m))
+          (local-set-key
+           (kbd "RET")
+           'eldoc-open-url-at-point))))))
+
+
+(advice-add 'eldoc--format-doc-buffer :around 'eldoc-bind-keys)
+
+
 ;; =======
 ;; isearch
 ;; =======
