@@ -49,7 +49,8 @@
 
 (progn (require 'cl-lib)
        (require 'subr-x)
-       (require 'compile))
+       (require 'compile)
+       (require 'ffap))
 
 
 ;; encoding
@@ -1843,26 +1844,56 @@
 ;; Fix link navigation
 
 
+(defun eldoc-url-at-point ()
+  (if (eq (get-text-property (point) 'face)
+          'markdown-plain-url-face)
+      (ffap-url-at-point)
+    (get-text-property (point) 'help-echo)))
+
+
 (defun eldoc-open-url-at-point ()
   (interactive)
-  (if-let (url (get-text-property (point) 'help-echo))
+  (if-let (url (eldoc-url-at-point))
       (progn (message "Opening doc: %s..." url)
              (browse-url-or-search url))
     (message "No references at point")))
 
 
-(defun eldoc-bind-keys (f &rest args)
+(defun eldoc-make-nav-link-command (prop-change-fn)
+  `(lambda ()
+     (interactive)
+     (let (p found)
+       (save-excursion
+         (while
+             (and (setq p (funcall ',prop-change-fn (point)))
+                  (goto-char p)
+                  (let ((prop (get-text-property p 'face)))
+                    (not (setq found
+                               (if (listp prop)
+                                   (member 'markdown-link-face prop)
+                                 (member prop '(markdown-link-face
+                                                markdown-plain-url-face)))))))))
+       (when found
+         (goto-char p)
+         (message (eldoc-url-at-point))))))
+
+
+(defun eldoc-fix-link-navigation (f &rest args)
   (let ((b (apply f args)))
     (prog1 b
       (with-current-buffer b
         (when-let (m (current-local-map))
           (use-local-map (copy-keymap m))
-          (local-set-key
-           (kbd "RET")
-           'eldoc-open-url-at-point))))))
+          (local-set-key (kbd "RET") 'eldoc-open-url-at-point)
+          (local-set-key (kbd "TAB")
+                         (eldoc-make-nav-link-command
+                          'next-property-change))
+          (local-set-key (kbd "<backtab>")
+                         (eldoc-make-nav-link-command
+                          'previous-property-change)))))))
 
 
-(advice-add 'eldoc--format-doc-buffer :around 'eldoc-bind-keys)
+(advice-add 'eldoc--format-doc-buffer :around 'eldoc-fix-link-navigation)
 
 
 ;; =======
@@ -3634,9 +3665,6 @@ Process .+
                            query)))
              (browse-url (format (or engine ddg) query))))
           (t (browse-url (format ddg query))))))
-
-
-(require 'ffap)
 
 
 (setq ffap-url-fetcher
