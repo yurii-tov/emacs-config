@@ -1744,15 +1744,14 @@
   ;; Keybindings
   (bind-keys '("M-p" eglot-code-actions
                "M-." xref-find-definitions
-               "C-c C-i" eldoc-print-current-symbol-info
+               "C-," eglot-code-action-extract
+               "C-." eglot-rename
+               "C-;" flymake-goto-next-error
                "C-c C-o" flymake-show-buffer-diagnostics
                "C-c C-p" flymake-show-project-diagnostics
-               "C-," flymake-goto-prev-error
-               "C-." flymake-goto-next-error
-               "C-c C-j" eglot-code-action-extract
+               "C-c C-j" eldoc-print-current-symbol-info
                "C-c C-k" eglot-code-action-inline
-               "C-c C-l" eglot-code-action-organize-imports
-               "C-c C-n" eglot-rename)
+               "C-c C-l" eglot-code-action-organize-imports)
              eglot-mode-map)
 
   ;; Do not clutter company settings
