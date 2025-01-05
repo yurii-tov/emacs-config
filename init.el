@@ -1761,6 +1761,9 @@
   ;; Auto-shutdown the server
   (setq eglot-autoshutdown t)
 
+  ;; Enable echo area progress indicator
+  (setq eglot-report-progress 'messages)
+
   ;; Fix snippets + company-tng
   (advice-remove #'eglot--snippet-expansion-fn #'ignore))
 
