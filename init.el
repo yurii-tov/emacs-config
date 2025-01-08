@@ -1749,7 +1749,7 @@
                "C-;" flymake-goto-next-error
                "C-c C-o" flymake-show-buffer-diagnostics
                "C-c C-p" flymake-show-project-diagnostics
-               "C-c C-j" eldoc-print-current-symbol-info
+               "C-h C-h" eldoc-print-current-symbol-info
                "C-c C-k" eglot-code-action-inline
                "C-c C-l" eglot-code-action-organize-imports)
              eglot-mode-map)
