@@ -1750,10 +1750,10 @@
                "C-c C-o" flymake-show-buffer-diagnostics
                "C-c C-p" flymake-show-project-diagnostics
                "C-h C-h" eldoc-print-current-symbol-info
-               "C-c C-i" eglot-code-action-organize-imports
+               "C-c C-i" eglot-code-action-inline
                "C-c C-j" eglot-code-action-quickfix
                "C-c C-k" eglot-code-action-rewrite
-               "C-c C-l" eglot-code-action-inline)
+               "C-c C-l" eglot-code-action-organize-imports)
              eglot-mode-map)
 
   ;; Do not clutter company settings
