@@ -2753,6 +2753,9 @@ Example input:
                      (shell-find-same-dir-buffer name)
                      (generate-new-buffer-name name))))
     (switch-to-buffer buffer)
+    (when (and comint-input-ring
+               (not (get-buffer-process (current-buffer))))
+      (comint-save-history))
     (apply f (cons buffer (cdr args)))))
 
 
