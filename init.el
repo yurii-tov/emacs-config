@@ -3664,7 +3664,7 @@ Process .+
 
 
 (defun browse-url-or-search (query)
-  (interactive (list (read-string "URL/search query: "
+  (interactive (list (read-string "Browse (WWW search): "
                                   (when (use-region-p)
                                     (buffer-substring (region-beginning)
                                                       (region-end)))
