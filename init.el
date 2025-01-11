@@ -447,6 +447,12 @@
   (add-hook x 'disable-hl-line-mode))
 
 
+;; enumerate lines
+
+
+(add-hook 'tabulated-list-mode-hook 'display-line-numbers-mode)
+
+
 ;; fonts
 
 
