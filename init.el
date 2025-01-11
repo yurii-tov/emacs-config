@@ -2306,7 +2306,7 @@ Example input:
 
 (defun read-string-shell-command (f &rest args)
   (if shell-command-history
-      (ido-completing-read
+      (completing-read
        (car args) shell-command-history nil nil (cadr args) 'shell-command-history)
     (read-string (car args) (cadr args) 'shell-command-history)))
 
@@ -2637,7 +2637,7 @@ Example input:
 (defun comint-browse-command-history ()
   (interactive)
   (let* ((history (ring-elements comint-input-ring))
-         (command (ido-completing-read "Command history: " history))
+         (command (completing-read "Command history: " history))
          (i (cl-position command history :test #'equal)))
     (setq-local comint-input-ring-index i)
     (comint-delete-input)
