@@ -1290,7 +1290,7 @@
 ;; =====================
 
 
-;; Use fido-mode as default completion method
+;; fido-vertical-mode - default completion framework
 
 
 (fido-vertical-mode)
@@ -1304,6 +1304,14 @@
 
 
 (setq completion-auto-select t)
+
+
+(defun minibuffer-setup-completion-style ()
+  (setq-local completion-styles '(substring)))
+
+
+(add-hook 'icomplete-minibuffer-setup-hook
+          'minibuffer-setup-completion-style)
 
 
 ;; Enhance read-string with history completion
