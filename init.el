@@ -1314,6 +1314,12 @@
           'minibuffer-setup-completion-style)
 
 
+(defun icomplete--fido-ccd ()
+  "Override original `icomplete--fido-ccd`,
+   prevent completion-category-defaults tampering"
+  completion-category-defaults)
+
+
 ;; Enhance read-string with history completion
 
 
