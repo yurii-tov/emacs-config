@@ -1305,28 +1305,24 @@
 (setq completion-auto-select t)
 
 
+(defun completion-flex-restrict (f &rest args)
+  "Do not activate `flex` algorithm on long inputs"
+  (when (<= (length (car args)) 16)
+    (apply f args)))
+
+
+(dolist (x '(completion-flex-try-completion
+             completion-flex-all-completions))
+  (advice-add x :around 'completion-flex-restrict))
+
+
 (defun minibuffer-setup-completion-style ()
-  (setq-local completion-styles '(substring)))
+  (setq-local completion-styles '(substring flex)
+              completion-category-defaults nil))
 
 
 (add-hook 'icomplete-minibuffer-setup-hook
           'minibuffer-setup-completion-style)
-
-
-(defun icomplete--fido-ccd ()
-  "Override original `icomplete--fido-ccd`,
-   prevent completion-category-defaults tampering"
-  completion-category-defaults)
-
-
-(setq completion-category-overrides
-      '((email (styles substring flex))
-        (buffer (styles substring flex))
-        (project-file (styles substring flex))
-        (xref-location (styles substring flex))
-        (info-menu (styles substring flex))
-        (symbol-help (styles substring flex))
-        (unicode-name (styles substring flex))))
 
 
 ;; Enhance read-string with history completion
