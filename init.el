@@ -781,8 +781,7 @@
          (zip-command (format "zip -r '%s' %s" output files))
          (command (if (string-match-p ".tar.gz$" output)
                       tar-command
-                    zip-command))
-         (*asc-kill-buffer* t))
+                    zip-command)))
     (async-shell-command command)))
 
 
@@ -2467,13 +2466,10 @@ Example input:
 ;; handle termination
 
 
-(defvar *asc-kill-buffer* nil)
-
-
 (defun asc-handle-termination (f &rest args)
   "When the command finishes in background,
    reports its termination status and output.
-   Also kills the buffer if `*asc-kill-buffer*` is t"
+   Also kills the buffer"
   (let (r b)
     (prog1 (setq r (apply f args))
       (setq b (if (windowp r)
@@ -2498,8 +2494,7 @@ Example input:
                                            ((string-match "exited abnormally.*" e)
                                             'error)
                                            (t 'shadow))))
-                  (when ,*asc-kill-buffer*
-                    (kill-buffer ,b)))))))))))
+                  (kill-buffer ,b))))))))))
 
 
 (advice-add 'async-shell-command :around 'asc-handle-termination)
