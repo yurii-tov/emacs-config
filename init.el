@@ -705,7 +705,7 @@
 (defun tail (file)
   (interactive "fTail file: ")
   (let ((default-directory (file-name-directory file))
-        (*async-shell-command-disable-popup* nil))
+        (*asc-disable-popup* nil))
     (async-shell-command (concat "tail -f " (file-relative-name file)))))
 
 
@@ -781,8 +781,9 @@
          (zip-command (format "zip -r '%s' %s" output files))
          (command (if (string-match-p ".tar.gz$" output)
                       tar-command
-                    zip-command)))
-    (async-shell-command command "*archiver*")))
+                    zip-command))
+         (*asc-kill-buffer* t))
+    (async-shell-command command)))
 
 
 (defun dired-extract-command (archive output-dir)
@@ -806,7 +807,7 @@
                                                     output-dir))
                            (dired-get-marked-files)))
          (command (string-join commands "; ")))
-    (async-shell-command command "*archiver*")))
+    (async-shell-command command)))
 
 
 (defun dired-flatten-directory ()
@@ -2346,7 +2347,7 @@ Example input:
 ;; ===================
 
 
-(defun async-shell-command-read-wd (f &rest args)
+(defun asc-read-wd (f &rest args)
   (let* ((project (project-current))
          (project-dir (when project (project-root project)))
          (default-directory (if (called-interactively-p)
@@ -2360,15 +2361,15 @@ Example input:
     (apply f args)))
 
 
-(advice-add 'async-shell-command :around 'async-shell-command-read-wd)
+(advice-add 'async-shell-command :around 'asc-read-wd)
 
 
-(defun async-shell-command-record-wd (f &rest args)
+(defun asc-record-wd (f &rest args)
   (ido-record-work-directory default-directory)
   (apply f args))
 
 
-(advice-add 'async-shell-command :around 'async-shell-command-record-wd)
+(advice-add 'async-shell-command :around 'asc-record-wd)
 
 
 ;; enable restarting
@@ -2382,7 +2383,7 @@ Example input:
               command))))
 
 
-(defun async-shell-command-setup-restart (f &rest args)
+(defun asc-setup-restart (f &rest args)
   (let* ((r (apply f args))
          (b (if (windowp r)
                 (window-buffer r)
@@ -2407,26 +2408,26 @@ Example input:
     r))
 
 
-(advice-add 'async-shell-command :around 'async-shell-command-setup-restart)
+(advice-add 'async-shell-command :around 'asc-setup-restart)
 
 
 ;; descriptive names
 
 
-(defun async-shell-command-setup-buffer-name (f &rest args)
+(defun asc-setup-buffer-name (f &rest args)
   (let* ((command (car args))
          (buffer-name (or (cadr args)
                           (command-to-buffer-name command))))
     (apply f command buffer-name (cddr args))))
 
 
-(advice-add 'async-shell-command :around 'async-shell-command-setup-buffer-name)
+(advice-add 'async-shell-command :around 'asc-setup-buffer-name)
 
 
 ;; histfile
 
 
-(defun async-shell-command-setup-histfile (r)
+(defun asc-setup-histfile (r)
   (let ((b (if (windowp r)
                (window-buffer r)
              (process-buffer r))))
@@ -2438,13 +2439,13 @@ Example input:
     r))
 
 
-(advice-add 'async-shell-command :filter-return 'async-shell-command-setup-histfile)
+(advice-add 'async-shell-command :filter-return 'asc-setup-histfile)
 
 
 ;; output command/wd
 
 
-(defun async-shell-command-setup-echo (f &rest args)
+(defun asc-echo-startup-info (f &rest args)
   (let* ((r (apply f args))
          (b (if (windowp r)
                 (window-buffer r)
@@ -2460,14 +2461,19 @@ Example input:
           (font-lock-update))))))
 
 
-(advice-add 'async-shell-command :around 'async-shell-command-setup-echo)
+(advice-add 'async-shell-command :around 'asc-echo-startup-info)
 
 
-;; Log ASC termination
+;; handle termination
 
 
-(defun async-shell-command-log-termination (f &rest args)
-  "When ASC finishes, report its termination status and output"
+(defvar *asc-kill-buffer* nil)
+
+
+(defun asc-handle-termination (f &rest args)
+  "When the command finishes in background,
+   reports its termination status and output.
+   Also kills the buffer if `*asc-kill-buffer*` is t"
   (let (r b)
     (prog1 (setq r (apply f args))
       (setq b (if (windowp r)
@@ -2491,21 +2497,23 @@ Example input:
                                'face (cond ((equal e "finished") 'success)
                                            ((string-match "exited abnormally.*" e)
                                             'error)
-                                           (t 'shadow)))))))))))))
+                                           (t 'shadow))))
+                  (when ,*asc-kill-buffer*
+                    (kill-buffer ,b)))))))))))
 
 
-(advice-add 'async-shell-command :around #'async-shell-command-log-termination)
+(advice-add 'async-shell-command :around 'asc-handle-termination)
 
 
 ;; don't display output buffer, but promote it in switch-to-buffer menu
 ;; add some useful output to *Messages*
 
 
-(defvar *async-shell-command-disable-popup* t)
+(defvar *asc-disable-popup* t)
 
 
-(defun async-shell-command-disable-popup (f &rest args)
-  (if *async-shell-command-disable-popup*
+(defun asc-disable-popup (f &rest args)
+  (if *asc-disable-popup*
       (let (r b)
         (save-window-excursion
           (prog1 (setq r (apply f args))
@@ -2519,7 +2527,7 @@ Example input:
     (apply f args)))
 
 
-(advice-add 'async-shell-command :around #'async-shell-command-disable-popup)
+(advice-add 'async-shell-command :around 'asc-disable-popup)
 
 
 ;; ===========
