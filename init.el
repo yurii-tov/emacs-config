@@ -1320,6 +1320,16 @@
   completion-category-defaults)
 
 
+(setq completion-category-overrides
+      '((email (styles substring flex))
+        (buffer (styles substring flex))
+        (project-file (styles substring flex))
+        (xref-location (styles substring flex))
+        (info-menu (styles substring flex))
+        (symbol-help (styles substring flex))
+        (unicode-name (styles substring flex))))
+
+
 ;; Enhance read-string with history completion
 
 
