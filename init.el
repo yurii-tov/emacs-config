@@ -2357,18 +2357,11 @@ Example input:
                                                      'face 'compilation-info))
                                  project-dir)
                               default-directory)))
+    (ido-record-work-directory default-directory)
     (apply f args)))
 
 
 (advice-add 'async-shell-command :around 'asc-read-wd)
-
-
-(defun asc-record-wd (f &rest args)
-  (ido-record-work-directory default-directory)
-  (apply f args))
-
-
-(advice-add 'async-shell-command :around 'asc-record-wd)
 
 
 ;; enable restarting
