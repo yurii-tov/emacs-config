@@ -834,6 +834,18 @@
              (string-join args  " ")))))
 
 
+(defun dired-calculate-size-tree ()
+  (interactive)
+  (let* ((dir (file-relative-name (car (dired-get-marked-files))))
+         (arg (format "'%s'" dir)))
+    (if (file-directory-p dir)
+        (progn (message "Calculating size of %s..."
+                        (propertize dir 'face 'compilation-info))
+               (shell-command
+                (format "tree --du -h %s" dir)))
+      (message "This command works only for directories"))))
+
+
 (defun customize-dired-keys ()
   (bind-keys '("o" dired-open-in-external-app
                "/" dired-hide-details-mode
@@ -841,7 +853,8 @@
                "a" dired-archive
                "A" dired-extract-archive
                "f" dired-flatten-directory
-               "s" dired-calculate-size)))
+               "s" dired-calculate-size
+               "S" dired-calculate-size-tree)))
 
 
 (add-hook 'dired-mode-hook 'customize-dired-keys)
