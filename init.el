@@ -1394,8 +1394,9 @@
   (let ((icomplete-mode nil)) (apply f args)))
 
 
-(progn (advice-add 'ido-file-internal :around #'ido-disable-icomplete)
-       (advice-add 'ido-read-file-name :around #'ido-disable-icomplete))
+(dolist (x '(ido-file-internal
+             ido-read-file-name))
+  (advice-add x :around 'ido-disable-icomplete))
 
 
 ;; Various advanced commands
