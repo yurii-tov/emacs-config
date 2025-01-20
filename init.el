@@ -1380,18 +1380,9 @@
 ;; Better IDO keybindings
 
 
-(bind-keys '("M-j" ido-take-first-match
-             "SPC" self-insert-command
-             "?" self-insert-command
-             "M-SPC" ido-toggle-prefix
-             "C-p" ido-prev-match
+(bind-keys '("C-p" ido-prev-match
              "C-n" ido-next-match
              "<down>" ido-next-match
-             "<up>" ido-prev-match)
-           ido-common-completion-map)
-
-
-(bind-keys '("<down>" ido-next-match
              "<up>" ido-prev-match)
            ido-file-dir-completion-map)
 
