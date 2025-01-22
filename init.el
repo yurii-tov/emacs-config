@@ -920,6 +920,151 @@
 (advice-add 'dired-copy-file :around #'dired-copy-force-scp)
 
 
+;; =======
+;; isearch
+;; =======
+
+
+(setq isearch-lazy-count t)
+
+
+(defun isearch-select-search-string ()
+  (interactive)
+  (isearch-done)
+  (set-mark (point))
+  (if isearch-forward
+      (funcall (if isearch-regexp
+                   #'search-backward-regexp
+                 #'search-backward)
+               isearch-string)
+    (funcall (if isearch-regexp
+                 #'search-forward-regexp
+               #'search-forward)
+             isearch-string)))
+
+
+(bind-keys '("M-q" isearch-query-replace
+             "M-w" isearch-toggle-word
+             "C-SPC" isearch-select-search-string)
+           isearch-mode-map)
+
+
+;; =======
+;; ibuffer
+;; =======
+
+
+(setq ibuffer-expert t
+      ibuffer-default-sorting-mode 'alphabetic
+      ibuffer-show-empty-filter-groups nil
+      ibuffer-formats '((mark modified read-only locked " "
+                              (name 16 -1)
+                              " " filename-and-process)))
+
+
+(defun ibuffer-colorize-process-info (s)
+  (let* ((process-indicator "^([^)]+)"))
+    (if (string-match process-indicator s)
+        (let ((s (replace-regexp-in-string
+                  process-indicator
+                  "•⁤" s)))
+          (set-text-properties
+           1 2 '(ibuffer-process t) s)
+          (set-text-properties
+           0 1 '(face (:foreground "#00cc00")) s)
+          s)
+      s)))
+
+
+(unless (and system-type-is-windows (not window-system))
+  (advice-add 'ibuffer-make-column-filename-and-process
+              :filter-return
+              #'ibuffer-colorize-process-info))
+
+
+(defun ibuffer-setup ()
+  ;; keybindings
+  (local-unset-key (kbd "M-o"))
+  (local-unset-key (kbd "M-j"))
+  ;; autoupdate
+  (ibuffer-auto-mode 1)
+  ;; filter groups
+  (setq ibuffer-saved-filter-groups
+        '(("default"
+           ("Directory" (mode . dired-mode))
+           ("Shell" (and (name . "^\\*\\([bz]?a?sh\\|powershell\\|.*-?shell\\|ssh-\\).*\\*")
+                         (mode . shell-mode)))
+           ("Process" (mode . shell-mode))
+           ("Text" (and (not (name . "^\\*.*\\*$"))
+                        (not (mode . org-mode))
+                        (or (derived-mode . text-mode)
+                            (mode . fundamental-mode)
+                            (derived-mode . conf-mode))))
+           ("Document" (or (mode . doc-view-mode)
+                           (mode . nov-mode)))
+           ("Org-mode" (or (mode . org-mode)
+                           (name . "^\\*Org .*$")))
+           ("SQL" (or (mode . sql-mode)
+                      (mode . sql-interactive-mode)))
+           ("C" (mode . c-mode))
+           ("Java" (mode . java-mode))
+           ("Groovy" (or (mode . groovy-mode)
+                         (mode . inferior-groovy-mode)))
+           ("Shell script" (or (mode . sh-mode)
+                               (mode . bat-mode)
+                               (mode . powershell-mode)))
+           ("Python" (or (mode . python-mode)
+                         (mode . inferior-python-mode)))
+           ("Javascript" (or (mode . js-mode) (mode . js-json-mode)))
+           ("Common Lisp" (or (name . "^\\*inferior-lisp\\*$")
+                              (mode . lisp-mode)
+                              (name . "^\\*slime-.**$")))
+           ("Scheme" (or (mode . scheme-mode)
+                         (mode . geiser-repl-mode)
+                         (mode . geiser-doc-mode)
+                         (mode . geiser-debug-mode)))
+           ("Clojure" (or (mode . clojure-mode)
+                          (mode . clojurescript-mode)
+                          (mode . cider-repl-mode)
+                          (name . "^\\*nrepl-server .*$")
+                          (name . "^\\*cider-.*$")))
+           ("Emacs Lisp" (or (mode . emacs-lisp-mode)
+                             (mode . inferior-emacs-lisp-mode)))
+           ("Rust" (mode . rust-mode))
+           ("Email" (mode . message-mode))
+           ("EWW" (or (mode . eww-buffers-mode)
+                      (mode . eww-mode)
+                      (mode . eww-history-mode)
+                      (mode . eww-bookmark-mode)
+                      (name . "^\\*eww[ -].*$")))
+           ("Image" (mode . image-mode))
+           ("Tramp" (name . "^\\*tramp.*$"))
+           ("IDE" (name . "^\\*EGLOT.*$"))
+           ("System" (or (name . "^\\*scratch\\*$")
+                         (name . "^\\*Messages\\*$"))))))
+  (ibuffer-switch-to-saved-filter-groups "default"))
+
+
+(add-hook 'ibuffer-mode-hook 'ibuffer-setup)
+
+
+;; Enhance ibuffer-filter-disable (i.e. "//" command) with 'switch to last filter' ability
+
+
+(defun ibuffer-toggle-last-filter (f &rest args)
+  "When there is no active filters, switches to last filter we used;
+   Otherwise, removes filtering"
+  (if ibuffer-filtering-qualifiers
+      (progn (setq-local last-filter ibuffer-filtering-qualifiers)
+             (apply f args))
+    (when (boundp 'last-filter)
+      (setq ibuffer-filtering-qualifiers last-filter)
+      (ibuffer-update nil))))
+
+
+(advice-add 'ibuffer-filter-disable :around 'ibuffer-toggle-last-filter)
+
+
 ;; ===========
 ;; text editor
 ;; ===========
@@ -1927,151 +2072,6 @@
 
 
 (advice-add 'eldoc--format-doc-buffer :around 'eldoc-fix-link-navigation)
-
-
-;; =======
-;; isearch
-;; =======
-
-
-(setq isearch-lazy-count t)
-
-
-(defun isearch-select-search-string ()
-  (interactive)
-  (isearch-done)
-  (set-mark (point))
-  (if isearch-forward
-      (funcall (if isearch-regexp
-                   #'search-backward-regexp
-                 #'search-backward)
-               isearch-string)
-    (funcall (if isearch-regexp
-                 #'search-forward-regexp
-               #'search-forward)
-             isearch-string)))
-
-
-(bind-keys '("M-q" isearch-query-replace
-             "M-w" isearch-toggle-word
-             "C-SPC" isearch-select-search-string)
-           isearch-mode-map)
-
-
-;; =======
-;; ibuffer
-;; =======
-
-
-(setq ibuffer-expert t
-      ibuffer-default-sorting-mode 'alphabetic
-      ibuffer-show-empty-filter-groups nil
-      ibuffer-formats '((mark modified read-only locked " "
-                              (name 16 -1)
-                              " " filename-and-process)))
-
-
-(defun ibuffer-colorize-process-info (s)
-  (let* ((process-indicator "^([^)]+)"))
-    (if (string-match process-indicator s)
-        (let ((s (replace-regexp-in-string
-                  process-indicator
-                  "•⁤" s)))
-          (set-text-properties
-           1 2 '(ibuffer-process t) s)
-          (set-text-properties
-           0 1 '(face (:foreground "#00cc00")) s)
-          s)
-      s)))
-
-
-(unless (and system-type-is-windows (not window-system))
-  (advice-add 'ibuffer-make-column-filename-and-process
-              :filter-return
-              #'ibuffer-colorize-process-info))
-
-
-(defun ibuffer-setup ()
-  ;; keybindings
-  (local-unset-key (kbd "M-o"))
-  (local-unset-key (kbd "M-j"))
-  ;; autoupdate
-  (ibuffer-auto-mode 1)
-  ;; filter groups
-  (setq ibuffer-saved-filter-groups
-        '(("default"
-           ("Directory" (mode . dired-mode))
-           ("Shell" (and (name . "^\\*\\([bz]?a?sh\\|powershell\\|.*-?shell\\|ssh-\\).*\\*")
-                         (mode . shell-mode)))
-           ("Process" (mode . shell-mode))
-           ("Text" (and (not (name . "^\\*.*\\*$"))
-                        (not (mode . org-mode))
-                        (or (derived-mode . text-mode)
-                            (mode . fundamental-mode)
-                            (derived-mode . conf-mode))))
-           ("Document" (or (mode . doc-view-mode)
-                           (mode . nov-mode)))
-           ("Org-mode" (or (mode . org-mode)
-                           (name . "^\\*Org .*$")))
-           ("SQL" (or (mode . sql-mode)
-                      (mode . sql-interactive-mode)))
-           ("C" (mode . c-mode))
-           ("Java" (mode . java-mode))
-           ("Groovy" (or (mode . groovy-mode)
-                         (mode . inferior-groovy-mode)))
-           ("Shell script" (or (mode . sh-mode)
-                               (mode . bat-mode)
-                               (mode . powershell-mode)))
-           ("Python" (or (mode . python-mode)
-                         (mode . inferior-python-mode)))
-           ("Javascript" (or (mode . js-mode) (mode . js-json-mode)))
-           ("Common Lisp" (or (name . "^\\*inferior-lisp\\*$")
-                              (mode . lisp-mode)
-                              (name . "^\\*slime-.**$")))
-           ("Scheme" (or (mode . scheme-mode)
-                         (mode . geiser-repl-mode)
-                         (mode . geiser-doc-mode)
-                         (mode . geiser-debug-mode)))
-           ("Clojure" (or (mode . clojure-mode)
-                          (mode . clojurescript-mode)
-                          (mode . cider-repl-mode)
-                          (name . "^\\*nrepl-server .*$")
-                          (name . "^\\*cider-.*$")))
-           ("Emacs Lisp" (or (mode . emacs-lisp-mode)
-                             (mode . inferior-emacs-lisp-mode)))
-           ("Rust" (mode . rust-mode))
-           ("Email" (mode . message-mode))
-           ("EWW" (or (mode . eww-buffers-mode)
-                      (mode . eww-mode)
-                      (mode . eww-history-mode)
-                      (mode . eww-bookmark-mode)
-                      (name . "^\\*eww[ -].*$")))
-           ("Image" (mode . image-mode))
-           ("Tramp" (name . "^\\*tramp.*$"))
-           ("IDE" (name . "^\\*EGLOT.*$"))
-           ("System" (or (name . "^\\*scratch\\*$")
-                         (name . "^\\*Messages\\*$"))))))
-  (ibuffer-switch-to-saved-filter-groups "default"))
-
-
-(add-hook 'ibuffer-mode-hook 'ibuffer-setup)
-
-
-;; Enhance ibuffer-filter-disable (i.e. "//" command) with 'switch to last filter' ability
-
-
-(defun ibuffer-toggle-last-filter (f &rest args)
-  "When there is no active filters, switches to last filter we used;
-   Otherwise, removes filtering"
-  (if ibuffer-filtering-qualifiers
-      (progn (setq-local last-filter ibuffer-filtering-qualifiers)
-             (apply f args))
-    (when (boundp 'last-filter)
-      (setq ibuffer-filtering-qualifiers last-filter)
-      (ibuffer-update nil))))
-
-
-(advice-add 'ibuffer-filter-disable :around 'ibuffer-toggle-last-filter)
 
 
 ;; ========
