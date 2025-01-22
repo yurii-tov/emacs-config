@@ -943,8 +943,8 @@
              isearch-string)))
 
 
-(bind-keys '("M-q" isearch-query-replace
-             "M-w" isearch-toggle-word
+(bind-keys '("M-w" isearch-toggle-word
+             "M-SPC" isearch-query-replace
              "C-SPC" isearch-select-search-string)
            isearch-mode-map)
 
@@ -1922,7 +1922,7 @@
                "C-." eglot-rename
                "C-;" flymake-goto-next-error
                "C-c C-o" flymake-show-buffer-diagnostics
-               "C-c C-p" flymake-show-project-diagnostics
+               "C-c C-p" flymake-ct-diagnostics
                "C-h C-h" eldoc-print-current-symbol-info
                "C-c C-i" eglot-code-action-inline
                "C-c C-j" eglot-code-action-quickfix
