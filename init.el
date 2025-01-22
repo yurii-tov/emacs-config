@@ -944,7 +944,7 @@
 
 
 (bind-keys '("M-w" isearch-toggle-word
-             "M-SPC" isearch-query-replace
+             "M-q" isearch-query-replace
              "C-SPC" isearch-select-search-string)
            isearch-mode-map)
 
