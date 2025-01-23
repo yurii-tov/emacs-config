@@ -848,6 +848,7 @@
 
 (defun customize-dired-keys ()
   (bind-keys '("o" dired-open-in-external-app
+               "j" dired-display-file
                "/" dired-hide-details-mode
                "l" dired-up-directory
                "a" dired-archive
