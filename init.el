@@ -1520,6 +1520,7 @@
 (setq ido-enable-flex-matching t
       ido-use-filename-at-point 'guess
       ido-use-url-at-point t
+      ido-show-dot-for-dired t
       ido-max-work-directory-list 100)
 
 
