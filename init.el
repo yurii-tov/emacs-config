@@ -818,7 +818,7 @@
       (message "This command works only for directories"))))
 
 
-(defun dired-calculate-size ()
+(defun dired-calculate-size (&optional tree-p)
   (interactive)
   (let* ((files (mapcar #'file-relative-name
                         (dired-get-marked-files)))
@@ -829,21 +829,17 @@
                                   files)
                           ", "))
     (shell-command
-     (format "du -hs%s %s"
-             (if (> (length args) 1) "c" "")
-             (string-join args  " ")))))
+     (if tree-p
+         (format "tree --du -h %s"
+                 (string-join args  " "))
+       (format "du -hs%s %s"
+               (if (> (length args) 1) "c" "")
+               (string-join args  " "))))))
 
 
 (defun dired-calculate-size-tree ()
   (interactive)
-  (let* ((dir (file-relative-name (car (dired-get-marked-files))))
-         (arg (format "'%s'" dir)))
-    (if (file-directory-p dir)
-        (progn (message "Calculating size of %s..."
-                        (propertize dir 'face 'compilation-info))
-               (shell-command
-                (format "tree --du -h %s" dir)))
-      (message "This command works only for directories"))))
+  (dired-calculate-size t))
 
 
 (defun customize-dired-keys ()
