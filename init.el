@@ -3404,6 +3404,14 @@ Process .+
     (add-to-list 'pretty-printers (cons m 'prettier-pprint-buffer))))
 
 
+;; =======
+;; Ripgrep
+;; =======
+
+
+(setq ripgrep-arguments '("-uu"))
+
+
 ;; ===
 ;; xml
 ;; ===
