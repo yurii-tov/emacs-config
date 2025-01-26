@@ -1712,7 +1712,8 @@
     dir))
 
 
-(defun ido-fix-grid-setup (f &rest args)
+(defun ido-fix-grid-mode (f &rest args)
+  "Prevent global settings tampering"
   (let ((h max-mini-window-height)
         (r resize-mini-windows))
     (apply f args)
@@ -1720,7 +1721,7 @@
           resize-mini-windows r)))
 
 
-(advice-add 'ido-grid-mode-ido-setup :around 'ido-fix-grid-setup)
+(advice-add 'ido-grid-mode-ido-setup :around 'ido-fix-grid-mode)
 
 
 ;; ====================
