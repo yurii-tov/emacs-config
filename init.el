@@ -1523,8 +1523,8 @@
 ;; Keybindings
 
 
-(bind-keys '("C-n" ignore
-             "C-p" ignore
+(bind-keys '("C-n" ido-grid-mode-next
+             "C-p" ido-grid-mode-previous
              "SPC" ido-grid-mode-next-page
              "M-SPC" ido-grid-mode-previous-page)
            ido-file-dir-completion-map)
