@@ -1713,9 +1713,11 @@
 
 
 (defun ido-fix-grid-setup (f &rest args)
-  (let ((h max-mini-window-height))
+  (let ((h max-mini-window-height)
+        (r resize-mini-windows))
     (apply f args)
-    (setq max-mini-window-height h)))
+    (setq max-mini-window-height h
+          resize-mini-windows r)))
 
 
 (advice-add 'ido-grid-mode-ido-setup :around 'ido-fix-grid-setup)
