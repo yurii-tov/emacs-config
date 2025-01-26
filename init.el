@@ -1520,16 +1520,6 @@
       ido-max-work-directory-list 100)
 
 
-;; Better IDO keybindings
-
-
-(bind-keys '("C-p" ido-prev-match
-             "C-n" ido-next-match
-             "<down>" ido-next-match
-             "<up>" ido-prev-match)
-           ido-file-dir-completion-map)
-
-
 ;; Ensure proper (i.e. old-fashioned) IDO fallback file-selection command:
 
 
