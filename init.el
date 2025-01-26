@@ -1516,6 +1516,8 @@
 (setq ido-enable-flex-matching t
       ido-use-filename-at-point 'guess
       ido-use-url-at-point t
+      ido-grid-mode-prefix ""
+      ido-grid-mode-exact-match-prefix ""
       ido-show-dot-for-dired t
       ido-max-work-directory-list 100)
 
