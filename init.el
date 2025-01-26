@@ -14,7 +14,7 @@
         ("melpa" . "https://melpa.org/packages/")))
 
 
-(let ((packages '(ido-vertical-mode
+(let ((packages '(ido-grid-mode
                   spacious-padding
                   ligature
                   ef-themes
@@ -1509,7 +1509,7 @@
 
 
 (progn (ido-mode 'files)
-       (ido-vertical-mode)
+       (ido-grid-mode)
        (add-function :override read-file-name-function #'ido-read-file-name))
 
 
