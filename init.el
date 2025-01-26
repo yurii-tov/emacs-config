@@ -1522,6 +1522,13 @@
       ido-max-work-directory-list 100)
 
 
+;; Better visuals
+
+
+(custom-set-faces
+ '(ido-first-match ((t (:inherit icomplete-selected-match)))))
+
+
 ;; Keybindings
 
 
