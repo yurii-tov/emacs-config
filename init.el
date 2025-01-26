@@ -1505,7 +1505,7 @@
 (advice-add 'read-string :around #'read-string-completing-history)
 
 
-;; Use IDO for file-browsing
+;; IDO (file browsing only)
 
 
 (progn (ido-mode 'files)
@@ -1518,6 +1518,19 @@
       ido-use-url-at-point t
       ido-show-dot-for-dired t
       ido-max-work-directory-list 100)
+
+
+;; Keybindings
+
+
+(bind-keys '("C-n" ignore
+             "C-p" ignore
+             "SPC" ido-grid-mode-next-page
+             "M-SPC" ido-grid-mode-previous-page)
+           ido-file-dir-completion-map)
+
+
+(setq ido-grid-mode-keys '(tab backtab up down left right))
 
 
 ;; Ensure proper (i.e. old-fashioned) IDO fallback file-selection command:
@@ -1675,6 +1688,9 @@
                 f (file-name-nondirectory filename)
                 res (cons (cons (if finddir (ido-final-slash f t) f) d) res))))
     res))
+
+
+;; Other fixes
 
 
 (defun ido-get-work-directory (&optional incr must-match)
