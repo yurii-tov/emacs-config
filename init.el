@@ -1526,7 +1526,8 @@
 
 
 (custom-set-faces
- '(ido-first-match ((t (:inherit icomplete-selected-match)))))
+ '(ido-first-match ((t (:inherit icomplete-selected-match))))
+ '(ido-grid-mode-match ((t (:inherit completions-common-part)))))
 
 
 ;; Keybindings
