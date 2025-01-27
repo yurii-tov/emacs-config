@@ -1518,6 +1518,7 @@
       ido-use-url-at-point t
       ido-grid-mode-prefix ""
       ido-grid-mode-exact-match-prefix ""
+      ido-auto-merge-work-directories-length -1
       ido-show-dot-for-dired t
       ido-max-work-directory-list 100)
 
