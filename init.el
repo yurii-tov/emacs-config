@@ -1522,7 +1522,7 @@
       ido-max-work-directory-list 100)
 
 
-;; Better visuals
+;; Styles
 
 
 (custom-set-faces
