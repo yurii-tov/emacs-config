@@ -1525,6 +1525,8 @@
       ido-grid-mode-prefix ""
       ido-grid-mode-exact-match-prefix ""
       ido-auto-merge-work-directories-length -1
+      ido-grid-mode-max-rows 10
+      ido-grid-mode-min-rows 5
       ido-show-dot-for-dired t
       ido-max-work-directory-list 100)
 
