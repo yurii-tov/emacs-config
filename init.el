@@ -584,6 +584,12 @@
 (advice-add 'kill-buffer-and-window :around #'kill-buffer-and-window-fix)
 
 
+;; remove confirmation when creating new buffer
+
+
+(setq confirm-nonexistent-file-or-buffer nil)
+
+
 ;; When in "switch to buffer" menu, bind M-j to "make new scratch buffer" action
 ;; Therefore, given the switch-to-buffer keybinding is M-j,
 ;; we got convenient M-j M-j global shortcut
