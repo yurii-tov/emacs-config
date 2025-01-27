@@ -1541,14 +1541,14 @@
 ;; Keybindings
 
 
-(bind-keys '("C-n" ido-grid-mode-next
-             "C-p" ido-grid-mode-previous
-             "SPC" ido-grid-mode-next-page
-             "M-SPC" ido-grid-mode-previous-page)
-           ido-file-dir-completion-map)
-
-
-(setq ido-grid-mode-keys '(tab backtab up down left right))
+(progn
+  (bind-keys '("C-n" ido-grid-mode-next
+               "C-p" ido-grid-mode-previous
+               "SPC" ido-merge-work-directories
+               "TAB" ido-grid-mode-next-page
+               "<backtab>" ido-grid-mode-previous-page)
+             ido-file-dir-completion-map)
+  (setq ido-grid-mode-keys '(up down left right)))
 
 
 ;; Ensure proper (i.e. old-fashioned) IDO fallback file-selection command:
