@@ -1551,7 +1551,7 @@
   (setq ido-grid-mode-keys '(up down left right)))
 
 
-;; Ensure proper (i.e. old-fashioned) IDO fallback file-selection command:
+;; Ensure "dumb" find-file fallback
 
 
 (defun ido-disable-icomplete (f &rest args)
