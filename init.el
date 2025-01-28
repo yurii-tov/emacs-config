@@ -1528,6 +1528,7 @@
       ido-grid-mode-max-rows 10
       ido-grid-mode-min-rows 5
       ido-show-dot-for-dired t
+      ido-report-no-match nil
       ido-max-work-directory-list 100)
 
 
