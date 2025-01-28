@@ -1561,7 +1561,7 @@
 
 
 (defun ido-colorize-counter (f &rest args)
-  (propertize (format "[%s]" (apply f args)) 'face 'warning))
+  (propertize (format "[%s]" (apply f args)) 'face 'font-lock-comment-face))
 
 
 (advice-add 'ido-grid-mode-count
