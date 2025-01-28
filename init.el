@@ -1548,23 +1548,13 @@
 (progn
   (bind-keys '("C-n" ido-grid-mode-next
                "C-p" ido-grid-mode-previous
+               "C-f" ido-grid-mode-right
+               "C-b" ido-grid-mode-left
                "SPC" ido-merge-work-directories
                "TAB" ido-grid-mode-next-page
                "<backtab>" ido-grid-mode-previous-page)
              ido-file-dir-completion-map)
   (setq ido-grid-mode-keys '(up down left right)))
-
-
-;; Ensure "dumb" find-file fallback
-
-
-(defun ido-disable-icomplete (f &rest args)
-  (let ((icomplete-mode nil)) (apply f args)))
-
-
-(dolist (x '(ido-file-internal
-             ido-read-file-name))
-  (advice-add x :around 'ido-disable-icomplete))
 
 
 ;; Better counter style
