@@ -1566,6 +1566,21 @@
   (advice-add x :around 'ido-disable-icomplete))
 
 
+;; Better counter style
+
+
+(defun ido-colorize-counter (f &rest args)
+  (propertize (format "[%s]" (apply f args)) 'face 'warning))
+
+
+(advice-add 'ido-grid-mode-count
+            :around
+            'ido-colorize-counter)
+
+
+(setq ido-grid-mode-first-line '(" " ido-grid-mode-count))
+
+
 ;; Advanced commands
 
 
