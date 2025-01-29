@@ -1631,14 +1631,13 @@
 
 (defun ido-wide-find-file (&optional file)
   "Redefinition of the original ido-wide-find-file from ido.el:
-   When the query is empty, all directory's files are included"
+   Starts search immediately using current input"
   (interactive)
   (unless file
     (let ((enable-recursive-minibuffers t))
       (setq file
             (condition-case nil
-                (let ((s (read-string (concat "Wide find file: " ido-current-directory) ido-text)))
-                  (if (equal s "") "*" s))
+                (if (equal ido-text "") "*" ido-text)
               (quit "")))))
   (when (> (length file) 0)
     (setq ido-use-merged-list t ido-try-merged-list 'wide)
@@ -1653,6 +1652,7 @@
 (defun ido-wide-find-dirs-or-files (dir file &optional prefix finddir)
   "Overrides original function. Now it:
    - Is able to search remote directories
+   - Finds files as well as directories
    - Splits 'find' output with newline symbol"
   (let* ((remote-prefix (file-remote-p dir))
          (default-directory dir)
@@ -1670,7 +1670,7 @@
                                   (if ido-case-fold " -iname " " -name ")
                                   (shell-quote-argument
                                    (concat (if prefix "" "*") file "*"))
-                                  " -type " (if finddir "d" "f") " -print"))
+                                  " -print"))
                          "\n"))))
          filename d f
          res)
@@ -1681,7 +1681,7 @@
                (file-exists-p filename))
           (setq d (file-name-directory filename)
                 f (file-name-nondirectory filename)
-                res (cons (cons (if finddir (ido-final-slash f t) f) d) res))))
+                res (cons (cons (if (file-directory-p filename) (ido-final-slash f t) f) d) res))))
     res))
 
 
