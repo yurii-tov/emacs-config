@@ -1951,7 +1951,7 @@
                "C-." eglot-rename
                "C-;" flymake-goto-next-error
                "C-c C-o" flymake-show-buffer-diagnostics
-               "C-c C-p" flymake-ct-diagnostics
+               "C-c C-p" flymake-show-project-diagnostics
                "C-h C-h" eldoc-print-current-symbol-info
                "C-c C-i" eglot-code-action-inline
                "C-c C-j" eglot-code-action-quickfix
@@ -2818,6 +2818,19 @@ Example input:
 
 (setq shell-prompt-pattern "^[^#$%>
 ]*#?[#$%>] *")
+
+
+;; Restarting
+
+
+(defun shell-restart ()
+  (interactive)
+  (comint-kill-subjob)
+  (sit-for 1)
+  (shell))
+
+
+(define-key shell-mode-map (kbd "C-c C-j") 'shell-restart)
 
 
 ;; Ssh sessions
