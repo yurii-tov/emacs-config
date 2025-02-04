@@ -665,13 +665,9 @@
 ;; no backups
 
 
-(setq auto-save-default nil)
-
-
-(setq make-backup-files nil)
-
-
-(setq auto-save-list-file-name nil)
+(setq auto-save-default nil
+      make-backup-files nil
+      auto-save-list-file-name nil)
 
 
 ;; reverting file-related buffers
