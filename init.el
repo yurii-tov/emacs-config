@@ -2103,6 +2103,53 @@
 (advice-add 'eldoc--format-doc-buffer :around 'eldoc-fix-link-navigation)
 
 
+;; ==========================
+;; Statistics / combinatorics
+;; ==========================
+
+
+(defun average (xs)
+  "Get the arithmetic mean of a list of numbers"
+  (/ (apply #'+ xs)
+     (* 1.0 (length xs))))
+
+
+(defun cartesian-product (factors)
+  "Example:
+=> (cartesian-product '((a1 a2 a3) (b1 b2) (c1)))
+=> ((a1 b1 c1)
+    (a1 b2 c1)
+    (a2 b1 c1)
+    (a2 b2 c1)
+    (a3 b1 c1)
+    (a3 b2 c1))"
+  (if (cdr factors)
+      (let ((factor (car factors))
+            (vectors (cartesian-product (cdr factors))))
+        (mapcan
+         (lambda (f) (mapcar (lambda (v) (cons f v)) vectors))
+         factor))
+    (mapcar #'list (car factors))))
+
+
+(defun permutations (xs)
+  "Example:
+=> (permutations '(a b c))
+=> ((a b c)
+    (a c b)
+    (b a c)
+    (b c a)
+    (c a b)
+    (c b a))"
+  (when xs
+    (if (cdr xs)
+        (mapcan (lambda (x)
+                  (mapcar (lambda (y) (cons x y))
+                          (permutations (remove x xs))))
+                xs)
+      (list xs))))
+
+
 ;; ========
 ;; org-mode
 ;; ========
@@ -2208,24 +2255,6 @@
 ;; cartesian product from org tables
 
 
-(defun cartesian-product (factors)
-  "Example:
-=> (cartesian-product '((a1 a2 a3) (b1 b2) (c1)))
-=> ((a1 b1 c1)
-    (a1 b2 c1)
-    (a2 b1 c1)
-    (a2 b2 c1)
-    (a3 b1 c1)
-    (a3 b2 c1))"
-  (if (cdr factors)
-      (let ((factor (car factors))
-            (vectors (cartesian-product (cdr factors))))
-        (mapcan
-         (lambda (f) (mapcar (lambda (v) (cons f v)) vectors))
-         factor))
-    (mapcar #'list (car factors))))
-
-
 (defun org-table-cartesian-product ()
   "Replace current table with cartesian product of its factors
 Example input:
@@ -2258,25 +2287,7 @@ Example input:
       (goto-char (1- (org-table-end))))))
 
 
-;; permutations
-
-
-(defun permutations (xs)
-  "Example:
-=> (permutations '(a b c))
-=> ((a b c)
-    (a c b)
-    (b a c)
-    (b c a)
-    (c a b)
-    (c b a))"
-  (when xs
-    (if (cdr xs)
-        (mapcan (lambda (x)
-                  (mapcar (lambda (y) (cons x y))
-                          (permutations (remove x xs))))
-                xs)
-      (list xs))))
+;; permutations of data from org table
 
 
 (defun org-table-permutations ()
