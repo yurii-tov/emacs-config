@@ -3024,7 +3024,9 @@ Example input:
 
 
 (setq sql-connection-alist
-      '((sqlilte (sql-product 'sqlite))))
+      '((sqlilte (sql-product 'sqlite))
+        (sqlilte-in-memory (sql-product 'sqlite)
+                           (sql-database ""))))
 
 
 (add-hook 'sql-login-hook 'orgtbl-mode)
