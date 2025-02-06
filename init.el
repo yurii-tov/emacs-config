@@ -1686,7 +1686,8 @@
 
 (defun ido-wrap-record-work-directory (f &rest args)
   "For directories, record their parent"
-  (if (equal "." (car ido-work-file-list))
+  (if (and ido-current-directory
+           (equal "." (car ido-work-file-list)))
       (funcall f (file-name-parent-directory
                   ido-current-directory))
     (apply f args)))
