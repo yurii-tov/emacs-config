@@ -1542,11 +1542,14 @@
 
 
 (progn
-  (bind-keys '("C-n" ido-grid-mode-next
+  (bind-keys '("C-f" nil
+               "C-b" nil
+               "C-n" ido-grid-mode-next
                "C-p" ido-grid-mode-previous
-               "C-f" ido-grid-mode-right
-               "C-b" ido-grid-mode-left
+               "M-f" ido-grid-mode-right
+               "M-b" ido-grid-mode-left
                "SPC" ido-merge-work-directories
+               "M-SPC" ido-wide-find-file-or-pop-dir
                "TAB" ido-grid-mode-next-page
                "<backtab>" ido-grid-mode-previous-page)
              ido-file-dir-completion-map)
