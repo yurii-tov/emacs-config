@@ -2695,7 +2695,13 @@ Example input:
 (defun comint-browse-command-history ()
   (interactive)
   (let* ((history (ring-elements comint-input-ring))
-         (command (completing-read "Command history: " history))
+         (command (completing-read "Command history: "
+                                   (lambda (string pred action)
+                                     (if (eq action 'metadata)
+                                         '(metadata (display-sort-function . identity)
+                                                    (cycle-sort-function . identity))
+                                       (complete-with-action
+                                        action history string pred)))))
          (i (cl-position command history :test #'equal)))
     (setq-local comint-input-ring-index i)
     (comint-delete-input)
