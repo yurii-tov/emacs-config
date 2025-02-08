@@ -1458,7 +1458,8 @@
            icomplete-minibuffer-map)
 
 
-(setq completion-auto-select t)
+(setq completion-auto-select t
+      max-mini-window-height 12)
 
 
 (defun completion-flex-restrict (f &rest args)
