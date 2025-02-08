@@ -919,6 +919,22 @@
 (advice-add 'dired-copy-file :around #'dired-copy-force-scp)
 
 
+;; record IDO work directory when open files in Dired
+
+
+(defun dired-record-ido-wd (f &rest args)
+  (let ((file (car args)))
+    (unless (file-directory-p file)
+      (ido-record-work-directory
+       (file-name-directory file)))
+    (apply f args)))
+
+
+(advice-add 'dired--find-possibly-alternative-file
+            :around
+            'dired-record-ido-wd)
+
+
 ;; =======
 ;; isearch
 ;; =======
