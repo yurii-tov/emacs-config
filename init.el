@@ -2879,6 +2879,28 @@ Example input:
 (add-hook 'sh-mode-hook 'sh-cleanup-capf)
 
 
+;; Elevating shell to root
+
+
+(defun shell-elevate ()
+  "Elevates current shell session to root
+   (equivalent to `sudo bash`).
+   When called again, reverts to regular shell"
+  (interactive)
+  (let ((command (if (setq-local rootp
+                                 (and (boundp 'rootp) rootp))
+                     "exit"
+                   "sudo $SHELL")))
+    (comint-send-string
+     (get-buffer-process (current-buffer))
+     command)
+    (comint-send-input)
+    (setq-local rootp (not rootp))))
+
+
+(define-key shell-mode-map (kbd "C-x u") 'shell-elevate)
+
+
 ;; ===
 ;; VCS
 ;; ===
