@@ -3068,7 +3068,10 @@ Example input:
 (setq sql-connection-alist
       '((sqlilte (sql-product 'sqlite))
         (sqlilte-in-memory (sql-product 'sqlite)
-                           (sql-database ""))))
+                           (sql-database ""))
+        (firebird (sql-product 'interbase)
+                  (sql-user "sysdba")
+                  (sql-password "masterkey"))))
 
 
 (add-hook 'sql-login-hook 'orgtbl-mode)
