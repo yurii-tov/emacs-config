@@ -2348,6 +2348,23 @@ Example input:
           (goto-char (1- (org-table-end))))))))
 
 
+;; Alternative (list-like) view for tables
+
+
+(defun org-table-to-list ()
+  (interactive)
+  (when (org-table-p)
+    (let* ((table (remove 'hline (org-table-to-lisp)))
+           (header (car table))
+           (rows (cdr table))
+           (record-list (cons 'hline
+                              (apply #'append (mapcar (lambda (row) (append (cl-mapcar #'list header row) '(hline)))
+                                                      rows)))))
+      (delete-region (org-table-begin) (org-table-end))
+      (insert (format "%s\n" (orgtbl-to-orgtbl record-list nil)))
+      (goto-char (1- (org-table-end))))))
+
+
 ;; Preload org-mode at startup
 
 
@@ -3350,24 +3367,10 @@ Process .+
           'sql-setup-output-preprocessing)
 
 
-;;;; provide alternative table view (for tables which is too wide)
+;; alternative table view (for too wide tables)
 
 
-(defun convert-table-to-record-list ()
-  (interactive)
-  (when (org-table-p)
-    (let* ((table (remove 'hline (org-table-to-lisp)))
-           (header (car table))
-           (rows (cdr table))
-           (record-list (cons 'hline
-                              (apply #'append (mapcar (lambda (row) (append (cl-mapcar #'list header row) '(hline)))
-                                                      rows)))))
-      (delete-region (org-table-begin) (org-table-end))
-      (insert (format "%s\n" (orgtbl-to-orgtbl record-list nil)))
-      (goto-char (1- (org-table-end))))))
-
-
-(define-key sql-interactive-mode-map (kbd "C-c C-p") 'convert-table-to-record-list)
+(define-key sql-interactive-mode-map (kbd "C-c C-p") 'org-table-to-list)
 
 
 ;; interbase
