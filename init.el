@@ -3074,9 +3074,6 @@ Example input:
                   (sql-password "masterkey"))))
 
 
-(add-hook 'sql-login-hook 'orgtbl-mode)
-
-
 ;; initial setup
 
 
@@ -3097,7 +3094,7 @@ Example input:
 
 ;; reconnect
 
-;; wtf is going on?
+
 (defun sql-setup-reconnect ()
   (let ((process (get-buffer-process (current-buffer))))
     (setq-local process-specs
@@ -3229,6 +3226,9 @@ Process .+
 
 
 ;; output preprocessing
+
+
+(add-hook 'sql-login-hook 'orgtbl-mode)
 
 
 (defun make-sql-output-preprocessor (table-parser)
