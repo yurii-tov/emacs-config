@@ -3074,6 +3074,20 @@ Example input:
                   (sql-password "masterkey"))))
 
 
+;; Fixing rough corners
+
+
+(defun sql-handle-read-db-path (f &rest args)
+  "Do not read db path from `sql-database', but record work directory"
+  (let ((sql-database ""))
+    (prog1 (apply f args)
+      (ido-record-work-directory
+       (file-name-directory sql-database)))))
+
+
+(advice-add 'sql-connect :around 'sql-handle-read-db-path)
+
+
 ;; initial setup
 
 
