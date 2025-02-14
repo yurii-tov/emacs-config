@@ -1567,8 +1567,8 @@
                "M-b" ido-grid-mode-left
                "SPC" ido-merge-work-directories
                "M-SPC" ido-wide-find-file-or-pop-dir
-               "TAB" ido-grid-mode-next-page
-               "<backtab>" ido-grid-mode-previous-page)
+               "M-." ido-grid-mode-next-page
+               "M-," ido-grid-mode-previous-page)
              ido-file-dir-completion-map)
   (setq ido-grid-mode-keys '(up down left right)))
 
@@ -1586,6 +1586,17 @@
 
 
 (setq ido-grid-mode-first-line '(" " ido-grid-mode-count))
+
+
+;; Auto-select buffer with completions
+
+
+(defun ido-jump-to-completions ()
+  (let ((w (get-buffer-window ido-completion-buffer)))
+    (when w (select-window w))))
+
+
+(advice-add 'ido-complete :after #'ido-jump-to-completions)
 
 
 ;; Advanced commands
