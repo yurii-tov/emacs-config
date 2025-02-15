@@ -332,6 +332,7 @@
              "C-c h" hexl-mode
              "C-c c" org-capture
              "C-c a" org-agenda
+             "C-c o" org-commit
              "C-c w" tail)
            global-map)
 
@@ -2205,6 +2206,15 @@
 
 
 (setq org-refile-allow-creating-parent-nodes 'confirm)
+
+
+;; Use Git repo as storage
+
+
+(defun org-commit ()
+  (interactive)
+  (let ((default-directory org-directory))
+    (shell-command "git add * && git commit -m 'Updated' && git push")))
 
 
 ;; Export
