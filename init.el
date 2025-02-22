@@ -1630,17 +1630,21 @@
 
 (defun ido-insert-path ()
   (interactive)
-  "Insert path of selected file/directory"
   (let* ((fname (expand-file-name (ido-name (car ido-matches))
                                   ido-current-directory))
-         (fname (or (file-remote-p fname 'localname) fname)))
+         (fname (or (file-remote-p fname 'localname) fname))
+         (default-directory (or (file-remote-p default-directory 'localname)
+                                default-directory)))
     (run-with-timer
      0.1 nil
-     `(lambda () (let ((path ,fname)
+     `(lambda () (let ((path (if (string-prefix-p ,default-directory ,fname)
+                                 (file-relative-name
+                                  (substring ,fname (length ,default-directory)))
+                               ,fname))
                        (p2 (point))
                        (p1 (save-excursion
                              (or (and (re-search-backward
-                                       "[\s\"]" (line-beginning-position) t)
+                                       "\s" (line-beginning-position) t)
                                       (1+ (point)))
                                  (line-beginning-position)))))
                    (when (string-prefix-p (buffer-substring p1 p2) path)
