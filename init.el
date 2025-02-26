@@ -2530,6 +2530,9 @@ Example input:
 ;; output command/wd
 
 
+(defvar *asc-echo* t)
+
+
 (defun asc-echo-startup-info (f &rest args)
   (let* ((r (apply f args))
          (b (if (windowp r)
@@ -2537,13 +2540,14 @@ Example input:
               (process-buffer r)))
          (p (get-buffer-process b)))
     (prog1 r
-      (with-current-buffer b
-        (let ((info (format "*** %s ***\n*** wd: %s ***\n" (car args) default-directory)))
-          (goto-char 1)
-          (comint-output-filter p info)
-          (set-marker comint-last-input-end (point))
-          (highlight-regexp (regexp-quote info) 'compilation-info)
-          (font-lock-update))))))
+      (when *asc-echo*
+        (with-current-buffer b
+          (let ((info (format "*** %s ***\n*** wd: %s ***\n" (car args) default-directory)))
+            (goto-char 1)
+            (comint-output-filter p info)
+            (set-marker comint-last-input-end (point))
+            (highlight-regexp (regexp-quote info) 'compilation-info)
+            (font-lock-update)))))))
 
 
 (advice-add 'async-shell-command :around 'asc-echo-startup-info)
@@ -2575,7 +2579,7 @@ Example input:
                   (message
                    "%s%s"
                    (or output "")
-                   (propertize (format "[%s] %s" e ,(car args))
+                   (propertize (format "[%s] %s" e (if ,*asc-echo* ,(car args) "*****"))
                                'face (cond ((equal e "finished") 'success)
                                            ((string-match "exited abnormally.*" e)
                                             'error)
@@ -2602,9 +2606,10 @@ Example input:
                         (window-buffer r)
                       (process-buffer r)))
             (switch-to-buffer b)
-            (message "Running command %s at %s"
-                     (propertize (car args) 'face 'compilation-info)
-                     (propertize default-directory 'face 'completions-annotations)))))
+            (when *asc-echo*
+              (message "Running command %s at %s"
+                       (propertize (car args) 'face 'compilation-info)
+                       (propertize default-directory 'face 'completions-annotations))))))
     (apply f args)))
 
 
