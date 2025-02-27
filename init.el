@@ -2439,6 +2439,9 @@ Example input:
 ;; ===================
 
 
+(setq async-shell-command-mode 'shell-mode)
+
+
 (defun asc-read-wd (f &rest args)
   (let* ((project (project-current))
          (project-dir (when project (project-root project)))
