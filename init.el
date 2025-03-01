@@ -2011,6 +2011,7 @@
 
 
 (defun flymake-display-diagnostics-fix (f &rest args)
+  "Fixes undesired layout of diagnostic buffers introduced in Emacs 30.1"
   (let (b)
     (save-window-excursion
       (setq b (window-buffer (apply f args))))
