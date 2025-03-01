@@ -190,17 +190,6 @@
            search-map)
 
 
-;; disable some keys overriding in all major modes
-
-
-(defun disable-search-map-overriding ()
-  (dolist (x '("M-s" "M-o" "M-q"))
-    (local-unset-key (kbd x))))
-
-
-(add-hook 'after-change-major-mode-hook 'disable-search-map-overriding)
-
-
 ;; transforming text
 
 
@@ -335,6 +324,17 @@
              "C-c o" org-commit
              "C-c w" tail)
            global-map)
+
+
+;; Preventing global keybindings shadowing by major modes
+
+
+(defun prevent-key-shadowing ()
+  (dolist (x '("M-s" "M-o" "M-q"))
+    (local-unset-key (kbd x))))
+
+
+(add-hook 'after-change-major-mode-hook 'prevent-key-shadowing)
 
 
 ;; =============
