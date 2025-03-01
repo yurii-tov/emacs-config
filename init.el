@@ -2010,6 +2010,18 @@
 (add-hook 'flymake-mode-hook 'flymake-add-indicators)
 
 
+(defun flymake-display-diagnostics-fix (f &rest args)
+  (let* (b)
+    (save-window-excursion
+      (setq b (window-buffer (apply f args))))
+    (display-buffer b)))
+
+
+(dolist (x '(flymake-show-buffer-diagnostics
+             flymake-show-project-diagnostics))
+  (advice-add x :around 'flymake-display-diagnostics-fix))
+
+
 ;; =============================================
 ;; Codeium
 ;; See https://github.com/Exafunction/codeium.el
