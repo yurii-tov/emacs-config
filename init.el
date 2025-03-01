@@ -2011,7 +2011,7 @@
 
 
 (defun flymake-display-diagnostics-fix (f &rest args)
-  (let* (b)
+  (let (b)
     (save-window-excursion
       (setq b (window-buffer (apply f args))))
     (display-buffer b)))
