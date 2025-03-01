@@ -194,8 +194,8 @@
 
 
 (defun disable-search-map-overriding ()
-  (local-unset-key (kbd "M-s"))
-  (local-unset-key (kbd "M-o")))
+  (dolist (x '("M-s" "M-o" "M-q"))
+    (local-unset-key (kbd x))))
 
 
 (add-hook 'after-change-major-mode-hook 'disable-search-map-overriding)
