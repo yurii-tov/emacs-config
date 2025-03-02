@@ -860,9 +860,6 @@
 (add-hook 'dired-mode-hook 'customize-dired-keys)
 
 
-(add-hook 'dired-mode-hook 'dired-hide-details-mode)
-
-
 (add-hook 'dired-mode-hook 'auto-revert-mode)
 
 
@@ -873,7 +870,7 @@
                     'font-lock-comment-face))
 
 
-(add-hook 'dired-hide-details-mode-hook 'dired-custom-highlight)
+(add-hook 'dired-after-readin-hook 'dired-custom-highlight)
 
 
 (defun dired-disable-ffap ()
@@ -881,6 +878,29 @@
 
 
 (add-hook 'dired-mode-hook 'dired-disable-ffap)
+
+
+;; hiding details
+
+
+(defvar *dired-hide-details-p* t)
+
+
+(defun dired-setup-hide-details ()
+  (dired-hide-details-mode
+   (or *dired-hide-details-p* -1)))
+
+
+(add-hook 'dired-mode-hook 'dired-setup-hide-details)
+
+
+(defun dired-propogate-hide-details (f &rest args)
+  (let ((*dired-hide-details-p* dired-hide-details-mode))
+    (apply f args)))
+
+
+(dolist (x '(dired-find-file dired-up-directory))
+  (advice-add x :around 'dired-propogate-hide-details))
 
 
 ;; set custom names for "find" buffers
