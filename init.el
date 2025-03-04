@@ -1872,7 +1872,7 @@
        (company-tng-mode))
 
 
-(setq-default company-minimum-prefix-length 1
+(setq-default company-minimum-prefix-length 2
               company-idle-delay 0
               company-tooltip-offset-display 'lines
               company-selection-wrap-around t
