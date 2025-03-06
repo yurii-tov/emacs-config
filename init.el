@@ -2387,6 +2387,13 @@ Example input:
       (goto-char (1- (org-table-end))))))
 
 
+;; Fix broken in-table typing
+
+
+(progn (defconst org-table--separator-space-pre " ")
+       (defconst org-table--separator-space-post " "))
+
+
 ;; ==============
 ;; shell commands
 ;; ==============
