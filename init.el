@@ -854,7 +854,9 @@
                "A" dired-extract-archive
                "f" dired-flatten-directory
                "s" dired-calculate-size
-               "S" dired-calculate-size-tree)))
+               "S" dired-calculate-size-tree
+               "M" dired-mark-files-regexp
+               "c" dired-do-chmod)))
 
 
 (add-hook 'dired-mode-hook 'customize-dired-keys)
