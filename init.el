@@ -856,7 +856,8 @@
                "s" dired-calculate-size
                "S" dired-calculate-size-tree
                "M" dired-mark-files-regexp
-               "c" dired-do-chmod)))
+               "c" dired-do-chmod
+               "L" dired-do-symlink)))
 
 
 (add-hook 'dired-mode-hook 'customize-dired-keys)
