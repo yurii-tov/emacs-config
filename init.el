@@ -959,26 +959,6 @@
             'dired-record-ido-wd)
 
 
-;; Counter for marked files
-
-
-(defun dired-mark-counter ()
-  (let* ((marked (dired-get-marked-files nil nil nil t))
-         (l (length marked)))
-    (when (> l 1)
-      (propertize (format "Marked: %s" (if (eq (car marked) t) (1- l) l))
-                  'face 'mode-line-emphasis))))
-
-
-(defun dired-setup-mark-counters ()
-  (setq-local mode-line-format
-              (append mode-line-format
-                      '(" " (:eval (dired-mark-counter))))))
-
-
-(add-hook 'dired-mode-hook 'dired-setup-mark-counters)
-
-
 ;; =======
 ;; isearch
 ;; =======
