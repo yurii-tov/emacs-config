@@ -3634,11 +3634,6 @@ Process .+
 (setq cider-show-error-buffer nil)
 
 
-(defun babashka ()
-  (interactive)
-  (cider-jack-in-universal 3))
-
-
 ;; ===========
 ;; common lisp
 ;; ===========
