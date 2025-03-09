@@ -179,12 +179,11 @@
           (bind-keys ',bindings ',name)))
 
 
-;; extending global search map
+;; search
 
 
 (bind-keys `("f" find-dired
-             "g" ,(if (executable-find "rg")
-                      'ripgrep-regexp 'rgrep)
+             "g" rgrep
              "s" browse-url-or-search
              "t" translate-en-ru-online)
            search-map)
@@ -3547,7 +3546,12 @@ Process .+
 ;; =======
 
 
-(setq ripgrep-arguments '("-uu"))
+(setq ripgrep (executable-find "rg")
+      ripgrep-arguments '("-uu"))
+
+
+(when ripgrep
+  (define-key search-map (kbd "g") 'ripgrep-regexp))
 
 
 ;; ===
