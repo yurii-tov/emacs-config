@@ -321,7 +321,8 @@
              "C-c c" org-capture
              "C-c a" org-agenda
              "C-c o" org-commit
-             "C-c w" tail)
+             "C-c w" tail
+             "C-c m" man)
            global-map)
 
 
