@@ -450,7 +450,10 @@
 ;; enumerate lines
 
 
-(add-hook 'tabulated-list-mode-hook 'display-line-numbers-mode)
+(dolist (x '(prog-mode-hook
+             conf-mode-hook
+             tabulated-list-mode-hook))
+  (add-hook x 'display-line-numbers-mode))
 
 
 ;; fonts
