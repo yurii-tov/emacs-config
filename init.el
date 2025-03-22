@@ -226,7 +226,7 @@
 (define-custom-keymap diff-map "C-x d"
                       "f" diff
                       "b" diff-buffers
-                      "d" diff-buffer-with-file)
+                      "d" diff-current-buffer)
 
 
 ;; kmacro
@@ -3544,6 +3544,17 @@ Process .+
   (prettier-write-options)
   (dolist (m '(js-mode java-mode mhtml-mode html-mode css-mode))
     (add-to-list 'pretty-printers (cons m 'prettier-pprint-buffer))))
+
+
+;; ====
+;; Diff
+;; ====
+
+
+(defun diff-current-buffer ()
+  "Invoke `diff-buffer-with-file' for current buffer"
+  (interactive)
+  (diff-buffer-with-file))
 
 
 ;; =======
