@@ -225,7 +225,8 @@
 
 (define-custom-keymap diff-map "C-x d"
                       "f" diff
-                      "b" diff-buffers)
+                      "b" diff-buffers
+                      "d" diff-buffer-with-file)
 
 
 ;; kmacro
