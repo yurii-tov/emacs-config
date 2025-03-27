@@ -453,6 +453,7 @@
 
 (dolist (x '(prog-mode-hook
              conf-mode-hook
+             sgml-mode-hook
              tabulated-list-mode-hook))
   (add-hook x 'display-line-numbers-mode))
 
