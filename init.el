@@ -179,6 +179,12 @@
           (bind-keys ',bindings ',name)))
 
 
+;; more user-friendly hints
+
+
+(which-key-mode)
+
+
 ;; search
 
 
