@@ -2004,9 +2004,10 @@
   ;; Keybindings
   (bind-keys '("M-p" eglot-code-actions
                "M-." xref-find-definitions
-               "C-," eglot-code-action-extract
-               "C-." eglot-rename
-               "C-;" flymake-goto-next-error
+               "C-," flymake-goto-prev-error
+               "C-." flymake-goto-next-error
+               "C-c C-n" eglot-rename
+               "C-c C-e" eglot-code-action-extract
                "C-c C-o" flymake-show-buffer-diagnostics
                "C-c C-p" flymake-show-project-diagnostics
                "C-h C-h" eldoc-print-current-symbol-info
