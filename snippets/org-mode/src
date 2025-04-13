@@ -1,6 +1,6 @@
 # -*- mode: snippet -*-
-# name: src
-# key: s
+# name: source code block
+# key: code
 # --
 #+begin_src $1
   $0
