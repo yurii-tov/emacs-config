@@ -2264,6 +2264,12 @@
 (define-key org-mode-map (kbd "C-c C-/") 'org-insert-checklist-status)
 
 
+;; Blocks insertion
+
+
+(define-key org-mode-map (kbd "M-p") 'org-insert-structure-template)
+
+
 ;; Agenda
 
 
