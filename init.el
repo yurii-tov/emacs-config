@@ -917,31 +917,6 @@
   (advice-add x :around 'dired-propogate-hide-details))
 
 
-;; set custom names for "find" buffers
-
-
-(defun find-dired-setup-buffer (f &rest args)
-  (let* ((working-directory (directory-file-name (car args)))
-         (name (file-name-base working-directory))
-         (existing (get-buffer name)))
-    (when (and existing
-               (equal (with-current-buffer existing
-                        (directory-file-name default-directory))
-                      working-directory)
-               (eq (with-current-buffer existing major-mode)
-                   'dired-mode))
-      (kill-buffer existing))
-    (apply f args)
-    (set (make-local-variable 'revert-buffer-function)
-         `(lambda (ignore-auto noconfirm)
-            (kill-buffer (current-buffer))
-            (apply #'find-dired ',args)))
-    (rename-buffer name t)))
-
-
-(advice-add 'find-dired :around #'find-dired-setup-buffer)
-
-
 ;; force scp usage when copying files with dired
 
 
@@ -968,6 +943,55 @@
 (advice-add 'dired--find-possibly-alternative-file
             :around
             'dired-record-ido-wd)
+
+
+;; ==========
+;; find-dired
+;; ==========
+
+
+(defun find-dired-setup-buffer (f &rest args)
+  (let* ((working-directory (directory-file-name (car args)))
+         (name (file-name-base working-directory))
+         (existing (get-buffer name)))
+    (when (and existing
+               (equal (with-current-buffer existing
+                        (directory-file-name default-directory))
+                      working-directory)
+               (eq (with-current-buffer existing major-mode)
+                   'dired-mode))
+      (kill-buffer existing))
+    (apply f args)
+    (set (make-local-variable 'revert-buffer-function)
+         `(lambda (ignore-auto noconfirm)
+            (kill-buffer (current-buffer))
+            (apply #'find-dired ',args)))
+    (rename-buffer name t)))
+
+
+(advice-add 'find-dired :around #'find-dired-setup-buffer)
+
+
+(defun find-dired-dwim (f &rest args)
+  "Simplify most frequent scenario
+   (case-insensitive search using part of a file name)"
+  (let ((query (cadr args)))
+    (unless (string-prefix-p "-" query)
+      (setf (cadr args)
+            (format "-iname '*%s*'" query)))
+    (apply f args)))
+
+
+(advice-add 'find-dired :around #'find-dired-dwim)
+
+
+(defun find-dired-prevent-prompt-clutter (f &rest args)
+  "Set find-args to empty string, therefore prevent input prompt cluttering"
+  (apply f args)
+  (setq find-args ""))
+
+
+(advice-add 'find-dired :around #'find-dired-prevent-prompt-clutter)
 
 
 ;; =======
