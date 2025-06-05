@@ -24,6 +24,7 @@
                   ripgrep
                   markdown-mode
                   cider
+                  gptel
                   powershell
                   groovy-mode
                   slime
@@ -319,6 +320,7 @@
              "C-h h" describe-symbol
              "C-c j" cider-start-map
              "C-c k" sql-connect
+             "C-c l" gptel-send
              "C-c i" ielm
              "C-c s" run-ssh-session
              "C-c d" serve-directory
@@ -3906,9 +3908,15 @@ Process .+
         (add-to-history 'browser-query-history x)))
 
 
-;; =======
-;; AI Chat
-;; =======
+;; ===============
+;; LLM integration
+;; ===============
+
+
+(setq gptel-default-mode 'org-mode)
+
+
+;;;; DDG AI Chat
 
 
 (let ((ddg-ai-chat-dir "~/.emacs.d/ddg-ai-chat/target/release/"))
