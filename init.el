@@ -321,6 +321,7 @@
              "C-c j" cider-start-map
              "C-c k" sql-connect
              "C-c l" gptel-send
+             "C-c r" gptel-rewrite
              "C-c i" ielm
              "C-c s" run-ssh-session
              "C-c d" serve-directory
