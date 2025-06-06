@@ -320,8 +320,8 @@
              "C-h h" describe-symbol
              "C-c j" cider-start-map
              "C-c k" sql-connect
-             "C-c RET" gptel-send
-             "C-c l" gptel
+             "C-c l" gptel-send
+             "C-c L" gptel
              "C-c r" gptel-rewrite
              "C-c i" ielm
              "C-c s" run-ssh-session
