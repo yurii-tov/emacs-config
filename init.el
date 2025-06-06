@@ -314,6 +314,7 @@
              "C-x C-b" ibuffer
              "C-x C-l" gptel-send
              "C-x C-k" kill-buffer-and-window
+             "C-x C-=" display-line-numbers-mode
              "C-x ." compile
              "C-x C-." recompile
              "C-h C-h" describe-symbol
