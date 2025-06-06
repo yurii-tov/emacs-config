@@ -312,7 +312,7 @@
              "C-x u" reopen-with-sudo
              "C-x l" eglot
              "C-x C-b" ibuffer
-             "C-x C-l" display-line-numbers-mode
+             "C-x C-l" gptel-send
              "C-x C-k" kill-buffer-and-window
              "C-x ." compile
              "C-x C-." recompile
@@ -320,8 +320,7 @@
              "C-h h" describe-symbol
              "C-c j" cider-start-map
              "C-c k" sql-connect
-             "C-c l" gptel-send
-             "C-c L" gptel
+             "C-c l" gptel
              "C-c r" gptel-rewrite
              "C-c i" ielm
              "C-c s" run-ssh-session
