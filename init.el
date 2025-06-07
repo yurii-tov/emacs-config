@@ -310,9 +310,9 @@
              "C-x B" bookmark-delete
              "C-x j" bookmark-jump
              "C-x u" reopen-with-sudo
-             "C-x l" eglot
              "C-x C-b" ibuffer
              "C-x C-l" gptel-send
+             "C-x l" gptel-menu
              "C-x C-k" kill-buffer-and-window
              "C-x C-=" display-line-numbers-mode
              "C-x ." compile
@@ -321,7 +321,7 @@
              "C-h h" describe-symbol
              "C-c j" cider-start-map
              "C-c k" sql-connect
-             "C-c l" gptel
+             "C-c l" eglot
              "C-c r" gptel-rewrite
              "C-c i" ielm
              "C-c s" run-ssh-session
