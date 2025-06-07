@@ -192,6 +192,7 @@
 (bind-keys `("f" find-dired
              "g" rgrep
              "s" browse-url-or-search
+             "l" gptel
              "t" translate-en-ru-online)
            search-map)
 
