@@ -3927,7 +3927,7 @@ Process .+
     (add-to-list 'exec-path ddg-ai-chat-dir)
     (load "~/.emacs.d/ddg-ai-chat/ddg-ai.el")
     (setq ddg-ai-translate-word-fn 'translate-en-ru-online)
-    (ddg-ai-chat-set-keybindings)))
+    (define-key search-map "t" 'ddg-ai-translate)))
 
 
 ;; ===========
