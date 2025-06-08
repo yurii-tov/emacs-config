@@ -3921,7 +3921,8 @@ Process .+
 (defun gptel-chat ()
   "Just drop me into LLM chat, now!"
   (interactive)
-  (gptel "*LLM-chat*" nil nil t))
+  (gptel (format "*%s*" (gptel-backend-name gptel-backend))
+         nil nil t))
 
 
 (with-eval-after-load 'gptel
