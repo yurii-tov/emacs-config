@@ -192,7 +192,7 @@
 (bind-keys `("f" find-dired
              "g" rgrep
              "s" browse-url-or-search
-             "l" gptel
+             "l" gptel-chat
              "t" translate-en-ru-online)
            search-map)
 
@@ -3917,6 +3917,18 @@ Process .+
 
 
 (setq gptel-default-mode 'org-mode)
+
+
+(defun gptel-chat ()
+  "Just drop me into LLM chat, now!"
+  (interactive)
+  (gptel "*LLM-chat*" nil nil t))
+
+
+(with-eval-after-load 'gptel
+  (gptel-make-preset 'random
+    :description "Generate random thing"
+    :system "You a random example generator. Give one example by provided description. Do not write any explanations"))
 
 
 ;;;; DDG AI Chat
