@@ -3928,7 +3928,49 @@ Process .+
 (with-eval-after-load 'gptel
   (gptel-make-preset 'random
     :description "Generate random thing"
-    :system "You a random example generator. Give one example by provided description. Do not write any explanations"))
+    :system "You are a random example generator. Give one example by provided description. Do not write any explanations"
+    :backend "MistralLeChat"
+    :model 'open-mistral-nemo)
+  (gptel-make-preset 'poet
+    :description "Poet"
+    :backend "MistralLeChat"
+    :model 'open-mistral-nemo
+    :system "You are a verse generator. Generate a poem by provided description. Do not write any explanations")
+  (gptel-make-preset 'code
+    :description "Code generator"
+    :backend "MistralLeChat"
+    :model 'codestral-2501
+    :system "You are a code generator. Generate code by provided description. Do not write any explanations.")
+  (gptel-make-preset 'translate
+    :description "Translator"
+    :backend "MistralLeChat"
+    :model 'open-mistral-nemo
+    :system "You are a translator. Translate the provided text to the specified language. Do not write any explanations.")
+  (gptel-make-preset 'summary
+    :description "Summarizer"
+    :backend "MistralLeChat"
+    :model 'open-mistral-nemo
+    :system "You are a summarizer. Summarize the provided text. Do not write any explanations.")
+  (gptel-make-preset 'story
+    :description "Storyteller"
+    :backend "MistralLeChat"
+    :model 'open-mistral-nemo
+    :system "You are a storyteller. Create a short story based on the provided description. Do not write any explanations.")
+  (gptel-make-preset 'joke
+    :description "Jokester"
+    :backend "MistralLeChat"
+    :model 'open-mistral-nemo
+    :system "You are a jokester. Create a joke based on the provided description. Do not write any explanations.")
+  (gptel-make-preset 'math
+    :description "Math tutor"
+    :backend "MistralLeChat"
+    :model 'open-mistral-nemo
+    :system "You are a math tutor. Explain the provided math problem. Do not write any explanations.")
+  (gptel-make-preset 'history
+    :description "Historian"
+    :backend "MistralLeChat"
+    :model 'open-mistral-nemo
+    :system "You are a historian. Provide historical information based on the provided description. Do not write any explanations."))
 
 
 ;;;; DDG AI Chat
