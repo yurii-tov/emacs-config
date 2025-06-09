@@ -1921,7 +1921,8 @@
               company-files-chop-trailing-slash nil
               company-dabbrev-downcase nil
               company-transformers '(delete-consecutive-dups)
-              company-backends '(company-files
+              company-backends '(company-gptel
+                                 company-files
                                  (company-capf
                                   company-yasnippet
                                   company-keywords
@@ -2868,7 +2869,8 @@ Example input:
 
 (defun comint-setup-company-completion ()
   (setq-local company-backends
-              '((company-capf
+              '(company-gptel
+                (company-capf
                  company-yasnippet
                  company-comint-hist-completion
                  company-keywords
@@ -3713,7 +3715,8 @@ Process .+
 (defun common-lisp-setup-company ()
   (require 'slime-company)
   (setq-local company-backends
-              '(company-files
+              '(company-gptel
+                company-files
                 (company-slime
                  company-yasnippet
                  company-keywords
@@ -3756,9 +3759,9 @@ Process .+
              (propertize socket 'face 'bold))))
 
 
-;; ================================
-;; Access eng-rus dictionary online
-;; ================================
+;; =====================
+;; EN ⇔ RU translations
+;; =====================
 
 
 (defun translate-en-ru-online (&optional query)
@@ -3787,6 +3790,14 @@ Process .+
                    (propertize query 'face 'font-lock-constant-face)
                    translation)
         translation))))
+
+
+(let ((ddg-ai-chat-dir "~/.emacs.d/ddg-ai-chat/target/release/"))
+  (when (file-exists-p ddg-ai-chat-dir)
+    (add-to-list 'exec-path ddg-ai-chat-dir)
+    (load "~/.emacs.d/ddg-ai-chat/ddg-ai.el")
+    (setq ddg-ai-translate-word-fn 'translate-en-ru-online)
+    (define-key search-map "t" 'ddg-ai-translate)))
 
 
 ;; ==========================
@@ -3915,6 +3926,9 @@ Process .+
 ;; ===============
 
 
+(require 'gptel)
+
+
 (setq gptel-default-mode 'org-mode)
 
 
@@ -3925,7 +3939,7 @@ Process .+
          nil nil t))
 
 
-(with-eval-after-load 'gptel
+(progn
   (gptel-make-preset 'random
     :description "Generate random thing"
     :system "You are a random example generator. Give one example by provided description. Do not write any explanations"
@@ -3973,15 +3987,28 @@ Process .+
     :system "You are a historian. Provide historical information based on the provided description. Do not write any explanations."))
 
 
-;;;; DDG AI Chat
-
-
-(let ((ddg-ai-chat-dir "~/.emacs.d/ddg-ai-chat/target/release/"))
-  (when (file-exists-p ddg-ai-chat-dir)
-    (add-to-list 'exec-path ddg-ai-chat-dir)
-    (load "~/.emacs.d/ddg-ai-chat/ddg-ai.el")
-    (setq ddg-ai-translate-word-fn 'translate-en-ru-online)
-    (define-key search-map "t" 'ddg-ai-translate)))
+(defun company-gptel (command &optional arg &rest _ignored)
+  "`company-mode' backend for `gptel' \"inline\" presets."
+  (interactive (list 'interactive))
+  (cl-case command
+    (interactive (company-begin-backend 'company-gptel))
+    (prefix (and gptel--known-presets
+                 (let ((s (company-grab-symbol)))
+                   (when (string-prefix-p "@" s) s))))
+    (candidates
+     (cl-remove-if-not
+      (lambda (x)
+        (string-prefix-p arg x))
+      (mapcar (lambda (x)
+                (format "@%s" (symbol-name (car x))))
+              gptel--known-presets)))
+    (annotation (format " %s"
+                        (thread-first
+                          (substring arg 1)
+                          (intern-soft)
+                          (assq gptel--known-presets) (cdr)
+                          (plist-get :description))))
+    (kind 'magic)))
 
 
 ;; ===========
