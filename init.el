@@ -3936,7 +3936,7 @@ Process .+
     :backend "MistralLeChat"
     :model 'open-mistral-nemo
     :system "You are a verse generator. Generate a poem by provided description. Do not write any explanations")
-  (gptel-make-preset 'code
+  (gptel-make-preset 'coder
     :description "Code generator"
     :backend "MistralLeChat"
     :model 'codestral-2501
@@ -3946,7 +3946,7 @@ Process .+
     :backend "MistralLeChat"
     :model 'open-mistral-nemo
     :system "You are a translator. Translate the provided text to the specified language. Do not write any explanations.")
-  (gptel-make-preset 'summary
+  (gptel-make-preset 'summarizer
     :description "Summarizer"
     :backend "MistralLeChat"
     :model 'open-mistral-nemo
