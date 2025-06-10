@@ -3998,6 +3998,11 @@ Process .+
                           (intern-soft)
                           (assq gptel--known-presets) (cdr)
                           (plist-get :description))))
+    (doc-buffer (company-doc-buffer (thread-first
+                                      (substring arg 1)
+                                      (intern-soft)
+                                      (assq gptel--known-presets) (cdr)
+                                      (prin1-to-string))))
     (kind 'magic)))
 
 
