@@ -2020,7 +2020,7 @@
     (t (apply f args))))
 
 
-(dolist (x '(company-dabbrev company-keywords company-yasnippet))
+(dolist (x '(company-gptel company-dabbrev company-keywords company-yasnippet))
   (advice-add x :around 'fix-company-backend))
 
 
@@ -3983,8 +3983,7 @@ Process .+
   (cl-case command
     (interactive (company-begin-backend 'company-gptel))
     (prefix (and gptel--known-presets
-                 (let ((s (company-grab-symbol)))
-                   (when (string-prefix-p "@" s) s))))
+                 (company-grab "@[a-zA-Z]*")))
     (candidates
      (cl-remove-if-not
       (lambda (x)
