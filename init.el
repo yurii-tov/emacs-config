@@ -3969,12 +3969,7 @@ Process .+
     :description "Create a short story"
     :backend "MistralLeChat"
     :model 'open-mistral-nemo
-    :system "You are a storyteller. Create a short story based on the provided description. Do not write any explanations.")
-  (gptel-make-preset 'joke
-    :description "Create a joke"
-    :backend "MistralLeChat"
-    :model 'open-mistral-nemo
-    :system "You are a jokester. Create a joke based on the provided description. Do not write any explanations."))
+    :system "You are a storyteller. Create a short story based on the provided description. Do not write any explanations."))
 
 
 (defun company-gptel (command &optional arg &rest _ignored)
