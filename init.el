@@ -3945,22 +3945,22 @@ Process .+
     :system "You are a random example generator. Give one example by provided description. Do not write any explanations"
     :backend "MistralLeChat"
     :model 'open-mistral-nemo)
-  (gptel-make-preset 'poet
+  (gptel-make-preset 'poetry
     :description "Generate a poem by provided description"
     :backend "MistralLeChat"
     :model 'open-mistral-nemo
     :system "You are a verse generator. Generate a poem by provided description. Do not write any explanations")
-  (gptel-make-preset 'coder
+  (gptel-make-preset 'program
     :description "Code monkey 🐵"
     :backend "MistralLeChat"
     :model 'codestral-2501
-    :system "You are a code generator. Generate code by provided description. Do not write any explanations.")
+    :system "You are a code generator. Generate code by provided description. Do not write any explanations. Answer with code only without any markup")
   (gptel-make-preset 'translate
     :description "Translate from english to any language"
     :backend "MistralLeChat"
     :model 'open-mistral-nemo
-    :system "You are a translator. Translate the provided text to the specified language. Do not write any explanations.")
-  (gptel-make-preset 'summarizer
+    :system "You are a translator. Translate the provided text to the specified language. If no language specified, translate into Russian. Do not write any explanations.")
+  (gptel-make-preset 'summary
     :description "Summarize the provided text"
     :backend "MistralLeChat"
     :model 'open-mistral-nemo
