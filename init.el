@@ -23,6 +23,7 @@
                   rust-mode
                   ripgrep
                   markdown-mode
+                  htmlize
                   cider
                   gptel
                   powershell
