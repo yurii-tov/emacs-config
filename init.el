@@ -4016,6 +4016,38 @@ Process .+
     (kind 'magic)))
 
 
+
+;;;; Send selected region to LLM (by TAB key), then replace it by response
+
+
+(defun gptel-tab-rewrite (f &rest args)
+  (if (use-region-p)
+      (progn
+        (gptel--sanitize-model)
+        (let ((fsm (gptel-make-fsm :handlers gptel-send--handlers)))
+          (gptel-request nil
+            :stream gptel-stream
+            :transforms gptel-prompt-transform-functions
+            :fsm fsm
+            :callback (lambda (response _)
+                        (delete-region (region-beginning)
+                                       (region-end))
+                        (insert response)
+                        (keyboard-quit)))
+          (message "Querying %s..."
+                   (thread-first (gptel-fsm-info fsm)
+                                 (plist-get :backend)
+                                 (gptel-backend-name))))
+        (gptel--update-status " Waiting..." 'warning))
+    (apply f args)))
+
+
+(dolist (x '(company-indent-or-complete-common
+             org-cycle
+             minibuffer-complete))
+  (advice-add x :around 'gptel-tab-rewrite))
+
+
 ;; ===========
 ;; epub reader
 ;; ===========
