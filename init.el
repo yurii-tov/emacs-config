@@ -4016,28 +4016,24 @@ Process .+
     (kind 'magic)))
 
 
-;; Send selected region to LLM (by TAB key), then replace it by response
+;; gptel-rewrite
+
+
+(bind-keys '("SPC" gptel--rewrite-accept
+             "TAB" gptel--suffix-rewrite
+             "r" gptel--rewrite-iterate
+             "k" gptel--rewrite-reject
+             "d" gptel--rewrite-diff
+             "n" gptel--rewrite-next
+             "p" gptel--rewrite-previous
+             "m" gptel--rewrite-merge)
+           gptel-rewrite-actions-map)
 
 
 (defun gptel-tab-rewrite (f &rest args)
+  "Trigger gptel-rewrite by TAB key"
   (if (use-region-p)
-      (progn
-        (gptel--sanitize-model)
-        (let ((fsm (gptel-make-fsm :handlers gptel-send--handlers)))
-          (gptel-request nil
-            :stream gptel-stream
-            :transforms gptel-prompt-transform-functions
-            :fsm fsm
-            :callback (lambda (response _)
-                        (delete-region (region-beginning)
-                                       (region-end))
-                        (insert response)
-                        (deactivate-mark)))
-          (message "Querying %s..."
-                   (thread-first (gptel-fsm-info fsm)
-                                 (plist-get :backend)
-                                 (gptel-backend-name))))
-        (gptel--update-status " Waiting..." 'warning))
+      (gptel--suffix-rewrite)
     (apply f args)))
 
 
