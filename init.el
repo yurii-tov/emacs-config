@@ -4038,8 +4038,7 @@ Process .+
 
 
 (dolist (x '(company-indent-or-complete-common
-             org-cycle
-             minibuffer-complete))
+             org-cycle))
   (advice-add x :around 'gptel-tab-rewrite))
 
 
