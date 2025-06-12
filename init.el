@@ -3937,7 +3937,15 @@ Process .+
 (require 'gptel)
 
 
-(setq gptel-default-mode 'org-mode)
+(setq gptel-backend (gptel-make-openai "MistralLeChat"
+                      :host "api.mistral.ai"
+                      :endpoint "/v1/chat/completions"
+                      :protocol "https"
+                      :key 'gptel-api-key
+                      :models '("open-mistral-nemo"
+                                "codestral-2501"))
+      gptel-model 'open-mistral-nemo
+      gptel-default-mode 'org-mode)
 
 
 (defun gptel-chat ()
