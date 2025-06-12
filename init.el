@@ -4033,7 +4033,9 @@ Process .+
 (defun gptel-tab-rewrite (f &rest args)
   "Trigger gptel-rewrite by TAB key"
   (if (use-region-p)
-      (gptel--suffix-rewrite)
+      (progn (unless gptel--rewrite-message
+               (setq gptel--rewrite-message "Rewrite: "))
+             (gptel--suffix-rewrite))
     (apply f args)))
 
 
