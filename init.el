@@ -4016,7 +4016,6 @@ Process .+
     (kind 'magic)))
 
 
-
 ;;;; Send selected region to LLM (by TAB key), then replace it by response
 
 
