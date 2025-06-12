@@ -4044,6 +4044,19 @@ Process .+
   (advice-add x :around 'gptel-tab-rewrite))
 
 
+;; Enable "coder" model in programming modes
+
+
+(defun gptel-enable-code-model ()
+  (setq-local gptel-model 'codestral-2501))
+
+
+(dolist (x '(prog-mode-hook
+             conf-mode-hook
+             sgml-mode-hook))
+  (add-hook x 'gptel-enable-code-model))
+
+
 ;; ===========
 ;; epub reader
 ;; ===========
