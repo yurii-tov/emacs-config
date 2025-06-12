@@ -4033,7 +4033,7 @@ Process .+
                         (delete-region (region-beginning)
                                        (region-end))
                         (insert response)
-                        (keyboard-quit)))
+                        (deactivate-mark)))
           (message "Querying %s..."
                    (thread-first (gptel-fsm-info fsm)
                                  (plist-get :backend)
