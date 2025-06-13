@@ -3964,7 +3964,7 @@ Process .+
     :model 'codestral-2501
     :system "You are a code generator. Generate code by provided description. Do not write any explanations. Answer with code only without any markup")
   (gptel-make-preset 'translate
-    :description "Translate from english to any language"
+    :description "Translate between human languages"
     :backend "MistralLeChat"
     :model 'open-mistral-nemo
     :system "You are a translator. Translate the provided text to the specified language. If no language specified, translate into Russian. Do not write any explanations.")
