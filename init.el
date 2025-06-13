@@ -4021,12 +4021,9 @@ Process .+
 
 (bind-keys '("SPC" gptel--rewrite-accept
              "TAB" gptel--suffix-rewrite
-             "r" gptel--rewrite-iterate
+             "i" gptel--rewrite-iterate
              "k" gptel--rewrite-reject
-             "d" gptel--rewrite-diff
-             "n" gptel--rewrite-next
-             "p" gptel--rewrite-previous
-             "m" gptel--rewrite-merge)
+             "=" gptel--rewrite-diff)
            gptel-rewrite-actions-map)
 
 
