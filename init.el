@@ -3800,14 +3800,6 @@ Process .+
         translation))))
 
 
-(let ((ddg-ai-chat-dir "~/.emacs.d/ddg-ai-chat/target/release/"))
-  (when (file-exists-p ddg-ai-chat-dir)
-    (add-to-list 'exec-path ddg-ai-chat-dir)
-    (load "~/.emacs.d/ddg-ai-chat/ddg-ai.el")
-    (setq ddg-ai-translate-word-fn 'translate-en-ru-online)
-    (define-key search-map "t" 'ddg-ai-translate)))
-
-
 ;; ==========================
 ;; capture videos with ffmpeg
 ;; ==========================
