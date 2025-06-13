@@ -4011,6 +4011,9 @@ Process .+
 ;; gptel-rewrite
 
 
+(require 'gptel-rewrite)
+
+
 (defun gptel-rewrite-with-directive ()
   (interactive)
   (let ((gptel--rewrite-message (read-string "Directive: ")))
