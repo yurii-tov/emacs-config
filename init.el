@@ -3941,10 +3941,14 @@ Process .+
 
 
 (defun gptel-chat ()
-  "Just drop me into LLM chat, now!"
+  "\"Just drop me into LLM chat, now!\"
+Optionally send region, if selected"
   (interactive)
-  (gptel (format "*%s*" (gptel-backend-name gptel-backend))
-         nil nil t))
+  (let ((buffer-name (format "*%s*" (gptel-backend-name gptel-backend))))
+    (if (use-region-p)
+        (gptel--suffix-send (list (format ":%s" (read-string "Directive: "))
+                                  (format "g%s" buffer-name)))
+      (gptel buffer-name nil nil t))))
 
 
 (progn
