@@ -3946,8 +3946,9 @@ Optionally send region, if selected"
   (interactive)
   (let ((buffer-name (format "*%s*" (gptel-backend-name gptel-backend))))
     (if (use-region-p)
-        (gptel--suffix-send (list (format ":%s" (read-string "Directive: "))
-                                  (format "g%s" buffer-name)))
+        (gptel--suffix-send
+         (list (format ":%s" (read-string "Directive: "))
+               (format "g%s" buffer-name)))
       (gptel buffer-name nil nil t))))
 
 
