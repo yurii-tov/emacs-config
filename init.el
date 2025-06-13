@@ -4053,7 +4053,8 @@ Process .+
 
 (dolist (x '(prog-mode-hook
              conf-mode-hook
-             sgml-mode-hook))
+             sgml-mode-hook
+             comint-mode-hook))
   (add-hook x 'gptel-enable-code-model))
 
 
