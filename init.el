@@ -3947,7 +3947,12 @@ Optionally send region, if selected"
   (let ((buffer-name (format "*%s*" (gptel-backend-name gptel-backend))))
     (if (use-region-p)
         (gptel--suffix-send
-         (list (format ":%s" (read-string "Directive: "))
+         (list (format ":%s" (car (cl-pushnew
+                                   (read-string "Directive: " nil
+                                                'gptel-directive-history)
+                                   (alist-get 'gptel--infix-add-directive
+                                              transient-history)
+                                   :test #'equal)))
                (format "g%s" buffer-name)))
       (gptel buffer-name nil nil t))))
 
@@ -4021,7 +4026,13 @@ Optionally send region, if selected"
 
 (defun gptel-rewrite-with-directive ()
   (interactive)
-  (let ((gptel--rewrite-message (read-string "Directive: ")))
+  (let ((gptel--rewrite-message
+         (car (cl-pushnew
+               (read-string "Directive: " nil
+                            'gptel-rewrite-directive-history)
+               (alist-get 'gptel--infix-rewrite-extra
+                          transient-history)
+               :test #'equal))))
     (gptel--suffix-rewrite)))
 
 
