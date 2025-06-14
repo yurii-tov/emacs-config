@@ -4026,11 +4026,12 @@ Optionally send region, if selected"
 
 
 (defun gptel-rewrite-fix-system (f &rest args)
-  "Dont mention current mode in the system message unless it is `prog-mode'-derived"
-  (let ((major-mode (if (derived-mode-p 'prog-mode)
-                        major-mode
-                      'dummy-mode)))
-    (apply f args)))
+  "Use \"dumb\" default system message"
+  "Follow my instructions and improve or rewrite text I provide.
+- If provided text looks like programming code, you should improve, rewrite or refactor it.
+  Generate code in full, do not abbreviate or omit code.
+- Generate ONLY the replacement text, without any explanation or markdown code fences.
+- Do not ask for further clarification, and make any assumptions you need to follow instructions.")
 
 
 (advice-add 'gptel--rewrite-directive-default
