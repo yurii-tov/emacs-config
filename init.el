@@ -3944,7 +3944,8 @@ Process .+
   "\"Just drop me into LLM chat, now!\"
 Optionally send region, if selected"
   (interactive)
-  (let ((buffer-name (format "*%s*" (gptel-backend-name gptel-backend))))
+  (let ((buffer-name (format "*%s*" (gptel-backend-name gptel-backend)))
+        (gptel-model 'open-mistral-nemo))
     (if (use-region-p)
         (gptel--suffix-send
          (list (format ":%s" (car (cl-pushnew
