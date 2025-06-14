@@ -4025,6 +4025,19 @@ Optionally send region, if selected"
 (require 'gptel-rewrite)
 
 
+(defun gptel-rewrite-fix-system (f &rest args)
+  "Dont mention current mode in the system message unless it is `prog-mode'-derived"
+  (let ((major-mode (if (derived-mode-p 'prog-mode)
+                        major-mode
+                      'dummy-mode)))
+    (apply f args)))
+
+
+(advice-add 'gptel--rewrite-directive-default
+            :around
+            'gptel-rewrite-fix-system)
+
+
 (defun gptel-rewrite-with-directive ()
   (interactive)
   (let ((gptel--rewrite-message
