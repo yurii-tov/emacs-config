@@ -1923,7 +1923,8 @@
               company-files-chop-trailing-slash nil
               company-dabbrev-downcase nil
               company-transformers '(delete-consecutive-dups)
-              company-backends '(company-files
+              company-backends '(company-gptel
+                                 company-files
                                  (company-capf
                                   company-yasnippet
                                   company-keywords
@@ -2021,7 +2022,7 @@
     (t (apply f args))))
 
 
-(dolist (x '(company-dabbrev company-keywords company-yasnippet))
+(dolist (x '(company-gptel company-dabbrev company-keywords company-yasnippet))
   (advice-add x :around 'fix-company-backend))
 
 
@@ -2876,7 +2877,8 @@ Example input:
 
 (defun comint-setup-company-completion ()
   (setq-local company-backends
-              '((company-capf
+              '(company-gptel
+                (company-capf
                  company-yasnippet
                  company-comint-hist-completion
                  company-keywords
@@ -3721,7 +3723,8 @@ Process .+
 (defun common-lisp-setup-company ()
   (require 'slime-company)
   (setq-local company-backends
-              '(company-files
+              '(company-gptel
+                company-files
                 (company-slime
                  company-yasnippet
                  company-keywords
@@ -3953,6 +3956,67 @@ Optionally send region, if selected"
                                    :test #'equal)))
                (format "g%s" buffer-name)))
       (gptel buffer-name nil nil t))))
+
+
+(progn
+  (gptel-make-preset 'random
+    :description "Generate random thing"
+    :system "You are a random example generator. Give one example by provided description. Do not write any explanations"
+    :backend "MistralLeChat"
+    :model 'open-mistral-nemo)
+  (gptel-make-preset 'poetry
+    :description "Generate a poem by provided description"
+    :backend "MistralLeChat"
+    :model 'open-mistral-nemo
+    :system "You are a verse generator. Generate a poem by provided description. Do not write any explanations")
+  (gptel-make-preset 'program
+    :description "Code monkey 🐵"
+    :backend "MistralLeChat"
+    :model 'codestral-2501
+    :system "You are a code generator. Generate code by provided description. Do not write any explanations. Answer with code only without any markup")
+  (gptel-make-preset 'translate
+    :description "Translate between human languages"
+    :backend "MistralLeChat"
+    :model 'open-mistral-nemo
+    :system "You are a translator. Translate the provided text to the specified language. If no language specified, translate into Russian. Do not write any explanations.")
+  (gptel-make-preset 'summary
+    :description "Summarize the provided text"
+    :backend "MistralLeChat"
+    :model 'open-mistral-nemo
+    :system "You are a summarizer. Summarize the provided text. Do not write any explanations.")
+  (gptel-make-preset 'story
+    :description "Create a short story"
+    :backend "MistralLeChat"
+    :model 'open-mistral-nemo
+    :system "You are a storyteller. Create a short story based on the provided description. Do not write any explanations."))
+
+
+(defun company-gptel (command &optional arg &rest _ignored)
+  "`company-mode' backend for `gptel' \"inline\" presets."
+  (interactive (list 'interactive))
+  (cl-case command
+    (interactive (company-begin-backend 'company-gptel))
+    (prefix (and gptel--known-presets
+                 (company-grab "@[a-zA-Z]*")))
+    (candidates
+     (cl-remove-if-not
+      (lambda (x)
+        (string-prefix-p arg x))
+      (mapcar (lambda (x)
+                (format "@%s" (symbol-name (car x))))
+              gptel--known-presets)))
+    (annotation (format " %s"
+                        (thread-first
+                          (substring arg 1)
+                          (intern-soft)
+                          (assq gptel--known-presets) (cdr)
+                          (plist-get :description))))
+    (doc-buffer (company-doc-buffer (thread-first
+                                      (substring arg 1)
+                                      (intern-soft)
+                                      (assq gptel--known-presets) (cdr)
+                                      (prin1-to-string))))
+    (kind 'magic)))
 
 
 ;; gptel-rewrite
