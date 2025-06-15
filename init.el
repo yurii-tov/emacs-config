@@ -3972,7 +3972,7 @@ Optionally send region, if selected"
     :description "Code monkey 🐵"
     :backend "MistralLeChat"
     :model 'codestral-2501
-    :system "You are a code generator. Generate code by provided description. Do not write any explanations. Answer with code only without any markup")
+    :system "You are a code generator. Generate code by provided description. Generate ONLY the code, without any explanation or markdown code fences")
   (gptel-make-preset 'translate
     :description "Translate between human languages"
     :backend "MistralLeChat"
