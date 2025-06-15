@@ -3958,11 +3958,6 @@ Optionally send region, if selected"
 
 
 (progn
-  (gptel-make-preset 'random
-    :description "Generate random thing"
-    :system "You are a random example generator. Give one example by provided description. Do not write any explanations"
-    :backend "MistralLeChat"
-    :model 'open-mistral-nemo)
   (gptel-make-preset 'poetry
     :description "Generate a poem by provided description"
     :backend "MistralLeChat"
@@ -3983,11 +3978,9 @@ Optionally send region, if selected"
     :backend "MistralLeChat"
     :model 'open-mistral-nemo
     :system "You are a summarizer. Summarize the provided text. Do not write any explanations.")
-  (gptel-make-preset 'story
-    :description "Create a short story"
-    :backend "MistralLeChat"
-    :model 'open-mistral-nemo
-    :system "You are a storyteller. Create a short story based on the provided description. Do not write any explanations."))
+  (gptel-make-preset 'explain
+    :description "Provide a detailed explanation of a topic."
+    :system "Provide a comprehensive explanation of the topic. Begin with a summary, using lists and tables where appropriate. Present only the explanations, without any additional commentary or context."))
 
 
 (defun company-gptel (command &optional arg &rest _ignored)
