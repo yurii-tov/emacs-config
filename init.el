@@ -3189,7 +3189,7 @@ Example input:
     :description "Code monkey 🐵"
     :backend "MistralLeChat"
     :model 'codestral-2501
-    :system "You are a code generator. Generate code by provided description. Generate ONLY the code, without any explanation or markdown code fences")
+    :system "You are a programmer. Generate a program by provided description. Do not write any explanations.")
   (gptel-make-preset 'translate
     :description "Translate between human languages"
     :backend "MistralLeChat"
