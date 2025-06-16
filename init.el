@@ -3237,7 +3237,7 @@ Example input:
 
 (defun gptel-chat ()
   "\"Just drop me into LLM chat, now!\"
-Grab a region, if selected."
+Also grabs a selected region, if any."
   (interactive)
   (let ((buffer-name (format "*%s*" (gptel-backend-name gptel-backend)))
         (gptel-model 'open-mistral-nemo)
