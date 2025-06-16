@@ -3178,24 +3178,6 @@ Example input:
       gptel-default-mode 'org-mode)
 
 
-(defun gptel-chat ()
-  "\"Just drop me into LLM chat, now!\"
-Optionally send region, if selected"
-  (interactive)
-  (let ((buffer-name (format "*%s*" (gptel-backend-name gptel-backend)))
-        (gptel-model 'open-mistral-nemo))
-    (if (use-region-p)
-        (gptel--suffix-send
-         (list (format ":%s" (car (cl-pushnew
-                                   (read-string "Directive: " nil
-                                                'gptel-directive-history)
-                                   (alist-get 'gptel--infix-add-directive
-                                              transient-history)
-                                   :test #'equal)))
-               (format "g%s" buffer-name)))
-      (gptel buffer-name nil nil t))))
-
-
 (progn
   (gptel-make-preset 'poetry
     :description "Generate a poem by provided description"
@@ -3248,6 +3230,23 @@ Optionally send region, if selected"
                                       (assq gptel--known-presets) (cdr)
                                       (prin1-to-string))))
     (kind 'magic)))
+
+
+;; The Chat
+
+
+(defun gptel-chat ()
+  "\"Just drop me into LLM chat, now!\"
+Grab a region, if selected."
+  (interactive)
+  (let ((buffer-name (format "*%s*" (gptel-backend-name gptel-backend)))
+        (gptel-model 'open-mistral-nemo)
+        (region (when (use-region-p)
+                  (prog1 (buffer-substring
+                          (region-beginning)
+                          (region-end))
+                    (deactivate-mark)))))
+    (gptel buffer-name nil region t)))
 
 
 ;; gptel-rewrite
