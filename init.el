@@ -3159,6 +3159,166 @@ Example input:
 (setq compilation-scroll-output t)
 
 
+;; ===============
+;; LLM integration
+;; ===============
+
+
+(require 'gptel)
+
+
+(setq gptel-backend (gptel-make-openai "MistralLeChat"
+                      :host "api.mistral.ai"
+                      :endpoint "/v1/chat/completions"
+                      :protocol "https"
+                      :key 'gptel-api-key
+                      :models '("open-mistral-nemo"
+                                "codestral-2501"))
+      gptel-model 'open-mistral-nemo
+      gptel-default-mode 'org-mode)
+
+
+(defun gptel-chat ()
+  "\"Just drop me into LLM chat, now!\"
+Optionally send region, if selected"
+  (interactive)
+  (let ((buffer-name (format "*%s*" (gptel-backend-name gptel-backend)))
+        (gptel-model 'open-mistral-nemo))
+    (if (use-region-p)
+        (gptel--suffix-send
+         (list (format ":%s" (car (cl-pushnew
+                                   (read-string "Directive: " nil
+                                                'gptel-directive-history)
+                                   (alist-get 'gptel--infix-add-directive
+                                              transient-history)
+                                   :test #'equal)))
+               (format "g%s" buffer-name)))
+      (gptel buffer-name nil nil t))))
+
+
+(progn
+  (gptel-make-preset 'poetry
+    :description "Generate a poem by provided description"
+    :backend "MistralLeChat"
+    :model 'open-mistral-nemo
+    :system "You are a verse generator. Generate a poem by provided description. Do not write any explanations")
+  (gptel-make-preset 'program
+    :description "Code monkey 🐵"
+    :backend "MistralLeChat"
+    :model 'codestral-2501
+    :system "You are a code generator. Generate code by provided description. Generate ONLY the code, without any explanation or markdown code fences")
+  (gptel-make-preset 'translate
+    :description "Translate between human languages"
+    :backend "MistralLeChat"
+    :model 'open-mistral-nemo
+    :system "You are a translator. Translate the provided text to the specified language. If no language specified, translate into Russian. Do not write any explanations.")
+  (gptel-make-preset 'summary
+    :description "Summarize the provided text"
+    :backend "MistralLeChat"
+    :model 'open-mistral-nemo
+    :system "You are a summarizer. Summarize the provided text. Do not write any explanations.")
+  (gptel-make-preset 'explain
+    :description "Provide a detailed explanation of a topic."
+    :system "Provide a comprehensive explanation of the topic. Begin with a summary, using lists and tables where appropriate. Present only the explanations, without any additional commentary or context."))
+
+
+(defun company-gptel (command &optional arg &rest _ignored)
+  "`company-mode' backend for `gptel' \"inline\" presets."
+  (interactive (list 'interactive))
+  (cl-case command
+    (interactive (company-begin-backend 'company-gptel))
+    (prefix (and gptel--known-presets
+                 (company-grab "@[a-zA-Z]*")))
+    (candidates
+     (cl-remove-if-not
+      (lambda (x)
+        (string-prefix-p arg x))
+      (mapcar (lambda (x)
+                (format "@%s" (symbol-name (car x))))
+              gptel--known-presets)))
+    (annotation (format " %s"
+                        (thread-first
+                          (substring arg 1)
+                          (intern-soft)
+                          (assq gptel--known-presets) (cdr)
+                          (plist-get :description))))
+    (doc-buffer (company-doc-buffer (thread-first
+                                      (substring arg 1)
+                                      (intern-soft)
+                                      (assq gptel--known-presets) (cdr)
+                                      (prin1-to-string))))
+    (kind 'magic)))
+
+
+;; gptel-rewrite
+
+
+(require 'gptel-rewrite)
+
+
+(defun gptel-rewrite-fix-system (f &rest args)
+  "Use \"dumb\" default system message"
+  "Follow my instructions and improve or rewrite text I provide.
+- If provided text looks like programming code, you should improve, rewrite or refactor it.
+  Generate code in full, do not abbreviate or omit code.
+- Generate ONLY the replacement text, without any explanation or markdown code fences.
+- Do not ask for further clarification, and make any assumptions you need to follow instructions.")
+
+
+(advice-add 'gptel--rewrite-directive-default
+            :around
+            'gptel-rewrite-fix-system)
+
+
+(defun gptel-rewrite-with-directive ()
+  (interactive)
+  (let ((gptel--rewrite-message
+         (car (cl-pushnew
+               (read-string "Directive: " nil
+                            'gptel-rewrite-directive-history)
+               (alist-get 'gptel--infix-rewrite-extra
+                          transient-history)
+               :test #'equal))))
+    (gptel--suffix-rewrite)))
+
+
+(bind-keys '("SPC" gptel--rewrite-accept
+             "TAB" gptel--suffix-rewrite
+             "d" gptel-rewrite-with-directive
+             "i" gptel--rewrite-iterate
+             "k" gptel--rewrite-reject
+             "=" gptel--rewrite-diff)
+           gptel-rewrite-actions-map)
+
+
+(defun gptel-tab-rewrite (f &rest args)
+  "Trigger gptel-rewrite by TAB key"
+  (if (use-region-p)
+      (progn (unless gptel--rewrite-message
+               (setq gptel--rewrite-message "Rewrite: "))
+             (gptel--suffix-rewrite))
+    (apply f args)))
+
+
+(dolist (x '(company-indent-or-complete-common
+             org-cycle))
+  (advice-add x :around 'gptel-tab-rewrite))
+
+
+;; Enable "coder" model in programming modes
+
+
+(defun gptel-enable-code-model ()
+  (setq-local gptel-model 'codestral-2501))
+
+
+(dolist (x '(prog-mode-hook
+             conf-mode-hook
+             sgml-mode-hook
+             comint-mode-hook))
+  (add-hook x 'gptel-enable-code-model))
+
+
 ;; ==========
 ;; SQL client
 ;; ==========
@@ -3918,166 +4078,6 @@ Process .+
       (lambda (x)
         (browse-url-or-search x)
         (add-to-history 'browser-query-history x)))
-
-
-;; ===============
-;; LLM integration
-;; ===============
-
-
-(require 'gptel)
-
-
-(setq gptel-backend (gptel-make-openai "MistralLeChat"
-                      :host "api.mistral.ai"
-                      :endpoint "/v1/chat/completions"
-                      :protocol "https"
-                      :key 'gptel-api-key
-                      :models '("open-mistral-nemo"
-                                "codestral-2501"))
-      gptel-model 'open-mistral-nemo
-      gptel-default-mode 'org-mode)
-
-
-(defun gptel-chat ()
-  "\"Just drop me into LLM chat, now!\"
-Optionally send region, if selected"
-  (interactive)
-  (let ((buffer-name (format "*%s*" (gptel-backend-name gptel-backend)))
-        (gptel-model 'open-mistral-nemo))
-    (if (use-region-p)
-        (gptel--suffix-send
-         (list (format ":%s" (car (cl-pushnew
-                                   (read-string "Directive: " nil
-                                                'gptel-directive-history)
-                                   (alist-get 'gptel--infix-add-directive
-                                              transient-history)
-                                   :test #'equal)))
-               (format "g%s" buffer-name)))
-      (gptel buffer-name nil nil t))))
-
-
-(progn
-  (gptel-make-preset 'poetry
-    :description "Generate a poem by provided description"
-    :backend "MistralLeChat"
-    :model 'open-mistral-nemo
-    :system "You are a verse generator. Generate a poem by provided description. Do not write any explanations")
-  (gptel-make-preset 'program
-    :description "Code monkey 🐵"
-    :backend "MistralLeChat"
-    :model 'codestral-2501
-    :system "You are a code generator. Generate code by provided description. Generate ONLY the code, without any explanation or markdown code fences")
-  (gptel-make-preset 'translate
-    :description "Translate between human languages"
-    :backend "MistralLeChat"
-    :model 'open-mistral-nemo
-    :system "You are a translator. Translate the provided text to the specified language. If no language specified, translate into Russian. Do not write any explanations.")
-  (gptel-make-preset 'summary
-    :description "Summarize the provided text"
-    :backend "MistralLeChat"
-    :model 'open-mistral-nemo
-    :system "You are a summarizer. Summarize the provided text. Do not write any explanations.")
-  (gptel-make-preset 'explain
-    :description "Provide a detailed explanation of a topic."
-    :system "Provide a comprehensive explanation of the topic. Begin with a summary, using lists and tables where appropriate. Present only the explanations, without any additional commentary or context."))
-
-
-(defun company-gptel (command &optional arg &rest _ignored)
-  "`company-mode' backend for `gptel' \"inline\" presets."
-  (interactive (list 'interactive))
-  (cl-case command
-    (interactive (company-begin-backend 'company-gptel))
-    (prefix (and gptel--known-presets
-                 (company-grab "@[a-zA-Z]*")))
-    (candidates
-     (cl-remove-if-not
-      (lambda (x)
-        (string-prefix-p arg x))
-      (mapcar (lambda (x)
-                (format "@%s" (symbol-name (car x))))
-              gptel--known-presets)))
-    (annotation (format " %s"
-                        (thread-first
-                          (substring arg 1)
-                          (intern-soft)
-                          (assq gptel--known-presets) (cdr)
-                          (plist-get :description))))
-    (doc-buffer (company-doc-buffer (thread-first
-                                      (substring arg 1)
-                                      (intern-soft)
-                                      (assq gptel--known-presets) (cdr)
-                                      (prin1-to-string))))
-    (kind 'magic)))
-
-
-;; gptel-rewrite
-
-
-(require 'gptel-rewrite)
-
-
-(defun gptel-rewrite-fix-system (f &rest args)
-  "Use \"dumb\" default system message"
-  "Follow my instructions and improve or rewrite text I provide.
-- If provided text looks like programming code, you should improve, rewrite or refactor it.
-  Generate code in full, do not abbreviate or omit code.
-- Generate ONLY the replacement text, without any explanation or markdown code fences.
-- Do not ask for further clarification, and make any assumptions you need to follow instructions.")
-
-
-(advice-add 'gptel--rewrite-directive-default
-            :around
-            'gptel-rewrite-fix-system)
-
-
-(defun gptel-rewrite-with-directive ()
-  (interactive)
-  (let ((gptel--rewrite-message
-         (car (cl-pushnew
-               (read-string "Directive: " nil
-                            'gptel-rewrite-directive-history)
-               (alist-get 'gptel--infix-rewrite-extra
-                          transient-history)
-               :test #'equal))))
-    (gptel--suffix-rewrite)))
-
-
-(bind-keys '("SPC" gptel--rewrite-accept
-             "TAB" gptel--suffix-rewrite
-             "d" gptel-rewrite-with-directive
-             "i" gptel--rewrite-iterate
-             "k" gptel--rewrite-reject
-             "=" gptel--rewrite-diff)
-           gptel-rewrite-actions-map)
-
-
-(defun gptel-tab-rewrite (f &rest args)
-  "Trigger gptel-rewrite by TAB key"
-  (if (use-region-p)
-      (progn (unless gptel--rewrite-message
-               (setq gptel--rewrite-message "Rewrite: "))
-             (gptel--suffix-rewrite))
-    (apply f args)))
-
-
-(dolist (x '(company-indent-or-complete-common
-             org-cycle))
-  (advice-add x :around 'gptel-tab-rewrite))
-
-
-;; Enable "coder" model in programming modes
-
-
-(defun gptel-enable-code-model ()
-  (setq-local gptel-model 'codestral-2501))
-
-
-(dolist (x '(prog-mode-hook
-             conf-mode-hook
-             sgml-mode-hook
-             comint-mode-hook))
-  (add-hook x 'gptel-enable-code-model))
 
 
 ;; ===========
