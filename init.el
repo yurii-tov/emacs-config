@@ -3175,7 +3175,8 @@ Example input:
                       :models '("open-mistral-nemo"
                                 "codestral-2501"))
       gptel-model 'open-mistral-nemo
-      gptel-default-mode 'org-mode)
+      gptel-default-mode 'org-mode
+      gptel-track-media t)
 
 
 (progn
