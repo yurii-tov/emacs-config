@@ -3284,7 +3284,6 @@ Also grabs a selected region, if any."
 (bind-keys '("SPC" gptel--rewrite-accept
              "TAB" gptel--suffix-rewrite
              "d" gptel-rewrite-with-directive
-             "i" gptel--rewrite-iterate
              "k" gptel--rewrite-reject
              "=" gptel--rewrite-diff)
            gptel-rewrite-actions-map)
