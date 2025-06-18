@@ -3194,7 +3194,7 @@ Example input:
     :description "Translate text between human languages"
     :backend "MistralLeChat"
     :model 'open-mistral-nemo
-    :system "You are a translator. Translate the provided text to the specified language. If no language is specified, translate into Russian. Do not include any explanations.")
+    :system "You are a translator. Translate the provided text to Russian unless otherwise specified. Do not include any explanations.")
   (gptel-make-preset 'summary
     :description "Summarize the provided text"
     :backend "MistralLeChat"
