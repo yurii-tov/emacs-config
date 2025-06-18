@@ -2675,6 +2675,9 @@ Example input:
 ;; ===========
 
 
+(add-hook 'comint-mode-hook 'orgtbl-mode)
+
+
 ;; use vertical tab (b) as separator in history file
 ;; to enable correct saving of multiline commands
 
@@ -3500,9 +3503,6 @@ Process .+
 
 
 ;; output preprocessing
-
-
-(add-hook 'sql-login-hook 'orgtbl-mode)
 
 
 (defun make-sql-output-preprocessor (table-parser)
