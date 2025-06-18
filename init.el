@@ -3259,6 +3259,9 @@ Also grabs a selected region, if any."
 (require 'gptel-rewrite)
 
 
+(setq-default gptel--rewrite-message "Rewrite: ")
+
+
 (defun gptel-rewrite-directive-dumb ()
   "Unconditional catch-all directive"
   "Follow my instructions and improve or rewrite text I provide.
@@ -3293,9 +3296,7 @@ Also grabs a selected region, if any."
 (defun gptel-tab-rewrite (f &rest args)
   "Trigger gptel-rewrite by TAB key"
   (if (use-region-p)
-      (progn (unless gptel--rewrite-message
-               (setq gptel--rewrite-message "Rewrite: "))
-             (gptel--suffix-rewrite))
+      (gptel--suffix-rewrite)
     (apply f args)))
 
 
