@@ -3259,17 +3259,15 @@ Also grabs a selected region, if any."
 (require 'gptel-rewrite)
 
 
-(defun gptel-rewrite-fix-system (f &rest args)
-  "Use \"dumb\" default system message"
+(defun gptel-rewrite-directive-dumb ()
+  "Unconditional catch-all directive"
   "Follow my instructions and improve or rewrite text I provide.
 - Generate programming code in full, do not abbreviate or omit code.
 - Generate ONLY the replacement text, without any explanation or markdown code fences.
 - Do not ask for further clarification, and make any assumptions you need to follow instructions.")
 
 
-(advice-add 'gptel--rewrite-directive-default
-            :around
-            'gptel-rewrite-fix-system)
+(add-hook 'gptel-rewrite-directives-hook 'gptel-rewrite-directive-dumb)
 
 
 (defun gptel-rewrite-with-directive ()
