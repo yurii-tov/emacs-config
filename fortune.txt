@@ -37,55 +37,23 @@ martyrdom - that may be necessary in religion, but in time a scientific result
 will establish itself.
 -- David Hilbert
 %
-Programs must be written for people to read, and only incidentally for machines
-to execute.
+Programs must be written for people to read, and only incidentally for machines to execute.
 -- Abelson and Sussman
 %
-Java is the most distressing thing to hit computing since MS-DOS.
--- Alan Kay
-%
-Because of its vitality, the computing field is always in desperate need of new cliches:
-Banality soothes our nerves.
--- Alan Perlis
-%
-Fools ignore complexity. Pragmatists suffer it. Some can avoid it. Geniuses
-remove it.
--- Alan Perlis
-%
-If your computer speaks English, it was probably made in Japan.
+Fools ignore complexity. Pragmatists suffer it. Some can avoid it. Geniuses remove it.
 -- Alan Perlis
 %
 In computing, turning the obvious into the useful is a living definition of the
 word "frustration".
 -- Alan Perlis
 %
-Programmers are not to be measured by their ingenuity and their logic but by the
-completeness of their case analysis.
--- Alan Perlis
-%
-If a listener nods his head when you're explaining your program, wake him up.
--- Alan Perlis
-%
-If you have a procedure with ten parameters, you probably missed some.
--- Alan Perlis
-%
-When someone says, "I want a programming language in which I need only say what
-I want done," give him a lollipop.
--- Alan Perlis
-%
-A language that doesn't affect the way you think about programming is not worth
-knowing.
--- Alan Perlis
-%
-In English every word can be verbed. Would that it were so in our programming
-languages.
+A language that doesn't affect the way you think about programming is not worth knowing.
 -- Alan Perlis
 %
 A LISP programmer knows the value of everything, but the cost of nothing.
 -- Alan Perlis
 %
-Adapting old programs to fit new machines usually means adapting new machines to
-behave like old ones.
+Adapting old programs to fit new machines usually means adapting new machines to behave like old ones.
 -- Alan Perlis
 %
 Don't have good ideas if you aren't willing to be responsible for them.
@@ -94,41 +62,15 @@ Don't have good ideas if you aren't willing to be responsible for them.
 In man-machine symbiosis, it is man who must adjust: The machines can't.
 -- Alan Perlis
 %
-You can measure a programmer's perspective by noting his attitude on the
-continuing vitality of FORTRAN.
--- Alan Perlis
-%
 Dealing with failure is easy: Work hard to improve. Success is also easy to
 handle: You've solved the wrong problem. Work hard to improve.
--- Alan Perlis
-%
-Often it is the means that justify the ends: goals advance technique and
-technique survives even when goal structures crumble.
 -- Alan Perlis
 %
 It is easier to change the specification to fit the program than vice versa.
 -- Alan Perlis
 %
-Any noun can be verbed.
--- Alan Perlis
-%
 You think you KNOW when you learn, are more sure when you can write, even more
 when you can teach, but certain when you can program.
--- Alan Perlis
-%
-In computing, the mean time to failure keeps getting shorter.
--- Alan Perlis
-%
-Every program has (at least) two purposes: the one for which it was written and
-another for which it wasn't.
--- Alan Perlis
-%
-It goes against the grain of modern education to teach children to program. What
-fun is there in making plans, acquiring discipline in organizing thoughts,
-devoting attention to detail and learning to be self-critical?
--- Alan Perlis
-%
-We toast the Lisp programmer who pens his thoughts within nests of parentheses.
 -- Alan Perlis
 %
 One can't proceed from the informal to the formal by formal means.
@@ -1018,12 +960,6 @@ home every night. If they are not treated well, they do not return the next
 morning.
 -- Peter Chang
 %
-Computer viruses are an urban legend.
--- Peter Norton, 1988
-%
-In the future, computers may weigh no more than 1.5 tonnes.
--- Popular mechanics, 1949
-%
 Before software should be reusable, it should be usable.
 -- Ralph Johnson
 %
@@ -1031,27 +967,13 @@ The difference between theory and practice is that in theory, there is no
 difference between theory and practice.
 -- Richard Moore
 %
-When debugging, novices insert corrective code; experts remove defective code.
--- Richard Pattis
-%
 If you automate a mess, you get an automated mess.
 -- Rod Michael
-%
-Commenting your code is like cleaning your bathroom — you never want to do it,
-but it really does create a more pleasant experience for you and your guests.
--- Ryan Campbell
-%
-Yes, we have a dress code. You have to dress.
--- Scott McNealy, co-founder of Sun Microsystems
-%
-BASIC is to computer programming as QWERTY is to typing.
--- Seymour Papert
 %
 The more you know, the more you realize you know nothing.
 -- Socrates
 %
-The greatest enemy of knowledge is not ignorance, it is the illusion of
-knowledge.
+The greatest enemy of knowledge is not ignorance, it is the illusion of knowledge.
 -- Stephen Hawking
 %
 I think computer viruses should count as life. I think it says something about
@@ -1062,18 +984,6 @@ destructive. We’ve created life in our own image.
 It’s better to wait for a productive programmer to become available than it is
 to wait for the first available programmer to become productive.
 -- Steve McConnell
-%
-It’s OK to figure out murder mysteries, but you shouldn’t need to figure out
-code. You should be able to read it.
--- Steve McConnell
-%
-When you are stuck in a traffic jam with a Porsche, all you do is burn more gas
-in idle. Scalability is about building wider roads, not about building faster
-cars.
--- Steve Swartz
-%
-Physics is the universe’s operating system.
--- Steven R Garman
 %
 Not all those who wander are lost
 -- J.R.R. Tolkien
