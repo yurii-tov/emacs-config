@@ -3247,13 +3247,15 @@ Example input:
 Also grabs a selected region, if any."
   (interactive)
   (let ((buffer-name "*LLM-chat*")
-        (gptel-model 'open-mistral-nemo)
         (region (when (use-region-p)
                   (prog1 (buffer-substring
                           (region-beginning)
                           (region-end))
                     (deactivate-mark)))))
-    (gptel buffer-name nil region t)))
+    (gptel buffer-name nil region t)
+    (with-current-buffer buffer-name
+      (setq-local gptel-model 'deepseek/deepseek-r1-0528:free
+                  gptel-backend openrouter-backend))))
 
 
 ;; gptel-rewrite
