@@ -3167,14 +3167,20 @@ Example input:
 (require 'gptel)
 
 
-(setq gptel-backend (gptel-make-openai "MistralLeChat"
-                      :host "api.mistral.ai"
-                      :endpoint "/v1/chat/completions"
-                      :protocol "https"
-                      :key 'gptel-api-key
-                      :models '("open-mistral-nemo"
-                                "codestral-2501"))
-      gptel-model 'open-mistral-nemo
+(setq openrouter-backend (gptel-make-openai "OpenRouter"
+                           :host "openrouter.ai"
+                           :endpoint "/api/v1/chat/completions"
+                           :stream t
+                           :key 'openrouter-api-key
+                           :models '(deepseek/deepseek-r1-0528:free))
+      mistral-backend (gptel-make-openai "MistralLeChat"
+                        :host "api.mistral.ai"
+                        :endpoint "/v1/chat/completions"
+                        :protocol "https"
+                        :key 'mistral-api-key
+                        :models '("open-mistral-nemo"
+                                  "codestral-2501"))
+      gptel-backend mistral-backend
       gptel-default-mode 'org-mode
       gptel-track-media t)
 
@@ -3240,7 +3246,7 @@ Example input:
   "\"Just drop me into LLM chat, now!\"
 Also grabs a selected region, if any."
   (interactive)
-  (let ((buffer-name (format "*%s*" (gptel-backend-name gptel-backend)))
+  (let ((buffer-name (format "*LLM-chat*"))
         (gptel-model 'open-mistral-nemo)
         (region (when (use-region-p)
                   (prog1 (buffer-substring
