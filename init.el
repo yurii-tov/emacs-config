@@ -3246,7 +3246,7 @@ Example input:
   "\"Just drop me into LLM chat, now!\"
 Also grabs a selected region, if any."
   (interactive)
-  (let ((buffer-name (format "*LLM-chat*"))
+  (let ((buffer-name "*LLM-chat*")
         (gptel-model 'open-mistral-nemo)
         (region (when (use-region-p)
                   (prog1 (buffer-substring
