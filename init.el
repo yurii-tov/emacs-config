@@ -3266,8 +3266,8 @@ Also grabs a selected region, if any."
 (defun gptel-chat-setup ()
   (when (string-prefix-p llm-chat-buffer-name
                          (buffer-name))
-    (setq-local gptel-backend openrouter-backend
-                gptel-model 'deepseek/deepseek-r1-0528:free)))
+    (setq-local gptel-backend mistral-backend
+                gptel-model 'open-mistral-nemo)))
 
 
 (add-hook 'gptel-mode-hook 'gptel-chat-setup)
