@@ -3202,10 +3202,10 @@ Example input:
     :model 'codestral-2501
     :system "You are a programmer. Write a program based on the provided description. Do not include any explanations.")
   (gptel-make-preset 'translate
-    :description "Translate text between human languages"
+    :description "{any language}/RU, RU/EN translator"
     :backend "MistralLeChat"
     :model 'open-mistral-nemo
-    :system "You are a translator. Translate the provided text to Russian unless otherwise specified. Do not include any explanations.")
+    :system "Translate the text i provide to you. If text is in Russian, translate it to English. Otherwise translate the text to Russian. Provide only translated text, without any explanations. The text:")
   (gptel-make-preset 'summary
     :description "Summarize the provided text"
     :backend "MistralLeChat"
