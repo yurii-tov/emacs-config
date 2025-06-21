@@ -3247,14 +3247,14 @@ Example input:
 ;; The Chat
 
 
-(setq llm-chat-buffer-name "*LLM-chat*")
+(setq gptel-chat-buffer-name "*LLM-chat*")
 
 
 (defun gptel-chat ()
   "\"Just drop me into LLM chat, now!\"
 Also grabs a selected region, if any."
   (interactive)
-  (let ((buffer-name llm-chat-buffer-name)
+  (let ((buffer-name gptel-chat-buffer-name)
         (region (when (use-region-p)
                   (prog1 (buffer-substring
                           (region-beginning)
@@ -3264,7 +3264,7 @@ Also grabs a selected region, if any."
 
 
 (defun gptel-chat-setup ()
-  (when (string-prefix-p llm-chat-buffer-name
+  (when (string-prefix-p gptel-chat-buffer-name
                          (buffer-name))
     (setq-local gptel-backend mistral-backend
                 gptel-model 'open-mistral-nemo)))
