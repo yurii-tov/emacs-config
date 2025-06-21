@@ -3956,7 +3956,7 @@ Process .+
   (interactive)
   (let* ((default-directory "~")
          (query (or query (read-string "Translate: " (word-at-point))))
-         (en-ru `((command . ,(concat "bash -c \"curl -sL -A 'Mozilla/1.0' '%s"
+         (en-ru `((command . ,(concat "bash -c \"curl -sL -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36' '%s"
                                       "' | sed -rn '/span class=.trans/ {s:.*<span.*>(.*[^ ]) *<.span>.*:\\1:g ; p}'"
                                       " | uniq | head -5\""))
                   (link . ,(format "https://dictionary.cambridge.org/search/direct/?datasetsearch=english-russian&q=%s"
