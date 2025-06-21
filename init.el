@@ -3243,18 +3243,30 @@ Example input:
 ;; The Chat
 
 
+(setq llm-chat-buffer-name "*LLM-chat*")
+
+
 (defun gptel-chat ()
   "\"Just drop me into LLM chat, now!\"
 Also grabs a selected region, if any."
   (interactive)
-  (let ((buffer-name "*LLM-chat*")
-        (gptel-model 'open-mistral-nemo)
+  (let ((buffer-name llm-chat-buffer-name)
         (region (when (use-region-p)
                   (prog1 (buffer-substring
                           (region-beginning)
                           (region-end))
                     (deactivate-mark)))))
     (gptel buffer-name nil region t)))
+
+
+(defun gptel-chat-setup ()
+  (when (string-prefix-p llm-chat-buffer-name
+                         (buffer-name))
+    (setq-local gptel-backend openrouter-backend
+                gptel-model 'deepseek/deepseek-r1-0528:free)))
+
+
+(add-hook 'gptel-mode-hook 'gptel-chat-setup)
 
 
 ;; gptel-rewrite
