@@ -3187,6 +3187,9 @@ Example input:
       gptel-track-media t)
 
 
+;; Presets
+
+
 (progn
   (gptel-make-preset 'poetry
     :description "Generate a poem based on the provided description"
