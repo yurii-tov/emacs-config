@@ -3182,6 +3182,7 @@ Example input:
                                   "codestral-2501"))
       gptel-backend mistral-backend
       gptel-model 'open-mistral-nemo
+      gptel--system-message "You are a large language model and a conversation partner. Respond concisely."
       gptel-default-mode 'org-mode
       gptel-track-media t)
 
