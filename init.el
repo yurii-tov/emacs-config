@@ -3951,32 +3951,44 @@ Process .+
 ;; =====================
 
 
-(defun translate-en-ru-online (&optional query)
+(defun translate-en-ru-online ()
   "Translate from english to russian or vice versa (depending on query)"
   (interactive)
   (let* ((default-directory "~")
-         (query (or query (read-string "Translate: " (word-at-point))))
+         (query (or (and (use-region-p)
+                         (prog1 (buffer-substring
+                                 (region-beginning)
+                                 (region-end))
+                           (deactivate-mark)))
+                    (read-string "Translate: " (word-at-point))))
+         (query-encoded (url-encode-url (replace-regexp-in-string "'" "" query)))
+         (query-message (propertize query 'face 'font-lock-constant-face))
          (en-ru `((command . ,(concat "bash -c \"curl -sL -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36' '%s"
                                       "' | sed -rn '/span class=.trans/ {s:.*<span.*>(.*[^ ]) *<.span>.*:\\1:g ; p}'"
                                       " | uniq | head -5\""))
                   (link . ,(format "https://dictionary.cambridge.org/search/direct/?datasetsearch=english-russian&q=%s"
-                                   (url-encode-url query)))))
+                                   query-encoded))))
          (ru-en `((command . ,(concat "bash -c \"curl -sL '%s"
-                                      "' | grep -oP '(?<=class=.tl.>)[^<]+' | head -5\""))
+                                      "' | grep -oP '(?<=class=.tl.>)[^<]+' | head -5 | tail -n +2\""))
                   (link . ,(format "https://en.openrussian.org/ru/%s"
-                                   (url-encode-url query)))))
+                                   query-encoded))))
          (preset (if (string-match "[a-zA-Z]" query)
                      en-ru ru-en))
          (link (cdr (assoc 'link preset)))
          (command (format (cdr (assoc 'command preset)) link))
-         (translation (string-trim (shell-command-to-string command))))
+         translation)
+    (message "%s =>\n%s"
+             query-message
+             (propertize "translating..." 'face 'shadow))
+    (setq translation (string-trim (shell-command-to-string command)))
     (if (zerop (length translation))
-        (prog1 nil (message "Can't find translation for '%s'" query))
-      (if (called-interactively-p)
-          (message "%s =>\n%s"
-                   (propertize query 'face 'font-lock-constant-face)
-                   translation)
-        translation))))
+        (let ((gptel-backend mistral-backend)
+              (gptel-model 'codestral-2501))
+          (gptel-request
+              (concat "Translate the text i provide to you. If text is in Russian, translate it to English. Otherwise translate the text to Russian. Provide only translated text, without any explanations. The text:\n" query)
+            :callback `(lambda (response _)
+                         (message "%s =>\n%s" ,query-message response))))
+      (message "%s =>\n%s" query-message translation))))
 
 
 ;; ==========================
