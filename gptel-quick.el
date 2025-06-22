@@ -110,7 +110,7 @@ word count of the response."
           ((and (derived-mode-p 'pdf-view-mode)
                 (pdf-view-active-region-p))
            (mapconcat #'identity (pdf-view-active-region-text) "\n\n"))
-          (t (thing-at-point 'sexp)))
+          (t (thing-at-point 'sexp t)))
          current-prefix-arg))
 
   (when (xor gptel-quick-backend gptel-quick-model)
