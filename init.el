@@ -198,6 +198,7 @@
              "g" rgrep
              "s" browse-url-or-search
              "l" gptel-chat
+             "i" gptel-quick
              "t" translate-en-ru-online)
            search-map)
 
@@ -3188,7 +3189,9 @@ Example input:
       gptel-model 'open-mistral-nemo
       gptel--system-message "You are a large language model and a conversation partner. Respond concisely."
       gptel-default-mode 'org-mode
-      gptel-track-media t)
+      gptel-track-media t
+      gptel-quick-backend mistral-backend
+      gptel-quick-model 'open-mistral-nemo)
 
 
 ;; Presets
