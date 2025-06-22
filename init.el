@@ -3208,11 +3208,6 @@ Example input:
     :backend "MistralLeChat"
     :model 'codestral-2501
     :system "You are a programmer. Write a program based on the provided description. Do not include any explanations.")
-  (gptel-make-preset 'summary
-    :description "Summarize the provided text"
-    :backend "MistralLeChat"
-    :model 'open-mistral-nemo
-    :system "You are a summarizer. Provide a summary of the provided text. Do not include any explanations.")
   (gptel-make-preset 'explain
     :description "Explain a topic in detail"
     :system "Provide a comprehensive explanation of the topic. Begin with a summary. Present only the explanations, without any additional commentary or context."))
