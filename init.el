@@ -37,7 +37,10 @@
       (unless refreshed
         (package-refresh-contents)
         (setq refreshed t))
-      (package-install p))))
+      (package-install p)
+      (when (eq p 'gptel)
+        (package-install 'posframe)
+        (package-install-file "~/.emacs.d/gptel-quick.el")))))
 
 
 ;; 'are we on windows?'-shortcut
