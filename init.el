@@ -26,6 +26,7 @@
                   htmlize
                   cider
                   gptel
+                  posframe
                   gptel-quick
                   powershell
                   groovy-mode
@@ -39,8 +40,7 @@
         (package-refresh-contents)
         (setq refreshed t))
       (if (eq p 'gptel-quick)
-          (progn (package-install 'posframe)
-                 (package-install-file "~/.emacs.d/gptel-quick.el"))
+          (package-install-file "~/.emacs.d/gptel-quick.el")
         (package-install p)))))
 
 
