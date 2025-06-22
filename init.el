@@ -3217,7 +3217,7 @@ Example input:
     :system "You are a summarizer. Provide a summary of the provided text. Do not include any explanations.")
   (gptel-make-preset 'explain
     :description "Explain a topic in detail"
-    :system "Provide a comprehensive explanation of the topic. Begin with a summary, using lists and tables where appropriate. Present only the explanations, without any additional commentary or context."))
+    :system "Provide a comprehensive explanation of the topic. Begin with a summary. Present only the explanations, without any additional commentary or context."))
 
 
 (defun company-gptel (command &optional arg &rest _ignored)
