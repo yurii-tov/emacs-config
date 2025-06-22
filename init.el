@@ -3265,7 +3265,7 @@ Also grabs a selected region, if any."
     (when (and region exists-p)
       (with-current-buffer buffer-name
         (end-of-buffer)
-        (insert region)))))
+        (insert " " region)))))
 
 
 (defun gptel-chat-setup ()
