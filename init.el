@@ -3191,7 +3191,8 @@ Example input:
       gptel-default-mode 'org-mode
       gptel-track-media t
       gptel-quick-backend mistral-backend
-      gptel-quick-model 'open-mistral-nemo)
+      gptel-quick-model 'open-mistral-nemo
+      gptel-quick-timeout 60)
 
 
 ;; Presets
