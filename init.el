@@ -3254,13 +3254,18 @@ Example input:
   "\"Just drop me into LLM chat, now!\"
 Also grabs a selected region, if any."
   (interactive)
-  (let ((buffer-name gptel-chat-buffer-name)
-        (region (when (use-region-p)
-                  (prog1 (buffer-substring
-                          (region-beginning)
-                          (region-end))
-                    (deactivate-mark)))))
-    (gptel buffer-name nil region t)))
+  (let* ((buffer-name gptel-chat-buffer-name)
+         (exists-p (get-buffer buffer-name))
+         (region (when (use-region-p)
+                   (prog1 (buffer-substring
+                           (region-beginning)
+                           (region-end))
+                     (deactivate-mark)))))
+    (gptel buffer-name nil region t)
+    (when (and region exists-p)
+      (with-current-buffer buffer-name
+        (end-of-buffer)
+        (insert region)))))
 
 
 (defun gptel-chat-setup ()
