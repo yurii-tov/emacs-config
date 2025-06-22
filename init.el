@@ -3192,7 +3192,7 @@ Example input:
       gptel-track-media t
       gptel-quick-backend mistral-backend
       gptel-quick-model 'open-mistral-nemo
-      gptel-quick-timeout 60)
+      gptel-quick-timeout 120)
 
 
 ;; Presets
