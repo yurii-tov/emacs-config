@@ -4008,7 +4008,7 @@ Process .+
   (interactive)
   (let* ((default-directory "~")
          (query (or (and (use-region-p)
-                         (prog1 (buffer-substring
+                         (prog1 (buffer-substring-no-properties
                                  (region-beginning)
                                  (region-end))
                            (deactivate-mark)))
