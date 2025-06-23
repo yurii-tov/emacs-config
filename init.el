@@ -3200,7 +3200,7 @@ Example input:
       gptel-track-media t
       gptel-quick-backend mistral-backend
       gptel-quick-model 'open-mistral-nemo
-      gptel-quick-timeout 120)
+      gptel-quick-timeout nil)
 
 
 (defun gptel-set-buffer-model ()
@@ -3255,8 +3255,6 @@ Example input:
     :system "You are a poet. Create a poem based on the provided description. Do not include any explanations.")
   (gptel-make-preset 'program
     :description "Generate a program based on the provided description"
-    :backend "MistralLeChat"
-    :model 'codestral-2501
     :system "You are a programmer. Write a program based on the provided description. Do not include any explanations.")
   (gptel-make-preset 'explain
     :description "Explain a topic in detail"
