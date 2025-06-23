@@ -3243,7 +3243,8 @@ Example input:
                                                      (gptel--model-name gptel-model)))
                             models-alist)))))
     (setq-local gptel-backend (car model)
-                gptel-model (cadr model))))
+                gptel-model (cadr model))
+    (gptel--sanitize-model)))
 
 
 ;; Presets
