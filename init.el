@@ -3179,26 +3179,26 @@ Example input:
 (require 'gptel)
 
 
-(setq openrouter-backend (gptel-make-openai "OpenRouter"
-                           :host "openrouter.ai"
-                           :endpoint "/api/v1/chat/completions"
-                           :stream t
-                           :key 'openrouter-api-key
-                           :models '(deepseek/deepseek-r1-0528:free))
-      mistral-backend (gptel-make-openai "MistralLeChat"
-                        :host "api.mistral.ai"
-                        :endpoint "/v1/chat/completions"
-                        :protocol "https"
-                        :key 'mistral-api-key
-                        :models '("open-mistral-nemo"
-                                  "codestral-2501"))
-      gptel-backend mistral-backend
+(setq openrouter (gptel-make-openai "OpenRouter"
+                   :host "openrouter.ai"
+                   :endpoint "/api/v1/chat/completions"
+                   :stream t
+                   :key 'openrouter-api-key
+                   :models '(deepseek/deepseek-r1-0528:free))
+      mistral (gptel-make-openai "MistralLeChat"
+                :host "api.mistral.ai"
+                :endpoint "/v1/chat/completions"
+                :protocol "https"
+                :key 'mistral-api-key
+                :models '("open-mistral-nemo"
+                          "codestral-2501"))
+      gptel-backend mistral
       gptel-model 'open-mistral-nemo
       gptel--system-message "You are a large language model and a conversation partner. Respond concisely."
       gptel--set-buffer-locally t
       gptel-default-mode 'org-mode
       gptel-track-media t
-      gptel-quick-backend mistral-backend
+      gptel-quick-backend mistral
       gptel-quick-model 'open-mistral-nemo
       gptel-quick-timeout nil)
 
@@ -3317,7 +3317,7 @@ Also grabs a selected region, if any."
 (defun gptel-chat-setup ()
   (when (string-prefix-p gptel-chat-buffer-name
                          (buffer-name))
-    (setq-local gptel-backend openrouter-backend
+    (setq-local gptel-backend openrouter
                 gptel-model 'deepseek/deepseek-r1-0528:free)))
 
 
@@ -4033,7 +4033,7 @@ Process .+
              (propertize "translating..." 'face 'shadow))
     (setq translation (string-trim (shell-command-to-string command)))
     (if (zerop (length translation))
-        (let ((gptel-backend mistral-backend)
+        (let ((gptel-backend mistral)
               (gptel-model 'codestral-2501))
           (gptel-request
               (concat "Translate the text i provide to you. If text is in Russian, translate it to English. Otherwise translate the text to Russian. Provide only translated text, without any explanations. The text:\n" query)
