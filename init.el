@@ -197,10 +197,17 @@
 (bind-keys `("f" find-dired
              "g" rgrep
              "s" browse-url-or-search
-             "l" gptel-chat
-             "i" gptel-quick
+             "l" gptel-quick
              "t" translate-en-ru-online)
            search-map)
+
+
+;; LLM
+
+
+(define-custom-keymap llm-keymap "C-x l"
+                      "l" gptel-chat
+                      "m" gptel-set-buffer-model)
 
 
 ;; transforming text
@@ -319,7 +326,6 @@
              "C-x u" reopen-with-sudo
              "C-x C-b" ibuffer
              "C-x C-l" gptel-send
-             "C-x l" eglot
              "C-x C-k" kill-buffer-and-window
              "C-x C-=" display-line-numbers-mode
              "C-x ." compile
@@ -328,6 +334,7 @@
              "C-h h" describe-symbol
              "C-c j" cider-start-map
              "C-c k" sql-connect
+             "C-c l" eglot
              "C-c i" ielm
              "C-c s" run-ssh-session
              "C-c d" serve-directory
@@ -3194,6 +3201,49 @@ Example input:
       gptel-quick-backend mistral-backend
       gptel-quick-model 'open-mistral-nemo
       gptel-quick-timeout 120)
+
+
+(defun gptel-set-buffer-model ()
+  "Set model for current buffer"
+  (interactive)
+  (let ((model (cl-loop
+                for (name . backend) in gptel--known-backends
+                nconc (cl-loop for model in (gptel-backend-models backend)
+                               collect (list (concat name ":" (gptel--model-name model))
+                                             backend model))
+                into models-alist
+                with completion-extra-properties =
+                `(:annotation-function
+                  ,(lambda (comp)
+                     (let* ((model (nth 2 (assoc comp models-alist)))
+                            (desc (get model :description))
+                            (caps (get model :capabilities))
+                            (context (get model :context-window))
+                            (input-cost (get model :input-cost))
+                            (output-cost (get model :output-cost))
+                            (cutoff (get model :cutoff-date)))
+                       (when (or desc caps context input-cost output-cost cutoff)
+                         (concat
+                          (propertize " " 'display `(space :align-to 40))
+                          (when desc (truncate-string-to-width desc 70 nil ? t t))
+                          " " (propertize " " 'display `(space :align-to 112))
+                          (when caps (truncate-string-to-width (prin1-to-string caps) 21 nil ? t t))
+                          " " (propertize " " 'display `(space :align-to 134))
+                          (when context (format "%5dk" context))
+                          " " (propertize " " 'display `(space :align-to 142))
+                          (when input-cost (format "$%5.2f in" input-cost))
+                          (if (and input-cost output-cost) "," " ")
+                          " " (propertize " " 'display `(space :align-to 153))
+                          (when output-cost (format "$%6.2f out" output-cost))
+                          " " (propertize " " 'display `(space :align-to 166))
+                          cutoff)))))
+                finally return
+                (cdr (assoc (completing-read "Model: " models-alist nil t nil nil
+                                             (concat (gptel-backend-name gptel-backend) ":"
+                                                     (gptel--model-name gptel-model)))
+                            models-alist)))))
+    (setq-local gptel-backend (car model)
+                gptel-model (cadr model))))
 
 
 ;; Presets

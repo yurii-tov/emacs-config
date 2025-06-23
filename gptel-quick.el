@@ -171,7 +171,7 @@ quick actions on the popup."
          (set-transient-map
           (let ((map (make-sparse-keymap)))
             (define-key map [remap keyboard-quit] #'clear-response)
-            (define-key map (kbd "i") #'more-response)
+            (define-key map (kbd "l") #'more-response)
             (define-key map [remap kill-ring-save] #'copy-response)
             (define-key map (kbd "M-RET") #'create-chat)
             map)
