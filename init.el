@@ -3197,6 +3197,7 @@ Example input:
       gptel--system-message "You are a large language model and a conversation partner. Respond concisely."
       gptel--set-buffer-locally t
       gptel-default-mode 'org-mode
+      gptel-prompt-prefix-alist '((org-mode . "* "))
       gptel-track-media t
       gptel-quick-backend mistral
       gptel-quick-model 'open-mistral-nemo
