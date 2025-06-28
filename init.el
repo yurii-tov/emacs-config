@@ -3184,7 +3184,8 @@ Example input:
                 :protocol "https"
                 :key 'mistral-api-key
                 :models '("open-mistral-nemo"
-                          "codestral-2501"))
+                          "codestral-latest"
+                          "mistral-medium-latest"))
       gptel-backend mistral
       gptel-model 'open-mistral-nemo
       gptel--system-message "You are a large language model and a conversation partner. Respond concisely."
@@ -3251,6 +3252,9 @@ Example input:
   (gptel-make-preset 'program
     :description "Generate a program based on the provided description"
     :system "You are a programmer. Write a program based on the provided description. Do not include any explanations.")
+  (gptel-make-preset 'translate
+    :description "RU ⇔ EN translator"
+    :system "Translate the text i provide to you. If text is in Russian, translate it to English. Otherwise translate the text to Russian. Provide only translated text, without any explanations. The text:\n")
   (gptel-make-preset 'explain
     :description "Explain a topic in detail"
     :system "Provide a comprehensive explanation of the topic. Begin with a summary. Present only the explanations, without any additional commentary or context."))
@@ -3374,7 +3378,7 @@ Also grabs a selected region, if any."
 
 
 (defun gptel-enable-code-model ()
-  (setq-local gptel-model 'codestral-2501))
+  (setq-local gptel-model 'codestral-latest))
 
 
 (dolist (x '(prog-mode-hook
@@ -4028,9 +4032,13 @@ Process .+
     (setq translation (string-trim (shell-command-to-string command)))
     (if (zerop (length translation))
         (let ((gptel-backend mistral)
-              (gptel-model 'codestral-2501))
+              (gptel-model 'mistral-medium-latest))
           (gptel-request
-              (concat "Translate the text i provide to you. If text is in Russian, translate it to English. Otherwise translate the text to Russian. Provide only translated text, without any explanations. The text:\n" query)
+              (concat (thread-first
+                        'translate
+                        (assq gptel--known-presets) (cdr)
+                        (plist-get :system))
+                      query)
             :callback `(lambda (response _)
                          (message "%s =>\n%s" ,query-message response))))
       (message "%s =>\n%s" query-message translation))))
