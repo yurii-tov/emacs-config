@@ -2605,7 +2605,7 @@ Example input:
             (goto-char 1)
             (comint-output-filter p info)
             (set-marker comint-last-input-end (point))
-            (highlight-regexp (regexp-quote info) 'compilation-info)
+            (highlight-regexp (regexp-quote info) 'shadow)
             (font-lock-update)))))))
 
 
