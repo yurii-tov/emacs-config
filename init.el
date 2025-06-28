@@ -3183,8 +3183,8 @@ Example input:
                 :endpoint "/v1/chat/completions"
                 :protocol "https"
                 :key 'mistral-api-key
-                :models '("codestral-latest"
-                          "mistral-medium-latest"))
+                :models '(codestral-latest
+                          mistral-medium-latest))
       gptel-backend mistral
       gptel-model 'mistral-medium-latest
       gptel--system-message "You are a large language model and a conversation partner. Respond concisely."
