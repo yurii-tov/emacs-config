@@ -3183,18 +3183,17 @@ Example input:
                 :endpoint "/v1/chat/completions"
                 :protocol "https"
                 :key 'mistral-api-key
-                :models '("open-mistral-nemo"
-                          "codestral-latest"
+                :models '("codestral-latest"
                           "mistral-medium-latest"))
       gptel-backend mistral
-      gptel-model 'open-mistral-nemo
+      gptel-model 'mistral-medium-latest
       gptel--system-message "You are a large language model and a conversation partner. Respond concisely."
       gptel--set-buffer-locally t
       gptel-default-mode 'org-mode
       gptel-prompt-prefix-alist '((org-mode . "* "))
       gptel-track-media t
       gptel-quick-backend mistral
-      gptel-quick-model 'open-mistral-nemo
+      gptel-quick-model 'mistral-medium-latest
       gptel-quick-timeout nil)
 
 
