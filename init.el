@@ -2601,7 +2601,7 @@ Example input:
     (prog1 r
       (when *asc-echo*
         (with-current-buffer b
-          (let ((info (format "*** %s ***\n*** wd: %s ***\n" (car args) default-directory)))
+          (let ((info (format "*** `%s` at %s ***\n" (car args) default-directory)))
             (goto-char 1)
             (comint-output-filter p info)
             (set-marker comint-last-input-end (point))
