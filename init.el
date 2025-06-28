@@ -1639,12 +1639,7 @@
                "C-b" nil
                "C-n" ido-grid-mode-next
                "C-p" ido-grid-mode-previous
-               "M-f" ido-grid-mode-right
-               "M-b" ido-grid-mode-left
-               "SPC" ido-merge-work-directories
-               "M-SPC" ido-wide-find-file-or-pop-dir
-               "M-." ido-grid-mode-next-page
-               "M-," ido-grid-mode-previous-page)
+               "SPC" ido-merge-work-directories)
              ido-file-dir-completion-map)
   (setq ido-grid-mode-keys '(up down left right)))
 
