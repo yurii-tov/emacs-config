@@ -2535,23 +2535,23 @@ Example input:
                 (window-buffer r)
               (process-buffer r)))
          (command (car args)))
-    (with-current-buffer b
-      (setq-local shell-last-command command)
-      (use-local-map (copy-keymap (current-local-map)))
-      (local-set-key
-       (kbd "C-c C-j")
-       (lambda () (interactive)
-         (let* ((command (read-shell-command "Command: " shell-last-command))
-                (buffer (current-buffer))
-                (name (command-to-buffer-name command)))
-           (when (get-buffer-process buffer)
-             (comint-kill-subjob)
-             (sit-for 1))
-           (comint-save-history)
-           (unless (string-equal command shell-last-command)
-             (rename-buffer name))
-           (async-shell-command command buffer)))))
-    r))
+    (prog1 r
+      (with-current-buffer b
+        (setq-local shell-last-command command)
+        (use-local-map (copy-keymap (current-local-map)))
+        (local-set-key
+         (kbd "C-c C-j")
+         (lambda () (interactive)
+           (let* ((command (read-shell-command "Command: " shell-last-command))
+                  (buffer (current-buffer))
+                  (name (command-to-buffer-name command)))
+             (when (get-buffer-process buffer)
+               (comint-kill-subjob)
+               (sit-for 1))
+             (comint-save-history)
+             (unless (string-equal command shell-last-command)
+               (rename-buffer name))
+             (async-shell-command command buffer))))))))
 
 
 (advice-add 'async-shell-command :around 'asc-setup-restart)
@@ -2577,12 +2577,12 @@ Example input:
   (let ((b (if (windowp r)
                (window-buffer r)
              (process-buffer r))))
-    (with-current-buffer b
-      (setq-local comint-input-ring-file-name
-                  (comint-make-input-ring-file-name "shell"))
-      (when (zerop (ring-length comint-input-ring))
-        (comint-read-input-ring t)))
-    r))
+    (prog1 r
+      (with-current-buffer b
+        (setq-local comint-input-ring-file-name
+                    (comint-make-input-ring-file-name "shell"))
+        (when (zerop (ring-length comint-input-ring))
+          (comint-read-input-ring t))))))
 
 
 (advice-add 'async-shell-command :filter-return 'asc-setup-histfile)
