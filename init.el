@@ -53,10 +53,8 @@
 ;; enable useful APIs
 
 
-(progn (require 'cl-lib)
-       (require 'subr-x)
-       (require 'compile)
-       (require 'ffap))
+(dolist (lib '(cl-lib subr-x compile ffap))
+  (require lib))
 
 
 ;; encoding
