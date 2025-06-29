@@ -3192,6 +3192,7 @@ Example input:
       gptel-default-mode 'org-mode
       gptel-prompt-prefix-alist '((org-mode . "* "))
       gptel-track-media t
+      gptel-expert-commands t
       gptel-quick-backend mistral
       gptel-quick-model 'mistral-medium-latest
       gptel-quick-timeout nil)
