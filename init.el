@@ -3173,6 +3173,9 @@ Example input:
 (require 'gptel)
 
 
+(setf (gptel-get-backend "ChatGPT") nil)
+
+
 (setq openrouter (gptel-make-openai "OpenRouter"
                    :host "openrouter.ai"
                    :endpoint "/api/v1/chat/completions"
