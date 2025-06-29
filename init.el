@@ -3344,11 +3344,11 @@ Also grabs a selected region, if any."
 (add-hook 'gptel-rewrite-directives-hook 'gptel-rewrite-directive-dumb)
 
 
-(bind-keys '("SPC" gptel--rewrite-accept
-             "TAB" gptel--suffix-rewrite
-             "d" gptel--rewrite-iterate
-             "k" gptel--rewrite-reject
-             "=" gptel--rewrite-diff)
+(bind-keys '("=" gptel--rewrite-diff
+             "TAB" gptel-rewrite
+             "SPC" gptel--rewrite-accept
+             "m" gptel--rewrite-merge
+             "k" gptel--rewrite-reject)
            gptel-rewrite-actions-map)
 
 
