@@ -3356,6 +3356,36 @@ Also grabs a selected region, if any."
   (transient-suffix-put 'gptel-rewrite (kbd "r") :key "TAB"))
 
 
+(transient-define-infix gptel--infix-rewrite-extra ()
+  "Chat directive (system message) to use for rewriting or refactoring."
+  :description "Rewrite instruction"
+  :class 'gptel-lisp-variable
+  :variable 'gptel--rewrite-message
+  :set-value #'gptel--set-with-scope
+  :display-nil "(None)"
+  :key "d"
+  :format " %k %d %v"
+  :prompt (concat "Instructions " gptel--read-with-prefix-help)
+  :reader (lambda (prompt _ history)
+            (let* ((rewrite-directive
+                    (car-safe (gptel--parse-directive gptel--rewrite-directive
+                                                      'raw)))
+                   (cb (current-buffer))
+                   (edit-in-buffer
+                    (lambda () (interactive)
+                      (let ((offset (- (point) (minibuffer-prompt-end))))
+                        (gptel--edit-directive 'gptel--rewrite-message
+                          :prompt rewrite-directive :initial (minibuffer-contents)
+                          :buffer cb :setup (lambda () (ignore-errors (forward-char offset)))
+                          :callback
+                          (lambda ()
+                            (run-at-time 0 nil #'transient-setup 'gptel-rewrite)
+                            (push (buffer-local-value 'gptel--rewrite-message cb)
+                                  (alist-get 'gptel--infix-rewrite-extra transient-history))
+                            (when (minibufferp) (minibuffer-quit-recursive-edit))))))))
+              (read-string "Directive: " nil history))))
+
+
 (defun gptel-tab-rewrite (f &rest args)
   "Trigger gptel-rewrite by TAB key"
   (if (use-region-p)
