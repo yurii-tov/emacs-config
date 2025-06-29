@@ -733,7 +733,7 @@
 (defun tail (file)
   (interactive "fTail file: ")
   (let ((default-directory (file-name-directory file))
-        (*asc-disable-popup* nil))
+        (*asc-popup* t))
     (async-shell-command (concat "tail -f " (file-relative-name file)))))
 
 
@@ -2653,26 +2653,27 @@ Example input:
 ;; add some useful output to *Messages*
 
 
-(defvar *asc-disable-popup* t)
+(defvar *asc-popup* nil)
 
 
-(defun asc-disable-popup (f &rest args)
-  (if *asc-disable-popup*
-      (let (r b)
-        (save-window-excursion
-          (prog1 (setq r (apply f args))
-            (setq b (if (windowp r)
-                        (window-buffer r)
-                      (process-buffer r)))
-            (switch-to-buffer b)
-            (when *asc-echo*
-              (message "Running command %s at %s"
-                       (propertize (car args) 'face 'compilation-info)
-                       (propertize default-directory 'face 'completions-annotations))))))
-    (apply f args)))
+(defun asc-handle-popup (f &rest args)
+  (if *asc-popup*
+      (apply f args)
+    (let (r b)
+      (save-window-excursion
+        (prog1 (setq r (apply f args))
+          (setq b (if (windowp r)
+                      (window-buffer r)
+                    (process-buffer r)))
+          (switch-to-buffer b)
+          (when *asc-echo*
+            (message
+             "Running command %s at %s"
+             (propertize (car args) 'face 'compilation-info)
+             (propertize default-directory 'face 'completions-annotations))))))))
 
 
-(advice-add 'async-shell-command :around 'asc-disable-popup)
+(advice-add 'async-shell-command :around 'asc-handle-popup)
 
 
 ;; ===========
