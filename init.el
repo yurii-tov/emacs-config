@@ -3327,13 +3327,10 @@ Also grabs a selected region, if any."
 (add-hook 'gptel-mode-hook 'gptel-chat-setup)
 
 
-;; gptel-rewrite
+;; Rewrite/refactoring with LLM
 
 
 (require 'gptel-rewrite)
-
-
-(setq-default gptel--rewrite-message "Rewrite: ")
 
 
 (defun gptel-rewrite-directive-dumb ()
@@ -3347,30 +3344,24 @@ Also grabs a selected region, if any."
 (add-hook 'gptel-rewrite-directives-hook 'gptel-rewrite-directive-dumb)
 
 
-(defun gptel-rewrite-with-directive ()
-  (interactive)
-  (let ((gptel--rewrite-message
-         (car (cl-pushnew
-               (read-string "Directive: " nil
-                            'gptel-rewrite-directive-history)
-               (alist-get 'gptel--infix-rewrite-extra
-                          transient-history)
-               :test #'equal))))
-    (gptel--suffix-rewrite)))
-
-
 (bind-keys '("SPC" gptel--rewrite-accept
              "TAB" gptel--suffix-rewrite
-             "d" gptel-rewrite-with-directive
+             "d" gptel--rewrite-iterate
              "k" gptel--rewrite-reject
              "=" gptel--rewrite-diff)
            gptel-rewrite-actions-map)
 
 
+(when (car (transient--locate-child 'gptel-rewrite (kbd "r")))
+  (transient-suffix-put 'gptel-rewrite (kbd "r") :key "TAB"))
+
+
 (defun gptel-tab-rewrite (f &rest args)
   "Trigger gptel-rewrite by TAB key"
   (if (use-region-p)
-      (gptel--suffix-rewrite)
+      (progn
+        (setq-local gptel--rewrite-message "Rewrite: ")
+        (gptel-rewrite))
     (apply f args)))
 
 
