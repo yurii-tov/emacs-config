@@ -5,36 +5,12 @@ Every kind of science, if it has only reached a certain degree of maturity,
 automatically becomes a part of mathematics.
 -- David Hilbert
 %
-If one were to bring ten of the wisest men in the world together and ask them
-what was the most stupid thing in existence, they would not be able to discover
-anything so stupid as astrology.
--- David Hilbert
-%
 One must be able to say at all times--instead of points, straight lines, and
 planes--tables, chairs, and beer mugs
 -- David Hilbert
 %
 I didn't work especially hard at mathematics at school, because I knew that's
 what I'd be doing later.
--- David Hilbert
-%
-Mathematics is a presuppositionless science. To found it I do not need God, as
-does Kronecker, or the assumption of a special faculty of our understanding
-attuned to the principle of mathematical induction, as does Poincaré, or the
-primal intuition of Brouwer, or, finally, as do Russell and Whitehead, axioms of
-infinity, reducibility, or completeness, which in fact are actual, contentual
-assumptions that cannot be compensated for by consistency proofs.
--- David Hilbert
-%
-Besides it is an error to believe that rigour is the enemy of simplicity. On the
-contrary we find it confirmed by numerous examples that the rigorous method is
-at the same time the simpler and the more easily comprehended. The very effort
-for rigor forces us to find out simpler methods of proof.
--- David Hilbert
-%
-Galileo was no idiot. Only an idiot could believe that science requires
-martyrdom - that may be necessary in religion, but in time a scientific result
-will establish itself.
 -- David Hilbert
 %
 Programs must be written for people to read, and only incidentally for machines to execute.
@@ -79,11 +55,6 @@ One can't proceed from the informal to the formal by formal means.
 C programmers never die. They are just cast into void.
 -- Alan Perlis
 %
-Every reader should ask himself periodically “Toward what end, toward what
-end?”—but do not ask it too often lest you pass up the fun of programming for
-the constipation of bittersweet philosophy.
--- Alan Perlis
-%
 Is it possible that software is not like anything else, that it is meant to be
 discarded: that the whole point is to always see it as a soap bubble?
 -- Alan Perlis
@@ -112,16 +83,6 @@ substantially help matters. We have to learn to live with it.
 Some programming languages manage to absorb change, but withstand progress.
 -- Alan Perlis
 %
-I think that it's extraordinarily important that we in computer science keep fun
-in computing. When it started out, it was an awful lot of fun. Of course, the
-paying customers got shafted every now and then, and after a while we began to
-take their complaints seriously. We began to feel as if we really were
-responsible for the successful, error-free perfect use of these machines. I
-don't think we are. I think we're responsible for stretching them, setting them
-off in new directions, and keeping fun in the house. I hope the field of
-computer science never loses its sense of fun.
--- Alan Perlis
-%
 When a professor insists computer science is X but not Y, have compassion for
 his graduate students.
 -- Alan Perlis
@@ -145,11 +106,6 @@ It is easier to change the specification to fit the program than vice versa.
 %
 Optimization hinders evolution. Everything should be built top-down, except the
 first time. Simplicity does not precede complexity, but follows it.
--- Alan Perlis
-%
-One can only display complex information in the mind. Like seeing, movement or
-flow or alteration of view is more important than the static picture, no matter
-how lovely.
 -- Alan Perlis
 %
 We are on the verge: Today our program proved Fermat's next-to-last theorem.
@@ -197,11 +153,6 @@ Optimization hinders evolution.
 It is better to have 100 functions operate on one data structure than to have 10
 functions operate on 10 data structures.
 -- Alan Perlis
-%
-Imagination is more important than knowledge. For knowledge is limited, whereas
-imagination embraces the entire world, stimulating progress, giving birth to
-evolution.
--- Albert Einstein
 %
 Make everything as simple as possible, but not simpler.
 -- Albert Einstein
@@ -253,11 +204,6 @@ It has been discovered that C++ provides a remarkable facility for concealing
 the trivial details of a program — such as where its bugs are.
 -- David Keppel
 %
-Let us change our traditional attitude to the construction of programs: Instead
-of imagining that our main task is to instruct a computer what to do, let us
-concentrate rather on explaining to human beings what we want a computer to do.
--- Donald E. Knuth
-%
 Computers are good at following instructions, but not at reading your mind.
 -- Donald Knuth
 %
@@ -274,11 +220,6 @@ the process of putting them in.
 -- Edsger Dijkstra
 %
 Simplicity is prerequisite for reliability.
--- Edsger Dijkstra
-%
-It is practically impossible to teach good programming to students that have had
-a prior exposure to BASIC: as potential programmers they are mentally mutilated
-beyond hope of regeneration.
 -- Edsger Dijkstra
 %
 The art of programming is the art of organizing complexity.
@@ -315,29 +256,11 @@ The question of whether computers can think is like the question of whether
 submarines can swim.
 -- Edsger Dijkstra
 %
-Raise your quality standards as high as you can live with, avoid wasting your
-time on routine problems, and always try to work as closely as possible at the
-boundary of your abilities. Do this, because it is the only way of discovering
-how that boundary should be moved forward.
--- Edsger Dijkstra
-%
 Much of the excitement we get out of our work is that we don't really know what
 we are doing.
 -- Edsger Dijkstra
 %
 Programming in Basic causes brain damage.
--- Edsger Dijkstra
-%
-The competent programmer is fully aware of the strictly limited size of his own
-skull; therefore he approaches the programming task in full humility, and among
-other things he avoids clever tricks like the plague.
--- Edsger Dijkstra
-%
-If in physics there's something you don't understand, you can always hide behind
-the uncharted depths of nature. You can always blame God. You didn't make it so
-complex yourself. But if your program doesn't work, there is no one to hide
-behind. You cannot hide behind an obstinate nature. If it doesn't work, you've
-messed up.
 -- Edsger Dijkstra
 %
 Teaching COBOL ought to be regarded as a criminal act.
@@ -353,19 +276,6 @@ waste their time debugging, they should not introduce the bugs to start with.
 %
 Programming is one of the most difficult branches of applied mathematics; the
 poorer mathematicians had better remain pure mathematicians.
--- Edsger Dijkstra
-%
-I mean, if 10 years from now, when you are doing something quick and dirty, you
-suddenly visualize that I am looking over your shoulders and say to yourself
-"Dijkstra would not have liked this," well, that would be enough immortality for
-me.
--- Edsger Dijkstra
-%
-… what society overwhelmingly asks for is snake oil. Of course, the snake oil
-has the most impressive names — otherwise you would be selling nothing — like
-“Structured Analysis and Design”,“Software Engineering”, “Maturity Models”,
-“Management Information Systems”, “Integrated Project Support Environments”
-“Object Orientation” and “Business Process Re-engineering”.
 -- Edsger Dijkstra
 %
 Aim for brevity while avoiding jargon.
@@ -398,39 +308,12 @@ It is not the task of the University to offer what society asks for, but to give
 what society needs.
 -- Edsger Dijkstra
 %
-When we had no computers, we had no programming problem either. When we had a
-few computers, we had a mild programming problem. Confronted with machines a
-million times as powerful, we are faced with a gigantic programming problem.
--- Edsger Dijkstra
-%
-Computer science is no more about computers than astronomy is about telescopes,
-biology is about microscopes or chemistry is about beakers and test
-tubes. Science is not about tools. It is about how we use them, and what we find
-out when we do.
--- Edsger Dijkstra
-%
-Are you quite sure that all those bells and whistles, all those wonderful
-facilities of your so called powerful programming languages, belong to the
-solution set rather than the problem set?
--- Edsger Dijkstra
-%
-How do we convince people that in programming simplicity and clarity - in short:
-what mathematicians call elegance - are not a dispensable luxury, but a crucial
-matter that decides between success and failure?
--- Edsger Dijkstra
-%
 Too few people recognize that the high technology so celebrated today is
 essentially a mathematical technology.
 -- Edsger Dijkstra
 %
 If we wish to count lines of code, we should not regard them as "lines produced"
 but as "lines spent."
--- Edsger Dijkstra
-%
-Don't blame me for the fact that competent programming, as I view it as an
-intellectual possibility, will be too difficult for the average programmer, you
-must not fall into the trap of rejecting a surgical technique because it is
-beyond the capabilities of the barber in his shop around the corner.
 -- Edsger Dijkstra
 %
 We must be very careful when we give advice to younger people; sometimes they
@@ -448,46 +331,11 @@ I don't need to waste my time with a computer just because I am a computer
 scientist.
 -- Edsger Dijkstra
 %
-...Simplifications have had a much greater long-range scientific impact than
-individual feats of ingenuity. The opportunity for simplification is very
-encouraging, because in all examples that come to mind the simple and elegant
-systems tend to be easier and faster to design and get right, more efficient in
-execution, and much more reliable than the more contrived contraptions that have
-to be debugged into some degree of acceptability....Simplicity and elegance are
-unpopular because they require hard work and discipline to achieve and education
-to be appreciated.
--- Edsger Dijkstra
-%
 Brainpower is by far our scarcest resource.
--- Edsger Dijkstra
-%
-The required techniques of effective reasoning are pretty formal, but as long as
-programming is done by people that don't master them, the software crisis will
-remain with us and will be considered an incurable disease. And you know what
-incurable diseases do: they invite the quacks and charlatans in, who in this
-case take the form of Software Engineering gurus.
--- Edsger Dijkstra
-%
-In the wake of the Cultural Revolution and now of the recession I observe a
-mounting pressure to co-operate and to promote "teamwork." For its
-anti-individualistic streak, such a drive is of course highly suspect; some
-people may not be so sensitive to it, but having seen the Hitlerjugend in action
-suffices for the rest of your life to be very wary of "team spirit." Very.
--- Edsger Dijkstra
-%
-Industry suffers from the managerial dogma that for the sake of stability and
-continuity, the company should be independent of the competence of individual
-employees.
 -- Edsger Dijkstra
 %
 Thanks to the greatly improved possibility of communication, we overrate its
 importance. Even stronger, we underrate the importance of isolation.
--- Edsger Dijkstra
-%
-It is a mistake to think that programmers wares are programs. Programmers have
-to produce trustworthy solutions and present it in the form of cogent
-arguments. Programs source code is just the accompanying material to which these
-arguments are to be applied to.
 -- Edsger Dijkstra
 %
 Testing shows the presence, not the absence of bugs.
@@ -495,11 +343,6 @@ Testing shows the presence, not the absence of bugs.
 %
 Beware of "the real world". A speaker's apeal to it is always an invitation not
 to challenge his tacit assumptions.
--- Edsger Dijkstra
-%
-In passing I draw attention to another English expression which often occurs in
-Dutch texts: "the real world". In Dutch - and I am afraid not in Dutch alone -
-its usage is almost always a symptom of a violent anti-intellectualism.
 -- Edsger Dijkstra
 %
 The ability of discerning high quality unavoidably implies the ability of
@@ -510,11 +353,6 @@ The use of COBOL cripples the mind; its teaching should, therefore, be regarded
 as a criminal offense.
 -- Edsger Dijkstra
 %
-Production speed is severely slowed down if one works with half-time people who
-have other obligations as well. This is at least a factor of four; probably it
-is worse.
--- Edsger Dijkstra
-%
 Thank goodness we don't have only serious problems, but ridiculous ones as well.
 -- Edsger Dijkstra
 %
@@ -522,43 +360,8 @@ It used to be the program's purpose to instruct our computers; it became the
 computer's purpose to execute our programs.
 -- Edsger Dijkstra
 %
-Yes, I share your concern: how to program well -though a teachable topic- is
-hardly taught. The situation is similar to that in mathematics, where the
-explicit curriculum is confined to mathematical results; how to do mathematics
-is something the student must absorb by osmosis, so to speak. One reason for
-preferring symbol-manipulating, calculating arguments is that their design is
-much better teachable than the design of verbal/pictorial arguments. Large-scale
-introduction of courses on such calculational methodology, however, would
-encounter unsurmoutable political problems.
--- Edsger Dijkstra
-%
-Our intellectual powers are rather geared to master static relations and that
-our powers to visualize processes evolving in time are relatively poorly
-developed. For that reason we should do (as wise programmers aware of our
-limitations) our utmost to shorten the conceptual gap between the static program
-and the dynamic process, to make the correspondence between the program (spread
-out in text space) and the process (spread out in time) as trivial as possible.
--- Edsger Dijkstra
-%
-LISP has jokingly been described as "the most intelligent way to misuse a
-computer." I think that description is a great compliment because it transmits
-the full flavour of liberation: it has assisted a number of our most gifted
-fellow humans in thinking previously impossible thoughts.
--- Edsger Dijkstra
-%
 Probably I am very naive, but I also think I prefer to remain so, at least for
 the time being and perhaps for the rest of my life.
--- Edsger Dijkstra
-%
-In the good old days physicists repeated each other's experiments, just to be
-sure. Today they stick to FORTRAN, so that they can share each other's programs,
-bugs included.
--- Edsger Dijkstra
-%
-We are all shaped by the tools we use, in particular: the formalisms we use
-shape our thinking habits, for better or for worse, and that means that we have
-to be very careful in the choice of what we learn and teach, for unlearning is
-not really possible.
 -- Edsger Dijkstra
 %
 The effective exploitation of his powers of abstraction must be regarded as one
@@ -577,86 +380,15 @@ About the use of language: it is impossible to sharpen a pencil with a blunt
 axe. It is equally vain to try to do it with ten blunt axes instead.
 -- Edsger Dijkstra
 %
-The traditional mathematician recognizes and appreciates mathematical elegance
-when he sees it. I propose to go one step further, and to consider elegance an
-essential ingredient of mathematics: if it is clumsy, it is not mathematics.
--- Edsger Dijkstra
-%
 If there is one 'scientific' discovery I am proud of, it is the discovery of the
 habit of writing without publication in mind.
--- Edsger Dijkstra
-%
-So-called "natural language" is wonderful for the purposes it was created for,
-such as to be rude in, to tell jokes in, to cheat or to make love in (and
-Theorists of Literary Criticism can even be content-free in it), but it is
-hopelessly inadequate when we have to deal unambiguously with situations of
-great intricacy, situations which unavoidably arise in such activities as
-legislation, arbitration, mathematics or programming.
--- Edsger Dijkstra
-%
-APL is a mistake, carried through to perfection. It is the language of the
-future for the programming techniques of the past: it creates a new generation
-of coding bums.
--- Edsger Dijkstra
-%
-FORTRAN, the infantile disorder, by now nearly 20 years old, is hopelessly
-inadequate for whatever computer application you have in mind today: it is now
-too clumsy, too risky, and too expensive to use.
--- Edsger Dijkstra
-%
-John von Neumann draws attention to what seemed to him a contrast. He remarked
-that for simple mechanisms, it is often easier to describe how they work than
-what they do, while for more complicated mechanisms, it is usually the other way
-around.
 -- Edsger Dijkstra
 %
 Mathematicians are like managers - they want improvement without change.
 -- Edsger Dijkstra
 %
-Please don't fall into the trap of believing that I am terribly dogmatical about
-the go to statement. I have the uncomfortable feeling that others are making a
-religion out of it, as if the conceptual problems of programming could be solved
-by a single trick, by a simple form of coding discipline!
--- Edsger Dijkstra
-%
-In this respect a program is like a poem: you cannot write a poem without
-writing it. Yet people talk about programming as if it were a production process
-and measure "programmer productivity" in terms of "number of lines of code
-produced". In so doing they book that number on the wrong side of the ledger: we
-should always refer to "the number of lines of code spent".
--- Edsger Dijkstra
-%
-[Though computer science is a fairly new discipline, it is predominantly based
-on the Cartesian world view. As Edsgar W. Dijkstra has pointed out] A scientific
-discipline emerges with the - usually rather slow! - discovery of which aspects
-can be meaningfully 'studied' in isolation for the sake of their own
-consistency.
--- Edsger Dijkstra
-%
-I now have had my foggy crystal ball for quite a long time. Its predictions are
-invariably gloomy and usually correct, but I am quite used to that and they
-won't keep me from giving you a few suggestions, even if it is merely an
-exercise in futility whose only effect is to make you feel guilty.
--- Edsger Dijkstra
-%
 In the software business there are many enterprises for which it is not clear
 that science can help them; that science should try is not clear either.
--- Edsger Dijkstra
-%
-Many mathematicians derive part of their self-esteem by feeling themselves the
-proud heirs of a long tradition of rational thinking; I am afraid they idealize
-their cultural ancestors.
--- Edsger Dijkstra
-%
-I think of the company advertising "Thought Processors" or the college
-pretending that learning BASIC suffices or at least helps, whereas the teaching
-of BASIC should be rated as a criminal offence: it mutilates the mind beyond
-recovery.
--- Edsger Dijkstra
-%
-Write a paper promising salvation, make it a "structured" something or a
-"virtual" something, or "abstract," "distributed" or "higher-order" or
-"applicative" and you can almost be certain of having started a new cult.
 -- Edsger Dijkstra
 %
 A programming language is a tool that has profound influence on our thinking
@@ -667,44 +399,10 @@ The problems of the real world are primarily those you are left with when you
 refuse to apply their effective solutions.
 -- Edsger Dijkstra
 %
-A most important, but also most elusive, aspect of any tool is its influence on
-the habits of those who train themselves in its use. If the tool is a
-programming language this influence is, whether we like it or not, an influence
-on our thinking habits.... A programming language is a tool that has profound
-influence on our thinking habits.
--- Edsger Dijkstra
-%
-Why has elegance found so little following? That is the reality of it. Elegance
-has the disadvantage, if that's what it is, that hard work is needed to achieve
-it and a good education to appreciate it.
--- Edsger Dijkstra
-%
-... as a slow-witted human being I have a very small head and I had better learn
-to live with it and to respect my limitations and give them full credit, rather
-than to try to ignore them, for the latter vain effort will be punished by
-failure.
--- Edsger Dijkstra
-%
 Mentally mutilated potential programmers beyond hope of regeneration.
 -- Edsger Dijkstra
 %
 Beauty is our business.
--- Edsger Dijkstra
-%
-The use of anthropomorphic terminology forces you linguistically to adopt an
-operational view. And it makes it practically impossible to argue about programs
-independently of their being executed.
--- Edsger Dijkstra
-%
-We shall do a much better programming job, provided that we approach the task
-with a full appreciation of its tremendous difficulty, provided that we stick to
-modest and elegant programming languages, provided that we respect the intrinsic
-limitations of the human mind and approach the task as Very Humble Programmers.
--- Edsger Dijkstra
-%
-In their capacity as a tool, computers will be but a ripple on the surface of
-our culture. In their capacity as intellectual challenge, they are without
-precedent in the cultural history of mankind.
 -- Edsger Dijkstra
 %
 PL/1, the fatal disease, belongs more to the problem set than to the solution
@@ -713,11 +411,6 @@ set.
 %
 Progress is possible only if we train ourselves to think about programs without
 thinking of them as pieces of executable code.
--- Edsger Dijkstra
-%
-I mentioned the non-competitive spirit explicitly, because these days,
-excellence is a fashionable concept. But excellence is a competitive notion, and
-that is not what we are heading for: we are heading for perfection.
 -- Edsger Dijkstra
 %
 Computer science has as much to do with computers as astronomy has to do with
@@ -731,35 +424,11 @@ as that world is still convinced that its ways are perfectly adequate.
 APL is a mistake, carried through to perfection.
 -- Edsger Dijkstra
 %
-When we take the position that it is not only the programmer's responsibility to
-produce a correct program but also to demonstrate its correctness in a
-convincing manner, then the above remarks have a profound influence on the
-programmer's activity: the object he has to produce must be usefully structured.
--- Edsger Dijkstra
-%
 There should be no such thing as boring mathematics.
--- Edsger Dijkstra
-%
-When I came back from Munich, it was September, and I was Professor of
-Mathematics at the Eindhoven University of Technology. Later I learned that I
-had been the Department's third choice, after two numerical analysts had turned
-the invitation down; the decision to invite me had not been an easy one, on the
-one hand because I had not really studied mathematics, and on the other hand
-because of my sandals, my beard and my "arrogance" (whatever that may be).
--- Edsger Dijkstra
-%
-Some consider the puzzles that are created by their omissions as spicy
-challenges, without which their texts would be boring; others shun clarity lest
-their work is considered trivial.
 -- Edsger Dijkstra
 %
 Several people have told me that my inability to suffer fools gladly is one of
 my main weaknesses.
--- Edsger Dijkstra
-%
-A convincing demonstration of correctness being impossible as long as the
-mechanism is regarded as a black box, our only hope lies in not regarding the
-mechanism as a black box.
 -- Edsger Dijkstra
 %
 Computer Science is no more about computers than astronomy is about telescopes.
@@ -778,28 +447,7 @@ The key to understanding complicated things is knowing what not to look at.
 Nothing brings fear to my heart more than a floating point number.
 -- Gerald Jay Sussman
 %
-In engineering, as in other creative arts, we must learn to do analysis to
-support our efforts in synthesis. One cannot build a beautiful and functional
-bridge without a knowledge of steel and dirt, and a considerable mathematical
-technique for using this knowledge to compute the properties of
-structures. Similarly, one cannot build a beautiful computer system without a
-deep understanding of how to "previsualize" the process generated by the code
-one writes.
--- Gerald Jay Sussman
-%
-being smart in the arts is the same as being smart in engineering is the same as
-being smart in writing is the same as being smart in anything, really. it's the
-ability to manipulate all the pieces of the puzzle in your mind, try to fit them
-together, and when they don't fit quite right... you sand the edges/corners and
-make them all fit.
--- Gerald Jay Sussman
-%
 A recursive definition does not necessarily lead to a recursive process.
--- Gerald Jay Sussman
-%
-The reason why people think of programming as being hard is because you're
-writing down a general rule which is going to be used for lots of instances that
-a particular instance must process correctly.
 -- Gerald Jay Sussman
 %
 In a software project team of 10, there are probably 3 people who produce enough
@@ -811,11 +459,6 @@ In 2031, lawyers will be commonly a part of most development teams.
 %
 Where is the ‘any’ key?
 -- Homer Simpson, in response to the message, Press any key
-%
-All parts should go together without forcing. You must remember that the parts
-you are reassembling were disassembled by you. Therefore, if you can’t get them
-together again, there must be a reason. By all means, do not use a hammer.
--- IBM Manual, 1925
 %
 Today, most software exists, not to solve a problem, but to interface with other
 software.
@@ -840,19 +483,8 @@ Low-level programming is good for the programmer’s soul.
 Simplicity, carried to the extreme, becomes elegance.
 -- Jon Franklin
 %
-If you think you are worth what you know, you are very wrong. Your knowledge
-today does not have much value beyond a couple of years. Your value is what you
-can learn and how easily you can adapt to the changes this profession brings so
-often.
--- Jose M. Aguilar
-%
 Perl: The only language that looks the same before and after RSA encryption.
 -- Keith Bostic
-%
-Companies spend millions of dollars on firewalls, encryption and secure access
-devices, and it’s money wasted, because none of these measures address the
-weakest link in the security chain.
--- Kevin Mitnick
 %
 Programming can be fun, so can cryptography; however they should not be
 combined.
@@ -889,17 +521,6 @@ There is only one problem with common sense; it’s not very common.
 Getting information off the Internet is like taking a drink from a fire hydrant.
 -- Mitchell Kapor
 %
-Professionals The most likely way for the world to be destroyed, most experts
-agree, is by accident. That’s where we come in; we’re computer professionals.
-We cause accidents.
--- Nathaniel Borenstein
-%
-It should be noted that no ethically-trained software engineer would ever
-consent to write a DestroyBaghdad procedure. Basic professional ethics would
-instead require him to write a DestroyCity procedure, to which Baghdad could be
-given as a parameter.
--- Nathaniel S. Borenstein
-%
 If the code and the comments do not match, possibly both are incorrect.
 -- Norm Schryer
 %
@@ -910,11 +531,6 @@ the Second Law of Thermodynamics; i.e., it always increases.
 From a programmer’s point of view, the user is a peripheral that types when you
 issue a read request.
 -- P. Williams
-%
-In an information economy, the most valuable company assets drive themselves
-home every night. If they are not treated well, they do not return the next
-morning.
--- Peter Chang
 %
 Before software should be reusable, it should be usable.
 -- Ralph Johnson
@@ -932,11 +548,6 @@ The more you know, the more you realize you know nothing.
 The greatest enemy of knowledge is not ignorance, it is the illusion of knowledge.
 -- Stephen Hawking
 %
-I think computer viruses should count as life. I think it says something about
-human nature that the only form of life we have created so far is purely
-destructive. We’ve created life in our own image.
--- Stephen Hawking
-%
 It’s better to wait for a productive programmer to become available than it is
 to wait for the first available programmer to become productive.
 -- Steve McConnell
@@ -944,36 +555,15 @@ to wait for the first available programmer to become productive.
 Not all those who wander are lost
 -- J.R.R. Tolkien
 %
-В разговоре с людьми здравого рассудка и среднего образования можно заметить,
-что в вопросах личного жизненного опыта они отменно толковы, а стоит разговору
-выйти за пределы этого опыта, могут плести неправдоподобную чушь. Домохозяйка
-никогда не согласится с тем, что горшок, оставленный в кладовке, может
-превратиться в голубя, но легко поверит в то, что звезды влияют на человеческие
-судьбы
--- Станислав Лем
-%
 Ты все время повторяешь себе: «Я бы и мог это сделать, да не хочу», и это лишь
 иной способ сказать, что ничего-то ты не можешь.
 --- Ричард Фейнман
 %
 Make love, not Emacs configuration
 %
-systemctl - Control the systemd system
-%Все лучшее, что в нас есть, определяется не свободой, а привязанностью
-%
 Плохо что ли? Хорошо!
 %
 There's never enough time to do all the nothing you want
-%
-Ибо воистину. Первый Язык, жемчужина посреди простых камней, и нет языков кроме
-Него. Скобки, в которых пустота — тело Его, мистическое двуединство кода и
-данных — дух Его, божественная рекурсия — сердце Его. Истинно говорю вам,
-избегающий света Его есть безумец, вот, свершается кара над главой его, и
-убогостью отмечены поделия его, подобные пустым глиняным горшкам рядом с
-хрустальным сосудом благодати Его. Принявший же и постигший истинный свет Его
-подобен прямой и отточенной стреле, чисты помыслы его и крепка рука его, и
-благословенны творения его, дарующие радость и утоляющие печали, ибо
-одухотворены духом Его и отмечены благодатью Его.
 %
 Добрый человек в своем стремленьи темном
 Найти сумеет настоящий путь
