@@ -3262,7 +3262,10 @@ Example input:
     :system "Translate the text i provide to you. If text is in Russian, translate it to English. Otherwise translate the text to Russian. Provide only translated text, without any explanations. The text:\n")
   (gptel-make-preset 'explain
     :description "Explain a topic in detail"
-    :system "Provide a comprehensive explanation of the topic. Begin with a summary. Present only the explanations, without any additional commentary or context."))
+    :system "Provide a comprehensive explanation of the topic. Begin with a summary. Present only the explanations, without any additional commentary or context.")
+  (gptel-make-preset 'summarize
+    :description "Generate a concise summary"
+    :system "Generate a concise summary of the provided text. The summary should capture the main points and key details, while omitting unnecessary information. Ensure the summary is coherent and easy to understand."))
 
 
 (defun company-gptel (command &optional arg &rest _ignored)
