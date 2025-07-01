@@ -703,6 +703,9 @@
 (global-auto-revert-mode t)
 
 
+(setq auto-revert-verbose nil)
+
+
 (when system-type-is-windows (setq auto-revert-use-notify nil))
 
 
