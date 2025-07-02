@@ -3896,7 +3896,8 @@ Process .+
                "e" wgrep-change-to-wgrep-mode)
              ripgrep-search-mode-map)
   (add-hook 'ripgrep-search-mode-hook
-            'ripgrep-setup))
+            'ripgrep-setup)
+  (setq wgrep-auto-save-buffer t))
 
 
 ;; ===
