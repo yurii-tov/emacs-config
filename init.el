@@ -3888,8 +3888,11 @@ Process .+
 
 
 (with-eval-after-load 'ripgrep
-  (bind-keys '("n" next-error-no-select
+  (bind-keys '("<tab>" compilation-next-error
+               "<backtab>" compilation-previous-error
+               "n" next-error-no-select
                "p" previous-error-no-select
+               "o" compilation-display-error
                "e" wgrep-change-to-wgrep-mode)
              ripgrep-search-mode-map)
   (add-hook 'ripgrep-search-mode-hook
