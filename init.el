@@ -3882,6 +3882,12 @@ Process .+
   (define-key search-map (kbd "g") 'ripgrep-regexp))
 
 
+(with-eval-after-load 'ripgrep
+  (bind-keys '("n" next-error-no-select
+               "p" previous-error-no-select)
+             ripgrep-search-mode-map))
+
+
 ;; ===
 ;; xml
 ;; ===
