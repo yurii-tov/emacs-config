@@ -22,6 +22,7 @@
                   yasnippet
                   rust-mode
                   ripgrep
+                  wgrep
                   markdown-mode
                   htmlize
                   cider
@@ -3882,10 +3883,17 @@ Process .+
   (define-key search-map (kbd "g") 'ripgrep-regexp))
 
 
+(defun ripgrep-setup ()
+  (setq-local compilation-scroll-output nil))
+
+
 (with-eval-after-load 'ripgrep
   (bind-keys '("n" next-error-no-select
-               "p" previous-error-no-select)
-             ripgrep-search-mode-map))
+               "p" previous-error-no-select
+               "e" wgrep-change-to-wgrep-mode)
+             ripgrep-search-mode-map)
+  (add-hook 'ripgrep-search-mode-hook
+            'ripgrep-setup))
 
 
 ;; ===
