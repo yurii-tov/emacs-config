@@ -20,17 +20,17 @@
                   ef-themes
                   company
                   yasnippet
-                  rust-mode
                   ripgrep
                   wgrep
                   markdown-mode
                   htmlize
-                  cider
                   gptel
                   posframe
                   gptel-quick
+                  cider
                   powershell
                   groovy-mode
+                  rust-mode
                   slime
                   slime-company
                   nov))
