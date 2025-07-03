@@ -174,10 +174,6 @@ Don’t document the problem, fix it.
 Tell me and I forget. Teach me and I remember. Involve me and I learn.
 -- Benjamin Franklin
 %
-There are only two things wrong with C++: The initial concept and the
-implementation.
--- Bertrand Meyer
-%
 In a room full of top software designers, if two agree on the same thing, that’s
 a majority.
 -- Bill Curtis
@@ -199,10 +195,6 @@ The best way to predict the future is to implement it.
 We need above all to know about changes; no one wants or needs to be reminded 16
 hours a day that his shoes are on.
 -- David Hubel
-%
-It has been discovered that C++ provides a remarkable facility for concealing
-the trivial details of a program — such as where its bugs are.
--- David Keppel
 %
 Computers are good at following instructions, but not at reading your mind.
 -- Donald Knuth
@@ -261,9 +253,6 @@ we are doing.
 -- Edsger Dijkstra
 %
 Programming in Basic causes brain damage.
--- Edsger Dijkstra
-%
-Teaching COBOL ought to be regarded as a criminal act.
 -- Edsger Dijkstra
 %
 Besides a mathematical inclination, an exceptionally good mastery of one's
@@ -349,10 +338,6 @@ The ability of discerning high quality unavoidably implies the ability of
 identifying shortcomings.
 -- Edsger Dijkstra
 %
-The use of COBOL cripples the mind; its teaching should, therefore, be regarded
-as a criminal offense.
--- Edsger Dijkstra
-%
 Thank goodness we don't have only serious problems, but ridiculous ones as well.
 -- Edsger Dijkstra
 %
@@ -403,10 +388,6 @@ Mentally mutilated potential programmers beyond hope of regeneration.
 -- Edsger Dijkstra
 %
 Beauty is our business.
--- Edsger Dijkstra
-%
-PL/1, the fatal disease, belongs more to the problem set than to the solution
-set.
 -- Edsger Dijkstra
 %
 Progress is possible only if we train ourselves to think about programs without
@@ -492,13 +473,6 @@ combined.
 %
 I think it’s a new feature. Don’t tell anyone it was an accident.
 -- Larry Wall
-%
-If you think your users are idiots, only idiots will use it.
--- Linus Torvalds
-%
-Companies I am not out to destroy Microsoft, that would be a completely
-unintended side effect.
--- Linus Torvalds
 %
 If people never did silly things, nothing intelligent would ever get done.
 -- Ludwig Wittgenstein
