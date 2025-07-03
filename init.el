@@ -3879,8 +3879,15 @@ Process .+
       ripgrep-arguments '("-uu"))
 
 
+(defun project-ripgrep (regexp)
+  (interactive (list (project--read-regexp)))
+  (let ((ripgrep-arguments nil))
+    (ripgrep-regexp regexp (project-root (project-current t)))))
+
+
 (when ripgrep
-  (define-key search-map (kbd "g") 'ripgrep-regexp))
+  (define-key search-map (kbd "g") 'ripgrep-regexp)
+  (advice-add 'project-find-regexp :override 'project-ripgrep))
 
 
 (defun ripgrep-setup ()
