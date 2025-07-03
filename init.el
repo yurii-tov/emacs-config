@@ -3888,7 +3888,7 @@ Process .+
 
 
 (with-eval-after-load 'ripgrep
-  (bind-keys '("<tab>" compilation-next-error
+  (bind-keys '("TAB" compilation-next-error
                "<backtab>" compilation-previous-error
                "n" next-error-no-select
                "p" previous-error-no-select
