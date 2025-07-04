@@ -1013,6 +1013,27 @@
 (advice-add 'find-dired :around #'find-dired-prevent-prompt-clutter)
 
 
+(defun find-dired-fix-prompt (f &rest xs)
+  "More consistent querying of user inputs:
+The search string is queried first, followed by the directory."
+  (interactive)
+  (let* ((prompt (format "Search for: "))
+         (query (cadr xs))
+         (dir (car xs))
+         (query (if (called-interactively-p)
+                    (read-string prompt nil 'find-args-history)
+                  query))
+         (dir (if (called-interactively-p)
+                  (read-directory-name
+                   (format "Search for %s at: "
+                           (propertize query 'face 'compilation-info)))
+                dir)))
+    (funcall f dir query)))
+
+
+(advice-add 'find-dired :around 'find-dired-fix-prompt)
+
+
 ;; =======
 ;; isearch
 ;; =======
