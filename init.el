@@ -1017,7 +1017,7 @@
   "More consistent querying of user inputs:
 The search string is queried first, followed by the directory."
   (interactive)
-  (let* ((prompt (format "Search for: "))
+  (let* ((prompt (format "Search for files: "))
          (query (cadr xs))
          (dir (car xs))
          (query (if (called-interactively-p)
