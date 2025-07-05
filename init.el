@@ -1026,7 +1026,9 @@ The search string is queried first, followed by the directory."
          (dir (if (called-interactively-p)
                   (read-directory-name
                    (format "Search for %s at: "
-                           (propertize query 'face 'compilation-info)))
+                           (propertize (if (string-empty-p query)
+                                           "*" query)
+                                       'face 'compilation-info)))
                 dir)))
     (funcall f dir query)))
 
