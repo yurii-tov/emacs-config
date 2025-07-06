@@ -247,15 +247,8 @@ level in which one can be absolutely precise.
 Perfecting oneself is as much unlearning as it is learning.
 -- Edsger Dijkstra
 %
-The question of whether computers can think is like the question of whether
-submarines can swim.
--- Edsger Dijkstra
-%
 Much of the excitement we get out of our work is that we don't really know what
 we are doing.
--- Edsger Dijkstra
-%
-Programming in Basic causes brain damage.
 -- Edsger Dijkstra
 %
 Besides a mathematical inclination, an exceptionally good mastery of one's
