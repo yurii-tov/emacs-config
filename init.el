@@ -1087,7 +1087,7 @@ The search string is queried first, followed by the directory."
           (set-text-properties
            1 2 '(ibuffer-process t) s)
           (set-text-properties
-           0 1 '(face (:foreground "#00cc00")) s)
+           0 1 '(face compilation-mode-line-run) s)
           s)
       s)))
 
