@@ -160,26 +160,15 @@ functions operate on 10 data structures.
 Make everything as simple as possible, but not simpler.
 -- Albert Einstein
 %
-Code generation, like drinking alcohol, is good in moderation.
--- Alex Lowe
-%
 If you don’t handle [exceptions], we shut your application down. That
 dramatically increases the reliability of the system.
 -- Anders Hejlsberg
-%
-Before man reaches the moon, mail will be delivered within hours from New York
-to California, to Britain, to India or Australia.
--- Arthur Summerfield, 1959, United States Post
 %
 Don’t document the problem, fix it.
 -- Atli Björgvin Oddsson
 %
 Tell me and I forget. Teach me and I remember. Involve me and I learn.
 -- Benjamin Franklin
-%
-In a room full of top software designers, if two agree on the same thing, that’s
-a majority.
--- Bill Curtis
 %
 Real knowledge is to know the extent of one’s ignorance.
 -- Confucius
@@ -414,10 +403,6 @@ Computer Science is no more about computers than astronomy is about telescopes.
 A *computer* *once* beat me at chess, but it was no match for me at kick boxing.
 -- Emo Philips
 %
-The only truly secure system is one that is powered off, cast in a block of
-concrete and sealed in a lead-lined room with armed guards.
--- Gene Spafford
-%
 The key to understanding complicated things is knowing what not to look at.
 -- Gerald Jay Sussman
 %
@@ -430,9 +415,6 @@ A recursive definition does not necessarily lead to a recursive process.
 In a software project team of 10, there are probably 3 people who produce enough
 defects to make them net negative producers.
 -- Gordon Schulmeyer
-%
-In 2031, lawyers will be commonly a part of most development teams.
--- Grady Booch
 %
 Where is the ‘any’ key?
 -- Homer Simpson, in response to the message, Press any key
