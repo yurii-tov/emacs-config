@@ -1954,14 +1954,12 @@ The search string is queried first, followed by the directory."
               company-selection-wrap-around t
               company-files-chop-trailing-slash nil
               company-dabbrev-downcase nil
-              company-transformers '(delete-consecutive-dups)
-              company-backends '(company-gptel
-                                 company-files
-                                 (company-capf
-                                  company-yasnippet
-                                  company-keywords
-                                  company-dabbrev
-                                  :separate)))
+              company-backends '(company-files
+                                 company-capf
+                                 company-keywords
+                                 company-yasnippet
+                                 company-gptel
+                                 company-dabbrev))
 
 
 ;; Keybindings
@@ -2910,13 +2908,10 @@ Example input:
 
 (defun comint-setup-company-completion ()
   (setq-local company-backends
-              '(company-gptel
-                (company-capf
-                 company-yasnippet
-                 company-comint-hist-completion
-                 company-keywords
-                 company-dabbrev
-                 :separate))))
+              (cons '(company-capf
+                      company-comint-hist-completion
+                      :separate)
+                    (cddr company-backends))))
 
 
 (add-hook 'comint-mode-hook 'comint-setup-company-completion)
@@ -4032,13 +4027,9 @@ Process .+
 (defun common-lisp-setup-company ()
   (require 'slime-company)
   (setq-local company-backends
-              '(company-gptel
-                company-files
-                (company-slime
-                 company-yasnippet
-                 company-keywords
-                 company-dabbrev
-                 :separate))))
+              (append `(,(car company-backends)
+                        company-slime)
+                      (cddr company-backends))))
 
 
 (dolist (m '(lisp-mode-hook slime-repl-mode-hook))
