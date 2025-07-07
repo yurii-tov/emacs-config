@@ -887,6 +887,7 @@
                "S" dired-calculate-size-tree
                "M" dired-mark-files-regexp
                "c" dired-do-chmod
+               "e" dired-toggle-read-only
                "L" dired-do-symlink)))
 
 
