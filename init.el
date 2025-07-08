@@ -432,12 +432,6 @@
        (menu-bar-mode -1))
 
 
-;; maximize window on startup
-
-
-(add-hook 'emacs-startup-hook 'toggle-frame-maximized)
-
-
 ;; better "welcome" message
 
 
