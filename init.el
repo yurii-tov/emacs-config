@@ -1948,15 +1948,14 @@ The search string is queried first, followed by the directory."
               company-selection-wrap-around t
               company-files-chop-trailing-slash nil
               company-dabbrev-downcase nil
+              company-dabbrev-ignore-case nil
+              company-dabbrev-other-buffers t
               company-backends '(company-files
-                                 (company-capf
-                                  :with
+                                 (company-capf :with company-yasnippet)
+                                 (company-dabbrev
+                                  company-keywords
                                   company-yasnippet)
-                                 (company-keywords
-                                  company-yasnippet
-                                  :separate)
-                                 company-gptel
-                                 company-dabbrev))
+                                 company-gptel))
 
 
 ;; Keybindings
@@ -2903,7 +2902,6 @@ Example input:
 (defun comint-setup-company-completion ()
   (setq-local company-backends
               (cons '(company-capf
-                      company-yasnippet
                       company-comint-hist-completion
                       :separate)
                     (cddr company-backends))))
