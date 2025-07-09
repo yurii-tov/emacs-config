@@ -1949,7 +1949,9 @@ The search string is queried first, followed by the directory."
               company-files-chop-trailing-slash nil
               company-dabbrev-downcase nil
               company-backends '(company-files
-                                 company-capf
+                                 (company-capf
+                                  :with
+                                  company-yasnippet)
                                  (company-keywords
                                   company-yasnippet
                                   :separate)
@@ -2901,6 +2903,7 @@ Example input:
 (defun comint-setup-company-completion ()
   (setq-local company-backends
               (cons '(company-capf
+                      company-yasnippet
                       company-comint-hist-completion
                       :separate)
                     (cddr company-backends))))
@@ -4020,7 +4023,7 @@ Process .+
   (require 'slime-company)
   (setq-local company-backends
               (append `(,(car company-backends)
-                        company-slime)
+                        (company-slime :with company-yasnippet))
                       (cddr company-backends))))
 
 
