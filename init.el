@@ -1950,8 +1950,8 @@ The search string is queried first, followed by the directory."
               company-dabbrev-downcase nil
               company-backends '(company-files
                                  company-capf
-                                 company-yasnippet
                                  company-keywords
+                                 company-yasnippet
                                  company-gptel
                                  company-dabbrev))
 
