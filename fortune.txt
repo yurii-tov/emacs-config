@@ -369,9 +369,6 @@ The problems of the real world are primarily those you are left with when you
 refuse to apply their effective solutions.
 -- Edsger Dijkstra
 %
-Mentally mutilated potential programmers beyond hope of regeneration.
--- Edsger Dijkstra
-%
 Beauty is our business.
 -- Edsger Dijkstra
 %
