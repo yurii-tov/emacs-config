@@ -1953,7 +1953,6 @@ The search string is queried first, followed by the directory."
               company-backends '(company-files
                                  (company-capf :with company-yasnippet)
                                  (company-dabbrev
-                                  company-keywords
                                   company-yasnippet)
                                  company-gptel))
 
@@ -2048,7 +2047,7 @@ The search string is queried first, followed by the directory."
     (t (apply f args))))
 
 
-(dolist (x '(company-gptel company-dabbrev company-keywords company-yasnippet))
+(dolist (x '(company-dabbrev company-yasnippet))
   (advice-add x :around 'fix-company-backend))
 
 
