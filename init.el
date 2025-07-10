@@ -1953,10 +1953,10 @@ The search string is queried first, followed by the directory."
               company-dabbrev-other-buffers t
               company-backends '(company-files
                                  (company-capf :with company-yasnippet)
+                                 company-gptel
                                  (company-keywords
                                   company-dabbrev
-                                  company-yasnippet)
-                                 company-gptel))
+                                  company-yasnippet)))
 
 
 ;; Keybindings
