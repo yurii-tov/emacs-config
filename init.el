@@ -1947,12 +1947,14 @@ The search string is queried first, followed by the directory."
               company-tooltip-offset-display 'lines
               company-selection-wrap-around t
               company-files-chop-trailing-slash nil
+              company-transformers '(delete-consecutive-dups)
               company-dabbrev-downcase nil
               company-dabbrev-ignore-case nil
               company-dabbrev-other-buffers t
               company-backends '(company-files
                                  (company-capf :with company-yasnippet)
-                                 (company-dabbrev
+                                 (company-keywords
+                                  company-dabbrev
                                   company-yasnippet)
                                  company-gptel))
 
@@ -2047,7 +2049,7 @@ The search string is queried first, followed by the directory."
     (t (apply f args))))
 
 
-(dolist (x '(company-dabbrev company-yasnippet))
+(dolist (x '(company-dabbrev company-keywords company-yasnippet))
   (advice-add x :around 'fix-company-backend))
 
 
