@@ -1950,13 +1950,13 @@ The search string is queried first, followed by the directory."
               company-transformers '(delete-consecutive-dups)
               company-dabbrev-downcase nil
               company-dabbrev-ignore-case nil
-              company-dabbrev-other-buffers t
               company-backends '(company-files
                                  (company-capf :with company-yasnippet)
                                  company-gptel
                                  (company-keywords
-                                  company-dabbrev
-                                  company-yasnippet)))
+                                  company-dabbrev-code
+                                  company-yasnippet)
+                                 company-dabbrev))
 
 
 ;; Keybindings
@@ -2049,7 +2049,10 @@ The search string is queried first, followed by the directory."
     (t (apply f args))))
 
 
-(dolist (x '(company-dabbrev company-keywords company-yasnippet))
+(dolist (x '(company-dabbrev
+             company-dabbrev-code
+             company-keywords
+             company-yasnippet))
   (advice-add x :around 'fix-company-backend))
 
 
