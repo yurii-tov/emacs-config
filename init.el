@@ -1951,9 +1951,8 @@ The search string is queried first, followed by the directory."
               company-dabbrev-ignore-case nil
               company-backends '(company-files
                                  (company-capf :with company-yasnippet)
-                                 (company-keywords
-                                  :with company-yasnippet)
                                  (company-dabbrev-code
+                                  company-keywords
                                   company-yasnippet)
                                  company-gptel
                                  company-dabbrev))
