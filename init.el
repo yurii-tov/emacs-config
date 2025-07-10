@@ -1947,13 +1947,11 @@ The search string is queried first, followed by the directory."
               company-tooltip-offset-display 'lines
               company-selection-wrap-around t
               company-files-chop-trailing-slash nil
-              company-transformers '(delete-consecutive-dups)
               company-dabbrev-downcase nil
               company-dabbrev-ignore-case nil
               company-backends '(company-files
                                  (company-capf :with company-yasnippet)
-                                 (company-keywords
-                                  company-dabbrev-code
+                                 (company-dabbrev-code
                                   company-yasnippet)
                                  company-gptel
                                  company-dabbrev))
@@ -2027,6 +2025,23 @@ The search string is queried first, followed by the directory."
     (call-interactively 'forward-char)))
 
 
+;; Merge company-dabbrev-code with company-keywords
+
+
+(defun company-dabbrev-merge-keywords (f &rest args)
+  (cl-case (car args)
+    (prefix (or (apply f args)
+                (apply #'company-keywords args)))
+    (candidates (append
+                 (apply #'company-keywords args)
+                 (apply f args)))
+    (kind 'magic)
+    (t (apply f args))))
+
+
+(advice-add 'company-dabbrev-code :around 'company-dabbrev-merge-keywords)
+
+
 ;; Fix backends
 ;; - Prevent completion on empty prefix
 ;; - Disallow empty candidates list
@@ -2051,7 +2066,6 @@ The search string is queried first, followed by the directory."
 
 (dolist (x '(company-dabbrev
              company-dabbrev-code
-             company-keywords
              company-yasnippet))
   (advice-add x :around 'fix-company-backend))
 
@@ -2908,7 +2922,8 @@ Example input:
               (cons '(company-capf
                       company-comint-hist-completion
                       :separate)
-                    (cddr company-backends))))
+                    (cddr company-backends))
+              company-transformers '(delete-consecutive-dups)))
 
 
 (add-hook 'comint-mode-hook 'comint-setup-company-completion)
