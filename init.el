@@ -2035,7 +2035,7 @@ The search string is queried first, followed by the directory."
     (candidates (append
                  (apply #'company-keywords args)
                  (apply f args)))
-    (kind 'magic)
+    (kind 'keyword)
     (t (apply f args))))
 
 
