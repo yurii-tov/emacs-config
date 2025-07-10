@@ -1,6 +1,6 @@
 # -*- mode: snippet -*-
-# name: for
-# key: for
+# name: infamous c-style for loop
+# key: fori
 # --
 for (${1:int i = 0}; ${2:i < N}; ${3:i++}) {
     $0

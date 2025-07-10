@@ -1,5 +1,5 @@
 # -*- mode: snippet -*-
-# name: forin
+# name: Java-style *for each* construct
 # key: forin
 # --
 for (${1:Object el} : ${2:iterator}) {
