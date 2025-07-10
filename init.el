@@ -1952,8 +1952,8 @@ The search string is queried first, followed by the directory."
               company-backends '(company-files
                                  (company-capf :with company-yasnippet)
                                  (company-dabbrev-code
-                                  company-keywords
                                   company-yasnippet)
+                                 company-keywords
                                  company-gptel
                                  company-dabbrev))
 
