@@ -2886,7 +2886,7 @@ Example input:
            comint-mode-map)
 
 
-;; Company completion
+;; Completion
 
 
 (defun set-company-history-candidates ()
@@ -2917,7 +2917,13 @@ Example input:
     (kind 'history)))
 
 
-(defun comint-setup-company-completion ()
+(defun comint-setup-completion ()
+  (dolist (x '(comint-c-a-p-replace-by-expanded-history
+               shell-c-a-p-replace-by-expanded-directory
+               shell-command-completion
+               pcomplete-completions-at-point))
+    (setq-local comint-dynamic-complete-functions
+                (remove x comint-dynamic-complete-functions)))
   (setq-local company-backends
               (cons '(company-capf
                       company-comint-hist-completion
@@ -2926,22 +2932,7 @@ Example input:
               company-transformers '(delete-consecutive-dups)))
 
 
-(add-hook 'comint-mode-hook 'comint-setup-company-completion)
-
-
-;; Remove unneeded completion-at-point functions
-
-
-(defun comint-cleanup-capf ()
-  (dolist (x '(comint-c-a-p-replace-by-expanded-history
-               shell-c-a-p-replace-by-expanded-directory
-               shell-command-completion
-               pcomplete-completions-at-point))
-    (setq-local comint-dynamic-complete-functions
-                (remove x comint-dynamic-complete-functions))))
-
-
-(add-hook 'comint-mode-hook 'comint-cleanup-capf)
+(add-hook 'comint-mode-hook 'comint-setup-completion)
 
 
 ;; =====
