@@ -1947,13 +1947,14 @@ The search string is queried first, followed by the directory."
               company-tooltip-offset-display 'lines
               company-selection-wrap-around t
               company-files-chop-trailing-slash nil
+              company-transformers '(delete-consecutive-dups)
               company-dabbrev-downcase nil
               company-dabbrev-ignore-case nil
               company-backends '(company-files
                                  (company-capf :with company-yasnippet)
                                  (company-dabbrev-code
+                                  company-keywords
                                   company-yasnippet)
-                                 company-keywords
                                  company-gptel
                                  company-dabbrev))
 
