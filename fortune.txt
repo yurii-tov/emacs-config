@@ -139,10 +139,6 @@ A good programming language is a conceptual universe for thinking about
 programming.
 -- Alan Perlis
 %
-FORTRAN is not a flower but a weed - it is hardy, occasionally blooms, and grows
-in every computer.
--- Alan Perlis
-%
 Motto for a research laboratory: what we work on today, others will first think
 of tomorrow.
 -- Alan Perlis
