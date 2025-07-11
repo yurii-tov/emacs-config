@@ -2,6 +2,6 @@
 # name: infamous c-style for loop
 # key: fori
 # --
-for (${1:int i = 0}; ${2:i < N}; ${3:i++}) {
+for (int i = 0; i < $1; i++) {
     $0
 }
