@@ -1,8 +1,8 @@
 # -*- mode: snippet -*-
-# name: test
+# name: define test method
 # key: test
 # --
 @Test
-public void test_${1:Case}() {
-       $0
+public void ${1:Case}() {
+        $0
 }
