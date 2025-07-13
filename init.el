@@ -192,7 +192,6 @@
 (bind-keys `("f" find-dired
              "g" rgrep
              "s" browse-url-or-search
-             "l" gptel-quick
              "t" translate-en-ru-online)
            search-map)
 
@@ -3219,10 +3218,7 @@ Example input:
       gptel-prompt-prefix-alist '((org-mode . "* "))
       gptel-track-media t
       gptel-include-reasoning 'ignore
-      gptel-expert-commands t
-      gptel-quick-backend mistral
-      gptel-quick-model 'mistral-medium-latest
-      gptel-quick-timeout nil)
+      gptel-expert-commands t)
 
 
 (defun gptel-set-buffer-model ()
