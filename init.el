@@ -25,8 +25,6 @@
                   markdown-mode
                   htmlize
                   gptel
-                  posframe
-                  gptel-quick
                   cider
                   powershell
                   groovy-mode
@@ -40,9 +38,7 @@
       (unless refreshed
         (package-refresh-contents)
         (setq refreshed t))
-      (if (eq p 'gptel-quick)
-          (package-install-file "~/.emacs.d/gptel-quick.el")
-        (package-install p)))))
+      (package-install p))))
 
 
 ;; 'are we on windows?'-shortcut
