@@ -3180,6 +3180,14 @@ Example input:
 (setq compilation-scroll-output t)
 
 
+(defun compile-suppress-initial (f &rest args)
+  "Don't suggest initial input when reading the command"
+  (apply f (cons nil (cdr args))))
+
+
+(advice-add 'compilation-read-command :around 'compile-suppress-initial)
+
+
 ;; ===============
 ;; LLM integration
 ;; ===============
