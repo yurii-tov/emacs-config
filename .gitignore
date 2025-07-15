@@ -3,4 +3,4 @@
 !init.el
 !/snippets
 !/snippets/**
-
+!fortune.txt
