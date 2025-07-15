@@ -2491,10 +2491,16 @@ Example input:
 
 
 (defun read-string-shell-command (f &rest args)
-  (if shell-command-history
-      (completing-read
-       (car args) shell-command-history nil nil (cadr args) 'shell-command-history)
-    (read-string (car args) (cadr args) 'shell-command-history)))
+  (let* ((history-arg (or (caddr args) 'shell-command-history))
+         (history-symbol (if (consp history-arg)
+                             (car history-arg)
+                           history-arg))
+         (history (and (boundp history-symbol)
+                       (symbol-value history-symbol))))
+    (if history
+        (completing-read
+         (car args) history nil nil (cadr args) history-symbol)
+      (apply f args))))
 
 
 (advice-add 'read-shell-command :around #'read-string-shell-command)
