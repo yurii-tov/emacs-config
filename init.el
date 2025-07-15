@@ -191,17 +191,10 @@
 
 (bind-keys `("f" find-dired
              "g" rgrep
+             "l" gptel-chat
              "s" browse-url-or-search
              "t" translate-en-ru-online)
            search-map)
-
-
-;; LLM
-
-
-(define-custom-keymap llm-keymap "C-x l"
-                      "l" gptel-chat
-                      "m" gptel-set-model)
 
 
 ;; transforming text
@@ -319,11 +312,12 @@
              "C-x j" bookmark-jump
              "C-x u" reopen-with-sudo
              "C-x C-b" ibuffer
-             "C-x C-l" gptel-send
              "C-x C-k" kill-buffer-and-window
              "C-x C-=" display-line-numbers-mode
              "C-x ." compile
              "C-x C-." recompile
+             "C-x l" gptel-menu
+             "C-x C-l" gptel-send
              "C-h C-h" describe-symbol
              "C-h h" describe-symbol
              "C-c j" cider-start-map
