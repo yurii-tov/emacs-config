@@ -3215,50 +3215,6 @@ Example input:
       gptel-expert-commands t)
 
 
-(defun gptel-set-model ()
-  "Set model for current buffer"
-  (interactive)
-  (let ((model (cl-loop
-                for (name . backend) in gptel--known-backends
-                nconc (cl-loop for model in (gptel-backend-models backend)
-                               collect (list (concat name ":" (gptel--model-name model))
-                                             backend model))
-                into models-alist
-                with completion-extra-properties =
-                `(:annotation-function
-                  ,(lambda (comp)
-                     (let* ((model (nth 2 (assoc comp models-alist)))
-                            (desc (get model :description))
-                            (caps (get model :capabilities))
-                            (context (get model :context-window))
-                            (input-cost (get model :input-cost))
-                            (output-cost (get model :output-cost))
-                            (cutoff (get model :cutoff-date)))
-                       (when (or desc caps context input-cost output-cost cutoff)
-                         (concat
-                          (propertize " " 'display `(space :align-to 40))
-                          (when desc (truncate-string-to-width desc 70 nil ? t t))
-                          " " (propertize " " 'display `(space :align-to 112))
-                          (when caps (truncate-string-to-width (prin1-to-string caps) 21 nil ? t t))
-                          " " (propertize " " 'display `(space :align-to 134))
-                          (when context (format "%5dk" context))
-                          " " (propertize " " 'display `(space :align-to 142))
-                          (when input-cost (format "$%5.2f in" input-cost))
-                          (if (and input-cost output-cost) "," " ")
-                          " " (propertize " " 'display `(space :align-to 153))
-                          (when output-cost (format "$%6.2f out" output-cost))
-                          " " (propertize " " 'display `(space :align-to 166))
-                          cutoff)))))
-                finally return
-                (cdr (assoc (completing-read "Model: " models-alist nil t nil nil
-                                             (concat (gptel-backend-name gptel-backend) ":"
-                                                     (gptel--model-name gptel-model)))
-                            models-alist)))))
-    (setq-local gptel-backend (car model)
-                gptel-model (cadr model))
-    (gptel--sanitize-model)))
-
-
 ;; Presets
 
 
