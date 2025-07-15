@@ -1590,19 +1590,17 @@ The search string is queried first, followed by the directory."
   (let* ((prompt (car args))
          (initial-input (cadr args))
          (history-arg (caddr args))
-         (history-symbol (cond ((consp history-arg) (car history-arg))
-                               ((symbolp history-arg) history-arg)))
-         (history-value (and history-symbol
-                             (not (member history-symbol
-                                          '(string-rectangle-history
-                                            junk-hist
-                                            org-read-date-history)))
-                             (boundp history-symbol)
-                             (symbol-value history-symbol))))
-    (if (and history-value
-             (listp history-value)
-             (not (null history-value)))
-        (completing-read prompt history-value nil nil initial-input history-symbol)
+         (history-symbol (if (consp history-arg)
+                             (car history-arg)
+                           history-arg))
+         (history (and (not (member history-symbol
+                                    '(string-rectangle-history
+                                      junk-hist
+                                      org-read-date-history)))
+                       (boundp history-symbol)
+                       (symbol-value history-symbol))))
+    (if history
+        (completing-read prompt history nil nil initial-input history-symbol)
       (apply f args))))
 
 
