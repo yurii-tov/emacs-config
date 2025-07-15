@@ -286,9 +286,6 @@ The effective exploitation of his powers of abstraction must be regarded as one 
 I would therefore like to posit that computing's central challenge, how not to make a mess of it, has not yet been met.
 -- Edsger Dijkstra
 %
-Teaching to unsuspecting youngsters the effective use of formal methods is one of the joys of life because it is so extremely rewarding.
--- Edsger Dijkstra
-%
 About the use of language: it is impossible to sharpen a pencil with a blunt axe. It is equally vain to try to do it with ten blunt axes instead.
 -- Edsger Dijkstra
 %
