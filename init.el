@@ -201,7 +201,7 @@
 
 (define-custom-keymap llm-keymap "C-x l"
                       "l" gptel-chat
-                      "m" gptel-set-buffer-model)
+                      "m" gptel-set-model)
 
 
 ;; transforming text
@@ -3221,7 +3221,7 @@ Example input:
       gptel-expert-commands t)
 
 
-(defun gptel-set-buffer-model ()
+(defun gptel-set-model ()
   "Set model for current buffer"
   (interactive)
   (let ((model (cl-loop
