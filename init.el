@@ -4089,7 +4089,7 @@ Process .+
                             (propertize "searching dictionary..."
                                         'face 'shadow))
                    (shell-command-to-string
-                    (format "curl -sA 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0' https://dictionary.cambridge.org/dictionary/english/%s | sed -e '0,/Meaning/ d' -e 's:<[^>]*>: :g; s:</[^>]*>: :g; s:  *: :g' -e '/^ *$/ d' -e '/<a/ d; /if(typeof/,$ d' -e '0,/login-sign-in/ d; /Add to word list/ d' -e '/SMART Vocabulary/,$ d' -e '/{ .src.: ..images/ d; /GettyImages/ d; /Thesaurus: / d; / / d; /on=/ d; /open.>/ d; /See more/ d; s:&#[0-9][0-9]*;::g; s:^ *[A-Z][0-9]* ::g; s: *\\[\\] *::g; s: ,:,:g; s: \\.:\\.:g; s:^ *::g' | sed  -e '/More examples Fewer examples/,$ d'"
+                    (format "curl -sA 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0' https://dictionary.cambridge.org/dictionary/english/%s | sed -e '0,/Meaning/ d' -e 's:<[^>]*>: :g; s:</[^>]*>: :g; s:  *: :g' -e '/^ *$/ d' -e '/<a/ d; /if(typeof/,$ d' -e '0,/login-sign-in/ d; /Add to word list/ d' -e '/SMART Vocabulary/,$ d' -e '/{ .src.: ..images/ d; /GettyImages/ d; /Thesaurus: / d; / / d; /on=/ d; /open.>/ d; /See more/ d; s:&#[0-9][0-9]*;::g; s: *[A-Z][0-9]* ::g; s: *\\[\\] *::g; s: ,:,:g; s: \\.:\\.:g; s:^ *::g' | sed  -e '/More examples Fewer examples/,$ d'"
                             (downcase word))))))
     (if (string-empty-p answer)
         (message "Can't find definition of %s" query)
