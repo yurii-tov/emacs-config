@@ -193,6 +193,7 @@
              "g" rgrep
              "l" gptel-chat
              "s" browse-url-or-search
+             "d" camd
              "t" translate-en-ru-online)
            search-map)
 
@@ -4071,6 +4072,28 @@ Process .+
             :callback `(lambda (response _)
                          (message "%s =>\n%s" ,query-message response))))
       (message "%s =>\n%s" query-message translation))))
+
+
+;; ===========================
+;; Cambridge dictionary lookup
+;; ===========================
+
+
+(defun camd (word)
+  "Retrieves word definitions from the Cambridge Dictionary"
+  (interactive (list (read-string "Find in Cambridge dictionary: "
+                                  (word-at-point))))
+  (let* ((query (propertize word 'face 'font-lock-constant-face))
+         (answer (progn
+                   (message "%s =>\n%s" query
+                            (propertize "searching dictionary..."
+                                        'face 'shadow))
+                   (shell-command-to-string
+                    (format "curl -sA 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0' https://dictionary.cambridge.org/dictionary/english/%s | sed -e '0,/Meaning/ d' -e 's:<[^>]*>: :g; s:</[^>]*>: :g; s:  *: :g' -e '/^ *$/ d' -e '/<a/ d; /if(typeof/,$ d' -e 's/More examples Fewer examples/\\nExamples\\n/' -e '0,/login-sign-in/ d; /Add to word list/ d' -e '/SMART Vocabulary/,$ d' -e '/{ .src.: ..images/ d; /GettyImages/ d; / / d; /on=/ d'"
+                            (downcase word))))))
+    (if (string-empty-p answer)
+        (message "Can't find definition of %s" query)
+      (message "%s =>\n%s" query answer))))
 
 
 ;; ==========================
