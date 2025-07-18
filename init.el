@@ -1,5 +1,5 @@
 ;; ======
-;; system
+;; System
 ;; ======
 
 
@@ -149,7 +149,7 @@
 
 
 ;; ==================
-;; global keybindings
+;; Global keybindings
 ;; ==================
 
 
@@ -351,7 +351,7 @@
 
 
 ;; =============
-;; look and feel
+;; Look and feel
 ;; =============
 
 
@@ -580,7 +580,7 @@
 
 
 ;; =======
-;; buffers
+;; Buffers
 ;; =======
 
 
@@ -669,8 +669,124 @@
 (advice-add 'read-buffer-to-switch :around #'switch-to-buffer-annotate-wd)
 
 
+;; =======
+;; Ibuffer
+;; =======
+
+
+(setq ibuffer-expert t
+      ibuffer-default-sorting-mode 'alphabetic
+      ibuffer-show-empty-filter-groups nil
+      ibuffer-formats '((mark modified read-only locked " "
+                              (name 16 -1)
+                              " " filename-and-process)))
+
+
+(defun ibuffer-colorize-process-info (s)
+  (let* ((process-indicator "^([^)]+)"))
+    (if (string-match process-indicator s)
+        (let ((s (replace-regexp-in-string
+                  process-indicator
+                  "•⁤" s)))
+          (set-text-properties
+           1 2 '(ibuffer-process t) s)
+          (set-text-properties
+           0 1 '(face compilation-mode-line-run) s)
+          s)
+      s)))
+
+
+(unless (and system-type-is-windows (not window-system))
+  (advice-add 'ibuffer-make-column-filename-and-process
+              :filter-return
+              #'ibuffer-colorize-process-info))
+
+
+(defun ibuffer-setup ()
+  ;; keybindings
+  (local-unset-key (kbd "M-o"))
+  (local-unset-key (kbd "M-j"))
+  ;; autoupdate
+  (ibuffer-auto-mode 1)
+  ;; filter groups
+  (setq ibuffer-saved-filter-groups
+        '(("default"
+           ("Directory" (mode . dired-mode))
+           ("Shell" (and (name . "^\\*\\([bz]?a?sh\\|powershell\\|.*-?shell\\|ssh-\\).*\\*")
+                         (mode . shell-mode)))
+           ("Process" (mode . shell-mode))
+           ("Text" (and (not (name . "^\\*.*\\*$"))
+                        (not (mode . org-mode))
+                        (or (derived-mode . text-mode)
+                            (mode . fundamental-mode)
+                            (derived-mode . conf-mode))))
+           ("Document" (or (mode . doc-view-mode)
+                           (mode . nov-mode)))
+           ("Org-mode" (or (mode . org-mode)
+                           (name . "^\\*Org .*$")))
+           ("SQL" (or (mode . sql-mode)
+                      (mode . sql-interactive-mode)))
+           ("C" (mode . c-mode))
+           ("Java" (mode . java-mode))
+           ("Groovy" (or (mode . groovy-mode)
+                         (mode . inferior-groovy-mode)))
+           ("Shell script" (or (mode . sh-mode)
+                               (mode . bat-mode)
+                               (mode . powershell-mode)))
+           ("Python" (or (mode . python-mode)
+                         (mode . inferior-python-mode)))
+           ("Javascript" (or (mode . js-mode) (mode . js-json-mode)))
+           ("Common Lisp" (or (name . "^\\*inferior-lisp\\*$")
+                              (mode . lisp-mode)
+                              (name . "^\\*slime-.**$")))
+           ("Scheme" (or (mode . scheme-mode)
+                         (mode . geiser-repl-mode)
+                         (mode . geiser-doc-mode)
+                         (mode . geiser-debug-mode)))
+           ("Clojure" (or (mode . clojure-mode)
+                          (mode . clojurescript-mode)
+                          (mode . cider-repl-mode)
+                          (name . "^\\*nrepl-server .*$")
+                          (name . "^\\*cider-.*$")))
+           ("Emacs Lisp" (or (mode . emacs-lisp-mode)
+                             (mode . inferior-emacs-lisp-mode)))
+           ("Rust" (mode . rust-mode))
+           ("Email" (mode . message-mode))
+           ("EWW" (or (mode . eww-buffers-mode)
+                      (mode . eww-mode)
+                      (mode . eww-history-mode)
+                      (mode . eww-bookmark-mode)
+                      (name . "^\\*eww[ -].*$")))
+           ("Image" (mode . image-mode))
+           ("Tramp" (name . "^\\*tramp.*$"))
+           ("IDE" (name . "^\\*EGLOT.*$"))
+           ("System" (or (name . "^\\*scratch\\*$")
+                         (name . "^\\*Messages\\*$"))))))
+  (ibuffer-switch-to-saved-filter-groups "default"))
+
+
+(add-hook 'ibuffer-mode-hook 'ibuffer-setup)
+
+
+;; Enhance ibuffer-filter-disable (i.e. "//" command) with 'switch to last filter' ability
+
+
+(defun ibuffer-toggle-last-filter (f &rest args)
+  "When there is no active filters, switches to last filter we used;
+   Otherwise, removes filtering"
+  (if ibuffer-filtering-qualifiers
+      (progn (setq-local last-filter ibuffer-filtering-qualifiers)
+             (apply f args))
+    (when (boundp 'last-filter)
+      (setq ibuffer-filtering-qualifiers last-filter)
+      (ibuffer-update nil))))
+
+
+(advice-add 'ibuffer-filter-disable :around 'ibuffer-toggle-last-filter)
+
+
 ;; =====
-;; files
+;; Files
 ;; =====
 
 
@@ -753,7 +869,7 @@
 
 
 ;; =====
-;; dired
+;; Dired
 ;; =====
 
 
@@ -949,9 +1065,9 @@
             'dired-record-ido-wd)
 
 
-;; ==========
-;; find-dired
-;; ==========
+;; ====
+;; Find
+;; ====
 
 
 (defun find-dired-setup-buffer (f &rest args)
@@ -1021,153 +1137,56 @@ The search string is queried first, followed by the directory."
 (advice-add 'find-dired :around 'find-dired-fix-prompt)
 
 
-;; =======
-;; isearch
-;; =======
+;; ====
+;; Diff
+;; ====
 
 
-(setq isearch-lazy-count t)
-
-
-(defun isearch-select-search-string ()
+(defun diff-current-buffer ()
+  "Invoke `diff-buffer-with-file' for current buffer"
   (interactive)
-  (isearch-done)
-  (set-mark (point))
-  (if isearch-forward
-      (funcall (if isearch-regexp
-                   #'search-backward-regexp
-                 #'search-backward)
-               isearch-string)
-    (funcall (if isearch-regexp
-                 #'search-forward-regexp
-               #'search-forward)
-             isearch-string)))
-
-
-(bind-keys '("M-w" isearch-toggle-word
-             "M-q" isearch-query-replace
-             "C-SPC" isearch-select-search-string)
-           isearch-mode-map)
+  (diff-buffer-with-file))
 
 
 ;; =======
-;; ibuffer
+;; Ripgrep
 ;; =======
 
 
-(setq ibuffer-expert t
-      ibuffer-default-sorting-mode 'alphabetic
-      ibuffer-show-empty-filter-groups nil
-      ibuffer-formats '((mark modified read-only locked " "
-                              (name 16 -1)
-                              " " filename-and-process)))
+(setq ripgrep (executable-find "rg")
+      ripgrep-arguments '("-uu"))
 
 
-(defun ibuffer-colorize-process-info (s)
-  (let* ((process-indicator "^([^)]+)"))
-    (if (string-match process-indicator s)
-        (let ((s (replace-regexp-in-string
-                  process-indicator
-                  "•⁤" s)))
-          (set-text-properties
-           1 2 '(ibuffer-process t) s)
-          (set-text-properties
-           0 1 '(face compilation-mode-line-run) s)
-          s)
-      s)))
+(defun project-ripgrep (regexp)
+  (interactive (list (project--read-regexp)))
+  (let ((ripgrep-arguments nil))
+    (ripgrep-regexp regexp (project-root (project-current t)))))
 
 
-(unless (and system-type-is-windows (not window-system))
-  (advice-add 'ibuffer-make-column-filename-and-process
-              :filter-return
-              #'ibuffer-colorize-process-info))
+(when ripgrep
+  (define-key search-map (kbd "g") 'ripgrep-regexp)
+  (advice-add 'project-find-regexp :override 'project-ripgrep))
 
 
-(defun ibuffer-setup ()
-  ;; keybindings
-  (local-unset-key (kbd "M-o"))
-  (local-unset-key (kbd "M-j"))
-  ;; autoupdate
-  (ibuffer-auto-mode 1)
-  ;; filter groups
-  (setq ibuffer-saved-filter-groups
-        '(("default"
-           ("Directory" (mode . dired-mode))
-           ("Shell" (and (name . "^\\*\\([bz]?a?sh\\|powershell\\|.*-?shell\\|ssh-\\).*\\*")
-                         (mode . shell-mode)))
-           ("Process" (mode . shell-mode))
-           ("Text" (and (not (name . "^\\*.*\\*$"))
-                        (not (mode . org-mode))
-                        (or (derived-mode . text-mode)
-                            (mode . fundamental-mode)
-                            (derived-mode . conf-mode))))
-           ("Document" (or (mode . doc-view-mode)
-                           (mode . nov-mode)))
-           ("Org-mode" (or (mode . org-mode)
-                           (name . "^\\*Org .*$")))
-           ("SQL" (or (mode . sql-mode)
-                      (mode . sql-interactive-mode)))
-           ("C" (mode . c-mode))
-           ("Java" (mode . java-mode))
-           ("Groovy" (or (mode . groovy-mode)
-                         (mode . inferior-groovy-mode)))
-           ("Shell script" (or (mode . sh-mode)
-                               (mode . bat-mode)
-                               (mode . powershell-mode)))
-           ("Python" (or (mode . python-mode)
-                         (mode . inferior-python-mode)))
-           ("Javascript" (or (mode . js-mode) (mode . js-json-mode)))
-           ("Common Lisp" (or (name . "^\\*inferior-lisp\\*$")
-                              (mode . lisp-mode)
-                              (name . "^\\*slime-.**$")))
-           ("Scheme" (or (mode . scheme-mode)
-                         (mode . geiser-repl-mode)
-                         (mode . geiser-doc-mode)
-                         (mode . geiser-debug-mode)))
-           ("Clojure" (or (mode . clojure-mode)
-                          (mode . clojurescript-mode)
-                          (mode . cider-repl-mode)
-                          (name . "^\\*nrepl-server .*$")
-                          (name . "^\\*cider-.*$")))
-           ("Emacs Lisp" (or (mode . emacs-lisp-mode)
-                             (mode . inferior-emacs-lisp-mode)))
-           ("Rust" (mode . rust-mode))
-           ("Email" (mode . message-mode))
-           ("EWW" (or (mode . eww-buffers-mode)
-                      (mode . eww-mode)
-                      (mode . eww-history-mode)
-                      (mode . eww-bookmark-mode)
-                      (name . "^\\*eww[ -].*$")))
-           ("Image" (mode . image-mode))
-           ("Tramp" (name . "^\\*tramp.*$"))
-           ("IDE" (name . "^\\*EGLOT.*$"))
-           ("System" (or (name . "^\\*scratch\\*$")
-                         (name . "^\\*Messages\\*$"))))))
-  (ibuffer-switch-to-saved-filter-groups "default"))
+(defun ripgrep-setup ()
+  (setq-local compilation-scroll-output nil))
 
 
-(add-hook 'ibuffer-mode-hook 'ibuffer-setup)
-
-
-;; Enhance ibuffer-filter-disable (i.e. "//" command) with 'switch to last filter' ability
-
-
-(defun ibuffer-toggle-last-filter (f &rest args)
-  "When there is no active filters, switches to last filter we used;
-   Otherwise, removes filtering"
-  (if ibuffer-filtering-qualifiers
-      (progn (setq-local last-filter ibuffer-filtering-qualifiers)
-             (apply f args))
-    (when (boundp 'last-filter)
-      (setq ibuffer-filtering-qualifiers last-filter)
-      (ibuffer-update nil))))
-
-
-(advice-add 'ibuffer-filter-disable :around 'ibuffer-toggle-last-filter)
+(with-eval-after-load 'ripgrep
+  (bind-keys '("TAB" compilation-next-error
+               "<backtab>" compilation-previous-error
+               "n" next-error-no-select
+               "p" previous-error-no-select
+               "o" compilation-display-error
+               "e" wgrep-change-to-wgrep-mode)
+             ripgrep-search-mode-map)
+  (add-hook 'ripgrep-search-mode-hook
+            'ripgrep-setup)
+  (setq wgrep-auto-save-buffer t))
 
 
 ;; ===========
-;; text editor
+;; Text editor
 ;; ===========
 
 
@@ -1542,6 +1561,35 @@ The search string is queried first, followed by the directory."
         (call-interactively 'reindent-region)))))
 
 
+;; =======
+;; Isearch
+;; =======
+
+
+(setq isearch-lazy-count t)
+
+
+(defun isearch-select-search-string ()
+  (interactive)
+  (isearch-done)
+  (set-mark (point))
+  (if isearch-forward
+      (funcall (if isearch-regexp
+                   #'search-backward-regexp
+                 #'search-backward)
+               isearch-string)
+    (funcall (if isearch-regexp
+                 #'search-forward-regexp
+               #'search-forward)
+             isearch-string)))
+
+
+(bind-keys '("M-w" isearch-toggle-word
+             "M-q" isearch-query-replace
+             "C-SPC" isearch-select-search-string)
+           isearch-mode-map)
+
+
 ;; =====================
 ;; Minibuffer completion
 ;; =====================
@@ -1881,7 +1929,7 @@ The search string is queried first, followed by the directory."
 
 
 ;; =============
-;; hippie-expand
+;; Hippie-expand
 ;; =============
 
 
@@ -2058,144 +2106,558 @@ The search string is queried first, followed by the directory."
   (advice-add x :around 'fix-company-backend))
 
 
-;; ===
-;; LSP
-;; ===
+;; ==============
+;; Shell commands
+;; ==============
 
 
-(with-eval-after-load 'eglot
-  ;; Keybindings
-  (bind-keys '("M-p" eglot-code-actions
-               "M-." xref-find-definitions
-               "C-," flymake-goto-prev-error
-               "C-." flymake-goto-next-error
-               "C-c C-n" eglot-rename
-               "C-c C-e" eglot-code-action-extract
-               "C-c C-o" flymake-show-buffer-diagnostics
-               "C-c C-p" flymake-show-project-diagnostics
-               "C-h C-h" eldoc-print-current-symbol-info
-               "C-c C-i" eglot-code-action-inline
-               "C-c C-j" eglot-code-action-quickfix
-               "C-c C-k" eglot-code-action-rewrite
-               "C-c C-l" eglot-code-action-organize-imports)
-             eglot-mode-map)
-
-  ;; Do not clutter company settings
-  (add-to-list 'eglot-stay-out-of 'company)
-
-  ;; Auto-shutdown the server
-  (setq eglot-autoshutdown t)
-
-  ;; Fix snippets + company-tng
-  (advice-remove #'eglot--snippet-expansion-fn #'ignore))
+;; Custom completion style for shell commands
 
 
-;; =======
-;; Flymake
-;; =======
+(defun read-string-shell-command (f &rest args)
+  (let* ((history-arg (or (caddr args) 'shell-command-history))
+         (history-symbol (if (consp history-arg)
+                             (car history-arg)
+                           history-arg))
+         (history (and (boundp history-symbol)
+                       (symbol-value history-symbol))))
+    (if history
+        (completing-read
+         (car args) history nil nil (cadr args) history-symbol)
+      (apply f args))))
 
 
-(defun flymake-add-indicators ()
-  (let ((setting '(" " (:eval (flymake--mode-line-counters)))))
-    (unless (equal (cadr setting) (car (last mode-line-format)))
-      (setq-local mode-line-format
-                  (append mode-line-format setting)))))
+(advice-add 'read-shell-command :around #'read-string-shell-command)
 
 
-(add-hook 'flymake-mode-hook 'flymake-add-indicators)
+;; shell-command now operates on selected region
 
 
-(defun flymake-display-diagnostics-fix (f &rest args)
-  "Fixes undesired layout of diagnostic buffers introduced in Emacs 30.1"
-  (let (b)
-    (save-window-excursion
-      (setq b (window-buffer (apply f args))))
-    (display-buffer b)))
+(defun shell-command-dwim (f &rest args)
+  (if (use-region-p)
+      (shell-command-on-region (region-beginning)
+                               (region-end)
+                               (car args)
+                               nil
+                               current-prefix-arg)
+    (apply f args)))
 
 
-(dolist (x '(flymake-show-buffer-diagnostics
-             flymake-show-project-diagnostics))
-  (advice-add x :around 'flymake-display-diagnostics-fix))
+(advice-add 'shell-command :around #'shell-command-dwim)
 
 
-;; ============================
-;; ElDoc (documentation viewer)
-;; ============================
+;; ===================
+;; async-shell-command
+;; ===================
 
 
-(setq eldoc-echo-area-use-multiline-p nil)
+(setq async-shell-command-mode 'shell-mode)
 
 
-;; Fix CR+LF issue
+(defun asc-read-wd (f &rest args)
+  (let* ((project (project-current))
+         (project-dir (when project (project-root project)))
+         (default-directory (if (called-interactively-p)
+                                (read-directory-name
+                                 (format "Run %s at: "
+                                         (propertize (reverse (string-truncate-left
+                                                               (reverse (car args)) 20))
+                                                     'face 'compilation-info))
+                                 project-dir)
+                              default-directory)))
+    (ido-record-work-directory default-directory)
+    (apply f args)))
 
 
-(defun fix-eldoc (f &rest args)
-  (let ((b (apply f args)))
-    (prog1 b
+(advice-add 'async-shell-command :around 'asc-read-wd)
+
+
+;; enable restarting
+
+
+(defun command-to-buffer-name (command)
+  (let ((max-chars 40))
+    (format "*%s*"
+            (if (> (length command) max-chars)
+                (format "%s…" (substring command 0 max-chars))
+              command))))
+
+
+(defun asc-setup-restart (f &rest args)
+  (let* ((r (apply f args))
+         (b (if (windowp r)
+                (window-buffer r)
+              (process-buffer r)))
+         (command (car args)))
+    (prog1 r
       (with-current-buffer b
-        (let ((inhibit-read-only t))
-          (save-excursion
+        (setq-local shell-last-command command)
+        (use-local-map (copy-keymap (current-local-map)))
+        (local-set-key
+         (kbd "C-c C-j")
+         (lambda () (interactive)
+           (let* ((command (read-shell-command "Command: " shell-last-command))
+                  (buffer (current-buffer))
+                  (name (command-to-buffer-name command)))
+             (when (get-buffer-process buffer)
+               (comint-kill-subjob)
+               (sit-for 1))
+             (comint-save-history)
+             (unless (string-equal command shell-last-command)
+               (rename-buffer name))
+             (async-shell-command command buffer))))))))
+
+
+(advice-add 'async-shell-command :around 'asc-setup-restart)
+
+
+;; descriptive names
+
+
+(defun asc-setup-buffer-name (f &rest args)
+  (let* ((command (car args))
+         (buffer-name (or (cadr args)
+                          (command-to-buffer-name command))))
+    (apply f command buffer-name (cddr args))))
+
+
+(advice-add 'async-shell-command :around 'asc-setup-buffer-name)
+
+
+;; histfile
+
+
+(defun asc-setup-histfile (r)
+  (let ((b (if (windowp r)
+               (window-buffer r)
+             (process-buffer r))))
+    (prog1 r
+      (with-current-buffer b
+        (setq-local comint-input-ring-file-name
+                    (comint-make-input-ring-file-name "shell"))
+        (when (zerop (ring-length comint-input-ring))
+          (comint-read-input-ring t))))))
+
+
+(advice-add 'async-shell-command :filter-return 'asc-setup-histfile)
+
+
+;; output command/wd
+
+
+(defvar *asc-echo* t)
+
+
+(defun asc-echo-startup-info (f &rest args)
+  (let* ((r (apply f args))
+         (b (if (windowp r)
+                (window-buffer r)
+              (process-buffer r)))
+         (p (get-buffer-process b)))
+    (prog1 r
+      (when *asc-echo*
+        (with-current-buffer b
+          (let ((info (format "*** `%s` at %s ***\n" (car args) default-directory)))
             (goto-char 1)
-            (while (re-search-forward "" nil t)
-              (replace-match ""))))))))
+            (comint-output-filter p info)
+            (set-marker comint-last-input-end (point))
+            (highlight-regexp (regexp-quote info) 'shadow)
+            (font-lock-update)))))))
 
 
-(advice-add 'eldoc--format-doc-buffer :around 'fix-eldoc)
+(advice-add 'async-shell-command :around 'asc-echo-startup-info)
 
 
-;; Fix link navigation
+;; handle termination
 
 
-(defun eldoc-url-at-point ()
-  (if (eq (get-text-property (point) 'face)
-          'markdown-plain-url-face)
-      (ffap-url-at-point)
-    (get-text-property (point) 'help-echo)))
-
-
-(defun eldoc-open-url-at-point ()
-  (interactive)
-  (if-let (url (eldoc-url-at-point))
-      (progn (message "Opening doc: %s..." url)
-             (browse-url-or-search url))
-    (message "No references at point")))
-
-
-(defun eldoc-make-nav-link-command (prop-change-fn)
-  `(lambda ()
-     (interactive)
-     (let (p found)
-       (save-excursion
-         (while
-             (and (setq p (funcall ',prop-change-fn (point)))
-                  (goto-char p)
-                  (let ((prop (get-text-property p 'face)))
-                    (not (setq found
-                               (if (listp prop)
-                                   (member 'markdown-link-face prop)
-                                 (member prop '(markdown-link-face
-                                                markdown-plain-url-face)))))))))
-       (when found
-         (goto-char p)
-         (message (eldoc-url-at-point))))))
-
-
-(defun eldoc-fix-link-navigation (f &rest args)
-  (let ((b (apply f args)))
-    (prog1 b
+(defun asc-handle-termination (f &rest args)
+  "When the command finishes in background,
+   reports its termination status and output.
+   Also kills the buffer"
+  (let (r b)
+    (prog1 (setq r (apply f args))
+      (setq b (if (windowp r)
+                  (window-buffer r)
+                (process-buffer r)))
       (with-current-buffer b
-        (when-let (m (current-local-map))
-          (use-local-map (copy-keymap m))
-          (local-set-key (kbd "RET") 'eldoc-open-url-at-point)
-          (local-set-key (kbd "TAB")
-                         (eldoc-make-nav-link-command
-                          'next-property-change))
-          (local-set-key (kbd "<backtab>")
-                         (eldoc-make-nav-link-command
-                          'previous-property-change)))))))
+        (when (get-buffer-process (current-buffer))
+          (set-process-sentinel
+           (get-process (get-buffer-process (current-buffer)))
+           `(lambda (p e)
+              (unless (member ,b (mapcar #'window-buffer (window-list)))
+                (let ((e (string-trim-right e))
+                      (output (ignore-errors
+                                (with-current-buffer ,b
+                                  (concat (buffer-substring (point-min) (point-max))
+                                          "\n")))))
+                  (message
+                   "%s%s"
+                   (or output "")
+                   (propertize (format "[%s] %s" e (if ,*asc-echo* ,(car args) "*****"))
+                               'face (cond ((equal e "finished") 'success)
+                                           ((string-match "exited abnormally.*" e)
+                                            'error)
+                                           (t 'shadow))))
+                  (kill-buffer ,b))))))))))
 
 
-(advice-add 'eldoc--format-doc-buffer :around 'eldoc-fix-link-navigation)
+(advice-add 'async-shell-command :around 'asc-handle-termination)
+
+
+;; don't display output buffer, but promote it in switch-to-buffer menu
+;; add some useful output to *Messages*
+
+
+(defvar *asc-popup* nil)
+
+
+(defun asc-handle-popup (f &rest args)
+  (if *asc-popup*
+      (apply f args)
+    (let (r b)
+      (save-window-excursion
+        (prog1 (setq r (apply f args))
+          (setq b (if (windowp r)
+                      (window-buffer r)
+                    (process-buffer r)))
+          (switch-to-buffer b)
+          (when *asc-echo*
+            (message
+             "Running command %s at %s"
+             (propertize (car args) 'face 'compilation-info)
+             (propertize default-directory 'face 'completions-annotations))))))))
+
+
+(advice-add 'async-shell-command :around 'asc-handle-popup)
+
+
+;; ======
+;; Comint
+;; ======
+
+
+;; use vertical tab (b) as separator in history file
+;; to enable correct saving of multiline commands
+
+
+(setq comint-input-ring-separator "
+
+")
+
+
+;; persistent history
+
+
+(setq comint-input-ring-size 1500)
+
+
+(defvar *comint-histfile-id* nil)
+
+
+(defun comint-make-input-ring-file-name (histfile-id)
+  (expand-file-name (format ".%s-history" histfile-id)
+                    user-emacs-directory))
+
+
+(defun comint-setup-persistent-history ()
+  (let ((process (get-buffer-process (current-buffer))))
+    (when process
+      (let ((histfile-id (or *comint-histfile-id*
+                             (downcase (replace-regexp-in-string
+                                        "<.*>\\| .+\\|[^a-zA-Z]" ""
+                                        (process-name process))))))
+        (setq-local comint-input-ring-file-name
+                    (comint-make-input-ring-file-name histfile-id))
+        (add-hook 'kill-buffer-hook 'comint-save-history nil t)
+        (comint-read-input-ring t)))))
+
+
+(defun comint-save-history ()
+  "Save command history to `comint-input-ring-file-name'
+   (preserving existing history from that file).
+   * Features
+     - Preserving existing history
+       i.e. in-memory history merged with history from file
+     - Removing duplicated commands
+   * Bugs
+     - When comint-input-ring is overflowed *and* (car comint-input-ring) is zero,
+       all its contents treated as 'old' history
+       (and therefore goes to the tail of history file)"
+  (let* ((ir (cl-coerce (cl-coerce (cddr comint-input-ring) 'list) 'vector))
+         (ir-items-count (cadr comint-input-ring))
+         (ir-insertion-place (car comint-input-ring))
+         (ir-full-p (= ir-items-count comint-input-ring-size))
+         (history-new-local-bound (cond ((not ir-full-p) (cl-position nil ir))
+                                        ((zerop ir-insertion-place) 0)
+                                        (t ir-insertion-place)))
+         (history-new-local (cl-subseq ir 0 history-new-local-bound))
+         (history-old-local (cl-subseq ir (if ir-full-p
+                                              history-new-local-bound
+                                            (1+ (cl-position nil ir :from-end t)))))
+         (history-current-global (progn (comint-read-input-ring)
+                                        (remove nil
+                                                (cl-coerce (cl-coerce (cddr comint-input-ring)
+                                                                      'list)
+                                                           'vector))))
+         (history-merged (cl-remove-duplicates
+                          (cl-concatenate 'vector
+                                          history-old-local
+                                          history-current-global
+                                          history-new-local)
+                          :test #'equal))
+         (history-final (cl-subseq history-merged
+                                   (max 0 (- (length history-merged)
+                                             comint-input-ring-size))))
+         (comint-input-ring (cons 0 (cons (length history-final)
+                                          history-final))))
+    (comint-write-input-ring))
+  (comint-read-input-ring))
+
+
+(defun comint-save-history-all ()
+  (dolist (b (buffer-list))
+    (with-current-buffer b
+      (and comint-input-ring-file-name
+           (comint-save-history)))))
+
+
+(add-hook 'comint-mode-hook
+          'comint-setup-persistent-history)
+
+
+(add-hook 'kill-emacs-hook
+          'comint-save-history-all)
+
+
+;; no scrolling to bottom when submitting commands
+
+
+(setq-default comint-scroll-show-maximum-output nil)
+
+
+;; limit output size
+
+
+(setq-default comint-buffer-maximum-size (expt 2 13))
+
+
+(add-to-list 'comint-output-filter-functions
+             'comint-truncate-buffer)
+
+
+;; add useful keybindings
+
+
+(bind-keys '("C-c C-k" comint-kill-subjob) comint-mode-map)
+
+
+;; browsing comint-input-ring
+
+
+(defun comint-browse-command-history ()
+  (interactive)
+  (let* ((history (ring-elements comint-input-ring))
+         (command (completing-read "Command history: "
+                                   (lambda (string pred action)
+                                     (if (eq action 'metadata)
+                                         '(metadata (display-sort-function . identity)
+                                                    (cycle-sort-function . identity))
+                                       (complete-with-action
+                                        action history string pred)))))
+         (i (cl-position command history :test #'equal)))
+    (setq-local comint-input-ring-index i)
+    (comint-delete-input)
+    (insert command)
+    (comint-send-input)))
+
+
+(bind-keys '("M-r" comint-browse-command-history) comint-mode-map)
+
+
+;; Use prefix-style matching when scrolling through history
+
+
+(defun comint-previous-input-prefixed (&optional n)
+  (interactive)
+  (unless (memq last-command '(comint-previous-input-prefixed
+                               comint-next-input-prefixed
+                               comint-history-isearch-backward-regexp))
+    (setq comint-matching-input-from-input-string
+          (buffer-substring
+           (or (marker-position comint-accum-marker)
+               (process-mark (get-buffer-process (current-buffer))))
+           (point))))
+  (comint-previous-matching-input
+   (format "^%s.*" (regexp-quote comint-matching-input-from-input-string))
+   (or n 1)))
+
+
+(defun comint-next-input-prefixed ()
+  (interactive)
+  (comint-previous-input-prefixed -1))
+
+
+(bind-keys '("M-p" comint-previous-input-prefixed
+             "M-n" comint-next-input-prefixed
+             "<up>" comint-previous-input-prefixed
+             "<down>" comint-next-input-prefixed)
+           comint-mode-map)
+
+
+;; Completion
+
+
+(defun set-company-history-candidates ()
+  (let* ((line (company-grab-line (concat comint-prompt-regexp ".*")))
+         (prefix (when line
+                   (replace-regexp-in-string comint-prompt-regexp "" line))))
+    (and prefix
+         (setq-local company-history-candidates
+                     (cl-remove-if-not
+                      (lambda (x) (string-prefix-p prefix x t))
+                      (ring-elements comint-input-ring)))
+         prefix)))
+
+
+(defun company-comint-hist-completion (command &optional arg &rest _ignored)
+  (interactive (list 'interactive))
+  (cl-case command
+    (interactive (company-begin-backend 'company-comint-history))
+    (prefix (and (eobp)
+                 (set-company-history-candidates)))
+    (candidates company-history-candidates)
+    (post-completion (let ((i (cl-position arg
+                                           (ring-elements comint-input-ring)
+                                           :test #'equal)))
+                       (setq-local comint-input-ring-index i)))
+    (sorted t)
+    (duplicates t)
+    (kind 'history)))
+
+
+(defun comint-setup-completion ()
+  (dolist (x '(comint-c-a-p-replace-by-expanded-history
+               shell-c-a-p-replace-by-expanded-directory
+               shell-command-completion
+               pcomplete-completions-at-point))
+    (setq-local comint-dynamic-complete-functions
+                (remove x comint-dynamic-complete-functions)))
+  (setq-local company-backends
+              (cons '(company-capf
+                      company-comint-hist-completion
+                      :separate)
+                    (cddr company-backends))
+              company-transformers '(delete-consecutive-dups)))
+
+
+(add-hook 'comint-mode-hook 'comint-setup-completion)
+
+
+;; =====
+;; Shell
+;; =====
+
+
+(require 'shell)
+
+
+(defun shell-find-same-dir-buffer (name)
+  (let ((current-dir default-directory))
+    (cl-find-if (lambda (x)
+                  (and (or (string-prefix-p name x)
+                           (string-suffix-p "-shell*" x)
+                           (string-prefix-p "*ssh-" x))
+                       (with-current-buffer x
+                         (apply #'equal
+                                (mapcar (lambda (d)
+                                          (file-name-as-directory
+                                           (expand-file-name
+                                            (file-name-as-directory d))))
+                                        (list default-directory current-dir))))))
+                (mapcar #'buffer-name (buffer-list)))))
+
+
+(defun setup-shell-buffer (f &rest args)
+  (let* ((name "*shell*")
+         (buffer (or (car args)
+                     (shell-find-same-dir-buffer name)
+                     (generate-new-buffer-name name))))
+    (switch-to-buffer buffer)
+    (when (and comint-input-ring
+               (not (get-buffer-process (current-buffer))))
+      (comint-save-history))
+    (apply f (cons buffer (cdr args)))))
+
+
+(advice-add 'shell :around #'setup-shell-buffer)
+
+
+(setq shell-prompt-pattern "^[^#$%>
+]*#?[#$%>] *")
+
+
+;; Restarting
+
+
+(defun shell-restart ()
+  (interactive)
+  (comint-kill-subjob)
+  (sit-for 1)
+  (shell))
+
+
+(define-key shell-mode-map (kbd "C-c C-j") 'shell-restart)
+
+
+;; Ssh sessions
+
+
+(defun read-ssh-hosts ()
+  (let* ((default-directory "~"))
+    (split-string (shell-command-to-string "c=~/.ssh/config; [ -f $c ] && sed -n -e '/Host \\*/ d' -e 's:Host ::p' $c"))))
+
+
+(defun run-ssh-session ()
+  (interactive)
+  (let* ((x (completing-read "Run ssh session: " (read-ssh-hosts) nil t))
+         (default-directory (format "/sshx:%s:" x))
+         (explicit-shell-file-name "/bin/bash"))
+    (shell (format "*ssh-%s*" x))))
+
+
+;; Remove unneeded CAPF
+
+
+(defun sh-cleanup-capf ()
+  (setq-local completion-at-point-functions
+              (remove 'sh-completion-at-point-function
+                      completion-at-point-functions)))
+
+
+(add-hook 'sh-mode-hook 'sh-cleanup-capf)
+
+
+;; Elevating shell to root
+
+
+(defun shell-elevate ()
+  "Elevates current shell session to root
+   (equivalent to `sudo bash`).
+   When called again, reverts to regular shell"
+  (interactive)
+  (let ((command (if (setq-local rootp
+                                 (and (boundp 'rootp) rootp))
+                     "exit"
+                   "sudo $SHELL")))
+    (comint-send-string
+     (get-buffer-process (current-buffer))
+     command)
+    (comint-send-input)
+    (setq-local rootp (not rootp))))
+
+
+(define-key shell-mode-map (kbd "C-x u") 'shell-elevate)
 
 
 ;; ==========================
@@ -2245,9 +2707,9 @@ The search string is queried first, followed by the directory."
       (list xs))))
 
 
-;; ========
-;; org-mode
-;; ========
+;; ===========
+;; Org Mode 🦄
+;; ===========
 
 
 (require 'org)
@@ -2481,718 +2943,6 @@ Example input:
        (defconst org-table--separator-space-post " "))
 
 
-;; ==============
-;; shell commands
-;; ==============
-
-
-;; Custom completion style for shell commands
-
-
-(defun read-string-shell-command (f &rest args)
-  (let* ((history-arg (or (caddr args) 'shell-command-history))
-         (history-symbol (if (consp history-arg)
-                             (car history-arg)
-                           history-arg))
-         (history (and (boundp history-symbol)
-                       (symbol-value history-symbol))))
-    (if history
-        (completing-read
-         (car args) history nil nil (cadr args) history-symbol)
-      (apply f args))))
-
-
-(advice-add 'read-shell-command :around #'read-string-shell-command)
-
-
-;; shell-command now operates on selected region
-
-
-(defun shell-command-dwim (f &rest args)
-  (if (use-region-p)
-      (shell-command-on-region (region-beginning)
-                               (region-end)
-                               (car args)
-                               nil
-                               current-prefix-arg)
-    (apply f args)))
-
-
-(advice-add 'shell-command :around #'shell-command-dwim)
-
-
-;; ===================
-;; async-shell-command
-;; ===================
-
-
-(setq async-shell-command-mode 'shell-mode)
-
-
-(defun asc-read-wd (f &rest args)
-  (let* ((project (project-current))
-         (project-dir (when project (project-root project)))
-         (default-directory (if (called-interactively-p)
-                                (read-directory-name
-                                 (format "Run %s at: "
-                                         (propertize (reverse (string-truncate-left
-                                                               (reverse (car args)) 20))
-                                                     'face 'compilation-info))
-                                 project-dir)
-                              default-directory)))
-    (ido-record-work-directory default-directory)
-    (apply f args)))
-
-
-(advice-add 'async-shell-command :around 'asc-read-wd)
-
-
-;; enable restarting
-
-
-(defun command-to-buffer-name (command)
-  (let ((max-chars 40))
-    (format "*%s*"
-            (if (> (length command) max-chars)
-                (format "%s…" (substring command 0 max-chars))
-              command))))
-
-
-(defun asc-setup-restart (f &rest args)
-  (let* ((r (apply f args))
-         (b (if (windowp r)
-                (window-buffer r)
-              (process-buffer r)))
-         (command (car args)))
-    (prog1 r
-      (with-current-buffer b
-        (setq-local shell-last-command command)
-        (use-local-map (copy-keymap (current-local-map)))
-        (local-set-key
-         (kbd "C-c C-j")
-         (lambda () (interactive)
-           (let* ((command (read-shell-command "Command: " shell-last-command))
-                  (buffer (current-buffer))
-                  (name (command-to-buffer-name command)))
-             (when (get-buffer-process buffer)
-               (comint-kill-subjob)
-               (sit-for 1))
-             (comint-save-history)
-             (unless (string-equal command shell-last-command)
-               (rename-buffer name))
-             (async-shell-command command buffer))))))))
-
-
-(advice-add 'async-shell-command :around 'asc-setup-restart)
-
-
-;; descriptive names
-
-
-(defun asc-setup-buffer-name (f &rest args)
-  (let* ((command (car args))
-         (buffer-name (or (cadr args)
-                          (command-to-buffer-name command))))
-    (apply f command buffer-name (cddr args))))
-
-
-(advice-add 'async-shell-command :around 'asc-setup-buffer-name)
-
-
-;; histfile
-
-
-(defun asc-setup-histfile (r)
-  (let ((b (if (windowp r)
-               (window-buffer r)
-             (process-buffer r))))
-    (prog1 r
-      (with-current-buffer b
-        (setq-local comint-input-ring-file-name
-                    (comint-make-input-ring-file-name "shell"))
-        (when (zerop (ring-length comint-input-ring))
-          (comint-read-input-ring t))))))
-
-
-(advice-add 'async-shell-command :filter-return 'asc-setup-histfile)
-
-
-;; output command/wd
-
-
-(defvar *asc-echo* t)
-
-
-(defun asc-echo-startup-info (f &rest args)
-  (let* ((r (apply f args))
-         (b (if (windowp r)
-                (window-buffer r)
-              (process-buffer r)))
-         (p (get-buffer-process b)))
-    (prog1 r
-      (when *asc-echo*
-        (with-current-buffer b
-          (let ((info (format "*** `%s` at %s ***\n" (car args) default-directory)))
-            (goto-char 1)
-            (comint-output-filter p info)
-            (set-marker comint-last-input-end (point))
-            (highlight-regexp (regexp-quote info) 'shadow)
-            (font-lock-update)))))))
-
-
-(advice-add 'async-shell-command :around 'asc-echo-startup-info)
-
-
-;; handle termination
-
-
-(defun asc-handle-termination (f &rest args)
-  "When the command finishes in background,
-   reports its termination status and output.
-   Also kills the buffer"
-  (let (r b)
-    (prog1 (setq r (apply f args))
-      (setq b (if (windowp r)
-                  (window-buffer r)
-                (process-buffer r)))
-      (with-current-buffer b
-        (when (get-buffer-process (current-buffer))
-          (set-process-sentinel
-           (get-process (get-buffer-process (current-buffer)))
-           `(lambda (p e)
-              (unless (member ,b (mapcar #'window-buffer (window-list)))
-                (let ((e (string-trim-right e))
-                      (output (ignore-errors
-                                (with-current-buffer ,b
-                                  (concat (buffer-substring (point-min) (point-max))
-                                          "\n")))))
-                  (message
-                   "%s%s"
-                   (or output "")
-                   (propertize (format "[%s] %s" e (if ,*asc-echo* ,(car args) "*****"))
-                               'face (cond ((equal e "finished") 'success)
-                                           ((string-match "exited abnormally.*" e)
-                                            'error)
-                                           (t 'shadow))))
-                  (kill-buffer ,b))))))))))
-
-
-(advice-add 'async-shell-command :around 'asc-handle-termination)
-
-
-;; don't display output buffer, but promote it in switch-to-buffer menu
-;; add some useful output to *Messages*
-
-
-(defvar *asc-popup* nil)
-
-
-(defun asc-handle-popup (f &rest args)
-  (if *asc-popup*
-      (apply f args)
-    (let (r b)
-      (save-window-excursion
-        (prog1 (setq r (apply f args))
-          (setq b (if (windowp r)
-                      (window-buffer r)
-                    (process-buffer r)))
-          (switch-to-buffer b)
-          (when *asc-echo*
-            (message
-             "Running command %s at %s"
-             (propertize (car args) 'face 'compilation-info)
-             (propertize default-directory 'face 'completions-annotations))))))))
-
-
-(advice-add 'async-shell-command :around 'asc-handle-popup)
-
-
-;; ===========
-;; comint-mode
-;; ===========
-
-
-;; use vertical tab (b) as separator in history file
-;; to enable correct saving of multiline commands
-
-
-(setq comint-input-ring-separator "
-
-")
-
-
-;; persistent history
-
-
-(setq comint-input-ring-size 1500)
-
-
-(defvar *comint-histfile-id* nil)
-
-
-(defun comint-make-input-ring-file-name (histfile-id)
-  (expand-file-name (format ".%s-history" histfile-id)
-                    user-emacs-directory))
-
-
-(defun comint-setup-persistent-history ()
-  (let ((process (get-buffer-process (current-buffer))))
-    (when process
-      (let ((histfile-id (or *comint-histfile-id*
-                             (downcase (replace-regexp-in-string
-                                        "<.*>\\| .+\\|[^a-zA-Z]" ""
-                                        (process-name process))))))
-        (setq-local comint-input-ring-file-name
-                    (comint-make-input-ring-file-name histfile-id))
-        (add-hook 'kill-buffer-hook 'comint-save-history nil t)
-        (comint-read-input-ring t)))))
-
-
-(defun comint-save-history ()
-  "Save command history to `comint-input-ring-file-name'
-   (preserving existing history from that file).
-   * Features
-     - Preserving existing history
-       i.e. in-memory history merged with history from file
-     - Removing duplicated commands
-   * Bugs
-     - When comint-input-ring is overflowed *and* (car comint-input-ring) is zero,
-       all its contents treated as 'old' history
-       (and therefore goes to the tail of history file)"
-  (let* ((ir (cl-coerce (cl-coerce (cddr comint-input-ring) 'list) 'vector))
-         (ir-items-count (cadr comint-input-ring))
-         (ir-insertion-place (car comint-input-ring))
-         (ir-full-p (= ir-items-count comint-input-ring-size))
-         (history-new-local-bound (cond ((not ir-full-p) (cl-position nil ir))
-                                        ((zerop ir-insertion-place) 0)
-                                        (t ir-insertion-place)))
-         (history-new-local (cl-subseq ir 0 history-new-local-bound))
-         (history-old-local (cl-subseq ir (if ir-full-p
-                                              history-new-local-bound
-                                            (1+ (cl-position nil ir :from-end t)))))
-         (history-current-global (progn (comint-read-input-ring)
-                                        (remove nil
-                                                (cl-coerce (cl-coerce (cddr comint-input-ring)
-                                                                      'list)
-                                                           'vector))))
-         (history-merged (cl-remove-duplicates
-                          (cl-concatenate 'vector
-                                          history-old-local
-                                          history-current-global
-                                          history-new-local)
-                          :test #'equal))
-         (history-final (cl-subseq history-merged
-                                   (max 0 (- (length history-merged)
-                                             comint-input-ring-size))))
-         (comint-input-ring (cons 0 (cons (length history-final)
-                                          history-final))))
-    (comint-write-input-ring))
-  (comint-read-input-ring))
-
-
-(defun comint-save-history-all ()
-  (dolist (b (buffer-list))
-    (with-current-buffer b
-      (and comint-input-ring-file-name
-           (comint-save-history)))))
-
-
-(add-hook 'comint-mode-hook
-          'comint-setup-persistent-history)
-
-
-(add-hook 'kill-emacs-hook
-          'comint-save-history-all)
-
-
-;; no scrolling to bottom when submitting commands
-
-
-(setq-default comint-scroll-show-maximum-output nil)
-
-
-;; limit output size
-
-
-(setq-default comint-buffer-maximum-size (expt 2 13))
-
-
-(add-to-list 'comint-output-filter-functions
-             'comint-truncate-buffer)
-
-
-;; add useful keybindings
-
-
-(bind-keys '("C-c C-k" comint-kill-subjob) comint-mode-map)
-
-
-;; browsing comint-input-ring
-
-
-(defun comint-browse-command-history ()
-  (interactive)
-  (let* ((history (ring-elements comint-input-ring))
-         (command (completing-read "Command history: "
-                                   (lambda (string pred action)
-                                     (if (eq action 'metadata)
-                                         '(metadata (display-sort-function . identity)
-                                                    (cycle-sort-function . identity))
-                                       (complete-with-action
-                                        action history string pred)))))
-         (i (cl-position command history :test #'equal)))
-    (setq-local comint-input-ring-index i)
-    (comint-delete-input)
-    (insert command)
-    (comint-send-input)))
-
-
-(bind-keys '("M-r" comint-browse-command-history) comint-mode-map)
-
-
-;; Use prefix-style matching when scrolling through history
-
-
-(defun comint-previous-input-prefixed (&optional n)
-  (interactive)
-  (unless (memq last-command '(comint-previous-input-prefixed
-                               comint-next-input-prefixed
-                               comint-history-isearch-backward-regexp))
-    (setq comint-matching-input-from-input-string
-          (buffer-substring
-           (or (marker-position comint-accum-marker)
-               (process-mark (get-buffer-process (current-buffer))))
-           (point))))
-  (comint-previous-matching-input
-   (format "^%s.*" (regexp-quote comint-matching-input-from-input-string))
-   (or n 1)))
-
-
-(defun comint-next-input-prefixed ()
-  (interactive)
-  (comint-previous-input-prefixed -1))
-
-
-(bind-keys '("M-p" comint-previous-input-prefixed
-             "M-n" comint-next-input-prefixed
-             "<up>" comint-previous-input-prefixed
-             "<down>" comint-next-input-prefixed)
-           comint-mode-map)
-
-
-;; Completion
-
-
-(defun set-company-history-candidates ()
-  (let* ((line (company-grab-line (concat comint-prompt-regexp ".*")))
-         (prefix (when line
-                   (replace-regexp-in-string comint-prompt-regexp "" line))))
-    (and prefix
-         (setq-local company-history-candidates
-                     (cl-remove-if-not
-                      (lambda (x) (string-prefix-p prefix x t))
-                      (ring-elements comint-input-ring)))
-         prefix)))
-
-
-(defun company-comint-hist-completion (command &optional arg &rest _ignored)
-  (interactive (list 'interactive))
-  (cl-case command
-    (interactive (company-begin-backend 'company-comint-history))
-    (prefix (and (eobp)
-                 (set-company-history-candidates)))
-    (candidates company-history-candidates)
-    (post-completion (let ((i (cl-position arg
-                                           (ring-elements comint-input-ring)
-                                           :test #'equal)))
-                       (setq-local comint-input-ring-index i)))
-    (sorted t)
-    (duplicates t)
-    (kind 'history)))
-
-
-(defun comint-setup-completion ()
-  (dolist (x '(comint-c-a-p-replace-by-expanded-history
-               shell-c-a-p-replace-by-expanded-directory
-               shell-command-completion
-               pcomplete-completions-at-point))
-    (setq-local comint-dynamic-complete-functions
-                (remove x comint-dynamic-complete-functions)))
-  (setq-local company-backends
-              (cons '(company-capf
-                      company-comint-hist-completion
-                      :separate)
-                    (cddr company-backends))
-              company-transformers '(delete-consecutive-dups)))
-
-
-(add-hook 'comint-mode-hook 'comint-setup-completion)
-
-
-;; =====
-;; shell
-;; =====
-
-
-(require 'shell)
-
-
-(defun shell-find-same-dir-buffer (name)
-  (let ((current-dir default-directory))
-    (cl-find-if (lambda (x)
-                  (and (or (string-prefix-p name x)
-                           (string-suffix-p "-shell*" x)
-                           (string-prefix-p "*ssh-" x))
-                       (with-current-buffer x
-                         (apply #'equal
-                                (mapcar (lambda (d)
-                                          (file-name-as-directory
-                                           (expand-file-name
-                                            (file-name-as-directory d))))
-                                        (list default-directory current-dir))))))
-                (mapcar #'buffer-name (buffer-list)))))
-
-
-(defun setup-shell-buffer (f &rest args)
-  (let* ((name "*shell*")
-         (buffer (or (car args)
-                     (shell-find-same-dir-buffer name)
-                     (generate-new-buffer-name name))))
-    (switch-to-buffer buffer)
-    (when (and comint-input-ring
-               (not (get-buffer-process (current-buffer))))
-      (comint-save-history))
-    (apply f (cons buffer (cdr args)))))
-
-
-(advice-add 'shell :around #'setup-shell-buffer)
-
-
-(setq shell-prompt-pattern "^[^#$%>
-]*#?[#$%>] *")
-
-
-;; Restarting
-
-
-(defun shell-restart ()
-  (interactive)
-  (comint-kill-subjob)
-  (sit-for 1)
-  (shell))
-
-
-(define-key shell-mode-map (kbd "C-c C-j") 'shell-restart)
-
-
-;; Ssh sessions
-
-
-(defun read-ssh-hosts ()
-  (let* ((default-directory "~"))
-    (split-string (shell-command-to-string "c=~/.ssh/config; [ -f $c ] && sed -n -e '/Host \\*/ d' -e 's:Host ::p' $c"))))
-
-
-(defun run-ssh-session ()
-  (interactive)
-  (let* ((x (completing-read "Run ssh session: " (read-ssh-hosts) nil t))
-         (default-directory (format "/sshx:%s:" x))
-         (explicit-shell-file-name "/bin/bash"))
-    (shell (format "*ssh-%s*" x))))
-
-
-;; Remove unneeded CAPF
-
-
-(defun sh-cleanup-capf ()
-  (setq-local completion-at-point-functions
-              (remove 'sh-completion-at-point-function
-                      completion-at-point-functions)))
-
-
-(add-hook 'sh-mode-hook 'sh-cleanup-capf)
-
-
-;; Elevating shell to root
-
-
-(defun shell-elevate ()
-  "Elevates current shell session to root
-   (equivalent to `sudo bash`).
-   When called again, reverts to regular shell"
-  (interactive)
-  (let ((command (if (setq-local rootp
-                                 (and (boundp 'rootp) rootp))
-                     "exit"
-                   "sudo $SHELL")))
-    (comint-send-string
-     (get-buffer-process (current-buffer))
-     command)
-    (comint-send-input)
-    (setq-local rootp (not rootp))))
-
-
-(define-key shell-mode-map (kbd "C-x u") 'shell-elevate)
-
-
-;; ===
-;; VCS
-;; ===
-
-
-(setq vc-command-overrides
-      '((vc-pull . ((Git . "git pull")))
-        (vc-push . ((Git . "git push")))))
-
-
-(dolist (vc-command '(vc-pull vc-push))
-  (advice-add
-   vc-command :around
-   `(lambda (f &rest args)
-      (if-let ((command (cdr (assoc (car (vc-deduce-fileset t))
-                                    (assoc ',vc-command vc-command-overrides)))))
-          (progn (message "Running %s..." (propertize command 'face 'compilation-info))
-                 (shell-command command))
-        (apply f args)))))
-
-
-(defun vc-log-pull ()
-  (interactive)
-  (vc-pull)
-  (revert-buffer))
-
-
-(defun vc-log-push ()
-  (interactive)
-  (vc-push)
-  (revert-buffer))
-
-
-(with-eval-after-load 'log-view
-  (bind-keys '("+" vc-log-pull "P" vc-log-push) log-view-mode-map))
-
-
-;; ========
-;; Projects
-;; ========
-
-
-(setq project-switch-commands
-      '((project-dired "Open project root")
-        (project-find-file "Find file")
-        (project-find-dir "Find directory")
-        (project-find-regexp "Find regexp")
-        (project-vc-dir "View VCS status")
-        (project-vcs-log "View VCS history")
-        (project-shell "Shell")
-        (project-async-shell-command "Run async shell command")
-        (project-compile "Compile")
-        (project-reformat "Reformat project files")))
-
-
-(defun project-vcs-log ()
-  (interactive)
-  (let (a b)
-    (save-window-excursion
-      (setq a (find-file (project-root (project-current t))))
-      (vc-print-root-log)
-      (kill-buffer a)
-      (setq b (current-buffer)))
-    (switch-to-buffer b)))
-
-
-(defun project-reformat ()
-  (interactive)
-  (let* ((default-directory (project-root (project-current t)))
-         (command (cdr (cl-find-if (lambda (x) (file-exists-p (car x)))
-                                   '(("Cargo.toml" . "cargo fmt"))))))
-    (cond (command (let ((msg (format "Running %s on %s..."
-                                      (propertize command 'face 'compilation-info)
-                                      default-directory)))
-                     (message msg)
-                     (when (zerop (shell-command command))
-                       (message "%sDone" msg))))
-          ((executable-find "prettier")
-           (prettier-pprint-folder default-directory))
-          (t (error "There is no formatting tools available")))))
-
-
-(add-hook 'emacs-startup-hook 'project-forget-zombie-projects)
-
-
-;; Better project root detection
-
-
-(defun project-try-file (dir)
-  (cl-loop for pattern in '("pom.xml" ; Java
-                            "*.iml"
-                            "build.xml"
-                            "build.gradle"
-                            ".project"
-                            "project.clj" ; Clojure
-                            "deps.edn"
-                            "Cargo.toml" ; Rust
-                            "go.mod" ; Go
-                            "Makefile" ; C/C++
-                            "requirements.txt" ; Python
-                            "venv"
-                            "package.json"; Javascript
-                            "*.dlrproj" ; Weird things
-                            )
-           for project-file = (locate-dominating-file
-                               dir
-                               (lambda (d)
-                                 (car (file-expand-wildcards
-                                       (expand-file-name pattern d)))))
-           when project-file
-           return (cons 'project-file
-                        (file-name-directory project-file))))
-
-
-(cl-defmethod project-root ((project (head project-file)))
-  (cdr project))
-
-
-(setq project-find-functions '(project-try-vc project-try-file))
-
-
-;; =======
-;; Compile
-;; =======
-
-
-(defun compile-maybe-project (f &rest args)
-  (let* ((project (project-current))
-         (default-directory (if project
-                                (project-root project)
-                              default-directory)))
-    (apply f args)))
-
-
-(advice-add 'compile :around 'compile-maybe-project)
-
-
-(require 'ansi-color)
-
-
-(defun compilation-enable-ascii-codes ()
-  (ansi-color-apply-on-region (point-min) (point-max)))
-
-
-(add-hook 'compilation-filter-hook 'compilation-enable-ascii-codes)
-
-
-(setq compilation-scroll-output t)
-
-
-(defun compile-suppress-initial (f &rest args)
-  "Don't suggest initial input when reading the command"
-  (apply f (cons nil (cdr args))))
-
-
-(advice-add 'compilation-read-command :around 'compile-suppress-initial)
-
-
 ;; ===============
 ;; LLM integration
 ;; ===============
@@ -3396,6 +3146,514 @@ Also grabs a selected region, if any."
              sgml-mode-hook
              comint-mode-hook))
   (add-hook x 'gptel-enable-code-model))
+
+
+;; ===
+;; VCS
+;; ===
+
+
+(setq vc-command-overrides
+      '((vc-pull . ((Git . "git pull")))
+        (vc-push . ((Git . "git push")))))
+
+
+(dolist (vc-command '(vc-pull vc-push))
+  (advice-add
+   vc-command :around
+   `(lambda (f &rest args)
+      (if-let ((command (cdr (assoc (car (vc-deduce-fileset t))
+                                    (assoc ',vc-command vc-command-overrides)))))
+          (progn (message "Running %s..." (propertize command 'face 'compilation-info))
+                 (shell-command command))
+        (apply f args)))))
+
+
+(defun vc-log-pull ()
+  (interactive)
+  (vc-pull)
+  (revert-buffer))
+
+
+(defun vc-log-push ()
+  (interactive)
+  (vc-push)
+  (revert-buffer))
+
+
+(with-eval-after-load 'log-view
+  (bind-keys '("+" vc-log-pull "P" vc-log-push) log-view-mode-map))
+
+
+;; ========
+;; Projects
+;; ========
+
+
+(setq project-switch-commands
+      '((project-dired "Open project root")
+        (project-find-file "Find file")
+        (project-find-dir "Find directory")
+        (project-find-regexp "Find regexp")
+        (project-vc-dir "View VCS status")
+        (project-vcs-log "View VCS history")
+        (project-shell "Shell")
+        (project-async-shell-command "Run async shell command")
+        (project-compile "Compile")
+        (project-reformat "Reformat project files")))
+
+
+(defun project-vcs-log ()
+  (interactive)
+  (let (a b)
+    (save-window-excursion
+      (setq a (find-file (project-root (project-current t))))
+      (vc-print-root-log)
+      (kill-buffer a)
+      (setq b (current-buffer)))
+    (switch-to-buffer b)))
+
+
+(defun project-reformat ()
+  (interactive)
+  (let* ((default-directory (project-root (project-current t)))
+         (command (cdr (cl-find-if (lambda (x) (file-exists-p (car x)))
+                                   '(("Cargo.toml" . "cargo fmt"))))))
+    (cond (command (let ((msg (format "Running %s on %s..."
+                                      (propertize command 'face 'compilation-info)
+                                      default-directory)))
+                     (message msg)
+                     (when (zerop (shell-command command))
+                       (message "%sDone" msg))))
+          ((executable-find "prettier")
+           (prettier-pprint-folder default-directory))
+          (t (error "There is no formatting tools available")))))
+
+
+(add-hook 'emacs-startup-hook 'project-forget-zombie-projects)
+
+
+;; Better project root detection
+
+
+(defun project-try-file (dir)
+  (cl-loop for pattern in '("pom.xml" ; Java
+                            "*.iml"
+                            "build.xml"
+                            "build.gradle"
+                            ".project"
+                            "project.clj" ; Clojure
+                            "deps.edn"
+                            "Cargo.toml" ; Rust
+                            "go.mod" ; Go
+                            "Makefile" ; C/C++
+                            "requirements.txt" ; Python
+                            "venv"
+                            "package.json"; Javascript
+                            "*.dlrproj" ; Weird things
+                            )
+           for project-file = (locate-dominating-file
+                               dir
+                               (lambda (d)
+                                 (car (file-expand-wildcards
+                                       (expand-file-name pattern d)))))
+           when project-file
+           return (cons 'project-file
+                        (file-name-directory project-file))))
+
+
+(cl-defmethod project-root ((project (head project-file)))
+  (cdr project))
+
+
+(setq project-find-functions '(project-try-vc project-try-file))
+
+
+;; ===========
+;; Compilation
+;; ===========
+
+
+(defun compile-maybe-project (f &rest args)
+  (let* ((project (project-current))
+         (default-directory (if project
+                                (project-root project)
+                              default-directory)))
+    (apply f args)))
+
+
+(advice-add 'compile :around 'compile-maybe-project)
+
+
+(require 'ansi-color)
+
+
+(defun compilation-enable-ascii-codes ()
+  (ansi-color-apply-on-region (point-min) (point-max)))
+
+
+(add-hook 'compilation-filter-hook 'compilation-enable-ascii-codes)
+
+
+(setq compilation-scroll-output t)
+
+
+(defun compile-suppress-initial (f &rest args)
+  "Don't suggest initial input when reading the command"
+  (apply f (cons nil (cdr args))))
+
+
+(advice-add 'compilation-read-command :around 'compile-suppress-initial)
+
+
+;; ===
+;; lSP
+;; ===
+
+
+(with-eval-after-load 'eglot
+  ;; Keybindings
+  (bind-keys '("M-p" eglot-code-actions
+               "M-." xref-find-definitions
+               "C-," flymake-goto-prev-error
+               "C-." flymake-goto-next-error
+               "C-c C-n" eglot-rename
+               "C-c C-e" eglot-code-action-extract
+               "C-c C-o" flymake-show-buffer-diagnostics
+               "C-c C-p" flymake-show-project-diagnostics
+               "C-h C-h" eldoc-print-current-symbol-info
+               "C-c C-i" eglot-code-action-inline
+               "C-c C-j" eglot-code-action-quickfix
+               "C-c C-k" eglot-code-action-rewrite
+               "C-c C-l" eglot-code-action-organize-imports)
+             eglot-mode-map)
+
+  ;; Do not clutter company settings
+  (add-to-list 'eglot-stay-out-of 'company)
+
+  ;; Auto-shutdown the server
+  (setq eglot-autoshutdown t)
+
+  ;; Fix snippets + company-tng
+  (advice-remove #'eglot--snippet-expansion-fn #'ignore))
+
+
+;; =======
+;; Flymake
+;; =======
+
+
+(defun flymake-add-indicators ()
+  (let ((setting '(" " (:eval (flymake--mode-line-counters)))))
+    (unless (equal (cadr setting) (car (last mode-line-format)))
+      (setq-local mode-line-format
+                  (append mode-line-format setting)))))
+
+
+(add-hook 'flymake-mode-hook 'flymake-add-indicators)
+
+
+(defun flymake-display-diagnostics-fix (f &rest args)
+  "Fixes undesired layout of diagnostic buffers introduced in Emacs 30.1"
+  (let (b)
+    (save-window-excursion
+      (setq b (window-buffer (apply f args))))
+    (display-buffer b)))
+
+
+(dolist (x '(flymake-show-buffer-diagnostics
+             flymake-show-project-diagnostics))
+  (advice-add x :around 'flymake-display-diagnostics-fix))
+
+
+;; ============================
+;; ElDoc (documentation viewer)
+;; ============================
+
+
+(setq eldoc-echo-area-use-multiline-p nil)
+
+
+;; Fix CR+LF issue
+
+
+(defun fix-eldoc (f &rest args)
+  (let ((b (apply f args)))
+    (prog1 b
+      (with-current-buffer b
+        (let ((inhibit-read-only t))
+          (save-excursion
+            (goto-char 1)
+            (while (re-search-forward "" nil t)
+              (replace-match ""))))))))
+
+
+(advice-add 'eldoc--format-doc-buffer :around 'fix-eldoc)
+
+
+;; Fix link navigation
+
+
+(defun eldoc-url-at-point ()
+  (if (eq (get-text-property (point) 'face)
+          'markdown-plain-url-face)
+      (ffap-url-at-point)
+    (get-text-property (point) 'help-echo)))
+
+
+(defun eldoc-open-url-at-point ()
+  (interactive)
+  (if-let (url (eldoc-url-at-point))
+      (progn (message "Opening doc: %s..." url)
+             (browse-url-or-search url))
+    (message "No references at point")))
+
+
+(defun eldoc-make-nav-link-command (prop-change-fn)
+  `(lambda ()
+     (interactive)
+     (let (p found)
+       (save-excursion
+         (while
+             (and (setq p (funcall ',prop-change-fn (point)))
+                  (goto-char p)
+                  (let ((prop (get-text-property p 'face)))
+                    (not (setq found
+                               (if (listp prop)
+                                   (member 'markdown-link-face prop)
+                                 (member prop '(markdown-link-face
+                                                markdown-plain-url-face)))))))))
+       (when found
+         (goto-char p)
+         (message (eldoc-url-at-point))))))
+
+
+(defun eldoc-fix-link-navigation (f &rest args)
+  (let ((b (apply f args)))
+    (prog1 b
+      (with-current-buffer b
+        (when-let (m (current-local-map))
+          (use-local-map (copy-keymap m))
+          (local-set-key (kbd "RET") 'eldoc-open-url-at-point)
+          (local-set-key (kbd "TAB")
+                         (eldoc-make-nav-link-command
+                          'next-property-change))
+          (local-set-key (kbd "<backtab>")
+                         (eldoc-make-nav-link-command
+                          'previous-property-change)))))))
+
+
+(advice-add 'eldoc--format-doc-buffer :around 'eldoc-fix-link-navigation)
+
+
+;; ===========
+;; ClangFormat
+;; ===========
+
+
+(setq clang-format (executable-find "clang-format"))
+
+
+(defun clang-pretty-print-buffer ()
+  (interactive)
+  (let* ((extension (or (file-name-extension (or (buffer-file-name) ""))
+                        (replace-regexp-in-string "-mode" "" (symbol-name major-mode))))
+         (style "'{IndentWidth: 4}'"))
+    (pretty-print-buffer
+     (format "%s --assume-filename=.%s --style=%s" clang-format extension style))))
+
+
+(when clang-format
+  (dolist (x '(c-mode java-mode js-mode))
+    (add-to-list 'pretty-printers (cons x 'clang-pretty-print-buffer))))
+
+
+;; ========
+;; Prettier
+;; ========
+
+
+(defun prettier-write-options ()
+  (interactive)
+  (let* ((config-file (expand-file-name ".prettierrc"
+                                        (if system-type-is-windows
+                                            (getenv "USERPROFILE")
+                                          "~")))
+         (java-plugin (expand-file-name
+                       "prettier-plugin-java/dist/index.js"
+                       (string-trim
+                        (shell-command-to-string "npm root -g"))))
+         (config `((printWidth . 100)
+                   (overrides . (((files . "*.java")
+                                  (options . ((tabWidth . 4)
+                                              (plugins . (,java-plugin))))))))))
+    (with-temp-buffer
+      (insert (json-encode config))
+      (json-pretty-print-buffer)
+      (write-file config-file))))
+
+
+(defun prettier-pprint-folder (directory)
+  (interactive "DReformat files in: ")
+  (let ((default-directory directory)
+        (pattern (if current-prefix-arg
+                     (read-string "Pattern: " "./*")
+                   "./*")))
+    (message "Formatting '%s' with Prettier..." directory)
+    (shell-command (format "prettier --write --no-color --ignore-unknown %s" pattern))))
+
+
+(defun prettier-pprint-buffer ()
+  (interactive)
+  (let* ((fname (buffer-file-name))
+         (default-directory "~"))
+    (unless (or fname (boundp 'prettier-parser))
+      (let ((parsers (string-split (with-temp-buffer
+                                     (insert (shell-command-to-string "prettier -h"))
+                                     (goto-char 1)
+                                     (buffer-substring (search-forward "--parser <")
+                                                       (1- (search-forward ">"))))
+                                   "|")))
+        (setq-local prettier-parser
+                    (or (cl-find (replace-regexp-in-string "-mode" ""
+                                                           (symbol-name major-mode))
+                                 parsers :test #'equal)
+                        (completing-read "Use parser: " parsers)))
+        (message "Formatting using '%s' parser" prettier-parser)))
+    (pretty-print-buffer (format "prettier --no-color %s"
+                                 (if fname
+                                     (format "--stdin-filepath %s" fname)
+                                   (format "--parser %s" prettier-parser))))))
+
+
+(when (executable-find "prettier")
+  (prettier-write-options)
+  (dolist (m '(js-mode java-mode mhtml-mode html-mode css-mode))
+    (add-to-list 'pretty-printers (cons m 'prettier-pprint-buffer))))
+
+
+;; ===
+;; XML
+;; ===
+
+
+(add-to-list 'auto-mode-alist
+             (cons (concat "\\." (regexp-opt '("xml" "xsd" "xslt" "xsl" "wsdl" "xml.template" "pom" "jmx") t) "\\'") 'sgml-mode))
+
+
+(setq xmllint (executable-find "xmllint"))
+
+
+(defun xml-pretty-print-buffer ()
+  (interactive)
+  (pretty-print-buffer (format "%s --format -" xmllint)))
+
+
+(when xmllint
+  (add-to-list 'pretty-printers
+               '(sgml-mode . xml-pretty-print-buffer)))
+
+
+;; ==========
+;; C language
+;; ==========
+
+
+(setq-default c-basic-offset 4)
+
+
+(add-hook 'c-mode-hook
+          (lambda () (c-set-style "k&r")))
+
+
+(defun c-customize-keybindings ()
+  (local-set-key (kbd "TAB") 'indent-for-tab-command))
+
+
+(add-hook 'c-mode-common-hook 'c-customize-keybindings)
+
+
+;; ====
+;; Java
+;; ====
+
+
+(add-hook 'java-mode-hook
+          (lambda () (c-set-style "user")))
+
+
+(defun copy-java-class-full-name ()
+  "Copy full name of current class/interface/enum etc. in a form, suitable for import"
+  (interactive)
+  (let (package class-full-name)
+    (save-excursion
+      (goto-char 1)
+      (re-search-forward "package *\\(.*\\);")
+      (setq package (match-string 1))
+      (search-forward "{")
+      (re-search-backward "\\(class\\|enum\\|interface\\) *\\([^ \n]*\\)")
+      (setq class-full-name (format "%s.%s" package (match-string 2))))
+    (message class-full-name)
+    (kill-new class-full-name)))
+
+
+(defun java-setup-keybindings ()
+  (local-set-key (kbd "C-c C-c") 'copy-java-class-full-name))
+
+
+(add-hook 'java-mode-hook 'java-setup-keybindings)
+
+
+;; =======
+;; Clojure
+;; =======
+
+
+(setq cider-repl-history-file
+      (expand-file-name ".cider-history" user-emacs-directory))
+
+
+(setq cider-show-error-buffer nil)
+
+
+;; ===========
+;; Common lisp
+;; ===========
+
+
+(add-to-list 'auto-mode-alist
+             '("\\.cl\\'" . common-lisp-mode))
+
+
+(defun use-eww-for-cl-hyperspec-lookup ()
+  (setq-local browse-url-browser-function
+              'eww-browse-url))
+
+
+(defun common-lisp-setup-company ()
+  (require 'slime-company)
+  (setq-local company-backends
+              (append `(,(car company-backends)
+                        (company-slime :with company-yasnippet))
+                      (cddr company-backends))))
+
+
+(dolist (m '(lisp-mode-hook slime-repl-mode-hook))
+  (add-hook m 'use-eww-for-cl-hyperspec-lookup)
+  (add-hook m 'common-lisp-setup-company))
+
+
+;; ==========
+;; Powershell
+;; ==========
+
+
+(advice-add 'powershell
+            :around
+            (lambda (f &rest args)
+              (let ((*comint-histfile-id* "powershell"))
+                (prog1 (apply f args)
+                  (set-buffer-process-coding-system 'cp866-dos 'cp866-dos)))))
 
 
 ;; ==========
@@ -3750,264 +4008,6 @@ Process .+
 (sql-set-product-feature 'sqlite :table-parser 'parse-sqlite-table)
 
 
-;; ============
-;; clang-format
-;; ============
-
-
-(setq clang-format (executable-find "clang-format"))
-
-
-(defun clang-pretty-print-buffer ()
-  (interactive)
-  (let* ((extension (or (file-name-extension (or (buffer-file-name) ""))
-                        (replace-regexp-in-string "-mode" "" (symbol-name major-mode))))
-         (style "'{IndentWidth: 4}'"))
-    (pretty-print-buffer
-     (format "%s --assume-filename=.%s --style=%s" clang-format extension style))))
-
-
-(when clang-format
-  (dolist (x '(c-mode java-mode js-mode))
-    (add-to-list 'pretty-printers (cons x 'clang-pretty-print-buffer))))
-
-
-;; ========
-;; Prettier
-;; ========
-
-
-(defun prettier-write-options ()
-  (interactive)
-  (let* ((config-file (expand-file-name ".prettierrc"
-                                        (if system-type-is-windows
-                                            (getenv "USERPROFILE")
-                                          "~")))
-         (java-plugin (expand-file-name
-                       "prettier-plugin-java/dist/index.js"
-                       (string-trim
-                        (shell-command-to-string "npm root -g"))))
-         (config `((printWidth . 100)
-                   (overrides . (((files . "*.java")
-                                  (options . ((tabWidth . 4)
-                                              (plugins . (,java-plugin))))))))))
-    (with-temp-buffer
-      (insert (json-encode config))
-      (json-pretty-print-buffer)
-      (write-file config-file))))
-
-
-(defun prettier-pprint-folder (directory)
-  (interactive "DReformat files in: ")
-  (let ((default-directory directory)
-        (pattern (if current-prefix-arg
-                     (read-string "Pattern: " "./*")
-                   "./*")))
-    (message "Formatting '%s' with Prettier..." directory)
-    (shell-command (format "prettier --write --no-color --ignore-unknown %s" pattern))))
-
-
-(defun prettier-pprint-buffer ()
-  (interactive)
-  (let* ((fname (buffer-file-name))
-         (default-directory "~"))
-    (unless (or fname (boundp 'prettier-parser))
-      (let ((parsers (string-split (with-temp-buffer
-                                     (insert (shell-command-to-string "prettier -h"))
-                                     (goto-char 1)
-                                     (buffer-substring (search-forward "--parser <")
-                                                       (1- (search-forward ">"))))
-                                   "|")))
-        (setq-local prettier-parser
-                    (or (cl-find (replace-regexp-in-string "-mode" ""
-                                                           (symbol-name major-mode))
-                                 parsers :test #'equal)
-                        (completing-read "Use parser: " parsers)))
-        (message "Formatting using '%s' parser" prettier-parser)))
-    (pretty-print-buffer (format "prettier --no-color %s"
-                                 (if fname
-                                     (format "--stdin-filepath %s" fname)
-                                   (format "--parser %s" prettier-parser))))))
-
-
-(when (executable-find "prettier")
-  (prettier-write-options)
-  (dolist (m '(js-mode java-mode mhtml-mode html-mode css-mode))
-    (add-to-list 'pretty-printers (cons m 'prettier-pprint-buffer))))
-
-
-;; ====
-;; Diff
-;; ====
-
-
-(defun diff-current-buffer ()
-  "Invoke `diff-buffer-with-file' for current buffer"
-  (interactive)
-  (diff-buffer-with-file))
-
-
-;; =======
-;; Ripgrep
-;; =======
-
-
-(setq ripgrep (executable-find "rg")
-      ripgrep-arguments '("-uu"))
-
-
-(defun project-ripgrep (regexp)
-  (interactive (list (project--read-regexp)))
-  (let ((ripgrep-arguments nil))
-    (ripgrep-regexp regexp (project-root (project-current t)))))
-
-
-(when ripgrep
-  (define-key search-map (kbd "g") 'ripgrep-regexp)
-  (advice-add 'project-find-regexp :override 'project-ripgrep))
-
-
-(defun ripgrep-setup ()
-  (setq-local compilation-scroll-output nil))
-
-
-(with-eval-after-load 'ripgrep
-  (bind-keys '("TAB" compilation-next-error
-               "<backtab>" compilation-previous-error
-               "n" next-error-no-select
-               "p" previous-error-no-select
-               "o" compilation-display-error
-               "e" wgrep-change-to-wgrep-mode)
-             ripgrep-search-mode-map)
-  (add-hook 'ripgrep-search-mode-hook
-            'ripgrep-setup)
-  (setq wgrep-auto-save-buffer t))
-
-
-;; ===
-;; xml
-;; ===
-
-
-(add-to-list 'auto-mode-alist
-             (cons (concat "\\." (regexp-opt '("xml" "xsd" "xslt" "xsl" "wsdl" "xml.template" "pom" "jmx") t) "\\'") 'sgml-mode))
-
-
-(setq xmllint (executable-find "xmllint"))
-
-
-(defun xml-pretty-print-buffer ()
-  (interactive)
-  (pretty-print-buffer (format "%s --format -" xmllint)))
-
-
-(when xmllint
-  (add-to-list 'pretty-printers
-               '(sgml-mode . xml-pretty-print-buffer)))
-
-
-;; =======
-;; cc-mode
-;; =======
-
-
-(setq-default c-basic-offset 4)
-
-
-(add-hook 'c-mode-hook
-          (lambda () (c-set-style "k&r")))
-
-
-(defun c-customize-keybindings ()
-  (local-set-key (kbd "TAB") 'indent-for-tab-command))
-
-
-(add-hook 'c-mode-common-hook 'c-customize-keybindings)
-
-
-;; ====
-;; java
-;; ====
-
-
-(add-hook 'java-mode-hook
-          (lambda () (c-set-style "user")))
-
-
-(defun copy-java-class-full-name ()
-  "Copy full name of current class/interface/enum etc. in a form, suitable for import"
-  (interactive)
-  (let (package class-full-name)
-    (save-excursion
-      (goto-char 1)
-      (re-search-forward "package *\\(.*\\);")
-      (setq package (match-string 1))
-      (search-forward "{")
-      (re-search-backward "\\(class\\|enum\\|interface\\) *\\([^ \n]*\\)")
-      (setq class-full-name (format "%s.%s" package (match-string 2))))
-    (message class-full-name)
-    (kill-new class-full-name)))
-
-
-(defun java-setup-keybindings ()
-  (local-set-key (kbd "C-c C-c") 'copy-java-class-full-name))
-
-
-(add-hook 'java-mode-hook 'java-setup-keybindings)
-
-
-;; =======
-;; clojure
-;; =======
-
-
-(setq cider-repl-history-file
-      (expand-file-name ".cider-history" user-emacs-directory))
-
-
-(setq cider-show-error-buffer nil)
-
-
-;; ===========
-;; common lisp
-;; ===========
-
-
-(add-to-list 'auto-mode-alist
-             '("\\.cl\\'" . common-lisp-mode))
-
-
-(defun use-eww-for-cl-hyperspec-lookup ()
-  (setq-local browse-url-browser-function
-              'eww-browse-url))
-
-
-(defun common-lisp-setup-company ()
-  (require 'slime-company)
-  (setq-local company-backends
-              (append `(,(car company-backends)
-                        (company-slime :with company-yasnippet))
-                      (cddr company-backends))))
-
-
-(dolist (m '(lisp-mode-hook slime-repl-mode-hook))
-  (add-hook m 'use-eww-for-cl-hyperspec-lookup)
-  (add-hook m 'common-lisp-setup-company))
-
-
-;; ==========
-;; powershell
-;; ==========
-
-
-(advice-add 'powershell
-            :around
-            (lambda (f &rest args)
-              (let ((*comint-histfile-id* "powershell"))
-                (prog1 (apply f args)
-                  (set-buffer-process-coding-system 'cp866-dos 'cp866-dos)))))
-
-
 ;; ===============================
 ;; Serving directories with Python
 ;; ===============================
@@ -4097,7 +4097,7 @@ Process .+
 
 
 ;; ==========================
-;; capture videos with ffmpeg
+;; Capture videos with ffmpeg
 ;; ==========================
 
 
@@ -4135,7 +4135,7 @@ Process .+
 
 
 ;; =======
-;; fortune
+;; Fortune
 ;; =======
 
 
@@ -4160,7 +4160,7 @@ Process .+
 
 
 ;; ============
-;; web browsing
+;; Web browsing
 ;; ============
 
 
@@ -4218,7 +4218,7 @@ Process .+
 
 
 ;; ===========
-;; epub reader
+;; ePub reader
 ;; ===========
 
 
