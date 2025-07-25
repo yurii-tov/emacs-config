@@ -2008,27 +2008,33 @@ The search string is queried first, followed by the directory."
     (bind-keys '("M-p" nil
                  "M-n" nil
                  "M-SPC" company-other-backend
-                 "C-f" company-files-go-deeper
-                 "SPC" company-expand-no-modify)
+                 "SPC" company-smart-complete)
                x)))
 
 
-;; Properly expand snippets
+;; Smart completion
 
 
-(defun company-expand-no-modify ()
-  "When candidate is a snippet, expands it, and suppress any modifying"
+(defun company-smart-complete ()
+  "Context-depending completion.
+   - Proceed to deeper filesystem level in company-files
+   - Snippets expanded properly"
   (interactive)
-  (when (or (not company-selection)
-            (let ((p (point)))
-              (company-complete)
-              (let* ((m (car company-last-metadata))
-                     (pp (point))
-                     (l (- p (- (length m)
-                                (length (buffer-substring p pp)))))
-                     (s (buffer-substring (max 1 l) pp)))
-                (equal m s))))
-    (call-interactively 'self-insert-command)))
+  (cond ((and company-selection
+              (eq company-backend 'company-files)
+              (progn (company-complete-selection)
+                     (looking-back "/")))
+         (company-manual-begin))
+        ((or (not company-selection)
+             (let ((p (point)))
+               (company-complete)
+               (let* ((m (car company-last-metadata))
+                      (pp (point))
+                      (l (- p (- (length m)
+                                 (length (buffer-substring p pp)))))
+                      (s (buffer-substring (max 1 l) pp)))
+                 (equal m s))))
+         (call-interactively 'self-insert-command))))
 
 
 ;; Force completion by TAB
@@ -2047,18 +2053,6 @@ The search string is queried first, followed by the directory."
 
 
 (add-hook 'company-mode-hook 'company-setup-tab-completion)
-
-
-;; Switching FS levels
-
-
-(defun company-files-go-deeper ()
-  (interactive)
-  (if (and company-selection
-           (progn (company-complete-selection)
-                  (looking-back "/")))
-      (company-manual-begin)
-    (call-interactively 'forward-char)))
 
 
 ;; Merge company-dabbrev-code with company-keywords
