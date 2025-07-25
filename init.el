@@ -4184,8 +4184,9 @@ Process .+
 (defun browse-url-or-search (query)
   (interactive (list (read-string "Browse (WWW search): "
                                   (when (use-region-p)
-                                    (buffer-substring (region-beginning)
-                                                      (region-end)))
+                                    (prog1 (buffer-substring (region-beginning)
+                                                             (region-end))
+                                      (deactivate-mark)))
                                   'browser-query-history)))
   (let ((browse-url-browser-function (if (display-graphic-p)
                                          'browse-url-default-browser
