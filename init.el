@@ -2813,7 +2813,7 @@ The search string is queried first, followed by the directory."
 
 
 (setq org-confirm-babel-evaluate nil
-      org-babel-default-header-args:bash '((:results . "output")))
+      org-babel-default-header-args:shell '((:results . "output")))
 
 
 (org-babel-do-load-languages
