@@ -2,4 +2,4 @@
 # name: String.format
 # key: sf
 # --
-String.format("${1:%s}", $2);
+String.format("%s", $1);
