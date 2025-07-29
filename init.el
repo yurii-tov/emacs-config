@@ -161,7 +161,7 @@
   (global-unset-key (kbd (format "M-%d" n))))
 
 
-;; dealing with keymaps boilerplate
+;; dealing with keymap definitions boilerplate
 
 
 (defun bind-keys (keybindings &optional keymap)
@@ -3302,7 +3302,7 @@ Also grabs a selected region, if any."
 
 
 ;; ===
-;; lSP
+;; LSP
 ;; ===
 
 
@@ -4003,9 +4003,9 @@ Process .+
 (sql-set-product-feature 'sqlite :table-parser 'parse-sqlite-table)
 
 
-;; ===============================
-;; Serving directories with Python
-;; ===============================
+;; ===========
+;; File server
+;; ===========
 
 
 (defun serve-directory ()
@@ -4020,9 +4020,9 @@ Process .+
              (propertize socket 'face 'bold))))
 
 
-;; =====================
-;; EN ⇔ RU translations
-;; =====================
+;; ===================
+;; EN ⇔ RU translator
+;; ===================
 
 
 (defun translate-en-ru-online ()
@@ -4069,9 +4069,9 @@ Process .+
       (message "%s =>\n%s" query-message translation))))
 
 
-;; ===========================
-;; Cambridge dictionary lookup
-;; ===========================
+;; ====================
+;; Cambridge dictionary
+;; ====================
 
 
 (defun camd (word)
@@ -4091,9 +4091,9 @@ Process .+
       (message "%s =>\n%s" query answer))))
 
 
-;; ==========================
-;; Capture videos with ffmpeg
-;; ==========================
+;; ===============
+;; Video capturing
+;; ===============
 
 
 (defun capture-video (arg)
