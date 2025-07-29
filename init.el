@@ -2284,7 +2284,7 @@ The search string is queried first, followed by the directory."
                        (output (ignore-errors
                                  (with-current-buffer ,b
                                    (let ((s (if ,*asc-echo*
-                                                (progn (beginning-of-buffer)
+                                                (progn (goto-char (point-min))
                                                        (end-of-line)
                                                        (1+ (point)))
                                               (point-min))))
