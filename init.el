@@ -2746,12 +2746,14 @@ The search string is queried first, followed by the directory."
 (defun org-commit ()
   (interactive)
   (let ((default-directory org-directory))
+    (message "Pushing org repository...")
     (shell-command "git add * && git commit -m 'Updated' && git push")))
 
 
 (defun org-pull ()
   (interactive)
   (let ((default-directory org-directory))
+    (message "Pulling org repository...")
     (shell-command "git pull")))
 
 
