@@ -956,18 +956,18 @@
   (let* ((files (mapcar #'file-relative-name
                         (dired-get-marked-files)))
          (args (mapcar (lambda (x) (format "'%s'" x)) files)))
-    (async-shell-command
+    (message "Calculating size of %s..."
+             (string-join (mapcar (lambda (x)
+                                    (propertize x 'face 'compilation-info))
+                                  files)
+                          ", "))
+    (shell-command
      (if tree-p
          (format "tree --du -h %s"
                  (string-join args  " "))
        (format "du -hs%s %s"
                (if (> (length args) 1) "c" "")
-               (string-join args  " "))))
-    (message "Calculating size of %s..."
-             (string-join (mapcar (lambda (x)
-                                    (propertize x 'face 'compilation-info))
-                                  files)
-                          ", "))))
+               (string-join args  " "))))))
 
 
 (defun dired-calculate-size-tree ()
