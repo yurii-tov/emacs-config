@@ -2280,19 +2280,26 @@ The search string is queried first, followed by the directory."
            (get-process (get-buffer-process (current-buffer)))
            `(lambda (p e)
               (unless (member ,b (mapcar #'window-buffer (window-list)))
-                (let ((e (string-trim-right e))
-                      (output (ignore-errors
-                                (with-current-buffer ,b
-                                  (concat (buffer-substring (point-min) (point-max))
-                                          "\n")))))
+                (let* ((e (string-trim-right e))
+                       (output (ignore-errors
+                                 (with-current-buffer ,b
+                                   (let ((s (if ,*asc-echo*
+                                                (progn (beginning-of-buffer)
+                                                       (end-of-line)
+                                                       (1+ (point)))
+                                              (point-min))))
+                                     (string-trim-right
+                                      (buffer-substring s (point-max)))))))
+                       (status-message (format "\n[%s] `%s` at %s"
+                                               e
+                                               (if ,*asc-echo* ,(car args) "?")
+                                               ,default-directory)))
                   (message
                    "%s%s"
                    (or output "")
-                   (propertize (format "[%s] %s" e (if ,*asc-echo* ,(car args) "*****"))
-                               'face (cond ((equal e "finished") 'success)
-                                           ((string-match "exited abnormally.*" e)
-                                            'error)
-                                           (t 'shadow))))
+                   (propertize status-message
+                               'face (if (string-match "exited abnormally.*" e)
+                                         'error 'shadow)))
                   (kill-buffer ,b))))))))))
 
 
