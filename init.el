@@ -292,7 +292,7 @@
              "C-v" scroll-up-5-lines
              "M-v" scroll-down-5-lines
              "M-1" shell-command
-             "M-!" async-shell-command
+             "M-!" run-asc
              "M-2" (lambda () (interactive)
                      (insert-brackets '("\"\"" "''" "``" "**" "<>") 134217778))
              "M-9" (lambda () (interactive) (wrap-with-text "(" ")" t))
@@ -955,9 +955,8 @@
   (interactive)
   (let* ((files (mapcar #'file-relative-name
                         (dired-get-marked-files)))
-         (args (mapcar (lambda (x) (format "'%s'" x)) files))
-         (*asc-result-buffer* "*size*"))
-    (async-shell-command
+         (args (mapcar (lambda (x) (format "'%s'" x)) files)))
+    (asc-message-or-buffer
      (if tree-p
          (format "tree --du -h %s"
                  (string-join args  " "))
@@ -2149,22 +2148,42 @@ The search string is queried first, followed by the directory."
 (setq async-shell-command-mode 'shell-mode)
 
 
-(defun asc-read-wd (f &rest args)
-  (let* ((project (project-current))
-         (project-dir (when project (project-root project)))
-         (default-directory (if (called-interactively-p)
+;; convenient variants of the command
+
+
+(defun asc-message-or-buffer (command)
+  "Run `async-shell-command' with output to minibuffer or window"
+  (let ((*asc-callback* (lambda (buffer)
+                          (let* ((output (ignore-errors
+                                           (with-current-buffer buffer
+                                             (let ((s (if *asc-echo*
+                                                          (progn (goto-char (point-min))
+                                                                 (end-of-line)
+                                                                 (1+ (point)))
+                                                        (point-min))))
+                                               (string-trim
+                                                (buffer-substring s (point-max)))))))
+                                 (output (unless (string-empty-p output)
+                                           output)))
+                            (when (windowp (and output
+                                                (display-message-or-buffer
+                                                 output
+                                                 "*Shell Command Output*")))
+                              (message nil))
+                            (kill-buffer buffer)))))
+    (async-shell-command command)))
+
+
+(defun run-asc (command working-directory)
+  "Run `async-shell-command' in specified work directory. Intended for long-running scenarios"
+  (interactive (list (read-shell-command "Run async command: ") nil))
+  (let* ((command-colorized (propertize (reverse (string-truncate-left
+                                                  (reverse command) 20))
+                                        'face 'compilation-info))
+         (default-directory (or working-directory
                                 (read-directory-name
-                                 (format "Run %s at: "
-                                         (propertize (reverse (string-truncate-left
-                                                               (reverse (car args)) 20))
-                                                     'face 'compilation-info))
-                                 project-dir)
-                              default-directory)))
-    (ido-record-work-directory default-directory)
-    (apply f args)))
-
-
-(advice-add 'async-shell-command :around 'asc-read-wd)
+                                 (format "Run `%s` at: " command-colorized)))))
+    (async-shell-command command)))
 
 
 ;; descriptive names
@@ -2235,13 +2254,13 @@ The search string is queried first, followed by the directory."
 ;; handle termination
 
 
-(defvar *asc-result-buffer* nil)
+(defvar *asc-callback* nil)
 
 
 (defun asc-handle-termination (f &rest args)
-  "When the command finishes in background,
-   reports its termination status and output.
-   Also kills the buffer"
+  "Handles command termination when in background:
+reports its termination status, than either
+executes `*asc-callback*' on the buffer or kills it"
   (let (r b)
     (prog1 (setq r (apply f args))
       (setq b (if (windowp r)
@@ -2253,28 +2272,16 @@ The search string is queried first, followed by the directory."
            (get-process (get-buffer-process (current-buffer)))
            `(lambda (p e)
               (unless (member ,b (mapcar #'window-buffer (window-list)))
-                (let* ((e (string-trim-right e))
-                       (output (ignore-errors
-                                 (with-current-buffer ,b
-                                   (let ((s (if ,*asc-echo*
-                                                (progn (goto-char (point-min))
-                                                       (end-of-line)
-                                                       (1+ (point)))
-                                              (point-min))))
-                                     (string-trim-right
-                                      (buffer-substring s (point-max)))))))
-                       (status-message (format "[%s] `%s` at %s"
-                                               e
-                                               (if ,*asc-echo* ,(car args) "?")
-                                               ,default-directory)))
-                  (if (and output ,*asc-result-buffer*)
-                      (display-message-or-buffer output ,*asc-result-buffer*)
-                    (message
-                     "%s%s"
-                     (or (and output (concat output "\n")) "")
-                     (propertize status-message
-                                 'face (if (string-match "exited abnormally.*" e)
-                                           'error 'shadow))))
+                (message "%s `%s` at %s"
+                         (propertize (format "[%s]" (string-trim-right e))
+                                     'face (if (string-match "exited abnormally.*" e)
+                                               'error 'shadow))
+                         (propertize (if ,*asc-echo* ,(car args) "?")
+                                     'face 'compilation-info)
+                         (propertize ,default-directory
+                                     'face 'completions-annotations))
+                (if ',*asc-callback*
+                    (funcall ',*asc-callback* ,b)
                   (kill-buffer ,b))))))))))
 
 
@@ -2300,7 +2307,7 @@ The search string is queried first, followed by the directory."
           (switch-to-buffer b)
           (when *asc-echo*
             (message
-             "Running command %s at %s"
+             "Running `%s` at %s"
              (propertize (car args) 'face 'compilation-info)
              (propertize default-directory 'face 'completions-annotations))))))))
 
@@ -2727,17 +2734,15 @@ The search string is queried first, followed by the directory."
 
 (defun org-commit ()
   (interactive)
-  (let ((default-directory org-directory)
-        (*asc-result-buffer* "*org-commit*"))
-    (async-shell-command "git add * && git commit -m 'Updated' && git push")
+  (let ((default-directory org-directory))
+    (asc-message-or-buffer "git add * && git commit -m 'Updated' && git push")
     (message "Pushing org repository...")))
 
 
 (defun org-pull ()
   (interactive)
-  (let ((default-directory org-directory)
-        (*asc-result-buffer* "*org-pull*"))
-    (async-shell-command "git pull")
+  (let ((default-directory org-directory))
+    (asc-message-or-buffer "git pull")
     (message "Pulling org repository...")))
 
 
@@ -3145,8 +3150,7 @@ Also grabs a selected region, if any."
    `(lambda (f &rest args)
       (if-let ((command (cdr (assoc (car (vc-deduce-fileset t))
                                     (assoc ',vc-command vc-command-overrides)))))
-          (progn (message "Running %s..." (propertize command 'face 'compilation-info))
-                 (shell-command command))
+          (asc-message-or-buffer command)
         (apply f args)))))
 
 
