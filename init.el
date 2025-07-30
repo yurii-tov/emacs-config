@@ -2728,7 +2728,7 @@ The search string is queried first, followed by the directory."
 (defun org-commit ()
   (interactive)
   (let ((default-directory org-directory)
-        (*asc-output-buffer* "*org-commit*"))
+        (*asc-result-buffer* "*org-commit*"))
     (async-shell-command "git add * && git commit -m 'Updated' && git push")
     (message "Pushing org repository...")))
 
@@ -2736,7 +2736,7 @@ The search string is queried first, followed by the directory."
 (defun org-pull ()
   (interactive)
   (let ((default-directory org-directory)
-        (*asc-output-buffer* "*org-pull*"))
+        (*asc-result-buffer* "*org-pull*"))
     (async-shell-command "git pull")
     (message "Pulling org repository...")))
 
