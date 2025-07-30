@@ -3152,10 +3152,12 @@ Also grabs a selected region, if any."
    `(lambda (f &rest args)
       (if-let ((command (cdr (assoc (car (vc-deduce-fileset t))
                                     (assoc ',vc-command vc-command-overrides)))))
-          (asc-message-or-buffer command
-                                 (lambda ()
-                                   (when (derived-mode-p 'log-view-mode)
-                                     (revert-buffer))))
+          (let* ((buffer (buffer-name))
+                 (callback (when (derived-mode-p 'log-view-mode)
+                             `(lambda ()
+                                (with-current-buffer ,buffer
+                                  (revert-buffer))))))
+            (asc-message-or-buffer command callback))
         (apply f args)))))
 
 
