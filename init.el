@@ -2745,7 +2745,7 @@ executes `*asc-callback*' on the buffer or kills it"
 (defun org-pull ()
   (interactive)
   (let ((default-directory org-directory))
-    (asc-message-or-buffer "git pull")
+    (vc-pull)
     (message "Pulling org repository...")))
 
 
