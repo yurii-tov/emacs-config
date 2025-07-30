@@ -2152,7 +2152,8 @@ The search string is queried first, followed by the directory."
 
 
 (defun asc-message-or-buffer (command &optional callback)
-  "Run `async-shell-command' with output to minibuffer or window"
+  "Runs `async-shell-command' with output to minibuffer or window.
+Useful for cases when we do interested in the output of a (possibly) long-running process"
   (let ((*asc-callback* `(lambda (buffer)
                            (let* ((output (ignore-errors
                                             (with-current-buffer buffer
@@ -2177,7 +2178,7 @@ The search string is queried first, followed by the directory."
 
 
 (defun run-asc (command working-directory)
-  "Run `async-shell-command' in specified work directory. Intended for long-running scenarios"
+  "Runs `async-shell-command' in specified work directory. Intended for long-running scenarios"
   (interactive (list (read-shell-command "Run async command: ") nil))
   (let* ((command-colorized (propertize (reverse (string-truncate-left
                                                   (reverse command) 20))
