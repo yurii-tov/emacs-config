@@ -2151,26 +2151,28 @@ The search string is queried first, followed by the directory."
 ;; convenient variants of the command
 
 
-(defun asc-message-or-buffer (command)
+(defun asc-message-or-buffer (command &optional callback)
   "Run `async-shell-command' with output to minibuffer or window"
-  (let ((*asc-callback* (lambda (buffer)
-                          (let* ((output (ignore-errors
-                                           (with-current-buffer buffer
-                                             (let ((s (if *asc-echo*
-                                                          (progn (goto-char (point-min))
-                                                                 (end-of-line)
-                                                                 (1+ (point)))
-                                                        (point-min))))
-                                               (string-trim
-                                                (buffer-substring s (point-max)))))))
-                                 (output (unless (string-empty-p output)
-                                           output)))
-                            (when (windowp (and output
-                                                (display-message-or-buffer
-                                                 output
-                                                 "*Shell Command Output*")))
-                              (message nil))
-                            (kill-buffer buffer)))))
+  (let ((*asc-callback* `(lambda (buffer)
+                           (let* ((output (ignore-errors
+                                            (with-current-buffer buffer
+                                              (let ((s (if *asc-echo*
+                                                           (progn (goto-char (point-min))
+                                                                  (end-of-line)
+                                                                  (1+ (point)))
+                                                         (point-min))))
+                                                (string-trim
+                                                 (buffer-substring s (point-max)))))))
+                                  (output (unless (string-empty-p output)
+                                            output)))
+                             (when (windowp (and output
+                                                 (display-message-or-buffer
+                                                  output
+                                                  "*Shell Command Output*")))
+                               (message nil))
+                             (kill-buffer buffer))
+                           (when ',callback
+                             (funcall ',callback)))))
     (async-shell-command command)))
 
 
@@ -3150,20 +3152,18 @@ Also grabs a selected region, if any."
    `(lambda (f &rest args)
       (if-let ((command (cdr (assoc (car (vc-deduce-fileset t))
                                     (assoc ',vc-command vc-command-overrides)))))
-          (asc-message-or-buffer command)
+          (asc-message-or-buffer command 'revert-buffer)
         (apply f args)))))
 
 
 (defun vc-log-pull ()
   (interactive)
-  (vc-pull)
-  (revert-buffer))
+  (vc-pull))
 
 
 (defun vc-log-push ()
   (interactive)
-  (vc-push)
-  (revert-buffer))
+  (vc-push))
 
 
 (with-eval-after-load 'log-view
