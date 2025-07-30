@@ -2263,7 +2263,7 @@ The search string is queried first, followed by the directory."
                                               (point-min))))
                                      (string-trim-right
                                       (buffer-substring s (point-max)))))))
-                       (status-message (format "\n[%s] `%s` at %s"
+                       (status-message (format "[%s] `%s` at %s"
                                                e
                                                (if ,*asc-echo* ,(car args) "?")
                                                ,default-directory)))
@@ -2271,7 +2271,7 @@ The search string is queried first, followed by the directory."
                       (display-message-or-buffer output ,*asc-result-buffer*)
                     (message
                      "%s%s"
-                     (or output "")
+                     (or (and output (concat output "\n")) "")
                      (propertize status-message
                                  'face (if (string-match "exited abnormally.*" e)
                                            'error 'shadow))))
