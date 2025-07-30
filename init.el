@@ -2169,7 +2169,7 @@ Useful for cases when we do interested in the output of a (possibly) long-runnin
                              (when (windowp (and output
                                                  (display-message-or-buffer
                                                   output
-                                                  "*Shell Command Output*")))
+                                                  shell-command-buffer-name)))
                                (message nil))
                              (kill-buffer buffer))
                            (when ',callback
