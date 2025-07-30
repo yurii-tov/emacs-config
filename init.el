@@ -2166,7 +2166,7 @@ The search string is queried first, followed by the directory."
 (advice-add 'async-shell-command :around 'asc-read-wd)
 
 
-;; enable restarting
+;; descriptive names
 
 
 (defun command-to-buffer-name (command)
@@ -2175,37 +2175,6 @@ The search string is queried first, followed by the directory."
             (if (> (length command) max-chars)
                 (format "%s…" (substring command 0 max-chars))
               command))))
-
-
-(defun asc-setup-restart (f &rest args)
-  (let* ((r (apply f args))
-         (b (if (windowp r)
-                (window-buffer r)
-              (process-buffer r)))
-         (command (car args)))
-    (prog1 r
-      (with-current-buffer b
-        (setq-local shell-last-command command)
-        (use-local-map (copy-keymap (current-local-map)))
-        (local-set-key
-         (kbd "C-c C-j")
-         (lambda () (interactive)
-           (let* ((command (read-shell-command "Command: " shell-last-command))
-                  (buffer (current-buffer))
-                  (name (command-to-buffer-name command)))
-             (when (get-buffer-process buffer)
-               (comint-kill-subjob)
-               (sit-for 1))
-             (comint-save-history)
-             (unless (string-equal command shell-last-command)
-               (rename-buffer name))
-             (async-shell-command command buffer))))))))
-
-
-(advice-add 'async-shell-command :around 'asc-setup-restart)
-
-
-;; descriptive names
 
 
 (defun asc-setup-buffer-name (f &rest args)
@@ -2265,6 +2234,9 @@ The search string is queried first, followed by the directory."
 ;; handle termination
 
 
+(defvar *asc-result-buffer* nil)
+
+
 (defun asc-handle-termination (f &rest args)
   "When the command finishes in background,
    reports its termination status and output.
@@ -2294,12 +2266,14 @@ The search string is queried first, followed by the directory."
                                                e
                                                (if ,*asc-echo* ,(car args) "?")
                                                ,default-directory)))
-                  (message
-                   "%s%s"
-                   (or output "")
-                   (propertize status-message
-                               'face (if (string-match "exited abnormally.*" e)
-                                         'error 'shadow)))
+                  (if (and output ,*asc-result-buffer*)
+                      (display-message-or-buffer output ,*asc-result-buffer*)
+                    (message
+                     "%s%s"
+                     (or output "")
+                     (propertize status-message
+                                 'face (if (string-match "exited abnormally.*" e)
+                                           'error 'shadow))))
                   (kill-buffer ,b))))))))))
 
 
