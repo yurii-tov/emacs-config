@@ -3152,22 +3152,15 @@ Also grabs a selected region, if any."
    `(lambda (f &rest args)
       (if-let ((command (cdr (assoc (car (vc-deduce-fileset t))
                                     (assoc ',vc-command vc-command-overrides)))))
-          (asc-message-or-buffer command 'revert-buffer)
+          (asc-message-or-buffer command
+                                 (lambda ()
+                                   (when (derived-mode-p 'log-view-mode)
+                                     (revert-buffer))))
         (apply f args)))))
 
 
-(defun vc-log-pull ()
-  (interactive)
-  (vc-pull))
-
-
-(defun vc-log-push ()
-  (interactive)
-  (vc-push))
-
-
 (with-eval-after-load 'log-view
-  (bind-keys '("+" vc-log-pull "P" vc-log-push) log-view-mode-map))
+  (bind-keys '("+" vc-pull "P" vc-push) log-view-mode-map))
 
 
 ;; ========
