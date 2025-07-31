@@ -3124,7 +3124,10 @@ Also grabs a selected region, if any."
    `(lambda (f &rest args)
       (if-let ((command (cdr (assoc (car (vc-deduce-fileset t))
                                     (assoc ',vc-command vc-command-overrides)))))
-          (progn (shell-command command)
+          (progn (message "Running %s"
+                          (propertize command
+                                      'face 'compilation-info))
+                 (shell-command command)
                  (when (derived-mode-p 'log-view-mode)
                    (revert-buffer)))
         (apply f args)))))
