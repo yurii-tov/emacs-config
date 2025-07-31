@@ -2146,7 +2146,7 @@ The search string is queried first, followed by the directory."
 
 
 (defun asc-at-directory (command working-directory)
-  (interactive (list (read-shell-command "Run async command: ") nil))
+  (interactive (list (read-shell-command "Async shell command: ") nil))
   (let* ((command-colorized (propertize (reverse (string-truncate-left
                                                   (reverse command) 20))
                                         'face 'compilation-info))
