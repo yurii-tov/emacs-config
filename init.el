@@ -956,18 +956,18 @@
   (let* ((files (mapcar #'file-relative-name
                         (dired-get-marked-files)))
          (args (mapcar (lambda (x) (format "'%s'" x)) files)))
-    (asc-message-or-buffer
+    (message "Calculating size of %s..."
+             (string-join (mapcar (lambda (x)
+                                    (propertize x 'face 'compilation-info))
+                                  files)
+                          ", "))
+    (shell-command
      (if tree-p
          (format "tree --du -h %s"
                  (string-join args  " "))
        (format "du -hs%s %s"
                (if (> (length args) 1) "c" "")
-               (string-join args  " "))))
-    (message "Calculating size of %s..."
-             (string-join (mapcar (lambda (x)
-                                    (propertize x 'face 'compilation-info))
-                                  files)
-                          ", "))))
+               (string-join args  " "))))))
 
 
 (defun dired-calculate-size-tree ()
@@ -2148,35 +2148,6 @@ The search string is queried first, followed by the directory."
 (setq async-shell-command-mode 'shell-mode)
 
 
-;; convenient variants of the command
-
-
-(defun asc-message-or-buffer (command &optional callback)
-  "Runs `async-shell-command' with output to minibuffer or window.
-Useful for cases when we do interested in the output of a (possibly) long-running process"
-  (let ((*asc-callback* `(lambda (buffer)
-                           (let* ((output (ignore-errors
-                                            (with-current-buffer buffer
-                                              (let ((s (if *asc-echo*
-                                                           (progn (goto-char (point-min))
-                                                                  (end-of-line)
-                                                                  (1+ (point)))
-                                                         (point-min))))
-                                                (string-trim
-                                                 (buffer-substring s (point-max)))))))
-                                  (output (unless (string-empty-p output)
-                                            output)))
-                             (when (windowp (and output
-                                                 (display-message-or-buffer
-                                                  output
-                                                  shell-command-buffer-name)))
-                               (message nil))
-                             (kill-buffer buffer))
-                           (when ',callback
-                             (funcall ',callback)))))
-    (async-shell-command command)))
-
-
 (defun asc-at-directory (command working-directory)
   (interactive (list (read-shell-command "Run async command: ") nil))
   (let* ((command-colorized (propertize (reverse (string-truncate-left
@@ -2188,7 +2159,7 @@ Useful for cases when we do interested in the output of a (possibly) long-runnin
     (async-shell-command command)))
 
 
-;; descriptive names
+;; descriptive buffer names
 
 
 (defun command-to-buffer-name (command)
@@ -2227,32 +2198,6 @@ Useful for cases when we do interested in the output of a (possibly) long-runnin
 (advice-add 'async-shell-command :filter-return 'asc-setup-histfile)
 
 
-;; output command/wd
-
-
-(defvar *asc-echo* t)
-
-
-(defun asc-echo-startup-info (f &rest args)
-  (let* ((r (apply f args))
-         (b (if (windowp r)
-                (window-buffer r)
-              (process-buffer r)))
-         (p (get-buffer-process b)))
-    (prog1 r
-      (when *asc-echo*
-        (with-current-buffer b
-          (let ((info (format "*** `%s` at %s ***\n" (car args) default-directory)))
-            (goto-char 1)
-            (comint-output-filter p info)
-            (set-marker comint-last-input-end (point))
-            (highlight-regexp (regexp-quote info) 'shadow)
-            (font-lock-update)))))))
-
-
-(advice-add 'async-shell-command :around 'asc-echo-startup-info)
-
-
 ;; handle termination
 
 
@@ -2278,7 +2223,7 @@ executes `*asc-callback*' on the buffer or kills it"
                          (propertize (format "[%s]" (string-trim-right e))
                                      'face (if (string-match "exited abnormally.*" e)
                                                'error 'shadow))
-                         (propertize (if ,*asc-echo* ,(car args) "?")
+                         (propertize ,(car args)
                                      'face 'compilation-info)
                          (propertize ,default-directory
                                      'face 'completions-annotations))
@@ -2307,11 +2252,10 @@ executes `*asc-callback*' on the buffer or kills it"
                       (window-buffer r)
                     (process-buffer r)))
           (switch-to-buffer b)
-          (when *asc-echo*
-            (message
-             "Running `%s` at %s"
-             (propertize (car args) 'face 'compilation-info)
-             (propertize default-directory 'face 'completions-annotations))))))))
+          (message
+           "Running `%s` at %s"
+           (propertize (car args) 'face 'compilation-info)
+           (propertize default-directory 'face 'completions-annotations)))))))
 
 
 (advice-add 'async-shell-command :around 'asc-handle-popup)
@@ -2737,15 +2681,15 @@ executes `*asc-callback*' on the buffer or kills it"
 (defun org-commit ()
   (interactive)
   (let ((default-directory org-directory))
-    (asc-message-or-buffer "git add * && git commit -m 'Updated' && git push")
-    (message "Pushing org repository...")))
+    (message "Pushing org repository...")
+    (shell-command "git add * && git commit -m 'Updated' && git push")))
 
 
 (defun org-pull ()
   (interactive)
   (let ((default-directory org-directory))
-    (vc-pull)
-    (message "Pulling org repository...")))
+    (message "Pulling org repository...")
+    (vc-pull)))
 
 
 ;; Export
@@ -3152,12 +3096,9 @@ Also grabs a selected region, if any."
    `(lambda (f &rest args)
       (if-let ((command (cdr (assoc (car (vc-deduce-fileset t))
                                     (assoc ',vc-command vc-command-overrides)))))
-          (let* ((buffer (buffer-name))
-                 (callback (when (derived-mode-p 'log-view-mode)
-                             `(lambda ()
-                                (with-current-buffer ,buffer
-                                  (revert-buffer))))))
-            (asc-message-or-buffer command callback))
+          (progn (shell-command command)
+                 (when (derived-mode-p 'log-view-mode)
+                   (revert-buffer)))
         (apply f args)))))
 
 
