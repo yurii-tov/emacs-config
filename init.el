@@ -825,9 +825,9 @@
   (let ((open-file
          (cond (system-type-is-windows
                 (lambda (f) (w32-shell-execute "open" (replace-regexp-in-string "/" "\\" f t t))))
-               ((string-equal system-type "darwin")
+               ((eq system-type 'darwin)
                 (lambda (f) (shell-command (concat "open " (shell-quote-argument f)))))
-               ((string-equal system-type "gnu/linux")
+               ((eq system-type 'gnu/linux)
                 (lambda (f) (let ((process-connection-type nil))
                               (start-process "" nil "xdg-open" f)))))))
     (ido-record-work-directory (file-name-directory file-name))
