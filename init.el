@@ -343,7 +343,7 @@
 
 
 (defun prevent-key-shadowing ()
-  (dolist (x '("M-s" "M-o" "M-q" "M-!"))
+  (dolist (x '("M-j" "M-s" "M-o" "M-q" "M-!"))
     (local-unset-key (kbd x))))
 
 
@@ -703,9 +703,6 @@
 
 
 (defun ibuffer-setup ()
-  ;; keybindings
-  (local-unset-key (kbd "M-o"))
-  (local-unset-key (kbd "M-j"))
   ;; autoupdate
   (ibuffer-auto-mode 1)
   ;; filter groups
