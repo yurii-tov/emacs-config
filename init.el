@@ -714,7 +714,7 @@
            ("Directory" (mode . dired-mode))
            ("Shell" (and (name . "^\\*\\([bz]?a?sh\\|powershell\\|.*-?shell\\|ssh-\\).*\\*")
                          (mode . shell-mode)))
-           ("Process" (mode . shell-mode))
+           ("Async shell command" (mode . shell-mode))
            ("Text" (and (not (name . "^\\*.*\\*$"))
                         (not (mode . org-mode))
                         (or (derived-mode . text-mode)
