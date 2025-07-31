@@ -2201,13 +2201,9 @@ The search string is queried first, followed by the directory."
 ;; handle termination
 
 
-(defvar *asc-callback* nil)
-
-
 (defun asc-handle-termination (f &rest args)
   "Handles command termination when in background:
-reports its termination status, than either
-executes `*asc-callback*' on the buffer or kills it"
+reports termination status, kills the buffer"
   (let (r b)
     (prog1 (setq r (apply f args))
       (setq b (if (windowp r)
@@ -2219,7 +2215,17 @@ executes `*asc-callback*' on the buffer or kills it"
            (get-process (get-buffer-process (current-buffer)))
            `(lambda (p e)
               (unless (member ,b (mapcar #'window-buffer (window-list)))
-                (message "%s `%s` at %s"
+                (message "%s%s `%s` at %s"
+                         (let ((output (ignore-errors
+                                         (with-current-buffer ,b
+                                           (string-trim
+                                            (buffer-substring
+                                             (progn (goto-char (point-min))
+                                                    (end-of-line)
+                                                    (1+ (point)))
+                                             (point-max)))))))
+                           (if (and output (not (string-empty-p output)))
+                               (concat output "\n") ""))
                          (propertize (format "[%s]" (string-trim-right e))
                                      'face (if (string-match "exited abnormally.*" e)
                                                'error 'shadow))
@@ -2227,9 +2233,7 @@ executes `*asc-callback*' on the buffer or kills it"
                                      'face 'compilation-info)
                          (propertize ,default-directory
                                      'face 'completions-annotations))
-                (if ',*asc-callback*
-                    (funcall ',*asc-callback* ,b)
-                  (kill-buffer ,b))))))))))
+                (kill-buffer ,b)))))))))
 
 
 (advice-add 'async-shell-command :around 'asc-handle-termination)
