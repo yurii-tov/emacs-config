@@ -2717,7 +2717,7 @@ reports termination status, kills the buffer"
   (interactive)
   (let ((default-directory org-directory))
     (message "Pulling org repository...")
-    (vc-pull)))
+    (shell-command "git pull")))
 
 
 ;; Export
