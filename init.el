@@ -2220,9 +2220,11 @@ reports termination status, kills the buffer"
                                          (with-current-buffer ,b
                                            (string-trim
                                             (buffer-substring
-                                             (progn (goto-char (point-min))
-                                                    (end-of-line)
-                                                    (1+ (point)))
+                                             (max (progn (goto-char (point-min))
+                                                         (end-of-line)
+                                                         (1+ (point)))
+                                                  (- (point-max)
+                                                     1024))
                                              (point-max)))))))
                            (if (and output (not (string-empty-p output)))
                                (concat output "\n") ""))
