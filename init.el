@@ -292,7 +292,7 @@
              "C-v" scroll-up-5-lines
              "M-v" scroll-down-5-lines
              "M-1" shell-command
-             "M-!" run-asc
+             "M-!" asc-at-directory
              "M-2" (lambda () (interactive)
                      (insert-brackets '("\"\"" "''" "``" "**" "<>") 134217778))
              "M-9" (lambda () (interactive) (wrap-with-text "(" ")" t))
@@ -2177,8 +2177,7 @@ Useful for cases when we do interested in the output of a (possibly) long-runnin
     (async-shell-command command)))
 
 
-(defun run-asc (command working-directory)
-  "Runs `async-shell-command' in specified work directory. Intended for long-running scenarios"
+(defun asc-at-directory (command working-directory)
   (interactive (list (read-shell-command "Run async command: ") nil))
   (let* ((command-colorized (propertize (reverse (string-truncate-left
                                                   (reverse command) 20))
