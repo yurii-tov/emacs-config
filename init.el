@@ -2198,6 +2198,28 @@ The search string is queried first, followed by the directory."
 (advice-add 'async-shell-command :filter-return 'asc-setup-histfile)
 
 
+;; output command/wd
+
+
+(defun asc-echo-startup-info (f &rest args)
+  (let* ((r (apply f args))
+         (b (if (windowp r)
+                (window-buffer r)
+              (process-buffer r)))
+         (p (get-buffer-process b)))
+    (prog1 r
+      (with-current-buffer b
+        (let ((info (format "*** `%s` at %s ***\n" (car args) default-directory)))
+          (goto-char 1)
+          (comint-output-filter p info)
+          (set-marker comint-last-input-end (point))
+          (highlight-regexp (regexp-quote info) 'shadow)
+          (font-lock-update))))))
+
+
+(advice-add 'async-shell-command :around 'asc-echo-startup-info)
+
+
 ;; handle termination
 
 
