@@ -44,7 +44,7 @@
 ;; 'are we on windows?'-shortcut
 
 
-(setq system-type-is-windows (string-equal system-type "windows-nt"))
+(setq system-type-is-windows (eq system-type 'windows-nt))
 
 
 ;; enable useful APIs
