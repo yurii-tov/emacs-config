@@ -3464,24 +3464,29 @@ Also grabs a selected region, if any."
 (defun prettier-pprint-buffer ()
   (interactive)
   (let* ((fname (buffer-file-name))
-         (default-directory "~"))
-    (unless (or fname (boundp 'prettier-parser))
-      (let ((parsers (string-split (with-temp-buffer
-                                     (insert (shell-command-to-string "prettier -h"))
-                                     (goto-char 1)
-                                     (buffer-substring (search-forward "--parser <")
-                                                       (1- (search-forward ">"))))
-                                   "|")))
-        (setq-local prettier-parser
-                    (or (cl-find (replace-regexp-in-string "-mode" ""
-                                                           (symbol-name major-mode))
-                                 parsers :test #'equal)
-                        (completing-read "Use parser: " parsers)))
-        (message "Formatting using '%s' parser" prettier-parser)))
-    (pretty-print-buffer (format "prettier --no-color %s"
-                                 (if fname
-                                     (format "--stdin-filepath %s" fname)
-                                   (format "--parser %s" prettier-parser))))))
+         (default-directory "~")
+         (mode (unless fname
+                 (replace-regexp-in-string
+                  "-mode" "" (symbol-name major-mode))))
+         (parser (unless fname
+                   (cl-find mode
+                            (setq-local
+                             prettier-parsers
+                             (or (bound-and-true-p prettier-parsers)
+                                 (string-split
+                                  (with-temp-buffer
+                                    (insert (shell-command-to-string "prettier -h"))
+                                    (goto-char 1)
+                                    (buffer-substring (search-forward "--parser <")
+                                                      (1- (search-forward ">"))))
+                                  "|")))
+                            :test #'equal))))
+    (pretty-print-buffer
+     (format
+      "prettier --no-color %s"
+      (cond (fname (format "--stdin-filepath %s" fname))
+            (parser (format "--parser %s" parser))
+            (t (format "--stdin-filepath file.%s" mode)))))))
 
 
 (when (executable-find "prettier")
