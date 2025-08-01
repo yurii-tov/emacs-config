@@ -2142,7 +2142,8 @@ The search string is queried first, followed by the directory."
 ;; ===================
 
 
-(setq async-shell-command-mode 'shell-mode)
+(setq async-shell-command-mode 'shell-mode
+      shell-command-prompt-show-cwd t)
 
 
 (defun asc-at-directory (command working-directory)
