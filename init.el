@@ -3454,7 +3454,8 @@ Also grabs a selected region, if any."
         (pattern (if current-prefix-arg
                      (read-string "Pattern: " "./*")
                    "./*")))
-    (message "Formatting '%s' with Prettier..." directory)
+    (message "Formatting '%s' with Prettier..."
+             (abbreviate-file-name directory))
     (shell-command (format "prettier --write --no-color --ignore-unknown %s" pattern))))
 
 
