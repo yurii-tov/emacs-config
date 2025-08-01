@@ -661,8 +661,10 @@
           `(:annotation-function
             (lambda (x)
               (with-current-buffer x
-                (concat " " (shrink-path (directory-file-name default-directory)
-                                         (- ,total-width (length x)))))))))
+                (concat " " (shrink-path
+                             (abbreviate-file-name
+                              (directory-file-name default-directory))
+                             (- ,total-width (length x)))))))))
     (apply f args)))
 
 
@@ -2207,7 +2209,9 @@ The search string is queried first, followed by the directory."
          (p (get-buffer-process b)))
     (prog1 r
       (with-current-buffer b
-        (let ((info (format "*** `%s` at %s ***\n" (car args) default-directory)))
+        (let ((info (format "*** `%s` at %s ***\n"
+                            (car args)
+                            (abbreviate-file-name default-directory))))
           (goto-char 1)
           (comint-output-filter p info)
           (set-marker comint-last-input-end (point))
@@ -2253,7 +2257,7 @@ reports termination status, kills the buffer"
                                                'error 'shadow))
                          (propertize ,(car args)
                                      'face 'compilation-info)
-                         (propertize ,default-directory
+                         (propertize ,(abbreviate-file-name default-directory)
                                      'face 'completions-annotations))
                 (kill-buffer ,b)))))))))
 
@@ -2281,7 +2285,8 @@ reports termination status, kills the buffer"
           (message
            "Running `%s` at %s"
            (propertize (car args) 'face 'compilation-info)
-           (propertize default-directory 'face 'completions-annotations)))))))
+           (propertize (abbreviate-file-name default-directory)
+                       'face 'completions-annotations)))))))
 
 
 (advice-add 'async-shell-command :around 'asc-handle-popup)
@@ -3171,7 +3176,7 @@ Also grabs a selected region, if any."
                                    '(("Cargo.toml" . "cargo fmt"))))))
     (cond (command (let ((msg (format "Running %s on %s..."
                                       (propertize command 'face 'compilation-info)
-                                      default-directory)))
+                                      (abbreviate-file-name default-directory))))
                      (message msg)
                      (when (zerop (shell-command command))
                        (message "%sDone" msg))))
@@ -3971,7 +3976,8 @@ Process .+
          (buffer (format "*python-server:%s*" socket)))
     (async-shell-command command buffer)
     (message "Serving %s at %s"
-             (propertize default-directory 'face 'bold-italic)
+             (propertize (abbreviate-file-name default-directory)
+                         'face 'bold-italic)
              (propertize socket 'face 'bold))))
 
 
