@@ -1540,11 +1540,13 @@ The search string is queried first, followed by the directory."
       (let ((shell-file-name "sh")
             (p (point))
             (b (current-buffer))
-            (s (buffer-substring (point-min) (point-max))))
+            (s (buffer-substring-no-properties
+                (point-min) (point-max))))
         (with-temp-buffer
           (insert s)
           (shell-command-on-region (point-min) (point-max) command nil t)
-          (let ((pprinted (buffer-substring (point-min) (point-max))))
+          (let ((pprinted (buffer-substring-no-properties
+                           (point-min) (point-max))))
             (with-current-buffer b
               (unless (string-equal pprinted s)
                 (erase-buffer)
