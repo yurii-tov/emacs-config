@@ -3417,8 +3417,8 @@ Also grabs a selected region, if any."
 ;; ========
 
 
-(defun prettier-write-options ()
-  "Write config into .prettierrc file unless it already exists."
+(defun prettier-create-config ()
+  "Write config into ~/.prettierrc file unless it already exists."
   (interactive)
   (let ((config-file (expand-file-name ".prettierrc"
                                        (if system-type-is-windows
@@ -3479,7 +3479,7 @@ Also grabs a selected region, if any."
 
 
 (when (executable-find "prettier")
-  (prettier-write-options)
+  (prettier-create-config)
   (dolist (m '(js-mode java-mode mhtml-mode html-mode css-mode))
     (add-to-list 'pretty-printers (cons m 'prettier-pprint-buffer))))
 
