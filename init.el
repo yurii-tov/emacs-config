@@ -2559,19 +2559,6 @@ reports termination status, kills the buffer"
 ]*#?[#$%>] *")
 
 
-;; Restarting
-
-
-(defun shell-restart ()
-  (interactive)
-  (comint-kill-subjob)
-  (sit-for 1)
-  (shell))
-
-
-(define-key shell-mode-map (kbd "C-c C-j") 'shell-restart)
-
-
 ;; Ssh sessions
 
 
