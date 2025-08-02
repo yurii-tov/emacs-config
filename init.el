@@ -3418,23 +3418,25 @@ Also grabs a selected region, if any."
 
 
 (defun prettier-write-options ()
+  "Write config into .prettierrc file unless it already exists."
   (interactive)
-  (let* ((config-file (expand-file-name ".prettierrc"
-                                        (if system-type-is-windows
-                                            (getenv "USERPROFILE")
-                                          "~")))
-         (java-plugin (expand-file-name
-                       "prettier-plugin-java/dist/index.js"
-                       (string-trim
-                        (shell-command-to-string "npm root -g"))))
-         (config `((printWidth . 100)
-                   (overrides . (((files . "*.java")
-                                  (options . ((tabWidth . 4)
-                                              (plugins . (,java-plugin))))))))))
-    (with-temp-buffer
-      (insert (json-encode config))
-      (json-pretty-print-buffer)
-      (write-file config-file))))
+  (let ((config-file (expand-file-name ".prettierrc"
+                                       (if system-type-is-windows
+                                           (getenv "USERPROFILE")
+                                         "~"))))
+    (unless (file-exists-p config-file)
+      (let* ((java-plugin (expand-file-name
+                           "prettier-plugin-java/dist/index.js"
+                           (string-trim
+                            (shell-command-to-string "npm root -g"))))
+             (config `((printWidth . 100)
+                       (overrides . (((files . "*.java")
+                                      (options . ((tabWidth . 4)
+                                                  (plugins . (,java-plugin))))))))))
+        (with-temp-buffer
+          (insert (json-encode config))
+          (json-pretty-print-buffer)
+          (write-file config-file))))))
 
 
 (defun prettier-pprint-folder (directory)
