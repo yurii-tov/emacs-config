@@ -3486,7 +3486,8 @@ Also grabs a selected region, if any."
     (pretty-print-buffer
      (format
       "prettier --no-color %s"
-      (cond (fname (format "--stdin-filepath %s" fname))
+      (cond (fname (format "--stdin-filepath file.%s"
+                           (file-name-extension fname)))
             (parser (format "--parser %s" parser))
             (t (format "--stdin-filepath file.%s" mode)))))))
 
