@@ -2141,6 +2141,19 @@ The search string is queried first, followed by the directory."
 (advice-add 'shell-command :around #'shell-command-dwim)
 
 
+;; Kill output buffer unless displayed
+
+
+(defun shell-command-cleanup (f &rest args)
+  (prog1 (apply f args)
+    (let ((b (get-buffer shell-command-buffer-name)))
+      (unless (member b (mapcar #'window-buffer (window-list)))
+        (kill-buffer b)))))
+
+
+(advice-add 'shell-command :around #'shell-command-cleanup)
+
+
 ;; ===================
 ;; async-shell-command
 ;; ===================
