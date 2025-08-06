@@ -148,6 +148,19 @@
              (setq shell-file-name "bash")))))
 
 
+;; Termux
+
+
+(when (eq system-type 'android)
+  (global-set-key (kbd "<wheel-down>") 'scroll-up-line)
+  (global-set-key (kbd "<wheel-up>") 'scroll-down-line)
+  (unless small-temporary-file-directory
+    (customize-set-variable
+     'small-temporary-file-directory
+     "/data/data/com.termux/cache/emacs/")
+    (make-directory small-temporary-file-directory t)))
+
+
 ;; ==================
 ;; Global keybindings
 ;; ==================
