@@ -151,7 +151,8 @@
 ;; Termux
 
 
-(when (eq system-type 'android)
+(when (and (eq system-type 'android)
+           (getenv "TERMUX_VERSION"))
   (global-set-key (kbd "<wheel-down>") 'scroll-up-line)
   (global-set-key (kbd "<wheel-up>") 'scroll-down-line)
   (unless small-temporary-file-directory
