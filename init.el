@@ -122,7 +122,7 @@
 (add-hook 'emacs-startup-hook 'load-site-settings)
 
 
-;; Enable unix'y things from MSYS2
+;; MSYS2 integration
 
 
 (when system-type-is-windows
