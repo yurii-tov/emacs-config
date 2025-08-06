@@ -3,7 +3,7 @@
 ;; ======
 
 
-;; third-party packages
+;; Third-party packages
 
 
 (require 'package)
@@ -41,20 +41,20 @@
       (package-install p))))
 
 
-;; 'are we on windows?'-shortcut
+;; Condition for Windows-specific code
 
 
 (setq system-type-is-windows (eq system-type 'windows-nt))
 
 
-;; enable useful APIs
+;; Enable useful APIs
 
 
 (dolist (lib '(cl-lib subr-x compile ffap))
   (require lib))
 
 
-;; encoding
+;; Text encoding
 
 
 (reset-language-environment)
@@ -80,20 +80,20 @@
     (advice-add x :around 'windows-fix-args-encoding)))
 
 
-;; monday-based weeks in calendar
+;; Monday-based weeks in calendar
 
 
 (setq calendar-week-start-day 1)
 
 
-;; shutdown
+;; Shutdown
 
 
 (setq confirm-kill-processes nil
       confirm-kill-emacs 'y-or-n-p)
 
 
-;; variables persistence across sessions (using savehist-mode)
+;; Variables persistence across sessions (using savehist-mode)
 
 
 (setq savehist-additional-variables '(kill-ring
@@ -105,7 +105,7 @@
 (add-hook 'emacs-startup-hook 'savehist-mode)
 
 
-;; site-specific customizations
+;; Site-specific customizations
 
 
 (progn (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
@@ -122,7 +122,7 @@
 (add-hook 'emacs-startup-hook 'load-site-settings)
 
 
-;; enable unix'y things from MSYS2
+;; Enable unix'y things from MSYS2
 
 
 (when system-type-is-windows
@@ -153,7 +153,7 @@
 ;; ==================
 
 
-;; unset all C-digit / M-digit combos
+;; Unset all C-digit / M-digit combos
 
 
 (dotimes (n 10)
@@ -161,7 +161,7 @@
   (global-unset-key (kbd (format "M-%d" n))))
 
 
-;; dealing with keymap definitions boilerplate
+;; Dealing with keymap definitions boilerplate
 
 
 (defun bind-keys (keybindings &optional keymap)
@@ -180,13 +180,13 @@
           (bind-keys ',bindings ',name)))
 
 
-;; more user-friendly hints
+;; More user-friendly hints
 
 
 (which-key-mode)
 
 
-;; search
+;; Search
 
 
 (bind-keys `("f" find-dired
@@ -198,7 +198,7 @@
            search-map)
 
 
-;; transforming text
+;; Transforming text
 
 
 (define-custom-keymap text-transform-map "M-c"
@@ -217,7 +217,7 @@
                       "w" wrap-with-text)
 
 
-;; inserting things
+;; Inserting things
 
 
 (define-custom-keymap insert-map "C-x i"
@@ -229,7 +229,7 @@
                       "i" insert-char)
 
 
-;; diff
+;; Diff
 
 
 (define-custom-keymap diff-map "C-x d"
@@ -238,7 +238,7 @@
                       "d" diff-current-buffer)
 
 
-;; kmacro
+;; Kmacro
 
 
 (define-custom-keymap kmacro-map "C-x C-u"
@@ -267,7 +267,7 @@
                       "x" kmacro-to-register)
 
 
-;; project
+;; Project
 
 
 (bind-keys '("SPC" project-dired
@@ -277,7 +277,7 @@
            project-prefix-map)
 
 
-;; misc
+;; Misc
 
 
 (bind-keys '("M-o" other-window
@@ -339,7 +339,7 @@
            global-map)
 
 
-;; Preventing global keybindings shadowing by major modes
+;; Prevent global keybindings shadowing
 
 
 (defun prevent-key-shadowing ()
@@ -355,7 +355,7 @@
 ;; =============
 
 
-;; ligatures
+;; Ligatures
 
 
 (progn
@@ -398,13 +398,13 @@
   (global-ligature-mode t))
 
 
-;; spacious-padding
+;; Spacious-padding
 
 
 (spacious-padding-mode 1)
 
 
-;; remove noisy stuff
+;; Remove noisy stuff
 
 
 (progn (setq inhibit-startup-message t
@@ -422,7 +422,7 @@
        (menu-bar-mode -1))
 
 
-;; better "welcome" message
+;; Better "welcome" message
 
 
 (defun welcome ()
@@ -438,7 +438,7 @@
 (add-hook 'emacs-startup-hook 'welcome)
 
 
-;; highlight current line
+;; Highlight current line
 
 
 (global-hl-line-mode)
@@ -454,7 +454,7 @@
   (add-hook x 'disable-hl-line-mode))
 
 
-;; enumerate lines
+;; Enumerate lines
 
 
 (dolist (x '(prog-mode-hook
@@ -464,7 +464,7 @@
   (add-hook x 'display-line-numbers-mode))
 
 
-;; fonts
+;; Fonts
 
 
 (defun font-available-p (font-name)
@@ -487,7 +487,7 @@
   (face-remap-add-relative 'default :family font))
 
 
-;; enable emojis on Windows
+;; Enable emojis on Windows
 
 
 (when (and system-type-is-windows
@@ -495,7 +495,7 @@
   (set-fontset-font t 'unicode (font-spec :family "Segoe UI Emoji") nil 'append))
 
 
-;; color themes
+;; Color themes
 
 
 (advice-add 'load-theme
@@ -511,7 +511,7 @@
               (apply f args)))
 
 
-;; better modeline
+;; Better modeline
 
 
 (defun modeline-selection-stats ()
@@ -557,7 +557,7 @@
                 (:eval (when (use-region-p) (format " %s" (modeline-selection-stats))))))
 
 
-;; slower scrolling
+;; Slower scrolling
 
 
 (defun scroll-down-5-lines ()
@@ -570,7 +570,7 @@
   (scroll-up-command 5))
 
 
-;; word wrap in modes which doesn't wrap by default
+;; Word wrap in modes which doesn't wrap by default
 
 
 (dolist (x '(man-common-hook
@@ -584,7 +584,7 @@
 ;; =======
 
 
-;; fix kill-buffer-and-window "single window" case
+;; Fix kill-buffer-and-window "single window" case
 
 
 (defun kill-buffer-and-window-fix (f &rest args)
@@ -596,7 +596,7 @@
 (advice-add 'kill-buffer-and-window :around #'kill-buffer-and-window-fix)
 
 
-;; remove confirmation when creating new buffer
+;; Remove confirmation when creating new buffer
 
 
 (setq confirm-nonexistent-file-or-buffer nil)
@@ -628,7 +628,7 @@
                 (apply f args))))
 
 
-;; better unique buffer names
+;; Better unique buffer names
 
 
 (require 'uniquify)
@@ -637,7 +637,7 @@
 (setq uniquify-buffer-name-style 'forward)
 
 
-;; displaying working directory in buffer list
+;; Displaying working directory in buffer list
 
 
 (defun shrink-path (path bound)
@@ -705,9 +705,7 @@
 
 
 (defun ibuffer-setup ()
-  ;; autoupdate
   (ibuffer-auto-mode 1)
-  ;; filter groups
   (setq ibuffer-saved-filter-groups
         '(("default"
            ("Directory" (mode . dired-mode))
@@ -789,7 +787,7 @@
 ;; =====
 
 
-;; no backups
+;; No backups
 
 
 (setq auto-save-default nil
@@ -797,7 +795,7 @@
       auto-save-list-file-name nil)
 
 
-;; reverting file-related buffers
+;; Reverting file-related buffers
 
 
 (global-auto-revert-mode t)
@@ -1013,7 +1011,7 @@
 (add-hook 'dired-mode-hook 'dired-disable-ffap)
 
 
-;; hiding details
+;; Hiding details
 
 
 (defvar *dired-hide-details-p* t)
@@ -1036,7 +1034,7 @@
   (advice-add x :around 'dired-propogate-hide-details))
 
 
-;; force scp usage when copying files with dired
+;; Force scp usage when copying files with dired
 
 
 (defun dired-copy-force-scp (f from to &rest args)
@@ -1048,7 +1046,7 @@
 (advice-add 'dired-copy-file :around #'dired-copy-force-scp)
 
 
-;; record IDO work directory when open files in Dired
+;; Record IDO work directory when open files in Dired
 
 
 (defun dired-record-ido-wd (f &rest args)
@@ -1192,7 +1190,7 @@ The search string is queried first, followed by the directory."
 (require 'rect)
 
 
-;; indentation
+;; Indentation
 
 
 (setq-default indent-tabs-mode nil)
@@ -1203,19 +1201,19 @@ The search string is queried first, followed by the directory."
               css-indent-offset 2)
 
 
-;; overwrite selected text
+;; Overwrite selected text
 
 
 (delete-selection-mode t)
 
 
-;; more informative char inspector
+;; More informative char inspector
 
 
 (setq what-cursor-show-names t)
 
 
-;; duplicating text
+;; Duplicating text
 
 
 (setq duplicate-line-final-position -1)
@@ -1477,7 +1475,7 @@ The search string is queried first, followed by the directory."
   (advice-add x :around #'fix-flush-lines))
 
 
-;; making text nicely formatted, like in books
+;; Making text nicely formatted, like in books
 
 
 (setq-default fill-column 80)
@@ -1500,7 +1498,7 @@ The search string is queried first, followed by the directory."
            rectangle-mark-mode-map)
 
 
-;; enable hex mode on regions
+;; Enable hex mode on regions
 
 
 (defun wrap-hexl-mode (f &rest args)
@@ -1515,7 +1513,7 @@ The search string is queried first, followed by the directory."
 (advice-add 'hexl-mode :around 'wrap-hexl-mode)
 
 
-;; reindenting / cleaning up
+;; Reindenting / cleaning up
 
 
 (defun reindent-region (start end)
@@ -1596,7 +1594,7 @@ The search string is queried first, followed by the directory."
 ;; =====================
 
 
-;; fido-vertical-mode - default completion framework
+;; Fido-vertical-mode - default completion framework
 
 
 (fido-vertical-mode)
@@ -1880,7 +1878,6 @@ The search string is queried first, followed by the directory."
                (not (and (file-remote-p dir) (not (file-remote-p dir nil t))))
                (file-directory-p dir)
                (or (not must-match)
-                   ;; TODO. check for nonreadable and too-big.
                    (ido-set-matches-1
                     (if (eq ido-cur-item 'file)
                         (ido-make-file-list-1 dir)
@@ -2125,7 +2122,7 @@ The search string is queried first, followed by the directory."
 (advice-add 'read-shell-command :around #'read-string-shell-command)
 
 
-;; shell-command now operates on selected region
+;; Enable region piping into the command
 
 
 (defun shell-command-dwim (f &rest args)
@@ -2161,7 +2158,7 @@ The search string is queried first, followed by the directory."
     (async-shell-command command)))
 
 
-;; descriptive buffer names
+;; Descriptive buffer names
 
 
 (defun command-to-buffer-name (command)
@@ -2182,7 +2179,7 @@ The search string is queried first, followed by the directory."
 (advice-add 'async-shell-command :around 'asc-setup-buffer-name)
 
 
-;; histfile
+;; Histfile
 
 
 (defun asc-setup-histfile (r)
@@ -2200,7 +2197,7 @@ The search string is queried first, followed by the directory."
 (advice-add 'async-shell-command :filter-return 'asc-setup-histfile)
 
 
-;; output command/wd
+;; Output command/wd
 
 
 (defun asc-echo-startup-info (f &rest args)
@@ -2224,7 +2221,7 @@ The search string is queried first, followed by the directory."
 (advice-add 'async-shell-command :around 'asc-echo-startup-info)
 
 
-;; handle termination
+;; Handle termination
 
 
 (defun asc-handle-termination (f &rest args)
@@ -2267,8 +2264,8 @@ reports termination status, kills the buffer"
 (advice-add 'async-shell-command :around 'asc-handle-termination)
 
 
-;; don't display output buffer, but promote it in switch-to-buffer menu
-;; add some useful output to *Messages*
+;; Don't display output buffer, but promote it in switch-to-buffer menu
+;; Add some useful output to *Messages*
 
 
 (defvar *asc-popup* nil)
@@ -2299,7 +2296,7 @@ reports termination status, kills the buffer"
 ;; ======
 
 
-;; use vertical tab (b) as separator in history file
+;; Use vertical tab (b) as separator in history file
 ;; to enable correct saving of multiline commands
 
 
@@ -2308,7 +2305,7 @@ reports termination status, kills the buffer"
 ")
 
 
-;; persistent history
+;; Persistent history
 
 
 (setq comint-input-ring-size 1500)
@@ -2392,13 +2389,13 @@ reports termination status, kills the buffer"
           'comint-save-history-all)
 
 
-;; no scrolling to bottom when submitting commands
+;; No scrolling to bottom when submitting commands
 
 
 (setq-default comint-scroll-show-maximum-output nil)
 
 
-;; limit output size
+;; Limit output size
 
 
 (setq-default comint-buffer-maximum-size (expt 2 13))
@@ -2408,13 +2405,13 @@ reports termination status, kills the buffer"
              'comint-truncate-buffer)
 
 
-;; add useful keybindings
+;; Add useful keybindings
 
 
 (bind-keys '("C-c C-k" comint-kill-subjob) comint-mode-map)
 
 
-;; browsing comint-input-ring
+;; Browsing comint-input-ring
 
 
 (defun comint-browse-command-history ()
@@ -2766,7 +2763,7 @@ reports termination status, kills the buffer"
 (advice-add 'org-agenda :around 'try-switch-to-agenda)
 
 
-;; babel
+;; Babel
 
 
 (setq org-confirm-babel-evaluate nil
@@ -2782,7 +2779,7 @@ reports termination status, kills the buffer"
    (js . t)))
 
 
-;; cartesian product from org tables
+;; Cartesian product from org tables
 
 
 (defun org-table-cartesian-product ()
@@ -2817,7 +2814,7 @@ Example input:
       (goto-char (1- (org-table-end))))))
 
 
-;; permutations of data from org table
+;; Permutations of data from org table
 
 
 (defun org-table-permutations ()
@@ -2840,7 +2837,7 @@ Example input:
       (goto-char (1- (org-table-end))))))
 
 
-;; allpairs integration
+;; Allpairs integration
 
 
 (defun org-table-allpairs ()
@@ -3640,7 +3637,7 @@ Also grabs a selected region, if any."
 (advice-add 'sql-connect :around 'sql-handle-read-db-path)
 
 
-;; initial setup
+;; Initial setup
 
 
 (defun sql-perform-initial-commands ()
@@ -3658,7 +3655,7 @@ Also grabs a selected region, if any."
 (add-hook 'sql-login-hook 'sql-perform-initial-commands)
 
 
-;; reconnect
+;; Reconnect
 
 
 (defun sql-setup-reconnect ()
@@ -3739,7 +3736,7 @@ Process .+
 (define-key sql-interactive-mode-map (kbd "C-c C-j") 'sql-reconnect)
 
 
-;; dealing with remote dbs
+;; Dealing with remote dbs
 
 
 (defun sql-handle-remote-db (f product params &rest args)
@@ -3791,7 +3788,7 @@ Process .+
 (advice-add 'sql-comint :around 'sql-handle-remote-db)
 
 
-;; output preprocessing
+;; Output preprocessing
 
 
 (add-hook 'sql-login-hook 'orgtbl-mode)
@@ -3902,13 +3899,13 @@ Process .+
           'sql-setup-output-preprocessing)
 
 
-;; alternative table view (for too wide tables)
+;; Alternative table view (for too wide tables)
 
 
 (define-key sql-interactive-mode-map (kbd "C-c C-p") 'org-table-to-list)
 
 
-;; interbase
+;; Interbase
 
 
 (sql-set-product-feature 'interbase :init-commands '("set list on;"))
@@ -3939,7 +3936,7 @@ Process .+
 (setq sql-interbase-login-params '(user password (database :file)))
 
 
-;; sqlite
+;; Sqlite
 
 
 (add-to-list 'sql-sqlite-options "-interactive")
@@ -4118,7 +4115,7 @@ Process .+
 ;; ============
 
 
-;; eww
+;; EWW
 
 
 (with-eval-after-load 'eww
