@@ -335,7 +335,7 @@
              "C-x C-." recompile
              "C-h C-h" describe-symbol
              "C-h h" describe-symbol
-             "C-h RET" man
+             "C-h r" man
              "C-c j" cider-start-map
              "C-c k" sql-connect
              "C-c i" ielm
