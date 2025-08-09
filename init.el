@@ -463,7 +463,8 @@
 
 (dolist (x '(comint-mode-hook
              vc-git-log-edit-mode-hook
-             cider-repl-mode-hook))
+             cider-repl-mode-hook
+             slime-repl-mode-hook))
   (add-hook x 'disable-hl-line-mode))
 
 
