@@ -335,6 +335,7 @@
              "C-x C-l" gptel-send
              "C-h C-h" describe-symbol
              "C-h h" describe-symbol
+             "C-h RET" man
              "C-c j" cider-start-map
              "C-c k" sql-connect
              "C-c l" eglot
@@ -348,8 +349,7 @@
              "C-c a" org-agenda
              "C-c o" org-commit
              "C-c O" org-pull
-             "C-c w" tail
-             "C-c m" man)
+             "C-c w" tail)
            global-map)
 
 
