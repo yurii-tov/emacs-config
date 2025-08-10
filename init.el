@@ -1947,8 +1947,7 @@ The search string is queried first, followed by the directory."
 
 (setq hippie-expand-try-functions-list
       ;; try expand to...
-      '(yas-hippie-try-expand ;; snippet
-        try-expand-dabbrev ;; thing from current buffer
+      '(try-expand-dabbrev ;; thing from current buffer
         try-expand-line
         try-expand-list
         try-complete-file-name-partially ;; filename
@@ -1967,18 +1966,6 @@ The search string is queried first, followed by the directory."
 
 
 (yas-global-mode 1)
-
-
-(bind-keys '("C-j" yas-next-field
-             "C-M-j" yas-prev-field
-             "TAB" nil
-             "<tab>" nil)
-           yas-keymap)
-
-
-(bind-keys '("TAB" nil
-             "<tab>" nil)
-           yas-minor-mode-map)
 
 
 ;; =======
@@ -2005,6 +1992,26 @@ The search string is queried first, followed by the directory."
                                  company-dabbrev))
 
 
+;; Improve TAB key behavior in TNG mode
+
+
+(defun company-fix-tng-tab (f &rest args)
+  "Improvements for TAB key in TNG mode:
+- Yasnippet snippets expand immediately
+(therefore conflict 'company vs yasnippet' is resolved)
+- When having sole candidate, completes immediately, with Yasnippet expansion"
+  (cond (company-selection (apply f args))
+        ((yas-expand) (company-abort))
+        ((= 1 (length company-candidates))
+         (company-select-first)
+         (company-complete)
+         (yas-expand))
+        (t (apply f args))))
+
+
+(advice-add 'company-select-next :around 'company-fix-tng-tab)
+
+
 ;; Keybindings
 
 
@@ -2019,6 +2026,8 @@ The search string is queried first, followed by the directory."
                    company-search-map))
     (bind-keys '("M-p" nil
                  "M-n" nil
+                 "C-p" nil
+                 "C-n" nil
                  "M-SPC" company-other-backend
                  "SPC" company-smart-complete)
                x)))
@@ -2047,24 +2056,6 @@ The search string is queried first, followed by the directory."
                       (s (buffer-substring (max 1 l) pp)))
                  (equal m s))))
          (call-interactively 'self-insert-command))))
-
-
-;; Force completion by TAB
-
-
-(defun company-setup-tab-completion ()
-  (let ((m (current-local-map))
-        (b (key-binding (kbd "TAB"))))
-    (unless (or (not m)
-                buffer-read-only
-                (member b '(org-cycle next-completion)))
-      (use-local-map (copy-keymap m))
-      (local-set-key
-       (kbd "TAB")
-       'company-indent-or-complete-common))))
-
-
-(add-hook 'company-mode-hook 'company-setup-tab-completion)
 
 
 ;; Merge company-dabbrev-code with company-keywords
@@ -2419,10 +2410,17 @@ reports termination status, kills the buffer"
              'comint-truncate-buffer)
 
 
-;; Add useful keybindings
+;; Keybindings
 
 
-(bind-keys '("C-c C-k" comint-kill-subjob) comint-mode-map)
+(bind-keys '("C-c C-k" comint-kill-subjob
+             "<tab>" company-indent-or-complete-common
+             "M-r" comint-browse-command-history
+             "M-p" comint-previous-input-prefixed
+             "M-n" comint-next-input-prefixed
+             "<up>" comint-previous-input-prefixed
+             "<down>" comint-next-input-prefixed)
+           comint-mode-map)
 
 
 ;; Browsing comint-input-ring
@@ -2443,9 +2441,6 @@ reports termination status, kills the buffer"
     (comint-delete-input)
     (insert command)
     (comint-send-input)))
-
-
-(bind-keys '("M-r" comint-browse-command-history) comint-mode-map)
 
 
 ;; Use prefix-style matching when scrolling through history
@@ -2469,13 +2464,6 @@ reports termination status, kills the buffer"
 (defun comint-next-input-prefixed ()
   (interactive)
   (comint-previous-input-prefixed -1))
-
-
-(bind-keys '("M-p" comint-previous-input-prefixed
-             "M-n" comint-next-input-prefixed
-             "<up>" comint-previous-input-prefixed
-             "<down>" comint-next-input-prefixed)
-           comint-mode-map)
 
 
 ;; Completion
@@ -3092,7 +3080,8 @@ Also grabs a selected region, if any."
     (apply f args)))
 
 
-(dolist (x '(company-indent-or-complete-common
+(dolist (x '(indent-for-tab-command
+             company-indent-or-complete-common
              org-cycle))
   (advice-add x :around 'gptel-tab-rewrite))
 
