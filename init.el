@@ -2003,9 +2003,13 @@ The search string is queried first, followed by the directory."
   (cond (company-selection (apply f args))
         ((yas-expand) (company-abort))
         ((= 1 (length company-candidates))
-         (company-select-first)
-         (company-complete)
-         (yas-expand))
+         (let ((snippet-p (eq (get-text-property
+                               0 'company-backend
+                               (car company-candidates))
+                              'company-yasnippet)))
+           (company-select-first)
+           (company-complete)
+           (when snippet-p (yas-expand))))
         (t (apply f args))))
 
 
