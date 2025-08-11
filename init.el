@@ -1347,10 +1347,17 @@ The search string is queried first, followed by the directory."
   "Wraps current word (or region) with given bracket-like strings
    (e.g. brackets/quotes/apostrophes/parens etc.).
    When rectangle selection is in effect, applies wrapping on each *line* of that selection"
-  (interactive (let* ((s (read-string
-                          (format "Wrap with arbitrary brackets (use %s char if needed): "
-                                  (propertize "?" 'face 'font-lock-builtin-face))
-                          nil nil))
+  (interactive (let* ((default-item (car minibuffer-history))
+                      (s (read-string
+                          (format "Wrap with arbitrary brackets (use %s char if needed)%s: "
+                                  (propertize "?" 'face 'font-lock-builtin-face)
+                                  (if default-item
+                                      (format " (default %s)"
+                                              (propertize default-item
+                                                          'face
+                                                          'font-lock-builtin-face))
+                                    ""))
+                          nil nil (car minibuffer-history)))
                       (bs (split-string s "\\?")))
                  (if (> (length bs) 1) bs
                    (list (substring s 0 (/ (length s) 2))
