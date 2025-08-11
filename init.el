@@ -308,6 +308,7 @@
              "M-1" shell-command
              "M-!" asc-at-directory
              "M-2" enclose-text-cycle-m2
+             "M-3" enclose-text-cycle-m3
              "M-9" (lambda () (interactive) (enclose-text "(" ")" t))
              "M-0" (lambda () (interactive) (enclose-text "[" "]" t))
              "M-)" (lambda () (interactive) (enclose-text "{" "}" t))
@@ -1438,11 +1439,16 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (defun enclose-text-cycle-m2 ()
-  "Cycle through quotes/asterisks/angle brackets using M-2 keybinding"
+  "Cycle through quotes/angle brackets using M-2 keybinding"
   (interactive)
-  (enclose-text-cycle '("\"\"" "''" "``"
-                        "**" "<>")
-                      134217778))
+  (enclose-text-cycle '("\"\"" "''" "``" "<>") 134217778))
+
+
+(defun enclose-text-cycle-m3 ()
+  "Cycle through more brackets using M-3 keybinding"
+  (interactive)
+  (enclose-text-cycle '("**" "==" "//" "~~")
+                      134217779))
 
 
 (defun move-line (direction)
@@ -2766,17 +2772,6 @@ reports termination status, kills the buffer"
 
 
 (define-key org-mode-map (kbd "M-p") 'org-insert-structure-template)
-
-
-;; Styling with `enclose-text-cycle'
-
-
-(defun org-markup-cycle-m3 ()
-  (interactive)
-  (enclose-text-cycle '("==" "~~" "//") 134217779))
-
-
-(define-key org-mode-map (kbd "M-3") 'org-markup-cycle-m3)
 
 
 ;; Agenda
