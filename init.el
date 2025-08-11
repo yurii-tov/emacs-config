@@ -228,7 +228,7 @@
                       "i" invert-chars
                       "e" enumerate-lines
                       "r" reverse-lines
-                      "w" wrap-with-text)
+                      "w" enclose-text)
 
 
 ;; Inserting things
@@ -307,11 +307,10 @@
              "M-v" scroll-down-5-lines
              "M-1" shell-command
              "M-!" asc-at-directory
-             "M-2" (lambda () (interactive)
-                     (insert-brackets '("\"\"" "''" "``" "**" "<>") 134217778))
-             "M-9" (lambda () (interactive) (wrap-with-text "(" ")" t))
-             "M-0" (lambda () (interactive) (wrap-with-text "[" "]" t))
-             "M-)" (lambda () (interactive) (wrap-with-text "{" "}" t))
+             "M-2" enclose-text-cycle-m2
+             "M-9" (lambda () (interactive) (enclose-text "(" ")" t))
+             "M-0" (lambda () (interactive) (enclose-text "[" "]" t))
+             "M-)" (lambda () (interactive) (enclose-text "{" "}" t))
              "M-i" pretty-print-buffer
              "M-u" force-revert-buffer
              "M-j" switch-to-buffer
@@ -1343,10 +1342,9 @@ The search string is queried first, followed by the directory."
     (insert text)))
 
 
-(defun wrap-with-text (b1 b2 &optional lisp-style-p)
-  "Wraps current word (or region) with given bracket-like strings
-   (e.g. brackets/quotes/apostrophes/parens etc.).
-   When rectangle selection is in effect, applies wrapping on each *line* of that selection"
+(defun enclose-text (b1 b2 &optional lisp-style-p)
+  "Encloses current word (or region) into provided \"bracket-like\" strings
+   Also operates on rectangular selections, applying the enclosing for each line"
   (interactive (let* ((default-item (car minibuffer-history))
                       (s (read-string
                           (format "Wrap with arbitrary brackets (use %s char if needed)%s: "
@@ -1412,11 +1410,14 @@ The search string is queried first, followed by the directory."
     (list b1-pos b2-pos)))
 
 
-(defun insert-brackets (brackets keybinding)
+(defun enclose-text-cycle (brackets keybinding)
+  "Encloses current word/region into brackets from provided BRACKETS set,
+with ability to \"cycle\" different variants with provided KEYBINDING
+(as numeric value, can be obtained e.g. from (`read-key') invocation)"
   (when (not rectangle-mark-mode)
-    (let* ((positions (wrap-with-text (substring (car brackets) 0 1)
-                                      (substring (car brackets) 1 2)
-                                      t))
+    (let* ((positions (enclose-text (substring (car brackets) 0 1)
+                                    (substring (car brackets) 1 2)
+                                    t))
            (p1 (car positions))
            (p2 (cadr positions))
            (i 0)
@@ -1434,6 +1435,14 @@ The search string is queried first, followed by the directory."
             (insert b2))
           (forward-char)))
       (push key unread-command-events))))
+
+
+(defun enclose-text-cycle-m2 ()
+  "Cycle through quotes/asterisks/angle brackets using M-2 keybinding"
+  (interactive)
+  (enclose-text-cycle '("\"\"" "''" "``"
+                        "**" "<>")
+                      134217778))
 
 
 (defun move-line (direction)
@@ -1514,7 +1523,7 @@ The search string is queried first, followed by the directory."
   (define-key rectangle-mark-mode-map (kbd (char-to-string x)) 'ignore))
 
 
-(bind-keys '("w" wrap-with-text
+(bind-keys '("w" enclose-text
              "SPC" string-rectangle)
            rectangle-mark-mode-map)
 
@@ -2757,6 +2766,17 @@ reports termination status, kills the buffer"
 
 
 (define-key org-mode-map (kbd "M-p") 'org-insert-structure-template)
+
+
+;; Styling with `enclose-text-cycle'
+
+
+(defun org-markup-cycle-m3 ()
+  (interactive)
+  (enclose-text-cycle '("==" "~~" "//") 134217779))
+
+
+(define-key org-mode-map (kbd "M-3") 'org-markup-cycle-m3)
 
 
 ;; Agenda
