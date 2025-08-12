@@ -297,7 +297,8 @@
 (bind-keys '("C-h C-h" describe-symbol
              "C-h h" describe-symbol
              "C-h r" man
-             "C-h s" yas-describe-tables)
+             "C-h s" yas-describe-tables
+             "C-h f" list-faces-display)
            global-map)
 
 
