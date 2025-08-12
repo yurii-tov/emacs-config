@@ -1207,10 +1207,8 @@ The search string is queried first, followed by the directory."
 ;; Indentation
 
 
-(setq-default indent-tabs-mode nil)
-
-
-(setq-default sgml-basic-offset 2
+(setq-default indent-tabs-mode nil
+              sgml-basic-offset 2
               js-indent-level 2
               css-indent-offset 2)
 
@@ -1343,6 +1341,46 @@ The search string is queried first, followed by the directory."
     (insert text)))
 
 
+(defun kill-line-to-indentation ()
+  "Kills line, leaving cursor at indentation.
+   In case of empty line, kills whole line"
+  (interactive)
+  (back-to-indentation)
+  (when (string-match-p "^[     ]*$"
+                        (buffer-substring
+                         (line-beginning-position)
+                         (line-end-position)))
+    (beginning-of-line))
+  (kill-line))
+
+
+(defun toggle-char-case ()
+  (interactive)
+  (save-excursion
+    (if (char-uppercase-p (following-char))
+        (downcase-region (point) (1+ (point)))
+      (upcase-region (point) (1+ (point))))))
+
+
+(defun move-line (direction)
+  (cond ((eq direction 'up)
+         (beginning-of-line)
+         (transpose-lines 1)
+         (dotimes (i 2)
+           (previous-line 1)
+           (beginning-of-line)))
+        ((eq direction 'down)
+         (end-of-line)
+         (next-line)
+         (move-line 'up)
+         (end-of-line)
+         (next-line)
+         (beginning-of-line))))
+
+
+;; Enclose text with brackets (and similar things)
+
+
 (defun enclose-text (b1 b2 &optional lisp-style-p)
   "Encloses current word (or region) into provided \"bracket-like\" strings
    Also operates on rectangular selections, applying the enclosing for each line"
@@ -1449,43 +1487,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   (interactive)
   (enclose-text-cycle '("**" "==" "//" "~~")
                       134217779))
-
-
-(defun move-line (direction)
-  (cond ((eq direction 'up)
-         (beginning-of-line)
-         (transpose-lines 1)
-         (dotimes (i 2)
-           (previous-line 1)
-           (beginning-of-line)))
-        ((eq direction 'down)
-         (end-of-line)
-         (next-line)
-         (move-line 'up)
-         (end-of-line)
-         (next-line)
-         (beginning-of-line))))
-
-
-(defun kill-line-to-indentation ()
-  "Kills line, leaving cursor at indentation.
-   In case of empty line, kills whole line"
-  (interactive)
-  (back-to-indentation)
-  (when (string-match-p "^[     ]*$"
-                        (buffer-substring
-                         (line-beginning-position)
-                         (line-end-position)))
-    (beginning-of-line))
-  (kill-line))
-
-
-(defun toggle-char-case ()
-  (interactive)
-  (save-excursion
-    (if (char-uppercase-p (following-char))
-        (downcase-region (point) (1+ (point)))
-      (upcase-region (point) (1+ (point))))))
 
 
 ;; Various fixes for out-of-the-box text transforming commands
