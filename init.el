@@ -291,6 +291,16 @@
            project-prefix-map)
 
 
+;; Help
+
+
+(bind-keys '("C-h C-h" describe-symbol
+             "C-h h" describe-symbol
+             "C-h r" man
+             "C-h s" yas-describe-tables)
+           global-map)
+
+
 ;; Misc
 
 
@@ -333,10 +343,6 @@
              "C-x C-l" gptel-send
              "C-x ." compile
              "C-x C-." recompile
-             "C-h C-h" describe-symbol
-             "C-h h" describe-symbol
-             "C-h r" man
-             "C-h s" yas-describe-tables
              "C-c j" cider-start-map
              "C-c k" sql-connect
              "C-c i" ielm
