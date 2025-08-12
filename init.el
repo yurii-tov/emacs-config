@@ -336,6 +336,7 @@
              "C-h C-h" describe-symbol
              "C-h h" describe-symbol
              "C-h r" man
+             "C-h s" yas-describe-tables
              "C-c j" cider-start-map
              "C-c k" sql-connect
              "C-c i" ielm
