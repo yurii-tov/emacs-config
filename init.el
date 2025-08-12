@@ -1439,9 +1439,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (defun enclose-text-cycle-m2 ()
-  "Cycle through quotes/angle brackets using M-2 keybinding"
+  "Cycle through quotes using M-2 keybinding"
   (interactive)
-  (enclose-text-cycle '("\"\"" "''" "``" "<>") 134217778))
+  (enclose-text-cycle '("\"\"" "''" "``") 134217778))
 
 
 (defun enclose-text-cycle-m3 ()
