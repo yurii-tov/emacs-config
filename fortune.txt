@@ -52,13 +52,7 @@ One can't proceed from the informal to the formal by formal means.
 C programmers never die. They are just cast into void.
 -- Alan Perlis
 %
-Is it possible that software is not like anything else, that it is meant to be discarded: that the whole point is to always see it as a soap bubble?
--- Alan Perlis
-%
 In programming, as in everything else, to be in error is to be reborn.
--- Alan Perlis
-%
-Syntactic sugar causes cancer of the semicolon.
 -- Alan Perlis
 %
 The best book on programming for the layman is Alice in Wonderland, but that's because it's the best book on anything for the layman.
