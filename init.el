@@ -2062,8 +2062,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                    company-search-map))
     (bind-keys '("M-p" nil
                  "M-n" nil
-                 "C-p" nil
-                 "C-n" nil
                  "M-SPC" company-other-backend
                  "SPC" company-smart-complete)
                x)))
