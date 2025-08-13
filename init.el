@@ -298,7 +298,8 @@
              "C-h h" describe-symbol
              "C-h r" man
              "C-h s" yas-describe-tables
-             "C-h f" list-faces-display)
+             "C-h f" list-faces-display
+             "C-h v" company-diag)
            global-map)
 
 
