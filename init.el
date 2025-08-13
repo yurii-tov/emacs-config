@@ -4166,7 +4166,8 @@ Process .+
 (with-eval-after-load 'eww
   ;; Setup download directory
   (when system-type-is-windows
-    (setq eww-download-directory (expand-file-name "Downloads" (getenv "USERPROFILE")))))
+    (setq eww-download-directory
+          (expand-file-name "Downloads" (getenv "USERPROFILE")))))
 
 
 (with-eval-after-load 'shr
@@ -4225,9 +4226,7 @@ Process .+
 (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
 
 
-(setq nov-variable-pitch t
-      nov-text-width 70
-      nov-font "Droid Sans")
+(setq nov-text-width 70)
 
 
 (defun nov-scroll-up-1 ()
@@ -4251,25 +4250,3 @@ Process .+
              "<left>" nov-previous-document
              "<right>" nov-next-document)
            nov-mode-map)
-
-
-(defun nov-font-setup ()
-  (face-remap-add-relative
-   'variable-pitch
-   :family nov-font
-   :height 1.0))
-
-
-(add-hook 'nov-mode-hook 'nov-font-setup)
-
-
-(defun nov-set-font (font)
-  (interactive
-   (list (completing-read
-          "Font: "
-          (cl-remove-duplicates (font-family-list) :test #'equal))))
-  (setq nov-font font)
-  (dolist (b (buffer-list))
-    (with-current-buffer b
-      (when (eq major-mode 'nov-mode)
-        (nov-font-setup)))))
