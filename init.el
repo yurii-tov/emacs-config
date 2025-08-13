@@ -499,8 +499,7 @@
   (dolist (x `((default . "Cascadia Code")
                (fixed-pitch . ,(if system-type-is-windows
                                    "Consolas"
-                                 "Ubuntu Mono"))
-               (variable-pitch . "Droid Sans")))
+                                 "Ubuntu Mono"))))
     (let ((face (car x))
           (font (cdr x)))
       (if (font-available-p font)
