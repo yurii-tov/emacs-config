@@ -1972,6 +1972,14 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (advice-add 'completion--capf-wrapper :around 'fix-capf-exclusiveness)
 
 
+;; Fix ill-behaving "magical" completion-at-point wrappers
+
+
+(dolist (x '(python-shell-completion-complete-or-indent
+             ielm-tab))
+  (advice-add x :override 'completion-at-point))
+
+
 ;; =============
 ;; Hippie-expand
 ;; =============
@@ -2135,6 +2143,14 @@ with ability to \"cycle\" different variants with provided KEYBINDING
              company-dabbrev-code
              company-yasnippet))
   (advice-add x :around 'fix-company-backend))
+
+
+;; Override out-of-the box TAB completion
+
+
+(advice-add 'completion-at-point
+            :override
+            'company-complete-common)
 
 
 ;; ==============
@@ -2448,7 +2464,6 @@ reports termination status, kills the buffer"
 
 
 (bind-keys '("C-c C-k" comint-kill-subjob
-             "<tab>" company-indent-or-complete-common
              "M-r" comint-browse-command-history
              "M-p" comint-previous-input-prefixed
              "M-n" comint-next-input-prefixed
@@ -3551,13 +3566,6 @@ Also grabs a selected region, if any."
 
 (add-hook 'c-mode-hook
           (lambda () (c-set-style "k&r")))
-
-
-(defun c-customize-keybindings ()
-  (local-set-key (kbd "TAB") 'indent-for-tab-command))
-
-
-(add-hook 'c-mode-common-hook 'c-customize-keybindings)
 
 
 ;; ====
