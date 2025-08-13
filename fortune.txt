@@ -175,9 +175,6 @@ Simplicity is prerequisite for reliability.
 The art of programming is the art of organizing complexity.
 -- Edsger Dijkstra
 %
-Object-oriented programming is an exceptionally bad idea which could only have originated in California.
--- Edsger Dijkstra
-%
 Program testing can be used to show the presence of bugs, but never to show their absence!
 -- Edsger Dijkstra
 %
