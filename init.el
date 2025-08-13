@@ -18,6 +18,7 @@
                   spacious-padding
                   ligature
                   ef-themes
+                  doric-themes
                   company
                   yasnippet
                   ripgrep
