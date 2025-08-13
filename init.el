@@ -531,7 +531,8 @@
               (apply f args)))
 
 
-(load-theme 'modus-vivendi)
+(when window-system
+  (load-theme 'modus-vivendi))
 
 
 ;; Better modeline
