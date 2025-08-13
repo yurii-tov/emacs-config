@@ -494,20 +494,17 @@
   (not (null (member font-name (font-family-list)))))
 
 
-(defun set-global-font (my-font)
-  (interactive
-   (list (completing-read
-          "Set global font: "
-          (cl-remove-duplicates (font-family-list) :test #'equal))))
-  (set-face-attribute 'default nil :font my-font))
-
-
-(defun set-buffer-font (font)
-  (interactive
-   (list (completing-read
-          "Set buffer font: "
-          (cl-remove-duplicates (font-family-list) :test #'equal))))
-  (face-remap-add-relative 'default :family font))
+(when window-system
+  (dolist (x `((default . "Cascadia Code")
+               (fixed-pitch . ,(if system-type-is-windows
+                                   "Consolas"
+                                 "Ubuntu Mono"))
+               (variable-pitch . "Droid Sans")))
+    (let ((face (car x))
+          (font (cdr x)))
+      (if (font-available-p font)
+          (set-face-attribute face nil :font (format "%s-13" font))
+        (message "Font %s for %s not found" font face)))))
 
 
 ;; Enable emojis on Windows
@@ -532,6 +529,9 @@
               (dolist (theme custom-enabled-themes)
                 (disable-theme theme))
               (apply f args)))
+
+
+(load-theme 'modus-vivendi)
 
 
 ;; Better modeline
