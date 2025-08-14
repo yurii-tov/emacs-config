@@ -491,27 +491,25 @@
 ;; Fonts
 
 
-(defun font-available-p (font-name)
-  (not (null (member font-name (font-family-list)))))
-
-
 (when window-system
-  (dolist (x `((default . "Cascadia Code")
-               (fixed-pitch . ,(if system-type-is-windows
-                                   "Consolas"
-                                 "Ubuntu Mono"))))
-    (let ((face (car x))
-          (font (cdr x)))
-      (if (font-available-p font)
+  (dolist (x `((default . ("Cascadia Code" "Consolas"))
+               (fixed-pitch . ("Consolas" "Ubuntu Mono"))))
+    (let* ((face (car x))
+           (fonts (cdr x))
+           (font (cl-find-if (lambda (x)
+                               (member x (font-family-list)))
+                             fonts)))
+      (if font
           (set-face-attribute face nil :font (format "%s-13" font))
-        (message "Font %s for %s not found" font face)))))
+        (message "Can't find any of %s fonts for '%s' face"
+                 (prin1-to-string fonts) face)))))
 
 
 ;; Enable emojis on Windows
 
 
 (when (and system-type-is-windows
-           (font-available-p "Segoe UI Emoji"))
+           (member "Segoe UI Emoji" (font-family-list)))
   (set-fontset-font t 'unicode (font-spec :family "Segoe UI Emoji") nil 'append))
 
 
