@@ -3185,13 +3185,12 @@ Also grabs a selected region, if any."
 
 (defun vc-wrap-mode-line-state (s)
   (let ((a (car s))
-        (b (cadr s))
+        (face (cadr s))
         (i (caddr s)))
-    (cond ((equal i "-")
-           (list a b "✓ "))
-          ((equal i ":")
-           (list a b "● "))
-          (t s))))
+    (cl-case face
+      (vc-up-to-date-state (list a face "✓ "))
+      (vc-edited-state (list a face "● "))
+      (t s))))
 
 
 (advice-add 'vc-mode-line-state :filter-return 'vc-wrap-mode-line-state)
