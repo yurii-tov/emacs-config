@@ -3183,6 +3183,20 @@ Also grabs a selected region, if any."
 (setq vc-display-status 'no-backend)
 
 
+(defun vc-wrap-mode-line-state (s)
+  (let ((a (car s))
+        (b (cadr s))
+        (i (caddr s)))
+    (cond ((equal i "-")
+           (list a b "✓ "))
+          ((equal i ":")
+           (list a b "● "))
+          (t s))))
+
+
+(advice-add 'vc-mode-line-state :filter-return 'vc-wrap-mode-line-state)
+
+
 ;; ========
 ;; Projects
 ;; ========
