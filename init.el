@@ -492,7 +492,7 @@
 
 
 (when window-system
-  (dolist (x `((default . ("Cascadia Code" "Consolas"))
+  (dolist (x `((default . ("Cascadia Code" "Consolas" "Ubuntu Mono"))
                (fixed-pitch . ("Consolas" "Ubuntu Mono"))))
     (let* ((face (car x))
            (fonts (cdr x))
