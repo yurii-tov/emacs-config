@@ -3180,6 +3180,9 @@ Also grabs a selected region, if any."
   (bind-keys '("+" vc-pull "P" vc-push) log-view-mode-map))
 
 
+(setq vc-display-status 'no-backend)
+
+
 ;; ========
 ;; Projects
 ;; ========
