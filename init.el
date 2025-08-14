@@ -3193,6 +3193,41 @@ Also grabs a selected region, if any."
 (advice-add 'vc-mode-line-state :filter-return 'vc-wrap-mode-line-state)
 
 
+;; Informative branch indicator in Git's vc-dir
+
+
+(defun wrap-vc-git-dir-extra-headers (headers)
+  (let ((status (replace-regexp-in-string
+                 "^\\* " ""
+                 (string-trim-right
+                  (cl-find-if
+                   (lambda (x) (string-prefix-p "* " x))
+                   (split-string (shell-command-to-string
+                                  "git branch -v")
+                                 "\n"))))))
+    (replace-regexp-in-string
+     "\\(Branch.*: \\).*"
+     (format "\\1%s" status) headers)))
+
+
+(advice-add 'vc-git-dir-extra-headers
+            :filter-return
+            'wrap-vc-git-dir-extra-headers)
+
+
+(defun vc-dir-log-edit-update ()
+  (when-let ((buffer (cl-find-if
+                      (lambda (x) (with-current-buffer x
+                                    (eq major-mode 'vc-dir-mode)))
+                      (when-let ((project (project-current)))
+                        (project-buffers project)))))
+    (with-current-buffer buffer
+      (run-with-timer 0.5 nil 'vc-dir-refresh))))
+
+
+(add-hook 'log-edit-done-hook 'vc-dir-log-edit-update)
+
+
 ;; ========
 ;; Projects
 ;; ========
