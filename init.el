@@ -576,7 +576,10 @@
                              "")))
                 ,(propertize "%b" 'face 'mode-line-buffer-id)
                 ,(propertize " %l:%C" 'face 'shadow)
-                (:eval (when (use-region-p) (format " %s" (modeline-selection-stats))))))
+                (:eval (when (use-region-p) (format " %s" (modeline-selection-stats))))
+                mode-line-format-right-align
+                (vc-mode vc-mode)
+                " "))
 
 
 ;; Slower scrolling
