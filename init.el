@@ -3197,9 +3197,11 @@ Also grabs a selected region, if any."
 
 
 (defun wrap-vc-git-dir-extra-headers (headers)
-  (let ((status (string-trim-right
-                 (shell-command-to-string
-                  "git branch -v | sed -n 's:^\* :: p'"))))
+  (let ((status (propertize
+                 (string-trim-right
+                  (shell-command-to-string
+                   "git branch -v | sed -n 's:^\* :: p'"))
+                 'face 'vc-dir-header-value)))
     (replace-regexp-in-string
      "\\(Branch.*: \\).*"
      (format "\\1%s" status) headers)))
