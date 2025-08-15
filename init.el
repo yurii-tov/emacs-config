@@ -3232,6 +3232,9 @@ Also grabs a selected region, if any."
             'update-vc-git-dir-extra-headers)
 
 
+;; Update vc-dir buffer after commit
+
+
 (defun vc-dir-log-edit-update ()
   (when-let ((buffer (cl-find-if
                       (lambda (x) (with-current-buffer x
