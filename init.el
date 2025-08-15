@@ -3171,7 +3171,7 @@ Also grabs a selected region, if any."
                           (propertize command
                                       'face 'compilation-info))
                  (shell-command command)
-                 (when (derived-mode-p 'log-view-mode)
+                 (when (derived-mode-p '(vc-dir-mode log-view-mode))
                    (revert-buffer)))
         (apply f args)))))
 
