@@ -3232,9 +3232,9 @@ Also grabs a selected region, if any."
                                     (eq major-mode 'vc-dir-mode)))
                       (when-let ((project (project-current)))
                         (project-buffers project)))))
-    (run-with-timer 0.1 nil `(lambda ()
-                               (with-current-buffer ,buffer
-                                 (vc-dir-refresh))))))
+    (run-with-timer 0.05 nil `(lambda ()
+                                (with-current-buffer ,buffer
+                                  (vc-dir-refresh))))))
 
 
 (add-hook 'log-edit-done-hook 'vc-dir-log-edit-update)
