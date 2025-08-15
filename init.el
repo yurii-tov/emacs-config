@@ -3212,18 +3212,16 @@ Also grabs a selected region, if any."
 
 (defun wrap-vc-git-dir-extra-headers (headers)
   (let* ((colorize (lambda (x)
-                     (propertize
-                      x 'face
-                      (if (string-match-p
-                           "\\[ahead\\|\\[behind\\|[0-9]+\\]" x)
-                          'compilation-info
-                        'vc-dir-header-value))))
+                     (if (string-match-p
+                          "\\(ahead\\|behind\\) [0-9]+" x)
+                         (propertize (format "[%s]" x)
+                                     'face 'compilation-info)
+                       (propertize x 'face 'vc-dir-header-value))))
          (status (string-trim-right
                   (shell-command-to-string
                    "git branch -v | sed -n 's:^\* :: p'")))
          (status (string-join
-                  (mapcar colorize (split-string status " "))
-                  " ")))
+                  (mapcar colorize (split-string status "[][]")))))
     (replace-regexp-in-string
      "\\(Branch.*: \\).*"
      (format "\\1%s" status) headers)))
