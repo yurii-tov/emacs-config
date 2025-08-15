@@ -3184,7 +3184,9 @@ Also grabs a selected region, if any."
           (progn (message "Running %s..."
                           (propertize command
                                       'face 'compilation-info))
-                 (shell-command command))
+                 (shell-command command)
+                 (when (derived-mode-p '(vc-dir-mode log-view-mode))
+                   (revert-buffer)))
         (apply f args)))))
 
 
@@ -3224,29 +3226,18 @@ Also grabs a selected region, if any."
             'wrap-vc-git-dir-extra-headers)
 
 
-;; Keep VCS buffers up to date
+(defun vc-dir-log-edit-update ()
+  (when-let ((buffer (cl-find-if
+                      (lambda (x) (with-current-buffer x
+                                    (eq major-mode 'vc-dir-mode)))
+                      (when-let ((project (project-current)))
+                        (project-buffers project)))))
+    (run-with-timer 0.1 nil `(lambda ()
+                               (with-current-buffer ,buffer
+                                 (vc-dir-refresh))))))
 
 
-(defun vc-update-buffers (&rest ignored)
-  (prog1 ignored
-    (when-let ((buffers (cl-remove-if-not
-                         (lambda (x) (with-current-buffer x
-                                       (derived-mode-p '(log-view-mode
-                                                         vc-dir-mode))))
-                         (when-let ((project (project-current)))
-                           (project-buffers project)))))
-      (dolist (buffer buffers)
-        (run-with-timer 0.05 nil
-                        `(lambda ()
-                           (with-current-buffer ,buffer
-                             (revert-buffer))))))))
-
-
-(add-hook 'log-edit-done-hook 'vc-update-buffers)
-
-
-(dolist (x '(vc-pull vc-push))
-  (advice-add x :filter-return 'vc-update-buffers))
+(add-hook 'log-edit-done-hook 'vc-dir-log-edit-update)
 
 
 ;; ========
