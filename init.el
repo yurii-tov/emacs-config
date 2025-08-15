@@ -3210,7 +3210,7 @@ Also grabs a selected region, if any."
 ;; Informative branch indicator in Git's vc-dir
 
 
-(defun wrap-vc-git-dir-extra-headers (headers)
+(defun update-vc-git-dir-extra-headers (headers)
   (let* ((status (string-trim-right
                   (shell-command-to-string
                    "git branch -v | sed -n 's:^\* :: p'")))
@@ -3229,7 +3229,7 @@ Also grabs a selected region, if any."
 
 (advice-add 'vc-git-dir-extra-headers
             :filter-return
-            'wrap-vc-git-dir-extra-headers)
+            'update-vc-git-dir-extra-headers)
 
 
 (defun vc-dir-log-edit-update ()
