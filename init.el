@@ -3230,8 +3230,7 @@ Also grabs a selected region, if any."
   (when-let ((buffer (cl-find-if
                       (lambda (x) (with-current-buffer x
                                     (eq major-mode 'vc-dir-mode)))
-                      (when-let ((project (project-current)))
-                        (project-buffers project)))))
+                      (mapcar #'window-buffer (window-list)))))
     (run-with-timer 0.1 nil `(lambda ()
                                (with-current-buffer ,buffer
                                  (vc-dir-refresh))))))
