@@ -3170,6 +3170,10 @@ Also grabs a selected region, if any."
 ;; ===
 
 
+(defun vc-refresh-headers ()
+  (ewoc-set-hf vc-ewoc (vc-dir-headers vc-dir-backend default-directory) ""))
+
+
 (setq vc-command-overrides
       '((vc-pull . ((Git . "git pull")))
         (vc-push . ((Git . "git push")))))
@@ -3185,8 +3189,10 @@ Also grabs a selected region, if any."
                           (propertize command
                                       'face 'compilation-info))
                  (shell-command command)
-                 (when (derived-mode-p '(vc-dir-mode log-view-mode))
-                   (revert-buffer)))
+                 (cond ((eq major-mode 'vc-dir-mode)
+                        (vc-refresh-headers))
+                       ((derived-mode-p 'log-view-mode)
+                        (revert-buffer))))
         (apply f args)))))
 
 
@@ -3240,9 +3246,11 @@ Also grabs a selected region, if any."
                                     (eq major-mode 'vc-dir-mode)))
                       (when-let ((project (project-current)))
                         (project-buffers project)))))
-    (run-with-timer 0.05 nil `(lambda ()
-                                (with-current-buffer ,buffer
-                                  (vc-dir-refresh))))))
+    (with-current-buffer buffer
+      (run-with-timer 0.01 nil
+                      `(lambda ()
+                         (with-current-buffer ,buffer
+                           (vc-refresh-headers)))))))
 
 
 (add-hook 'log-edit-done-hook 'vc-dir-log-edit-update)
