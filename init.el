@@ -3214,14 +3214,17 @@ Also grabs a selected region, if any."
   (let* ((status (string-trim-right
                   (shell-command-to-string
                    "git branch -v | sed -n 's:^\* :: p'")))
-         (colorize (lambda (x)
-                     (if (string-match-p
-                          "\\(ahead\\|behind\\) [0-9]+" x)
-                         (propertize (format "[%s]" x)
-                                     'face 'compilation-info)
-                       (propertize x 'face 'vc-dir-header-value))))
-         (status (string-join
-                  (mapcar colorize (split-string status "[][]")))))
+         (p1 (string-match-p "\\[\\(ahead\\|behind\\)" status))
+         (p2 (when p1 (string-match-p "\\]" status p1))))
+    (set-text-properties
+     0 (length status) '(face vc-dir-header-value) status)
+    (when p1
+      (set-text-properties
+       0 (1- p1) '(face vc-dir-header-value) status)
+      (set-text-properties
+       p1 (1+ p2) '(face compilation-info) status)
+      (set-text-properties
+       (1+ p2) (length status) '(face vc-dir-header-value) status))
     (replace-regexp-in-string
      "\\(Branch.*: \\).*"
      (format "\\1%s" status) headers)))
