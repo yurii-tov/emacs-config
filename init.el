@@ -3190,10 +3190,6 @@ Also grabs a selected region, if any."
         (apply f args)))))
 
 
-(with-eval-after-load 'log-view
-  (bind-keys '("+" vc-pull "P" vc-push) log-view-mode-map))
-
-
 (setq vc-display-status 'no-backend)
 
 
@@ -3250,6 +3246,19 @@ Also grabs a selected region, if any."
 
 
 (add-hook 'log-edit-done-hook 'vc-dir-log-edit-update)
+
+
+;; Keybindings
+
+
+(with-eval-after-load 'vc-dir
+  (bind-keys '("TAB" vc-dir-next-line
+               "<backtab>" vc-dir-previous-line)
+             vc-dir-mode-map))
+
+
+(with-eval-after-load 'log-view
+  (bind-keys '("+" vc-pull "P" vc-push) log-view-mode-map))
 
 
 ;; ========
