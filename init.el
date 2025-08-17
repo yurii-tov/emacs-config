@@ -3169,43 +3169,20 @@ Also grabs a selected region, if any."
 ;; ===
 
 
-(defun vc-refresh-headers ()
-  (ewoc-set-hf vc-ewoc (vc-dir-headers vc-dir-backend default-directory) ""))
-
-
-(setq vc-command-overrides
-      '((vc-pull . ((Git . "git pull")))
-        (vc-push . ((Git . "git push")))))
-
-
-(dolist (vc-command '(vc-pull vc-push))
-  (advice-add
-   vc-command :around
-   `(lambda (f &rest args)
-      (if-let ((command (cdr (assoc (car (vc-deduce-fileset t))
-                                    (assoc ',vc-command vc-command-overrides)))))
-          (progn (message "Running %s..."
-                          (propertize command
-                                      'face 'compilation-info))
-                 (shell-command command)
-                 (cond ((eq major-mode 'vc-dir-mode)
-                        (vc-refresh-headers))
-                       ((derived-mode-p 'log-view-mode)
-                        (revert-buffer))))
-        (apply f args)))))
-
-
 (setq vc-display-status 'no-backend)
 
 
-(defun vc-wrap-mode-line-state (s)
+;; Good-looking modeline indicator
+
+
+(defun vc-prettify-mode-line-state (s)
   (prog1 s
     (cl-case (cadr s)
       (vc-up-to-date-state (setf (caddr s) "✓ "))
       (vc-edited-state (setf (caddr s) "● ")))))
 
 
-(advice-add 'vc-mode-line-state :filter-return 'vc-wrap-mode-line-state)
+(advice-add 'vc-mode-line-state :filter-return 'vc-prettify-mode-line-state)
 
 
 ;; Informative branch indicator in Git's vc-dir
@@ -3239,6 +3216,10 @@ Also grabs a selected region, if any."
 ;; Update vc-dir buffer after commit
 
 
+(defun vc-refresh-headers ()
+  (ewoc-set-hf vc-ewoc (vc-dir-headers vc-dir-backend default-directory) ""))
+
+
 (defun vc-dir-log-edit-update ()
   (when-let ((buffer (cl-find-if
                       (lambda (x) (with-current-buffer x
@@ -3253,6 +3234,31 @@ Also grabs a selected region, if any."
 
 
 (add-hook 'log-edit-done-hook 'vc-dir-log-edit-update)
+
+
+;; Explicitly define some commands
+
+
+(setq vc-command-overrides
+      '((vc-pull . ((Git . "git pull")))
+        (vc-push . ((Git . "git push")))))
+
+
+(dolist (vc-command '(vc-pull vc-push))
+  (advice-add
+   vc-command :around
+   `(lambda (f &rest args)
+      (if-let ((command (cdr (assoc (car (vc-deduce-fileset t))
+                                    (assoc ',vc-command vc-command-overrides)))))
+          (progn (message "Running %s..."
+                          (propertize command
+                                      'face 'compilation-info))
+                 (shell-command command)
+                 (cond ((eq major-mode 'vc-dir-mode)
+                        (vc-refresh-headers))
+                       ((derived-mode-p 'log-view-mode)
+                        (revert-buffer))))
+        (apply f args)))))
 
 
 ;; Keybindings
