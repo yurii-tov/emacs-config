@@ -3261,6 +3261,16 @@ Also grabs a selected region, if any."
         (apply f args)))))
 
 
+;; Reset
+
+
+(defun vc-reset ()
+  "git reset HEAD^"
+  (interactive)
+  (shell-command "git reset HEAD^")
+  (vc-dir-refresh))
+
+
 ;; Keybindings
 
 
@@ -3268,7 +3278,8 @@ Also grabs a selected region, if any."
   (bind-keys '("TAB" vc-dir-next-line
                "<backtab>" vc-dir-previous-line
                "l" vc-print-root-log
-               "L" vc-print-branch-log)
+               "L" vc-print-branch-log
+               "r" vc-reset)
              vc-dir-mode-map))
 
 
