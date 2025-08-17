@@ -355,7 +355,7 @@
              "C-c h" hexl-mode
              "C-c c" org-capture
              "C-c a" org-agenda
-             "C-c o" org-commit
+             "C-c o" org-push
              "C-c O" org-pull
              "C-c w" tail)
            global-map)
@@ -2761,7 +2761,7 @@ reports termination status, kills the buffer"
 ;; Use Git repo as storage
 
 
-(defun org-commit ()
+(defun org-push ()
   (interactive)
   (let ((default-directory org-directory))
     (message "Pushing org repository...")
