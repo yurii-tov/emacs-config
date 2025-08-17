@@ -603,6 +603,13 @@
   (add-hook x 'visual-line-mode))
 
 
+;; Remove visual artifacts in wrapped lines (when working in terminal)
+
+
+(unless window-system
+  (set-display-table-slot standard-display-table 'wrap ?\ ))
+
+
 ;; =======
 ;; Buffers
 ;; =======
