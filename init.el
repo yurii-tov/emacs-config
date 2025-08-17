@@ -3280,6 +3280,9 @@ Also grabs a selected region, if any."
                "n" vc-dir-next-directory
                "p" vc-dir-previous-directory
                "l" vc-print-root-log
+               "L" vc-print-branch-log
+               "s" vc-switch-branch
+               "c" vc-create-branch
                "r" vc-reset)
              vc-dir-mode-map))
 
