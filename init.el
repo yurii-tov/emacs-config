@@ -2765,7 +2765,7 @@ reports termination status, kills the buffer"
   (interactive)
   (let ((default-directory org-directory))
     (message "Pushing org repository...")
-    (shell-command "git add * && git commit -m 'Updated' && git push")))
+    (shell-command "git add * && git commit -m 'Updated' && git push && touch *.org")))
 
 
 (defun org-pull ()
