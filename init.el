@@ -3266,12 +3266,10 @@ Also grabs a selected region, if any."
 
 (with-eval-after-load 'vc-dir
   (bind-keys '("TAB" vc-dir-next-line
-               "<backtab>" vc-dir-previous-line)
+               "<backtab>" vc-dir-previous-line
+               "l" vc-print-root-log
+               "L" vc-print-branch-log)
              vc-dir-mode-map))
-
-
-(with-eval-after-load 'log-view
-  (bind-keys '("+" vc-pull "P" vc-push) log-view-mode-map))
 
 
 ;; ========
