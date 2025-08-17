@@ -3277,6 +3277,8 @@ Also grabs a selected region, if any."
 (with-eval-after-load 'vc-dir
   (bind-keys '("TAB" vc-dir-next-line
                "<backtab>" vc-dir-previous-line
+               "n" vc-dir-next-directory
+               "p" vc-dir-previous-directory
                "l" vc-print-root-log
                "r" vc-reset)
              vc-dir-mode-map))
