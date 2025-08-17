@@ -286,7 +286,6 @@
 
 
 (bind-keys '("SPC" project-dired
-             "l" project-vcs-log
              "i" project-reformat
              "a" project-async-shell-command)
            project-prefix-map)
@@ -3280,22 +3279,10 @@ Also grabs a selected region, if any."
         (project-find-dir "Find directory")
         (project-find-regexp "Find regexp")
         (project-vc-dir "View VCS status")
-        (project-vcs-log "View VCS history")
         (project-shell "Shell")
         (project-async-shell-command "Run async shell command")
         (project-compile "Compile")
         (project-reformat "Reformat project files")))
-
-
-(defun project-vcs-log ()
-  (interactive)
-  (let (a b)
-    (save-window-excursion
-      (setq a (find-file (project-root (project-current t))))
-      (vc-print-root-log)
-      (kill-buffer a)
-      (setq b (current-buffer)))
-    (switch-to-buffer b)))
 
 
 (defun project-reformat ()
