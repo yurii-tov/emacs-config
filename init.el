@@ -3278,7 +3278,6 @@ Also grabs a selected region, if any."
   (bind-keys '("TAB" vc-dir-next-line
                "<backtab>" vc-dir-previous-line
                "l" vc-print-root-log
-               "L" vc-print-branch-log
                "r" vc-reset)
              vc-dir-mode-map))
 
