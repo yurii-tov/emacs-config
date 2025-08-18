@@ -576,8 +576,9 @@
                 ,(propertize "%b" 'face 'mode-line-buffer-id)
                 ,(propertize " %l:%C" 'face 'shadow)
                 (:eval (when (use-region-p) (format " %s" (mode-line-selection-stats))))
+                " "
+                (((flymake-mode flymake-mode-line-counters)))
                 mode-line-format-right-align
-                mode-line-modes
                 (vc-mode vc-mode)
                 " "))
 
@@ -3409,6 +3410,11 @@ Also grabs a selected region, if any."
 ;; ===
 
 
+(defun eglot-quit-flymake ()
+  (unless (eglot-managed-p)
+    (flymake-mode -1)))
+
+
 (with-eval-after-load 'eglot
   ;; Keybindings
   (bind-keys '("M-p" eglot-code-actions
@@ -3433,7 +3439,10 @@ Also grabs a selected region, if any."
   (setq eglot-autoshutdown t)
 
   ;; Fix snippets + company-tng
-  (advice-remove #'eglot--snippet-expansion-fn #'ignore))
+  (advice-remove #'eglot--snippet-expansion-fn #'ignore)
+
+  ;; Disable flymake mode on exit
+  (add-hook 'eglot-managed-mode-hook 'eglot-quit-flymake))
 
 
 ;; =======
