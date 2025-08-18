@@ -577,6 +577,7 @@
                 ,(propertize " %l:%C" 'face 'shadow)
                 (:eval (when (use-region-p) (format " %s" (mode-line-selection-stats))))
                 mode-line-format-right-align
+                mode-line-modes
                 (vc-mode vc-mode)
                 " "))
 
@@ -3438,16 +3439,6 @@ Also grabs a selected region, if any."
 ;; =======
 ;; Flymake
 ;; =======
-
-
-(defun flymake-add-indicators ()
-  (let ((setting '(" " (:eval (flymake--mode-line-counters)))))
-    (unless (equal (cadr setting) (car (last mode-line-format)))
-      (setq-local mode-line-format
-                  (append mode-line-format setting)))))
-
-
-(add-hook 'flymake-mode-hook 'flymake-add-indicators)
 
 
 (defun flymake-display-diagnostics-fix (f &rest args)
