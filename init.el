@@ -532,10 +532,10 @@
   (load-theme 'modus-vivendi))
 
 
-;; Modeline
+;; Mode line
 
 
-(defun modeline-selection-stats ()
+(defun mode-line-selection-stats ()
   (let* ((start (region-beginning))
          (end (region-end))
          (chars (- end start))
@@ -575,7 +575,7 @@
                              "")))
                 ,(propertize "%b" 'face 'mode-line-buffer-id)
                 ,(propertize " %l:%C" 'face 'shadow)
-                (:eval (when (use-region-p) (format " %s" (modeline-selection-stats))))
+                (:eval (when (use-region-p) (format " %s" (mode-line-selection-stats))))
                 mode-line-format-right-align
                 (vc-mode vc-mode)
                 " "))
@@ -3179,7 +3179,7 @@ Also grabs a selected region, if any."
 (setq vc-display-status 'no-backend)
 
 
-;; Good-looking modeline indicator
+;; Good-looking mode line indicator
 
 
 (defun vc-prettify-mode-line-state (s)
