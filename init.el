@@ -532,7 +532,7 @@
   (load-theme 'modus-vivendi))
 
 
-;; Better modeline
+;; Modeline
 
 
 (defun modeline-selection-stats ()
@@ -659,7 +659,7 @@
                 (apply f args))))
 
 
-;; Better unique buffer names
+;; Unique buffer names
 
 
 (require 'uniquify)
@@ -1753,7 +1753,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   (setq ido-grid-mode-keys '(up down left right)))
 
 
-;; Better counter style
+;; Counter
 
 
 (defun ido-colorize-counter (f &rest args)
