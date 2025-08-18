@@ -3410,7 +3410,7 @@ Also grabs a selected region, if any."
 ;; ===
 
 
-(defun eglot-quit-flymake ()
+(defun eglot-cleanup-flymake ()
   (unless (eglot-managed-p)
     (flymake-mode -1)))
 
@@ -3441,8 +3441,8 @@ Also grabs a selected region, if any."
   ;; Fix snippets + company-tng
   (advice-remove #'eglot--snippet-expansion-fn #'ignore)
 
-  ;; Disable flymake mode on exit
-  (add-hook 'eglot-managed-mode-hook 'eglot-quit-flymake))
+  ;; Turn off flymake mode on exit
+  (add-hook 'eglot-managed-mode-hook 'eglot-cleanup-flymake))
 
 
 ;; =======
