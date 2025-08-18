@@ -577,7 +577,7 @@
                 ,(propertize " %l:%C" 'face 'shadow)
                 (:eval (when (use-region-p) (format " %s" (mode-line-selection-stats))))
                 " "
-                (((flymake-mode flymake-mode-line-counters)))
+                ((flymake-mode flymake-mode-line-counters))
                 mode-line-format-right-align
                 (vc-mode vc-mode)
                 " "))
