@@ -2652,7 +2652,8 @@ reports termination status, kills the buffer"
 
 (defun ssh (host)
   "Establishes interactive ssh session"
-  (interactive (list (completing-read "Run ssh session: " (read-ssh-hosts) nil t)))
+  (interactive (list (completing-read "Run ssh session: "
+                                      (read-ssh-hosts))))
   (let ((default-directory (format "/sshx:%s:" host))
         (explicit-shell-file-name "/bin/bash"))
     (shell (format "*ssh-%s*" host))))
