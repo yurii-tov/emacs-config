@@ -1183,7 +1183,8 @@ The search string is queried first, followed by the directory."
 ;; ===============
 
 
-(setq Man-support-remote-systems t)
+(with-eval-after-load 'man
+  (setq Man-support-remote-systems t))
 
 
 ;; =======
