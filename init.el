@@ -348,7 +348,7 @@
              "C-c j" cider-start-map
              "C-c k" sql-connect
              "C-c i" ielm
-             "C-c s" run-ssh-session
+             "C-c s" ssh
              "C-c d" serve-directory
              "C-c v" capture-video
              "C-c p" copy-file-name-to-clipboard
@@ -2650,12 +2650,11 @@ reports termination status, kills the buffer"
      :test #'equal)))
 
 
-(defun run-ssh-session ()
-  (interactive)
-  (let* ((x (completing-read "Run ssh session: " (read-ssh-hosts) nil t))
-         (default-directory (format "/sshx:%s:" x))
-         (explicit-shell-file-name "/bin/bash"))
-    (shell (format "*ssh-%s*" x))))
+(defun ssh (host)
+  (interactive (list (completing-read "Run ssh session: " (read-ssh-hosts) nil t)))
+  (let ((default-directory (format "/sshx:%s:" host))
+        (explicit-shell-file-name "/bin/bash"))
+    (shell (format "*ssh-%s*" host))))
 
 
 ;; Remove unneeded CAPF
