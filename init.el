@@ -1178,6 +1178,14 @@ The search string is queried first, followed by the directory."
   (diff-buffer-with-file))
 
 
+;; ===============
+;; Man page reader
+;; ===============
+
+
+(setq Man-support-remote-systems t)
+
+
 ;; =======
 ;; Ripgrep
 ;; =======
