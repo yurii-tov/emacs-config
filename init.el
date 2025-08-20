@@ -2645,7 +2645,9 @@ reports termination status, kills the buffer"
 
 (defun read-ssh-hosts ()
   (let* ((default-directory "~"))
-    (split-string (shell-command-to-string "c=~/.ssh/config; [ -f $c ] && sed -n -e '/Host \\*/ d' -e 's:Host ::p' $c"))))
+    (cl-delete-duplicates
+     (split-string (shell-command-to-string "c=~/.ssh/config; [ -f $c ] && sed -n -e '/Host \\*/ d' -e 's:Host ::p' $c"))
+     :test #'equal)))
 
 
 (defun run-ssh-session ()
