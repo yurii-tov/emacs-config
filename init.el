@@ -1212,18 +1212,19 @@ The search string is queried first, followed by the directory."
   (interactive)
   (let (result)
     (save-excursion
-      (beginning-of-buffer)
       (goto-line 4)
       (end-of-line)
       (while-let ((p (re-search-forward "^[^:]+:[0-9]" nil t)))
-        (cl-pushnew (buffer-substring-no-properties (line-beginning-position)
-                                                    (- p 2))
+        (cl-pushnew (buffer-substring-no-properties
+                     (line-beginning-position)
+                     (- p 2))
                     result
                     :test #'equal)))
     (pop result)
     (if result
         (dired-other-window
-         (cons "." (nreverse (mapcar #'file-relative-name result))))
+         (cons compilation-directory
+               (nreverse (mapcar #'file-relative-name result))))
       (message "File list is empty"))))
 
 
