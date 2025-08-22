@@ -4133,7 +4133,7 @@ Process .+
 (defun fortune ()
   (with-temp-buffer
     (insert-file-contents fortune-file)
-    (goto-char (1+ (random (point-max))))
+    (goto-char (1+ (cl-random (point-max))))
     (let* ((e (search-forward-regexp "^%$" nil t))
            (e (if e (- e 2) (point-max))))
       (goto-char e)
