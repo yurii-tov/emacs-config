@@ -1225,8 +1225,12 @@ The search string is queried first, followed by the directory."
                       result
                       :test #'equal))
         (setq pos next)))
-    (dired-other-window
-     (cons "." (nreverse (mapcar #'file-relative-name (cdr result)))))))
+    (unless (file-exists-p (car result))
+      (pop result))
+    (if result
+        (dired-other-window
+         (cons "." (nreverse (mapcar #'file-relative-name result))))
+      (message "File list is empty"))))
 
 
 (defun ripgrep-setup ()
