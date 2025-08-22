@@ -2047,7 +2047,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                                  (company-capf :with company-yasnippet)
                                  (company-dabbrev-code
                                   company-yasnippet)
-                                 company-gptel
                                  company-dabbrev))
 
 
@@ -3014,55 +3013,6 @@ Example input:
       gptel-expert-commands t)
 
 
-;; Presets
-
-
-(progn
-  (gptel-make-preset 'poetry
-    :description "Generate a poem based on the provided description"
-    :system "You are a poet. Create a poem based on the provided description. Do not include any explanations.")
-  (gptel-make-preset 'program
-    :description "Generate a program based on the provided description"
-    :system "You are a programmer. Write a program based on the provided description. Do not include any explanations.")
-  (gptel-make-preset 'translate
-    :description "RU ⇔ EN translator"
-    :system "Translate the text i provide to you. If text is in Russian, translate it to English. Otherwise translate the text to Russian. Provide only translated text, without any explanations. The text:\n")
-  (gptel-make-preset 'explain
-    :description "Explain a topic in detail"
-    :system "Provide a comprehensive explanation of the topic. Begin with a summary. Present only the explanations, without any additional commentary or context.")
-  (gptel-make-preset 'summarize
-    :description "Generate a concise summary"
-    :system "Generate a concise summary of the provided text. The summary should capture the main points and key details, while omitting unnecessary information. Ensure the summary is coherent and easy to understand."))
-
-
-(defun company-gptel (command &optional arg &rest _ignored)
-  "`company-mode' backend for `gptel' \"inline\" presets."
-  (interactive (list 'interactive))
-  (cl-case command
-    (interactive (company-begin-backend 'company-gptel))
-    (prefix (and gptel--known-presets
-                 (company-grab "@[a-zA-Z]*")))
-    (candidates
-     (cl-remove-if-not
-      (lambda (x)
-        (string-prefix-p arg x))
-      (mapcar (lambda (x)
-                (format "@%s" (symbol-name (car x))))
-              gptel--known-presets)))
-    (annotation (format " %s"
-                        (thread-first
-                          (substring arg 1)
-                          (intern-soft)
-                          (assq gptel--known-presets) (cdr)
-                          (plist-get :description))))
-    (doc-buffer (company-doc-buffer (thread-first
-                                      (substring arg 1)
-                                      (intern-soft)
-                                      (assq gptel--known-presets) (cdr)
-                                      (prin1-to-string))))
-    (kind 'magic)))
-
-
 ;; The Chat
 
 
@@ -3095,80 +3045,6 @@ Also grabs a selected region, if any."
 
 
 (add-hook 'gptel-mode-hook 'gptel-chat-setup)
-
-
-;; Rewrite/refactoring with LLM
-
-
-(require 'gptel-rewrite)
-
-
-(defun gptel-rewrite-directive-dumb ()
-  "Unconditional catch-all directive"
-  "Follow my instructions and improve or rewrite text I provide.
-- Generate programming code in full, do not abbreviate or omit code.
-- Generate ONLY the replacement text, without any explanation or markdown code fences.
-- Do not ask for further clarification, and make any assumptions you need to follow instructions.")
-
-
-(add-hook 'gptel-rewrite-directives-hook 'gptel-rewrite-directive-dumb)
-
-
-(bind-keys '("=" gptel--rewrite-diff
-             "TAB" gptel-rewrite
-             "SPC" gptel--rewrite-accept
-             "m" gptel--rewrite-merge
-             "k" gptel--rewrite-reject)
-           gptel-rewrite-actions-map)
-
-
-(when (car (transient--locate-child 'gptel-rewrite (kbd "r")))
-  (transient-suffix-put 'gptel-rewrite (kbd "r") :key "TAB"))
-
-
-(transient-define-infix gptel--infix-rewrite-extra ()
-  "Chat directive (system message) to use for rewriting or refactoring."
-  :description "Rewrite instruction"
-  :class 'gptel-lisp-variable
-  :variable 'gptel--rewrite-message
-  :set-value #'gptel--set-with-scope
-  :display-nil "(None)"
-  :key "d"
-  :format " %k %d %v"
-  :prompt (concat "Instructions " gptel--read-with-prefix-help)
-  :reader (lambda (prompt _ history)
-            (let* ((rewrite-directive
-                    (car-safe (gptel--parse-directive gptel--rewrite-directive
-                                                      'raw)))
-                   (cb (current-buffer))
-                   (edit-in-buffer
-                    (lambda () (interactive)
-                      (let ((offset (- (point) (minibuffer-prompt-end))))
-                        (gptel--edit-directive 'gptel--rewrite-message
-                          :prompt rewrite-directive :initial (minibuffer-contents)
-                          :buffer cb :setup (lambda () (ignore-errors (forward-char offset)))
-                          :callback
-                          (lambda ()
-                            (run-at-time 0 nil #'transient-setup 'gptel-rewrite)
-                            (push (buffer-local-value 'gptel--rewrite-message cb)
-                                  (alist-get 'gptel--infix-rewrite-extra transient-history))
-                            (when (minibufferp) (minibuffer-quit-recursive-edit))))))))
-              (read-string "Directive: " nil history))))
-
-
-(defun gptel-tab-rewrite (f &rest args)
-  "Trigger gptel-rewrite by TAB key"
-  (if (use-region-p)
-      (progn
-        (setq-local gptel--rewrite-message "Rewrite: ")
-        (gptel-rewrite))
-    (apply f args)))
-
-
-(dolist (x '(indent-for-tab-command
-             company-indent-or-complete-common
-             org-cycle))
-  (advice-add x :around 'gptel-tab-rewrite))
 
 
 ;; Enable "coder" model in programming modes
