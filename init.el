@@ -1210,23 +1210,17 @@ The search string is queried first, followed by the directory."
 (defun ripgrep-dired ()
   "Collect the files into Dired buffer"
   (interactive)
-  (let ((face 'ripgrep-hit-face)
-        (pos (point-min))
-        (end (point-max))
-        result)
-    (while (< pos end)
-      (let* ((next (next-single-property-change pos 'font-lock-face nil end))
-             (prop (get-text-property pos 'font-lock-face)))
-        (when (cond ((listp prop) (memq face prop))
-                    ((eq face prop)))
-          (cl-pushnew (replace-regexp-in-string
-                       ":[0-9]+.*" ""
-                       (buffer-substring-no-properties pos next))
-                      result
-                      :test #'equal))
-        (setq pos next)))
-    (unless (file-exists-p (car result))
-      (pop result))
+  (let (result)
+    (save-excursion
+      (beginning-of-buffer)
+      (goto-line 4)
+      (end-of-line)
+      (while-let ((p (re-search-forward "^[^:]+:[0-9]" nil t)))
+        (cl-pushnew (buffer-substring-no-properties (line-beginning-position)
+                                                    (- p 2))
+                    result
+                    :test #'equal)))
+    (pop result)
     (if result
         (dired-other-window
          (cons "." (nreverse (mapcar #'file-relative-name result))))
