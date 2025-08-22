@@ -1207,6 +1207,28 @@ The search string is queried first, followed by the directory."
   (advice-add 'project-find-regexp :override 'project-ripgrep))
 
 
+(defun ripgrep-dired ()
+  "Collect the files into Dired buffer"
+  (interactive)
+  (let ((face 'ripgrep-hit-face)
+        (pos (point-min))
+        (end (point-max))
+        result)
+    (while (< pos end)
+      (let* ((next (next-single-property-change pos 'font-lock-face nil end))
+             (prop (get-text-property pos 'font-lock-face)))
+        (when (cond ((listp prop) (memq face prop))
+                    ((eq face prop)))
+          (cl-pushnew (replace-regexp-in-string
+                       ":[0-9]+.*" ""
+                       (buffer-substring-no-properties pos next))
+                      result
+                      :test #'equal))
+        (setq pos next)))
+    (dired-other-window
+     (cons "." (nreverse (mapcar #'file-relative-name (cdr result)))))))
+
+
 (defun ripgrep-setup ()
   (setq-local compilation-scroll-output nil))
 
@@ -1214,6 +1236,7 @@ The search string is queried first, followed by the directory."
 (with-eval-after-load 'ripgrep
   (bind-keys '("TAB" compilation-next-error
                "<backtab>" compilation-previous-error
+               "d" ripgrep-dired
                "n" next-error-no-select
                "p" previous-error-no-select
                "o" compilation-display-error
