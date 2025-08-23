@@ -2059,7 +2059,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (setq-default company-minimum-prefix-length 2
-              company-idle-delay 0
+              company-idle-delay 0.3
               company-tooltip-offset-display 'lines
               company-selection-wrap-around t
               company-files-chop-trailing-slash nil
