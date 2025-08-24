@@ -2065,6 +2065,8 @@ with ability to \"cycle\" different variants with provided KEYBINDING
               company-files-chop-trailing-slash nil
               company-dabbrev-downcase nil
               company-dabbrev-ignore-case nil
+              company-dabbrev-ignore-buffers "\\`[ ]"
+              company-dabbrev-time-limit 0.2
               company-backends '(company-files
                                  (company-capf :with company-yasnippet)
                                  (company-dabbrev-code
