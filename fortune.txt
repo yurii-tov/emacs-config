@@ -307,9 +307,6 @@ Computer science has as much to do with computers as astronomy has to do with te
 There is very little point in trying to urge the world to mend its ways as long as that world is still convinced that its ways are perfectly adequate.
 -- Edsger Dijkstra
 %
-APL is a mistake, carried through to perfection.
--- Edsger Dijkstra
-%
 There should be no such thing as boring mathematics.
 -- Edsger Dijkstra
 %
