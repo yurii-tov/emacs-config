@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: buffer-substring
+# key: bs
+# --
+(buffer-substring-no-properties ${1:(point-min)} ${2:(point-max)})
