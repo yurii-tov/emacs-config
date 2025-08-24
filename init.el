@@ -2046,6 +2046,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; =========
 
 
+(setq yas-verbosity 1)
+
+
 (yas-global-mode 1)
 
 
