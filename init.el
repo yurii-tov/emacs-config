@@ -1010,7 +1010,8 @@
                "f" dired-flatten-directory
                "s" dired-calculate-size
                "S" dired-calculate-size-tree
-               "M" dired-mark-files-regexp
+               "SPC" dired-mark
+               "m" dired-mark-files-regexp
                "c" dired-do-copy
                "r" dired-do-rename
                "k" dired-do-delete
