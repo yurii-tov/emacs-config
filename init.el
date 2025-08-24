@@ -1014,6 +1014,7 @@
                "m" dired-mark-files-regexp
                "c" dired-do-copy
                "r" dired-do-rename
+               "k" dired-do-delete
                "e" dired-toggle-read-only
                "," dired-do-chmod
                "." dired-do-chown
