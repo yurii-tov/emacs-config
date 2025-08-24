@@ -4074,10 +4074,7 @@ Process .+
         (let ((gptel-backend mistral)
               (gptel-model 'mistral-medium-latest))
           (gptel-request
-              (concat (thread-first
-                        'translate
-                        (assq gptel--known-presets) (cdr)
-                        (plist-get :system))
+              (concat "Translate the text i provide to you. If text is in Russian, translate it to English. Otherwise translate the text to Russian. Provide only translated text, without any explanations. The text:\n"
                       query)
             :callback `(lambda (response _)
                          (message "%s =>\n%s" ,query-message response))))
