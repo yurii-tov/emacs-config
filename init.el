@@ -2062,7 +2062,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 (setq-default company-tooltip-offset-display 'lines
               company-selection-wrap-around t
-              company-files-chop-trailing-slash nil
               company-dabbrev-downcase nil
               company-dabbrev-ignore-case nil
               company-dabbrev-ignore-buffers "\\`[ ]"
