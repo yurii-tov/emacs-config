@@ -925,11 +925,6 @@
 (setq find-ls-option '("-exec ls -ldh {} +" . "-ldh"))
 
 
-(defun dired-open-in-external-app ()
-  (interactive)
-  (mapc #'open-in-external-app (dired-get-marked-files)))
-
-
 (defun dired-archive ()
   (interactive)
   (let* ((output (file-truename (read-file-name "Add file(s) to archive: ")))
@@ -1006,19 +1001,23 @@
 
 
 (defun customize-dired-keys ()
-  (bind-keys '("o" dired-open-in-external-app
-               "j" dired-display-file
-               "/" dired-hide-details-mode
+  (bind-keys '("C-o" dired-do-open
+               "o" dired-display-file
+               "h" dired-hide-details-mode
                "l" dired-up-directory
                "a" dired-archive
                "A" dired-extract-archive
                "f" dired-flatten-directory
                "s" dired-calculate-size
                "S" dired-calculate-size-tree
-               "M" dired-mark-files-regexp
-               "c" dired-do-chmod
+               "SPC" dired-mark
+               "m" dired-mark-files-regexp
+               "c" dired-do-copy
+               "r" dired-do-rename
                "e" dired-toggle-read-only
-               "L" dired-do-symlink)))
+               "," dired-do-chmod
+               "." dired-do-chown
+               "/" dired-do-symlink)))
 
 
 (add-hook 'dired-mode-hook 'customize-dired-keys)
