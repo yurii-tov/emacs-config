@@ -1001,7 +1001,7 @@
 
 
 (defun customize-dired-keys ()
-  (bind-keys '("C-o" dired-do-open
+  (bind-keys '("/" dired-do-open
                "o" dired-display-file
                "h" dired-hide-details-mode
                "l" dired-up-directory
