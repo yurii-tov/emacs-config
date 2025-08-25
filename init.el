@@ -1001,7 +1001,7 @@
 
 
 (with-eval-after-load 'dired
-  (bind-keys '("/" dired-do-open
+  (bind-keys '("e" dired-do-open
                "o" dired-display-file
                "h" dired-hide-details-mode
                "l" dired-up-directory
@@ -1014,7 +1014,7 @@
                "c" dired-do-copy
                "r" dired-do-rename
                "k" dired-do-delete
-               "e" dired-toggle-read-only
+               "/" dired-toggle-read-only
                "1" dired-do-chmod
                "2" dired-do-chown
                "y" dired-do-symlink)
