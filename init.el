@@ -1000,7 +1000,7 @@
   (dired-calculate-size t))
 
 
-(defun customize-dired-keys ()
+(with-eval-after-load 'dired
   (bind-keys '("/" dired-do-open
                "o" dired-display-file
                "h" dired-hide-details-mode
@@ -1017,10 +1017,8 @@
                "e" dired-toggle-read-only
                "1" dired-do-chmod
                "2" dired-do-chown
-               "y" dired-do-symlink)))
-
-
-(add-hook 'dired-mode-hook 'customize-dired-keys)
+               "y" dired-do-symlink)
+             dired-mode-map))
 
 
 (add-hook 'dired-mode-hook 'auto-revert-mode)
