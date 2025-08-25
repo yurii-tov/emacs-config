@@ -3203,8 +3203,8 @@ Also grabs a selected region, if any."
              vc-dir-mode-map))
 
 
-(with-eval-after-load 'vc-git
-  (define-key vc-git-log-view-mode-map
+(with-eval-after-load 'log-view
+  (define-key log-view-mode-map
               (kbd "j")
               'vc-print-branch-log))
 
