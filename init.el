@@ -895,7 +895,7 @@
                  (buffer-file-name))))
     (when names
       (kill-new names)
-      (message "Name copied to clipboard: %s" names))))
+      (message "Copied to clipboard: %s" names))))
 
 
 ;; =====
