@@ -1018,6 +1018,7 @@
                "/" dired-toggle-read-only
                "1" dired-do-chmod
                "2" dired-do-chown
+               "3" dired-do-touch
                "y" dired-do-symlink)
              dired-mode-map))
 
