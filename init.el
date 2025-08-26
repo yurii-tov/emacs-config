@@ -1004,7 +1004,6 @@
 (with-eval-after-load 'dired
   (bind-keys '("w" copy-file-name-to-clipboard
                "e" dired-do-open
-               "j" dired-find-file
                "o" dired-display-file
                "h" dired-hide-details-mode
                "l" dired-up-directory
