@@ -890,9 +890,10 @@
 (defun copy-file-name-to-clipboard ()
   "Copy the current file name(s) to the clipboard"
   (interactive)
-  (let ((names (if (equal major-mode 'dired-mode)
-                   (string-join (dired-get-marked-files) "\n")
-                 (buffer-file-name))))
+  (let ((names (or (and (equal major-mode 'dired-mode)
+                        (string-join (dired-get-marked-files) "\n"))
+                   (buffer-file-name)
+                   default-directory)))
     (when names
       (kill-new names)
       (message "Copied to clipboard: %s" names))))
