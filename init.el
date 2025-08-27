@@ -285,7 +285,8 @@
 ;; Project
 
 
-(bind-keys '("SPC" project-dired
+(bind-keys '("/" project-switch-project
+             "j" project-dired
              "i" project-reformat
              "a" project-async-shell-command)
            project-prefix-map)
@@ -306,7 +307,7 @@
 ;; Misc
 
 
-(bind-keys '("M-o" other-window
+(bind-keys `("M-o" other-window
              "C-1" delete-other-windows
              "C-2" split-window-below
              "C-3" split-window-right
@@ -314,7 +315,6 @@
              "M-k" kill-line-to-indentation
              "M-=" count-words
              "M-q" hippie-expand
-             "M-/" project-find-file
              "C-v" scroll-up-5-lines
              "M-v" scroll-down-5-lines
              "M-1" shell-command
@@ -329,11 +329,13 @@
              "M-j" switch-to-buffer
              "M-`" shell
              "M-g" goto-line
+             "M-/" ,project-prefix-map
              "C-=" text-scale-increase
              "C-M-=" text-scale-decrease
              "C-+" (lambda () (interactive) (text-scale-set 0))
              "M-l" (lambda () (interactive) (move-line 'up))
              "C-M-l" (lambda () (interactive) (move-line 'down))
+             "C-x p" copy-file-name-to-clipboard
              "C-x b" bookmark-set
              "C-x B" bookmark-delete
              "C-x j" bookmark-jump
@@ -351,7 +353,6 @@
              "C-c s" ssh
              "C-c d" serve-directory
              "C-c v" capture-video
-             "C-c p" copy-file-name-to-clipboard
              "C-c h" hexl-mode
              "C-c c" org-capture
              "C-c a" org-agenda
