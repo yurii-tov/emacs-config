@@ -1005,7 +1005,7 @@
 
 (with-eval-after-load 'dired
   (bind-keys '("w" copy-file-name-to-clipboard
-               "e" dired-do-open
+               "j" dired-do-open
                "o" dired-display-file
                "h" dired-hide-details-mode
                "l" dired-up-directory
@@ -1018,7 +1018,7 @@
                "c" dired-do-copy
                "r" dired-do-rename
                "k" dired-do-delete
-               "/" dired-toggle-read-only
+               "e" dired-toggle-read-only
                "1" dired-do-chmod
                "2" dired-do-chown
                "3" dired-do-touch
