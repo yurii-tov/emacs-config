@@ -435,7 +435,8 @@
              use-short-answers t
              ring-bell-function 'ignore
              kill-buffer-query-functions (remq 'process-kill-buffer-query-function
-                                               kill-buffer-query-functions))
+                                               kill-buffer-query-functions)
+             disabled-command-function nil)
        (when fringe-indicator-alist
          (setf (cdr (assq 'continuation fringe-indicator-alist)) '(nil nil)))
        (when (fboundp 'toggle-scroll-bar)
