@@ -253,35 +253,6 @@
                       "d" diff-current-buffer)
 
 
-;; Kmacro
-
-
-(define-custom-keymap kmacro-map "C-x C-u"
-                      "C-a" kmacro-add-counter
-                      "C-c" kmacro-set-counter
-                      "C-d" kmacro-delete-ring-head
-                      "C-e" kmacro-edit-macro-repeat
-                      "C-f" kmacro-set-format
-                      "TAB" kmacro-insert-counter
-                      "C-k" kmacro-end-or-call-macro-repeat
-                      "C-l" kmacro-call-ring-2nd-repeat
-                      "RET" kmacro-edit-macro
-                      "C-n" kmacro-cycle-ring-next
-                      "C-p" kmacro-cycle-ring-previous
-                      "C-t" kmacro-swap-ring
-                      "C-v" kmacro-view-macro-repeat
-                      "SPC" kmacro-step-edit-macro
-                      "b" kmacro-bind-to-key
-                      "d" kmacro-redisplay
-                      "e" edit-kbd-macro
-                      "l" kmacro-edit-lossage
-                      "n" kmacro-name-last-macro
-                      "q" kbd-macro-query
-                      "r" apply-macro-to-region-lines
-                      "s" kmacro-start-macro
-                      "x" kmacro-to-register)
-
-
 ;; Project
 
 
