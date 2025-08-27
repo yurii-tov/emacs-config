@@ -204,7 +204,7 @@
 ;; Search
 
 
-(bind-keys `("f" find-dired
+(bind-keys '("f" find-dired
              "g" rgrep
              "l" gptel-chat
              "s" browse-url-or-search
