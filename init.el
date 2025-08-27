@@ -278,7 +278,8 @@
 ;; Misc
 
 
-(bind-keys `("M-o" other-window
+(bind-keys `("<f2>" kmacro-set-counter
+             "M-o" other-window
              "C-1" delete-other-windows
              "C-2" split-window-below
              "C-3" split-window-right
