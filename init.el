@@ -292,9 +292,9 @@
              "M-!" asc-at-directory
              "M-2" enclose-text-cycle-m2
              "M-3" enclose-text-cycle-m3
-             "M-9" (lambda () (interactive) (enclose-text "(" ")" t))
-             "M-0" (lambda () (interactive) (enclose-text "[" "]" t))
-             "M-)" (lambda () (interactive) (enclose-text "{" "}" t))
+             "M-9" enclose-text-parenthesis
+             "M-0" enclose-text-square-brackets
+             "M-)" enclose-text-curly-brackets
              "M-i" pretty-print-buffer
              "M-u" force-revert-buffer
              "M-j" switch-to-buffer
@@ -303,9 +303,9 @@
              "M-/" ,project-prefix-map
              "C-=" text-scale-increase
              "C-M-=" text-scale-decrease
-             "C-+" (lambda () (interactive) (text-scale-set 0))
-             "M-l" (lambda () (interactive) (move-line 'up))
-             "C-M-l" (lambda () (interactive) (move-line 'down))
+             "C-+" text-scale-reset
+             "M-l" move-line-up
+             "C-M-l" move-line-down
              "C-x p" copy-file-name-to-clipboard
              "C-x b" bookmark-set
              "C-x B" bookmark-delete
@@ -1254,6 +1254,14 @@ The search string is queried first, followed by the directory."
 (setq duplicate-line-final-position -1)
 
 
+;; Scaling
+
+
+(defun text-scale-reset ()
+  (interactive)
+  (text-scale-set 0))
+
+
 ;; Various brand-new text transforming commands
 
 
@@ -1401,6 +1409,16 @@ The search string is queried first, followed by the directory."
          (beginning-of-line))))
 
 
+(defun move-line-up ()
+  (interactive)
+  (move-line 'up))
+
+
+(defun move-line-down ()
+  (interactive)
+  (move-line 'down))
+
+
 ;; Enclose text with brackets (and similar things)
 
 
@@ -1510,6 +1528,21 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   (interactive)
   (enclose-text-cycle '("**" "==" "//" "~~")
                       134217779))
+
+
+(defun enclose-text-parenthesis ()
+  (interactive)
+  (enclose-text "(" ")" t))
+
+
+(defun enclose-text-square-brackets ()
+  (interactive)
+  (enclose-text "[" "]" t))
+
+
+(defun enclose-text-curly-brackets ()
+  (interactive)
+  (enclose-text "{" "}" t))
 
 
 ;; Various fixes for out-of-the-box text transforming commands
