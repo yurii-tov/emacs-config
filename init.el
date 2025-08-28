@@ -278,10 +278,12 @@
 ;; Keyboard macro
 
 
-(bind-keys '("<f1>" call-last-kbd-macro
-             "<f2>" kmacro-set-counter
-             "S-<f2>" kmacro-set-format
-             "S-<f4>" kmacro-name-last-macro)
+(bind-keys '("<f1>" kmacro-start-macro-or-insert-counter
+             "<f2>" kmacro-end-or-call-macro
+             "<f3>" kmacro-set-counter
+             "S-<f3>" kmacro-set-format
+             "<f4>" kmacro-cycle-ring-previous
+             "S-<f4>" kmacro-delete-ring-head)
            global-map)
 
 
