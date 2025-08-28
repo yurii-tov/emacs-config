@@ -558,10 +558,11 @@
                              "")))
                 ,(propertize "%b" 'face 'mode-line-buffer-id)
                 ,(propertize " %l:%C" 'face 'shadow)
-                (:eval (when (use-region-p) (format " %s" (mode-line-selection-stats))))
+                (mark-active (:eval (when (> (region-end) (region-beginning))
+                                      (format " %s" (mode-line-selection-stats)))))
                 " "
                 mode-line-format-right-align
-                ((flymake-mode flymake-mode-line-counters))
+                (flymake-mode flymake-mode-line-counters)
                 (vc-mode vc-mode)
                 " "))
 
