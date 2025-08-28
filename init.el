@@ -275,11 +275,20 @@
            global-map)
 
 
+;; Keyboard macro
+
+
+(bind-keys '("<f1>" call-last-kbd-macro
+             "S-<f1>" kmacro-name-last-macro
+             "<f2>" kmacro-set-counter
+             "S-<f2>" kmacro-set-format)
+           global-map)
+
+
 ;; Misc
 
 
-(bind-keys `("<f2>" kmacro-set-counter
-             "M-o" other-window
+(bind-keys `("M-o" other-window
              "C-1" delete-other-windows
              "C-2" split-window-below
              "C-3" split-window-right
