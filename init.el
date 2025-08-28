@@ -279,9 +279,9 @@
 
 
 (bind-keys '("<f1>" call-last-kbd-macro
-             "S-<f1>" kmacro-name-last-macro
              "<f2>" kmacro-set-counter
-             "S-<f2>" kmacro-set-format)
+             "S-<f2>" kmacro-set-format
+             "S-<f4>" kmacro-name-last-macro)
            global-map)
 
 
