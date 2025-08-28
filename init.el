@@ -521,10 +521,10 @@
 (defun mode-line-selection-stats ()
   (let* ((start (region-beginning))
          (end (region-end))
-         (chars (- end start))
-         (lines (count-lines start end)))
-    (propertize (format "Sel: %d|%d" chars lines)
-                'face 'mode-line-emphasis)))
+         (chars (- end start)))
+    (when (> chars 0)
+      (propertize (format " Sel: %d|%d" chars (count-lines start end))
+                  'face 'mode-line-emphasis))))
 
 
 (setq-default mode-line-format
@@ -558,8 +558,7 @@
                              "")))
                 ,(propertize "%b" 'face 'mode-line-buffer-id)
                 ,(propertize " %l:%C" 'face 'shadow)
-                (mark-active (:eval (when (> (region-end) (region-beginning))
-                                      (format " %s" (mode-line-selection-stats)))))
+                (mark-active (:eval (mode-line-selection-stats)))
                 " "
                 mode-line-format-right-align
                 (flymake-mode flymake-mode-line-counters)
