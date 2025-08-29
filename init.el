@@ -280,8 +280,8 @@
 
 (bind-keys '("<f1>" kmacro-start-macro-or-insert-counter
              "<f2>" kmacro-end-or-call-macro
-             "<f3>" kmacro-set-counter
-             "<f4>" kmacro-delete-ring-head)
+             "<f3>" kmacro-cycle-ring-previous
+             "<f4>" kmacro-set-counter)
            global-map)
 
 
