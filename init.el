@@ -3351,12 +3351,8 @@ Also grabs a selected region, if any."
   ;; Keybindings
   (bind-keys '("M-p" eglot-code-actions
                "M-." xref-find-definitions
-               "C-," flymake-goto-prev-error
-               "C-." flymake-goto-next-error
                "C-c C-n" eglot-rename
                "C-c C-e" eglot-code-action-extract
-               "C-c C-o" flymake-show-buffer-diagnostics
-               "C-c C-p" flymake-show-project-diagnostics
                "C-h C-h" eldoc-print-current-symbol-info
                "C-c C-i" eglot-code-action-inline
                "C-c C-j" eglot-code-action-quickfix
@@ -3380,6 +3376,14 @@ Also grabs a selected region, if any."
 ;; =======
 ;; Flymake
 ;; =======
+
+
+(with-eval-after-load 'flymake
+  (bind-keys '("C-," flymake-goto-prev-error
+               "C-." flymake-goto-next-error
+               "C-c C-o" flymake-show-buffer-diagnostics
+               "C-c C-p" flymake-show-project-diagnostics)
+             flymake-mode-map))
 
 
 (defun flymake-display-diagnostics-fix (f &rest args)
