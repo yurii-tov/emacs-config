@@ -325,9 +325,10 @@
              "C-x C-b" ibuffer
              "C-x C-k" kill-buffer-and-window
              "C-x C-=" display-line-numbers-mode
-             "C-x C-l" gptel-send
+             "C-x C-l" gptel-menu
              "C-x ." compile
              "C-x C-." recompile
+             "C-c RET" gptel-send
              "C-c j" cider-start-map
              "C-c k" sql-connect
              "C-c i" ielm
