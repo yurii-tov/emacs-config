@@ -1748,7 +1748,8 @@ with ability to \"cycle\" different variants with provided KEYBINDING
          (history (and (not (member history-symbol
                                     '(string-rectangle-history
                                       junk-hist
-                                      org-read-date-history)))
+                                      org-read-date-history
+                                      transient--history)))
                        (boundp history-symbol)
                        (symbol-value history-symbol))))
     (if history
