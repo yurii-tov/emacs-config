@@ -2287,7 +2287,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; Descriptive buffer names
 
 
-(defun command-to-buffer-name (command)
+(defun asc-gen-buffer-name (command)
   (let ((max-chars 40))
     (format "*%s*"
             (if (> (length command) max-chars)
@@ -2295,14 +2295,33 @@ with ability to \"cycle\" different variants with provided KEYBINDING
               command))))
 
 
-(defun asc-setup-buffer-name (f &rest args)
+(defun asc-setup-buffer (f &rest args)
   (let* ((command (car args))
          (buffer-name (or (cadr args)
-                          (command-to-buffer-name command))))
+                          (asc-gen-buffer-name command))))
+    (when (and (get-buffer buffer-name)
+               (get-buffer-process buffer-name))
+      (let ((key (read-key
+                  (concat
+                   "The command is already running.\n"
+                   "Press the key for next action:\n"
+                   (mapconcat (lambda (x)
+                                (format "%s %s"
+                                        (propertize (car x)
+                                                    'face 'help-key-binding)
+                                        (cdr x)))
+                              '(("k" . "Kill the existing buffer and then run the command")
+                                ("n" . "Run the command in another buffer")
+                                ("other" . "Do nothing"))
+                              " ")))))
+        (cl-case key
+          (?k (kill-buffer buffer-name))
+          (?n (setq buffer-name (generate-new-buffer-name buffer-name)))
+          (t (keyboard-quit)))))
     (apply f command buffer-name (cddr args))))
 
 
-(advice-add 'async-shell-command :around 'asc-setup-buffer-name)
+(advice-add 'async-shell-command :around 'asc-setup-buffer)
 
 
 ;; Histfile
