@@ -2287,7 +2287,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; Descriptive buffer names
 
 
-(defun asc-gen-buffer-name (command)
+(defun asc-make-buffer-name (command)
   (let ((max-chars 40))
     (format "*%s*"
             (if (> (length command) max-chars)
@@ -2298,7 +2298,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (defun asc-setup-buffer (f &rest args)
   (let* ((command (car args))
          (buffer-name (or (cadr args)
-                          (asc-gen-buffer-name command))))
+                          (asc-make-buffer-name command))))
     (when (and (get-buffer buffer-name)
                (get-buffer-process buffer-name))
       (let ((key (read-key
