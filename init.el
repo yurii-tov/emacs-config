@@ -3130,9 +3130,19 @@ Also grabs a selected region, if any."
 (require 'diff-mode)
 
 
+(require 'gptel-rewrite)
+
+
 (custom-set-faces
  '(gptel-rewrite-highlight-face ((t (:inherit diff-added)))))
 
+
+(bind-keys '("=" gptel--rewrite-diff
+             "r" gptel--rewrite-iterate
+             "SPC" gptel--rewrite-accept
+             "m" gptel--rewrite-merge
+             "k" gptel--rewrite-reject)
+           gptel-rewrite-actions-map)
 
 ;; ===
 ;; VCS
