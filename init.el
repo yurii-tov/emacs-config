@@ -3105,10 +3105,10 @@ Also grabs a selected region, if any."
 ;; ===
 
 
-(setq vc-display-status 'no-backend)
-
-
 ;; Good-looking mode line indicator
+
+
+(setq vc-display-status 'no-backend)
 
 
 (defun vc-prettify-mode-line-state (s)
@@ -3207,6 +3207,16 @@ Also grabs a selected region, if any."
   (vc-dir-refresh))
 
 
+;; Convenient revision copying
+
+
+(defun log-view-copy-revision ()
+  (interactive)
+  (let ((r (cadr (log-view-current-entry))))
+    (kill-new r)
+    (message "Copied to clipboard: %s" r)))
+
+
 ;; Keybindings
 
 
@@ -3223,9 +3233,9 @@ Also grabs a selected region, if any."
 
 
 (with-eval-after-load 'log-view
-  (define-key log-view-mode-map
-              (kbd "j")
-              'vc-print-branch-log))
+  (bind-keys '("j" vc-print-branch-log
+               "w" log-view-copy-revision)
+             log-view-mode-map))
 
 
 ;; ========
