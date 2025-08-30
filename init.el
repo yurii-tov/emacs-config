@@ -2301,19 +2301,22 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                           (asc-make-buffer-name command))))
     (when (and (get-buffer buffer-name)
                (get-buffer-process buffer-name))
-      (let ((key (read-key
-                  (concat
-                   "The command is already running.\n"
-                   "Press the key for next action:\n"
-                   (mapconcat (lambda (x)
-                                (format "%s %s"
-                                        (propertize (car x)
-                                                    'face 'help-key-binding)
-                                        (cdr x)))
-                              '(("k" . "Kill the existing buffer and then run the command")
-                                ("n" . "Run the command in another buffer")
-                                ("other" . "Do nothing"))
-                              " ")))))
+      (let* ((dir (with-current-buffer buffer-name
+                    (abbreviate-file-name default-directory)))
+             (key (read-key
+                   (concat
+                    (format "The process is already running at %s.\n"
+                            (propertize dir 'face 'completions-annotations))
+                    "Press the key for next action:\n"
+                    (mapconcat (lambda (x)
+                                 (format "%s %s"
+                                         (propertize (car x)
+                                                     'face 'help-key-binding)
+                                         (cdr x)))
+                               '(("k" . "Kill it before running the new one")
+                                 ("n" . "Leave it as is, run the new one in another buffer")
+                                 ("other" . "Do nothing"))
+                               " ")))))
         (cl-case key
           (?k (kill-buffer buffer-name))
           (?n (setq buffer-name (generate-new-buffer-name buffer-name)))
