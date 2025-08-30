@@ -3124,6 +3124,13 @@ Also grabs a selected region, if any."
   (add-hook x 'gptel-enable-code-model))
 
 
+;; Rewrite facility
+
+
+(custom-set-faces
+ '(gptel-rewrite-highlight-face ((t (:inherit diff-added)))))
+
+
 ;; ===
 ;; VCS
 ;; ===
