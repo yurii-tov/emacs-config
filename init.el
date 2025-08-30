@@ -3127,6 +3127,9 @@ Also grabs a selected region, if any."
 ;; Rewrite facility
 
 
+(require 'diff-mode)
+
+
 (custom-set-faces
  '(gptel-rewrite-highlight-face ((t (:inherit diff-added)))))
 
