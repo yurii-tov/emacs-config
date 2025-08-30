@@ -2308,7 +2308,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                    (concat
                     (format "The process is already running at %s.\n"
                             (propertize dir 'face 'completions-annotations))
-                    "Press the key for next action:\n"
+                    "Choose: "
                     (mapconcat (lambda (x)
                                  (format "%s %s"
                                          (propertize (car x)
@@ -2316,8 +2316,8 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                                          (cdr x)))
                                '(("k" . "Kill it before running the new one")
                                  ("n" . "Leave it as is, run the new one in another buffer")
-                                 ("other" . "Do nothing"))
-                               " ")))))
+                                 ("any other" . "Do nothing"))
+                               "  ")))))
         (cl-case key
           (?k (kill-buffer buffer-name))
           (?n (setq buffer-name (generate-new-buffer-name buffer-name)))
