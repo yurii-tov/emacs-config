@@ -800,6 +800,10 @@
 (advice-add 'ibuffer-filter-disable :around 'ibuffer-toggle-last-filter)
 
 
+(with-eval-after-load 'ibuffer
+  (define-key ibuffer-mode-map (kbd "j") 'ibuffer-jump-to-filter-group))
+
+
 ;; =====
 ;; Files
 ;; =====
