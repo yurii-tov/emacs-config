@@ -2231,6 +2231,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; ==============
 
 
+(setq shell-command-prompt-show-cwd t)
+
+
 ;; Custom completion style for shell commands
 
 
@@ -2271,8 +2274,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; ===================
 
 
-(setq async-shell-command-mode 'shell-mode
-      shell-command-prompt-show-cwd t)
+(setq async-shell-command-mode 'shell-mode)
 
 
 (defun asc-at-directory (command working-directory)
