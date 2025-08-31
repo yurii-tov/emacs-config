@@ -992,6 +992,7 @@
                "s" dired-calculate-size
                "S" dired-calculate-size-tree
                "M" dired-mark-files-regexp
+               "v" dired-sort-toggle-or-edit
                "c" dired-do-copy
                "r" dired-do-rename
                "k" dired-do-delete
