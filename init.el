@@ -3245,11 +3245,18 @@ Also grabs a selected region, if any."
 ;; Reset
 
 
-(defun vc-reset ()
-  "git reset HEAD^"
+(defun vc-reset (&optional args)
+  "Resets to HEAD^"
   (interactive)
-  (shell-command "git reset HEAD^")
+  (shell-command (format "git reset %s HEAD^"
+                         (or args "")))
   (vc-dir-refresh))
+
+
+(defun vc-reset-hard ()
+  "git reset --hard HEAD^"
+  (interactive)
+  (vc-reset "--hard"))
 
 
 ;; Convenient revision copying
@@ -3273,7 +3280,8 @@ Also grabs a selected region, if any."
                "l" vc-print-root-log
                "s" vc-switch-branch
                "c" vc-create-branch
-               "r" vc-reset)
+               "r" vc-reset
+               "R" vc-reset-hard)
              vc-dir-mode-map))
 
 
