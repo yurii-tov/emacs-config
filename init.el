@@ -896,18 +896,13 @@
       '("%Y-%m-%d %H:%M"
         "%Y-%m-%d %H:%M")
       ls-lisp-use-localized-time-format t
-      ls-lisp-dirs-first t)
-
-
-(setq dired-listing-switches "-alh"
+      ls-lisp-dirs-first t
+      dired-listing-switches "-alh"
       dired-recursive-copies 'always
       dired-recursive-deletes 'always
       dired-dwim-target t
       dired-hide-details-hide-symlink-targets nil
       dired-kill-when-opening-new-dired-buffer t)
-
-
-(setq find-ls-option '("-exec ls -ldh {} +" . "-ldh"))
 
 
 (defun dired-archive ()
@@ -1082,6 +1077,9 @@
 ;; ====
 ;; Find
 ;; ====
+
+
+(setq find-ls-option '("-exec ls -ldh {} +" . "-ldh"))
 
 
 (defun find-dired-setup-buffer (f &rest args)
