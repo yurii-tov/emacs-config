@@ -3245,18 +3245,23 @@ Also grabs a selected region, if any."
 ;; Reset
 
 
-(defun vc-reset (&optional args)
-  "Resets to HEAD^"
+(defun vc-reset (&optional args action)
   (interactive)
-  (shell-command (format "git reset %s HEAD^"
-                         (or args "")))
+  (let* ((default "HEAD^")
+         (dir (expand-file-name (vc-root-dir)))
+         (revision (vc-read-revision (format "%s to (default %s): " (or action "Reset") default)
+                                     (list dir)
+                                     (vc-responsible-backend dir)
+                                     default)))
+    (shell-command (format "git reset %s %s"
+                           (or args "")
+                           revision)))
   (vc-dir-refresh))
 
 
 (defun vc-reset-hard ()
-  "git reset --hard HEAD^"
   (interactive)
-  (vc-reset "--hard"))
+  (vc-reset "--hard" "Hard reset"))
 
 
 ;; Convenient revision copying
