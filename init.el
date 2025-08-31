@@ -1006,14 +1006,14 @@
 (add-hook 'dired-mode-hook 'auto-revert-mode)
 
 
-(defun dired-custom-highlight ()
+(defun dired-colorize ()
   (highlight-regexp " [0-9]+\\-[0-9][0-9]\\-[0-9][0-9] [0-9][0-9]:[0-9][0-9] "
                     'font-lock-doc-face)
   (highlight-regexp " [0-9]+\\(\\.[0-9]+\\)?\\(k\\|M\\|G\\)? "
                     'font-lock-comment-face))
 
 
-(add-hook 'dired-after-readin-hook 'dired-custom-highlight)
+(add-hook 'dired-after-readin-hook 'dired-colorize)
 
 
 (defun dired-disable-ffap ()
