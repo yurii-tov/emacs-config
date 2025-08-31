@@ -2322,7 +2322,8 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                                  ("any other" . "Do nothing"))
                                "  ")))))
         (cl-case key
-          (?k (kill-buffer buffer-name))
+          (?k (kill-buffer buffer-name)
+              (sit-for 0.5))
           (?n (setq buffer-name (generate-new-buffer-name buffer-name)))
           (t (keyboard-quit)))))
     (apply f command buffer-name (cddr args))))
