@@ -699,7 +699,7 @@
       ibuffer-show-empty-filter-groups nil
       ibuffer-formats '((mark modified read-only locked " "
                               (name 16 -1)
-                              " " filename-and-process))
+                              " " filename))
       ibuffer-saved-filter-groups
       '(("default"
          ("System" (or (mode . messages-buffer-mode)
@@ -717,11 +717,11 @@
          ("📦 Build" (and (mode . compilation-mode)
                           (predicate . (get-buffer-process (current-buffer)))))
          ("🦄 Org Mode" (mode . org-mode))
-         ("📜 Program" (derived-mode . prog-mode))
-         ("📄 Plain text" (and (or (derived-mode . text-mode)
-                                   (mode . fundamental-mode)
-                                   (derived-mode . conf-mode))
-                               (not (name . "^\\*.*\\*$"))))
+         ("Program" (derived-mode . prog-mode))
+         ("Text" (and (or (derived-mode . text-mode)
+                          (mode . fundamental-mode)
+                          (derived-mode . conf-mode))
+                      (not (name . "^\\*.*\\*$"))))
          ("❓📖 Help" (or (mode . Man-mode)
                           (mode . Info-mode)
                           (mode . help-mode)))
@@ -733,26 +733,6 @@
                        (name . "^\\*eww[ -].*$")))
          ("📁 Directory" (mode . dired-mode))
          ("Inferior process" (predicate . (get-buffer-process (current-buffer)))))))
-
-
-(defun ibuffer-colorize-process-info (s)
-  (let* ((process-indicator "^([^)]+)"))
-    (if (string-match process-indicator s)
-        (let ((s (replace-regexp-in-string
-                  process-indicator
-                  "•⁤" s)))
-          (set-text-properties
-           1 2 '(ibuffer-process t) s)
-          (set-text-properties
-           0 1 '(face compilation-mode-line-run) s)
-          s)
-      s)))
-
-
-(unless (and system-type-is-windows (not window-system))
-  (advice-add 'ibuffer-make-column-filename-and-process
-              :filter-return
-              #'ibuffer-colorize-process-info))
 
 
 (defun ibuffer-setup ()
