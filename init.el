@@ -716,7 +716,7 @@
                       (predicate . (get-buffer-process (current-buffer)))))
          ("⚗️ Build" (and (mode . compilation-mode)
                          (predicate . (get-buffer-process (current-buffer)))))
-         ("🦄 Org Mode" (mode . org-mode))
+         ("🦄 Org" (mode . org-mode))
          ("Program" (derived-mode . prog-mode))
          ("Text" (and (or (derived-mode . text-mode)
                           (mode . fundamental-mode)
