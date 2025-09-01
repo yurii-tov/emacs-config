@@ -731,7 +731,7 @@
                        (mode . eww-history-mode)
                        (mode . eww-bookmark-mode)))
          ("📁 Directory" (mode . dired-mode))
-         ("Inferior process" (predicate . (get-buffer-process (current-buffer)))))))
+         ("Process" (predicate . (get-buffer-process (current-buffer)))))))
 
 
 (defun ibuffer-setup ()
