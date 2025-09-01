@@ -706,7 +706,7 @@
                        (and (mode . lisp-interaction-mode)
                             (name . "^\\*scratch\\*$"))))
          ("REPL" (and (or (and (mode . shell-mode)
-                               (name . "^\\*\\([bz]?a?sh\\|powershell\\|.*-?shell\\|ssh-\\).*\\*"))
+                               (name . "\\*\\(.*shell\\|ssh-\\).*\\*"))
                           (mode . inferior-emacs-lisp-mode)
                           (mode . sql-interactive-mode)
                           (mode . inferior-groovy-mode)
