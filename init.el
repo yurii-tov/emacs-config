@@ -311,6 +311,7 @@
              "M-j" switch-to-buffer
              "M-`" shell
              "M-g" goto-line
+             "M-'" recompile
              "M-/" ,project-prefix-map
              "C-=" text-scale-increase
              "C-M-=" text-scale-decrease
@@ -327,8 +328,6 @@
              "C-x C-k" kill-buffer-and-window
              "C-x C-=" display-line-numbers-mode
              "C-x C-l" gptel-menu
-             "C-x ." compile
-             "C-x C-." recompile
              "C-c RET" gptel-send
              "C-c j" cider-start-map
              "C-c k" sql-connect
@@ -3336,17 +3335,6 @@ Also grabs a selected region, if any."
 ;; ===========
 ;; Compilation
 ;; ===========
-
-
-(defun compile-maybe-project (f &rest args)
-  (let* ((project (project-current))
-         (default-directory (if project
-                                (project-root project)
-                              default-directory)))
-    (apply f args)))
-
-
-(advice-add 'compile :around 'compile-maybe-project)
 
 
 (require 'ansi-color)
