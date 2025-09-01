@@ -722,7 +722,7 @@
                           (mode . fundamental-mode)
                           (derived-mode . conf-mode))
                       (not (name . "\\*"))))
-         ("📖 Help" (or (mode . Man-mode)
+         ("📖 Docs" (or (mode . Man-mode)
                         (mode . Info-mode)
                         (mode . help-mode)))
          ("📚 Book" (mode . nov-mode))
