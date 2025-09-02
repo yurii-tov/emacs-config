@@ -3725,18 +3725,15 @@ Also grabs a selected region, if any."
                   (sql-password "masterkey"))))
 
 
-;; Fixing rough corners
+;; Fix rough corners
 
 
-(defun sql-handle-read-db-path (f &rest args)
-  "Do not read db path from `sql-database', but record work directory"
+(defun ignore-sql-database (f &rest args)
   (let ((sql-database ""))
-    (prog1 (apply f args)
-      (ido-record-work-directory
-       (file-name-directory sql-database)))))
+    (apply f args)))
 
 
-(advice-add 'sql-connect :around 'sql-handle-read-db-path)
+(advice-add 'sql-connect :around 'ignore-sql-database)
 
 
 ;; Initial setup
