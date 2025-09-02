@@ -318,6 +318,7 @@
              "C-+" text-scale-reset
              "M-l" move-line-up
              "C-M-l" move-line-down
+             "C-x ." compile
              "C-x p" copy-file-name-to-clipboard
              "C-x b" bookmark-set
              "C-x B" bookmark-delete
