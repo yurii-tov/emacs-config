@@ -769,15 +769,9 @@
 ;; =====
 
 
-;; No backups
-
-
 (setq auto-save-default nil
       make-backup-files nil
       auto-save-list-file-name nil)
-
-
-;; Reverting file-related buffers
 
 
 (global-auto-revert-mode t)
@@ -797,6 +791,19 @@
   (message "Force reverting buffer '%s'..." (buffer-name))
   (yas-exit-all-snippets)
   (revert-buffer nil t t))
+
+
+(defun open-in-external-app (file-name)
+  (let ((open-file
+         (cond (system-type-is-windows
+                (lambda (f) (w32-shell-execute "open" (replace-regexp-in-string "/" "\\" f t t))))
+               ((eq system-type 'darwin)
+                (lambda (f) (shell-command (concat "open " (shell-quote-argument f)))))
+               ((eq system-type 'gnu/linux)
+                (lambda (f) (let ((process-connection-type nil))
+                              (start-process "" nil "xdg-open" f)))))))
+    (ido-record-work-directory (file-name-directory file-name))
+    (funcall open-file file-name)))
 
 
 (defun watch-file (file)
@@ -1789,16 +1796,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   (let ((file-name (expand-file-name (ido-name (car ido-matches))
                                      ido-current-directory)))
     (message "Open in external app: %s" file-name)
-    (let ((open-file
-           (cond (system-type-is-windows
-                  (lambda (f) (w32-shell-execute "open" (replace-regexp-in-string "/" "\\" f t t))))
-                 ((eq system-type 'darwin)
-                  (lambda (f) (shell-command (concat "open " (shell-quote-argument f)))))
-                 ((eq system-type 'gnu/linux)
-                  (lambda (f) (let ((process-connection-type nil))
-                                (start-process "" nil "xdg-open" f)))))))
-      (ido-record-work-directory (file-name-directory file-name))
-      (funcall open-file file-name))
+    (open-in-external-app file-name)
     (minibuffer-keyboard-quit)))
 
 
