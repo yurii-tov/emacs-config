@@ -311,14 +311,14 @@
              "M-j" switch-to-buffer
              "M-`" shell
              "M-g" goto-line
-             "M-'" recompile
              "M-/" ,project-prefix-map
+             "M-'" recompile
+             "C-'" compile
+             "M-l" move-line-up
+             "C-M-l" move-line-down
              "C-=" text-scale-increase
              "C-M-=" text-scale-decrease
              "C-+" text-scale-reset
-             "M-l" move-line-up
-             "C-M-l" move-line-down
-             "C-x ." compile
              "C-x p" copy-file-name-to-clipboard
              "C-x b" bookmark-set
              "C-x B" bookmark-delete
