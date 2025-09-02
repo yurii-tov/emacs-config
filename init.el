@@ -1709,7 +1709,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (advice-add 'read-string :around #'read-string-completing-history)
 
 
-;; IDO (file browsing only)
+;; ===
+;; IDO
+;; ===
 
 
 (progn (ido-mode 'files)
@@ -1846,7 +1848,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
            ido-file-dir-completion-map)
 
 
-;; "Wide find file" fixes
+;; Wide find file fixes
 
 
 (defun ido-wide-find-file (&optional file)
@@ -1905,10 +1907,10 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     res))
 
 
-;; Other fixes
+;; Work directory recording fixes
 
 
-(defun ido-wrap-record-work-directory (f &rest args)
+(defun ido-fix-record-work-directory (f &rest args)
   "For directories, record their parent"
   (if (and ido-current-directory
            (equal "." (car ido-work-file-list)))
@@ -1917,7 +1919,16 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (apply f args)))
 
 
-(advice-add 'ido-record-work-directory :around 'ido-wrap-record-work-directory)
+(advice-add 'ido-record-work-directory :around 'ido-fix-record-work-directory)
+
+
+(defun ido-record-file-work-directory (file-name)
+  (prog1 file-name
+    (ido-record-work-directory
+     (file-name-directory file-name))))
+
+
+(advice-add 'ido-read-file-name :filter-return 'ido-record-file-work-directory)
 
 
 (defun ido-get-work-directory (&optional incr must-match)
@@ -1950,6 +1961,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (if dir
         (setq ido-work-directory-index i))
     dir))
+
+
+;; Grid mode fixes
 
 
 (defun ido-fix-grid-mode (f &rest args)
