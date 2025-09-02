@@ -799,20 +799,6 @@
   (revert-buffer nil t t))
 
 
-(defun open-in-external-app (&optional file-name)
-  (interactive)
-  (let ((open-file
-         (cond (system-type-is-windows
-                (lambda (f) (w32-shell-execute "open" (replace-regexp-in-string "/" "\\" f t t))))
-               ((eq system-type 'darwin)
-                (lambda (f) (shell-command (concat "open " (shell-quote-argument f)))))
-               ((eq system-type 'gnu/linux)
-                (lambda (f) (let ((process-connection-type nil))
-                              (start-process "" nil "xdg-open" f)))))))
-    (ido-record-work-directory (file-name-directory file-name))
-    (funcall open-file file-name)))
-
-
 (defun watch-file (file)
   (interactive "fWatch file: ")
   (let ((default-directory (file-name-directory file))
@@ -1798,10 +1784,19 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 (defun ido-open-in-external-app ()
   (interactive)
-  (let ((fname (expand-file-name (ido-name (car ido-matches))
-                                 ido-current-directory)))
-    (message "Open in external app: %s" fname)
-    (open-in-external-app fname)
+  (let ((file-name (expand-file-name (ido-name (car ido-matches))
+                                     ido-current-directory)))
+    (message "Open in external app: %s" file-name)
+    (let ((open-file
+           (cond (system-type-is-windows
+                  (lambda (f) (w32-shell-execute "open" (replace-regexp-in-string "/" "\\" f t t))))
+                 ((eq system-type 'darwin)
+                  (lambda (f) (shell-command (concat "open " (shell-quote-argument f)))))
+                 ((eq system-type 'gnu/linux)
+                  (lambda (f) (let ((process-connection-type nil))
+                                (start-process "" nil "xdg-open" f)))))))
+      (ido-record-work-directory (file-name-directory file-name))
+      (funcall open-file file-name))
     (minibuffer-keyboard-quit)))
 
 
