@@ -341,7 +341,7 @@
              "C-c a" org-agenda
              "C-c o" org-push
              "C-c O" org-pull
-             "C-c w" tail)
+             "C-c w" watch-file)
            global-map)
 
 
@@ -813,8 +813,8 @@
     (funcall open-file file-name)))
 
 
-(defun tail (file)
-  (interactive "fTail file: ")
+(defun watch-file (file)
+  (interactive "fWatch file: ")
   (let ((default-directory (file-name-directory file))
         (*asc-popup* t))
     (async-shell-command (concat "tail -f " (file-relative-name file)))))
