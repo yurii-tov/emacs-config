@@ -3248,8 +3248,8 @@ Also grabs a selected region, if any."
 (with-eval-after-load 'vc-dir
   (bind-keys '("TAB" vc-dir-next-line
                "<backtab>" vc-dir-previous-line
-               "n" vc-dir-next-directory
-               "p" vc-dir-previous-directory
+               "n" nil
+               "p" vc-pull
                "l" vc-print-root-log
                "s" vc-switch-branch
                "c" vc-create-branch
