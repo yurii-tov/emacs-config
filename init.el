@@ -2104,9 +2104,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (defun company-smart-complete ()
-  "Context-depending completion.
-   - Proceed to deeper filesystem level in company-files
-   - Snippets expanded properly"
+  "Does special action depending on context.
+   - When navigating filesystem: Proceeds to deeper level
+   - When expanding a snippet: Prevents any extra edits"
   (interactive)
   (cond ((and company-selection
               (eq company-backend 'company-files)
