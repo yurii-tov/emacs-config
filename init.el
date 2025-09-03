@@ -2036,6 +2036,19 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (yas-global-mode 1)
 
 
+(defun yas-company-c-f ()
+  "Company conflict workaround"
+  (interactive)
+  (if (get-char-property (point) 'yas--field)
+      (forward-char)
+    (when company-selection
+      (company-complete))
+    (yas-next-field-or-maybe-expand)))
+
+
+(define-key yas-keymap (kbd "C-f") 'yas-company-c-f)
+
+
 ;; =======
 ;; Company
 ;; =======
