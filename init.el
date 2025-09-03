@@ -777,13 +777,9 @@
 (global-auto-revert-mode t)
 
 
-(setq auto-revert-verbose nil)
-
-
-(when system-type-is-windows (setq auto-revert-use-notify nil))
-
-
-(setq revert-without-query '(".*"))
+(setq auto-revert-verbose nil
+      revert-without-query '(".*")
+      auto-revert-use-notify (not system-type-is-windows))
 
 
 (defun force-revert-buffer ()
