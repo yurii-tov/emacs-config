@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: advice-add
+# key: aa
+# --
+(advice-add '${1:target} ${2::around} '${3:advice})
