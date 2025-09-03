@@ -3265,6 +3265,9 @@ Also grabs a selected region, if any."
              log-view-mode-map))
 
 
+(bind-keys '("p" vc-pull "+" nil) vc-prefix-map)
+
+
 ;; ========
 ;; Projects
 ;; ========
