@@ -3249,6 +3249,7 @@ Also grabs a selected region, if any."
   (bind-keys '("TAB" vc-dir-next-line
                "<backtab>" vc-dir-previous-line
                "n" nil
+               "+" nil
                "p" vc-pull
                "l" vc-print-root-log
                "s" vc-switch-branch
