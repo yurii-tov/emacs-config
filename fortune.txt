@@ -91,9 +91,6 @@ Experience does by no means automatically leads to wisdom and understanding.
 The lurking suspicion that something could be simplified is the world's richest source of rewarding challenges.
 -- Edsger Dijkstra
 %
-If we wish to count lines of code, we should not regard them as "lines produced" but as "lines spent."
--- Edsger Dijkstra
-%
 The prisoner falls in love with his chains.
 -- Edsger Dijkstra
 %
