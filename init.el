@@ -936,7 +936,6 @@
 
 (with-eval-after-load 'dired
   (bind-keys '("w" copy-file-name-to-clipboard
-               "j" dired-do-open
                "o" dired-display-file
                "h" dired-hide-details-mode
                "l" dired-up-directory
