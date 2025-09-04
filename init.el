@@ -349,7 +349,7 @@
 
 
 (defun prevent-key-shadowing ()
-  (dolist (x '("M-j" "M-s" "M-o" "M-q" "M-!"))
+  (dolist (x '("M-j" "M-s" "M-o" "M-q" "M-!" "C-c RET"))
     (local-unset-key (kbd x))))
 
 
