@@ -4,22 +4,10 @@ It isn't what we don't know that gives us trouble, it's what we know that ain't 
 Begin with the simplest examples.
 -- David Hilbert
 %
-Every kind of science, if it has only reached a certain degree of maturity, automatically becomes a part of mathematics.
--- David Hilbert
-%
 One must be able to say at all times--instead of points, straight lines, and planes--tables, chairs, and beer mugs
 -- David Hilbert
 %
-I didn't work especially hard at mathematics at school, because I knew that's what I'd be doing later.
--- David Hilbert
-%
-Programs must be written for people to read, and only incidentally for machines to execute.
--- Abelson and Sussman
-%
 Fools ignore complexity. Pragmatists suffer it. Some can avoid it. Geniuses remove it.
--- Alan Perlis
-%
-In computing, turning the obvious into the useful is a living definition of the word "frustration".
 -- Alan Perlis
 %
 A language that doesn't affect the way you think about programming is not worth knowing.
@@ -37,61 +25,19 @@ Don't have good ideas if you aren't willing to be responsible for them.
 In man-machine symbiosis, it is man who must adjust: The machines can't.
 -- Alan Perlis
 %
-Dealing with failure is easy: Work hard to improve. Success is also easy to handle: You've solved the wrong problem. Work hard to improve.
--- Alan Perlis
-%
-It is easier to change the specification to fit the program than vice versa.
--- Alan Perlis
-%
-You think you KNOW when you learn, are more sure when you can write, even more when you can teach, but certain when you can program.
--- Alan Perlis
-%
 One can't proceed from the informal to the formal by formal means.
--- Alan Perlis
-%
-C programmers never die. They are just cast into void.
--- Alan Perlis
-%
-In programming, as in everything else, to be in error is to be reborn.
 -- Alan Perlis
 %
 The best book on programming for the layman is Alice in Wonderland, but that's because it's the best book on anything for the layman.
 -- Alan Perlis
 %
-I think it is inevitable that people program poorly. Training will not substantially help matters. We have to learn to live with it.
--- Alan Perlis
-%
 Simplicity does not precede complexity, but follows it.
--- Alan Perlis
-%
-I think it is inevitable that people program poorly. Training will not substantially help matters. We have to learn to live with it.
--- Alan Perlis
-%
-Some programming languages manage to absorb change, but withstand progress.
--- Alan Perlis
-%
-When a professor insists computer science is X but not Y, have compassion for his graduate students.
--- Alan Perlis
-%
-Learning French is trivial: the word for horse is cheval, and everything else follows in the same way.
--- Alan Perlis
-%
-A programming language is low level when its programs require attention to the irrelevant.
 -- Alan Perlis
 %
 To understand a program, you must become both the machine and the program.
 -- Alan Perlis
 %
-In the long run, every program becomes rococo, and then rubble.
--- Alan Perlis
-%
 It is easier to change the specification to fit the program than vice versa.
--- Alan Perlis
-%
-Optimization hinders evolution. Everything should be built top-down, except the first time. Simplicity does not precede complexity, but follows it.
--- Alan Perlis
-%
-We are on the verge: Today our program proved Fermat's next-to-last theorem.
 -- Alan Perlis
 %
 A year spent in artificial intelligence is enough to make one believe in God.
@@ -100,28 +46,10 @@ A year spent in artificial intelligence is enough to make one believe in God.
 If you have a procedure with 10 parameters, you probably missed some.
 -- Alan Perlis
 %
-In software systems it is often the early bird that makes the worm.
--- Alan Perlis
-%
 Once you understand how to write a program get someone else to write it.
 -- Alan Perlis
 %
-Computer Science is embarrassed by the computer.
--- Alan Perlis
-%
-There is no such thing as a free variable.
--- Alan Perlis
-%
 One man's constant is another man's variable.
--- Alan Perlis
-%
-A good programming language is a conceptual universe for thinking about programming.
--- Alan Perlis
-%
-Motto for a research laboratory: what we work on today, others will first think of tomorrow.
--- Alan Perlis
-%
-In English every word can be verbed.
 -- Alan Perlis
 %
 Optimization hinders evolution.
@@ -129,12 +57,6 @@ Optimization hinders evolution.
 %
 It is better to have 100 functions operate on one data structure than to have 10 functions operate on 10 data structures.
 -- Alan Perlis
-%
-Make everything as simple as possible, but not simpler.
--- Albert Einstein
-%
-If you don’t handle [exceptions], we shut your application down. That dramatically increases the reliability of the system.
--- Anders Hejlsberg
 %
 Don’t document the problem, fix it.
 -- Atli Björgvin Oddsson
@@ -145,40 +67,10 @@ Tell me and I forget. Teach me and I remember. Involve me and I learn.
 Real knowledge is to know the extent of one’s ignorance.
 -- Confucius
 %
-It’s hardware that makes a machine fast. It’s software that makes a fast machine slow.
--- Craig Bruce
-%
 As a rule, software systems do not work well until they have been used, and have failed repeatedly, in real applications.
 -- Dave Parnas
 %
-The best way to predict the future is to implement it.
--- David Heinemeier Hansson
-%
-We need above all to know about changes; no one wants or needs to be reminded 16 hours a day that his shoes are on.
--- David Hubel
-%
-Computers are good at following instructions, but not at reading your mind.
--- Donald Knuth
-%
-Program testing can be a very effective way to show the presence of bugs, but is hopelessly inadequate for showing their absence.
--- Edsger Dijkstra
-%
-If we wish to count lines of code, we should not regard them as ‘lines produced’ but as ‘lines spent.'
--- Edsger Dijkstra
-%
-If debugging is the process of removing software bugs, then programming must be the process of putting them in.
--- Edsger Dijkstra
-%
-Simplicity is prerequisite for reliability.
--- Edsger Dijkstra
-%
 The art of programming is the art of organizing complexity.
--- Edsger Dijkstra
-%
-Program testing can be used to show the presence of bugs, but never to show their absence!
--- Edsger Dijkstra
-%
-Simplicity and elegance are unpopular because they require hard work and discipline to achieve and education to be appreciated.
 -- Edsger Dijkstra
 %
 The effort of using machines to mimic the human mind has always struck me as rather silly. I would rather use them to mimic something better.
@@ -187,28 +79,10 @@ The effort of using machines to mimic the human mind has always struck me as rat
 Simplicity is a great virtue but it requires hard work to achieve it and education to appreciate it. And to make matters worse: complexity sells better.
 -- Edsger Dijkstra
 %
-The purpose of abstraction is not to be vague, but to create a new semantic level in which one can be absolutely precise.
--- Edsger Dijkstra
-%
 Perfecting oneself is as much unlearning as it is learning.
 -- Edsger Dijkstra
 %
 Much of the excitement we get out of our work is that we don't really know what we are doing.
--- Edsger Dijkstra
-%
-Besides a mathematical inclination, an exceptionally good mastery of one's native tongue is the most vital asset of a competent programmer.
--- Edsger Dijkstra
-%
-If you want more effective programmers, you will discover that they should not waste their time debugging, they should not introduce the bugs to start with.
--- Edsger Dijkstra
-%
-Programming is one of the most difficult branches of applied mathematics; the poorer mathematicians had better remain pure mathematicians.
--- Edsger Dijkstra
-%
-Aim for brevity while avoiding jargon.
--- Edsger Dijkstra
-%
-The computing scientist's main challenge is not to get confused by the complexities of his own making.
 -- Edsger Dijkstra
 %
 Experience does by no means automatically leads to wisdom and understanding.
@@ -217,37 +91,13 @@ Experience does by no means automatically leads to wisdom and understanding.
 The lurking suspicion that something could be simplified is the world's richest source of rewarding challenges.
 -- Edsger Dijkstra
 %
-Elegance is not a dispensable luxury but a factor that decides between success and failure.
--- Edsger Dijkstra
-%
-Don't compete with me: firstly, I have more experience, and secondly, I have chosen the weapons.
--- Edsger Dijkstra
-%
-The tools we use have a profound and devious influence on our thinking habits, and therefore on our thinking abilities.
--- Edsger Dijkstra
-%
-It is not the task of the University to offer what society asks for, but to give what society needs.
--- Edsger Dijkstra
-%
-Too few people recognize that the high technology so celebrated today is essentially a mathematical technology.
--- Edsger Dijkstra
-%
 If we wish to count lines of code, we should not regard them as "lines produced" but as "lines spent."
--- Edsger Dijkstra
-%
-We must be very careful when we give advice to younger people; sometimes they follow it!
 -- Edsger Dijkstra
 %
 The prisoner falls in love with his chains.
 -- Edsger Dijkstra
 %
-When building sand castles on the beach, we can ignore the waves but should watch the tide.
--- Edsger Dijkstra
-%
 I don't need to waste my time with a computer just because I am a computer scientist.
--- Edsger Dijkstra
-%
-Brainpower is by far our scarcest resource.
 -- Edsger Dijkstra
 %
 Thanks to the greatly improved possibility of communication, we overrate its importance. Even stronger, we underrate the importance of isolation.
@@ -259,9 +109,6 @@ Testing shows the presence, not the absence of bugs.
 Beware of "the real world". A speaker's apeal to it is always an invitation not to challenge his tacit assumptions.
 -- Edsger Dijkstra
 %
-The ability of discerning high quality unavoidably implies the ability of identifying shortcomings.
--- Edsger Dijkstra
-%
 Thank goodness we don't have only serious problems, but ridiculous ones as well.
 -- Edsger Dijkstra
 %
@@ -271,53 +118,11 @@ It used to be the program's purpose to instruct our computers; it became the com
 Probably I am very naive, but I also think I prefer to remain so, at least for the time being and perhaps for the rest of my life.
 -- Edsger Dijkstra
 %
-The effective exploitation of his powers of abstraction must be regarded as one of the most vital activities of a competent programmer.
--- Edsger Dijkstra
-%
-I would therefore like to posit that computing's central challenge, how not to make a mess of it, has not yet been met.
--- Edsger Dijkstra
-%
-About the use of language: it is impossible to sharpen a pencil with a blunt axe. It is equally vain to try to do it with ten blunt axes instead.
--- Edsger Dijkstra
-%
-If there is one 'scientific' discovery I am proud of, it is the discovery of the habit of writing without publication in mind.
--- Edsger Dijkstra
-%
-Mathematicians are like managers - they want improvement without change.
--- Edsger Dijkstra
-%
 In the software business there are many enterprises for which it is not clear that science can help them; that science should try is not clear either.
--- Edsger Dijkstra
-%
-A programming language is a tool that has profound influence on our thinking habits.
--- Edsger Dijkstra
-%
-The problems of the real world are primarily those you are left with when you refuse to apply their effective solutions.
--- Edsger Dijkstra
-%
-Beauty is our business.
--- Edsger Dijkstra
-%
-Progress is possible only if we train ourselves to think about programs without thinking of them as pieces of executable code.
--- Edsger Dijkstra
-%
-Computer science has as much to do with computers as astronomy has to do with telescopes.
 -- Edsger Dijkstra
 %
 There is very little point in trying to urge the world to mend its ways as long as that world is still convinced that its ways are perfectly adequate.
 -- Edsger Dijkstra
-%
-There should be no such thing as boring mathematics.
--- Edsger Dijkstra
-%
-Several people have told me that my inability to suffer fools gladly is one of my main weaknesses.
--- Edsger Dijkstra
-%
-Computer Science is no more about computers than astronomy is about telescopes.
--- Edsger W. Dijkstra
-%
-A *computer* *once* beat me at chess, but it was no match for me at kick boxing.
--- Emo Philips
 %
 The key to understanding complicated things is knowing what not to look at.
 -- Gerald Jay Sussman
@@ -328,53 +133,14 @@ Nothing brings fear to my heart more than a floating point number.
 A recursive definition does not necessarily lead to a recursive process.
 -- Gerald Jay Sussman
 %
-In a software project team of 10, there are probably 3 people who produce enough defects to make them net negative producers.
--- Gordon Schulmeyer
-%
-Where is the ‘any’ key?
--- Homer Simpson, in response to the message, Press any key
-%
-We have to stop optimizing for programmers and start optimizing for users.
--- Jeff Atwood
-%
 Simplicity, carried to the extreme, becomes elegance.
 -- Jon Franklin
-%
-Programming can be fun, so can cryptography; however they should not be combined.
--- Kreitzberg and Shneiderman
-%
-If people never did silly things, nothing intelligent would ever get done.
--- Ludwig Wittgenstein
-%
-It was a joke, okay? If we thought it would actually be used, we wouldn’t have written it!
--- Mark Andreesen, speaking of the HTML tag BLINK
-%
-The best way to get accurate information on Usenet is to post something wrong and wait for corrections.
--- Matthew Austern
-%
-Good specifications will always improve programmer productivity far better than any programming tool or technique.
--- Milt Bryce
-%
-There is only one problem with common sense; it’s not very common.
--- Milt Bryce
-%
-Getting information off the Internet is like taking a drink from a fire hydrant.
--- Mitchell Kapor
 %
 If the code and the comments do not match, possibly both are incorrect.
 -- Norm Schryer
 %
-Software is like entropy: It is difficult to grasp, weighs nothing, and obeys the Second Law of Thermodynamics; i.e., it always increases.
--- Norman Augustine
-%
 From a programmer’s point of view, the user is a peripheral that types when you issue a read request.
 -- P. Williams
-%
-Before software should be reusable, it should be usable.
--- Ralph Johnson
-%
-The difference between theory and practice is that in theory, there is no difference between theory and practice.
--- Richard Moore
 %
 If you automate a mess, you get an automated mess.
 -- Rod Michael
@@ -384,9 +150,6 @@ The more you know, the more you realize you know nothing.
 %
 The greatest enemy of knowledge is not ignorance, it is the illusion of knowledge.
 -- Stephen Hawking
-%
-It’s better to wait for a productive programmer to become available than it is to wait for the first available programmer to become productive.
--- Steve McConnell
 %
 Not all those who wander are lost
 -- J.R.R. Tolkien
