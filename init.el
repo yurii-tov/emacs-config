@@ -731,6 +731,7 @@
                        (mode . eww-history-mode)
                        (mode . eww-bookmark-mode)))
          ("📁 Directory" (mode . dired-mode))
+         ("🧠 LSP" (name . "\\*EGLOT"))
          ("Process" (predicate . (get-buffer-process (current-buffer))))
          ("📦 Misc" (predicate . t)))))
 
