@@ -257,7 +257,7 @@
 
 
 (bind-keys '("/" project-switch-project
-             "j" project-dired
+             "SPC" project-dired
              "i" project-reformat
              "a" project-async-shell-command)
            project-prefix-map)
