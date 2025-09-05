@@ -123,7 +123,7 @@
 (add-hook 'emacs-startup-hook 'load-site-settings)
 
 
-;; MSYS2 integration
+;; MSYS2
 
 
 (when system-type-is-windows
@@ -176,7 +176,7 @@
   (global-unset-key (kbd (format "M-%d" n))))
 
 
-;; Dealing with keymap definitions boilerplate
+;; Deal with keymap definitions boilerplate
 
 
 (defun bind-keys (keybindings &optional keymap)
@@ -195,7 +195,7 @@
           (bind-keys ',bindings ',name)))
 
 
-;; More user-friendly hints
+;; User-friendly hints
 
 
 (which-key-mode)
@@ -213,7 +213,7 @@
            search-map)
 
 
-;; Transforming text
+;; Text editing
 
 
 (define-custom-keymap text-transform-map "M-c"
@@ -232,7 +232,7 @@
                       "w" enclose-text)
 
 
-;; Inserting things
+;; Insertions
 
 
 (define-custom-keymap insert-map "C-x i"
@@ -345,7 +345,7 @@
            global-map)
 
 
-;; Prevent global keybindings shadowing
+;; Prevent keybindings shadowing
 
 
 (defun prevent-key-shadowing ()
@@ -429,7 +429,7 @@
        (menu-bar-mode -1))
 
 
-;; Better "welcome" message
+;; Welcome message
 
 
 (defun welcome ()
@@ -581,16 +581,13 @@
   (scroll-up-command 5))
 
 
-;; Word wrap in modes which doesn't wrap by default
+;; Word wrap
 
 
 (dolist (x '(man-common-hook
              flymake-diagnostics-buffer-mode-hook
              flymake-project-diagnostics-mode-hook))
   (add-hook x 'visual-line-mode))
-
-
-;; Remove visual artifacts in wrapped lines (when working in terminal)
 
 
 (unless window-system
@@ -620,9 +617,7 @@
 (setq confirm-nonexistent-file-or-buffer nil)
 
 
-;; When in "switch to buffer" menu, bind M-j to "make new scratch buffer" action
-;; Therefore, given the switch-to-buffer keybinding is M-j,
-;; we got convenient M-j M-j global shortcut
+;; Convenient "new buffer" shortcut
 
 
 (defun switch-to-buffer-make-scratch-buffer ()
@@ -655,7 +650,7 @@
 (setq uniquify-buffer-name-style 'forward)
 
 
-;; Displaying working directory in buffer list
+;; Display working directory in buffer list
 
 
 (defun shrink-path (path bound)
@@ -742,9 +737,6 @@
 
 
 (add-hook 'ibuffer-mode-hook 'ibuffer-setup)
-
-
-;; Enhance ibuffer-filter-disable (i.e. "//" command) with 'switch to last filter' ability
 
 
 (defun ibuffer-toggle-last-filter (f &rest args)
@@ -977,7 +969,7 @@
 (add-hook 'dired-mode-hook 'dired-disable-ffap)
 
 
-;; Hiding details
+;; Hide details
 
 
 (defvar *dired-hide-details-p* t)
@@ -1205,7 +1197,7 @@ The search string is queried first, followed by the directory."
 (delete-selection-mode t)
 
 
-;; More informative char inspector
+;; Char inspector
 
 
 (setq what-cursor-show-names t)
@@ -1225,7 +1217,7 @@ The search string is queried first, followed by the directory."
   (text-scale-set 0))
 
 
-;; Various brand-new text transforming commands
+;; Auxiliary commands
 
 
 (defun buffer-or-region ()
@@ -1508,7 +1500,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   (enclose-text "{" "}" t))
 
 
-;; Various fixes for out-of-the-box text transforming commands
+;; Fixes
 
 
 (defun fix-flush-lines (f &rest args)
@@ -1531,7 +1523,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   (advice-add x :around #'fix-flush-lines))
 
 
-;; Making text nicely formatted, like in books
+;; Make text nicely formatted, like in books
 
 
 (setq-default fill-column 80)
@@ -1554,7 +1546,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
            rectangle-mark-mode-map)
 
 
-;; Enable hex mode on regions
+;; Hex mode on regions
 
 
 (defun wrap-hexl-mode (f &rest args)
@@ -1569,7 +1561,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (advice-add 'hexl-mode :around 'wrap-hexl-mode)
 
 
-;; Reindenting / cleaning up
+;; Reindenting
 
 
 (defun reindent-region (start end)
@@ -1580,7 +1572,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   (whitespace-cleanup))
 
 
-;; Enable pretty-printing buffers with custom functions
+;; Pretty-printing buffers
 
 
 (setq pretty-printers
@@ -1650,9 +1642,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; =====================
 
 
-;; Fido-vertical-mode - default completion framework
-
-
 (fido-vertical-mode)
 
 
@@ -1687,7 +1676,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
           'minibuffer-setup-completion-style)
 
 
-;; Enhance read-string with history completion
+;; History completion for read-string
 
 
 (defun read-string-completing-history (f &rest args)
@@ -1980,7 +1969,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (setq tab-always-indent 'complete)
 
 
-;; Fix ill-behaving CAPF completion
+;; Fix CAPF completion
 
 
 (defun fix-capf-exclusiveness (f &rest args)
@@ -1997,7 +1986,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (advice-add 'completion--capf-wrapper :around 'fix-capf-exclusiveness)
 
 
-;; Fix ill-behaving "magical" completion-at-point wrappers
+;; Fix "magical" completion-at-point wrappers
 
 
 (dolist (x '(python-shell-completion-complete-or-indent
@@ -2213,7 +2202,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (setq shell-command-prompt-show-cwd t)
 
 
-;; Custom completion style for shell commands
+;; History completion
 
 
 (defun read-string-shell-command (f &rest args)
@@ -2232,7 +2221,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (advice-add 'read-shell-command :around #'read-string-shell-command)
 
 
-;; Enable region piping into the command
+;; Pipe region into the command
 
 
 (defun shell-command-dwim (f &rest args)
@@ -2396,8 +2385,7 @@ reports termination status, kills the buffer"
 (advice-add 'async-shell-command :around 'asc-handle-termination)
 
 
-;; Don't display output buffer, but promote it in switch-to-buffer menu
-;; Add some useful output to *Messages*
+;; Hide output buffer
 
 
 (defvar *asc-popup* nil)
@@ -2428,8 +2416,7 @@ reports termination status, kills the buffer"
 ;; ======
 
 
-;; Use vertical tab (b) as separator in history file
-;; to enable correct saving of multiline commands
+;; Use vertical tab as separator in history file
 
 
 (setq comint-input-ring-separator "
@@ -2521,7 +2508,7 @@ reports termination status, kills the buffer"
           'comint-save-history-all)
 
 
-;; No scrolling to bottom when submitting commands
+;; Disable autoscrolling
 
 
 (setq-default comint-scroll-show-maximum-output nil)
@@ -2549,7 +2536,7 @@ reports termination status, kills the buffer"
            comint-mode-map)
 
 
-;; Browsing comint-input-ring
+;; History browsing
 
 
 (defun comint-browse-command-history ()
@@ -2715,7 +2702,7 @@ reports termination status, kills the buffer"
 (add-hook 'sh-mode-hook 'sh-cleanup-capf)
 
 
-;; Elevating shell to root
+;; Elevate to root
 
 
 (defun shell-elevate ()
