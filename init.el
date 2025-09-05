@@ -42,13 +42,7 @@
       (package-install p))))
 
 
-;; Condition for Windows-specific code
-
-
-(setq system-type-is-windows (eq system-type 'windows-nt))
-
-
-;; Enable useful APIs
+;; Useful APIs
 
 
 (dolist (lib '(cl-lib subr-x compile ffap))
@@ -61,7 +55,7 @@
 (reset-language-environment)
 
 
-(when system-type-is-windows
+(when (eq system-type 'windows-nt)
   (set-coding-system-priority 'cp1251-dos))
 
 
@@ -76,12 +70,12 @@
     (apply f args)))
 
 
-(when system-type-is-windows
+(when (eq system-type 'windows-nt)
   (dolist (x '(compilation-start shell-command))
     (advice-add x :around 'windows-fix-args-encoding)))
 
 
-;; Monday-based weeks in calendar
+;; Calendar
 
 
 (setq calendar-week-start-day 1)
@@ -94,7 +88,7 @@
       confirm-kill-emacs 'y-or-n-p)
 
 
-;; Variables persistence across sessions (using savehist-mode)
+;; Persistence across sessions
 
 
 (setq savehist-additional-variables '(kill-ring
@@ -106,7 +100,7 @@
 (add-hook 'emacs-startup-hook 'savehist-mode)
 
 
-;; Site-specific customizations
+;; Site-specific
 
 
 (progn (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
@@ -126,7 +120,7 @@
 ;; MSYS2
 
 
-(when system-type-is-windows
+(when (eq system-type 'windows-nt)
   (let ((msys "C:/tools/msys64")
         (gpg (executable-find "gpg.exe"))
         (gpg-path (cl-find-if (lambda (x) (string-match "Gpg4win" x)) exec-path))
@@ -492,7 +486,7 @@
 ;; Enable emojis on Windows
 
 
-(when (and system-type-is-windows
+(when (and (eq system-type 'windows-nt)
            (member "Segoe UI Emoji" (font-family-list)))
   (set-fontset-font t 'unicode (font-spec :family "Segoe UI Emoji") nil 'append))
 
@@ -546,7 +540,7 @@
                                           (downcase current-input-method-title)
                                           'face 'mode-line-emphasis))
                          ""))
-                ,(if (and (not window-system) system-type-is-windows)
+                ,(if (and (not window-system) (eq system-type 'windows-nt))
                      'mode-line-modified
                    '(:eval (let ((ro buffer-read-only)
                                  (m (and (buffer-file-name) (buffer-modified-p))))
@@ -554,7 +548,7 @@
                                    (ro "🔒 ")
                                    (m "✒ ")
                                    (t "")))))
-                ,(unless (and (not window-system) system-type-is-windows)
+                ,(unless (and (not window-system) (eq system-type 'windows-nt))
                    '(:eval (if (get-buffer-process (current-buffer))
                                (propertize "• " 'face 'compilation-mode-line-run)
                              "")))
@@ -568,7 +562,7 @@
                 " "))
 
 
-;; Slower scrolling
+;; Scrolling
 
 
 (defun scroll-down-5-lines ()
@@ -772,7 +766,7 @@
 
 (setq auto-revert-verbose nil
       revert-without-query '(".*")
-      auto-revert-use-notify (not system-type-is-windows))
+      auto-revert-use-notify (not (eq system-type 'windows-nt)))
 
 
 (defun force-revert-buffer ()
@@ -784,7 +778,7 @@
 
 (defun open-in-external-app (file-name)
   (let ((open-file
-         (cond (system-type-is-windows
+         (cond ((eq system-type 'windows-nt)
                 (lambda (f) (w32-shell-execute "open" (replace-regexp-in-string "/" "\\" f t t))))
                ((eq system-type 'darwin)
                 (lambda (f) (shell-command (concat "open " (shell-quote-argument f)))))
@@ -3539,7 +3533,7 @@ Also grabs a selected region, if any."
   "Write config into ~/.prettierrc file unless it already exists."
   (interactive)
   (let ((config-file (expand-file-name ".prettierrc"
-                                       (if system-type-is-windows
+                                       (if (eq system-type 'windows-nt)
                                            (getenv "USERPROFILE")
                                          "~"))))
     (unless (file-exists-p config-file)
@@ -4165,7 +4159,7 @@ Process .+
   (let ((ffmpeg (or (executable-find "ffmpeg")
                     (error "ffmpeg executable not found")))
         (buffer-name "*video-capture*")
-        (capture-file-name (if system-type-is-windows
+        (capture-file-name (if (eq system-type 'windows-nt)
                                (expand-file-name "Videos/v.mp4" (getenv "USERPROFILE"))
                              "~/v.mp4")))
     (if (get-buffer-process buffer-name)
@@ -4179,7 +4173,7 @@ Process .+
                                     (read-file-name "Capture video to file: ")
                                   capture-file-name))
              (default-directory (file-name-directory capture-file-name))
-             (command (if system-type-is-windows
+             (command (if (eq system-type 'windows-nt)
                           "%s -y -f gdigrab -i desktop -framerate 30 -pix_fmt yuv420p %s"
                         "%s -y -f x11grab -i :0.0 -framerate 30 -pix_fmt yuv420p %s")))
         (async-shell-command
@@ -4227,16 +4221,14 @@ Process .+
 
 
 (with-eval-after-load 'eww
-  ;; Setup download directory
-  (when system-type-is-windows
+  (when (eq system-type 'windows-nt)
     (setq eww-download-directory
           (expand-file-name "Downloads" (getenv "USERPROFILE")))))
 
 
 (with-eval-after-load 'shr
-  ;; Use monospaced fonts by default
-  (setq shr-use-fonts nil)
-  (setq shr-inhibit-images t))
+  (setq shr-use-fonts nil
+        shr-inhibit-images t))
 
 
 ;; GUI browser
