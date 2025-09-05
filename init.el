@@ -157,9 +157,9 @@
     (make-directory small-temporary-file-directory t)))
 
 
-;; ==================
-;; Global keybindings
-;; ==================
+;; ===========
+;; Keybindings
+;; ===========
 
 
 ;; Unset all C-digit / M-digit combos
