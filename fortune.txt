@@ -4,7 +4,7 @@ It isn't what we don't know that gives us trouble, it's what we know that ain't 
 Begin with the simplest examples.
 -- David Hilbert
 %
-One must be able to say at all times--instead of points, straight lines, and planes--tables, chairs, and beer mugs
+One must be able to say at all times--instead of points, straight lines, and planes--tables, chairs, and beer mugs 🍺
 -- David Hilbert
 %
 Fools ignore complexity. Pragmatists suffer it. Some can avoid it. Geniuses remove it.
