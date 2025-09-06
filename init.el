@@ -162,7 +162,7 @@
 ;; ===========
 
 
-;; Unset all C-digit / M-digit combos
+;; Remove unneeded shortcuts
 
 
 (dotimes (n 10)
@@ -170,7 +170,7 @@
   (global-unset-key (kbd (format "M-%d" n))))
 
 
-;; Deal with keymap definitions boilerplate
+;; Deal with boilerplate
 
 
 (defun bind-keys (keybindings &optional keymap)
@@ -404,7 +404,7 @@
 (spacious-padding-mode 1)
 
 
-;; Remove noisy stuff
+;; Remove noisy things
 
 
 (progn (setq inhibit-startup-message t
@@ -481,9 +481,6 @@
           (set-face-attribute face nil :font (format "%s-13" font))
         (message "Can't find any of %s fonts for '%s' face"
                  (prin1-to-string fonts) face)))))
-
-
-;; Enable emojis on Windows
 
 
 (when (and (eq system-type 'windows-nt)
@@ -593,7 +590,7 @@
 ;; =======
 
 
-;; Fix kill-buffer-and-window "single window" case
+;; Fix kill-buffer-and-window
 
 
 (defun kill-buffer-and-window-fix (f &rest args)
@@ -644,7 +641,7 @@
 (setq uniquify-buffer-name-style 'forward)
 
 
-;; Display working directory in buffer list
+;; Annotate list in switch-to-buffer
 
 
 (defun shrink-path (path bound)
@@ -986,7 +983,7 @@
   (advice-add x :around 'dired-propogate-hide-details))
 
 
-;; Force scp usage when copying files with dired
+;; Copy remote files with scp
 
 
 (defun dired-copy-force-scp (f from to &rest args)
@@ -998,7 +995,7 @@
 (advice-add 'dired-copy-file :around #'dired-copy-force-scp)
 
 
-;; Record IDO work directory when open files in Dired
+;; Record IDO work directory
 
 
 (defun dired-record-ido-wd (f &rest args)
@@ -1955,9 +1952,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (advice-add 'ido-grid-mode-ido-setup :around 'ido-fix-grid-mode)
 
 
-;; ====================
-;; Completions at point
-;; ====================
+;; ===================
+;; Completion at point
+;; ===================
 
 
 (setq tab-always-indent 'complete)
@@ -2891,7 +2888,7 @@ reports termination status, kills the buffer"
    (js . t)))
 
 
-;; Cartesian product from org tables
+;; Cartesian product from org table
 
 
 (defun org-table-cartesian-product ()
@@ -2949,7 +2946,7 @@ Example input:
       (goto-char (1- (org-table-end))))))
 
 
-;; Allpairs integration
+;; Allpairs
 
 
 (defun org-table-allpairs ()
@@ -2997,7 +2994,7 @@ Example input:
       (goto-char (1- (org-table-end))))))
 
 
-;; Fix broken in-table typing
+;; Fix in-table typing
 
 
 (progn (defconst org-table--separator-space-pre " ")
@@ -3841,7 +3838,7 @@ Process .+
 (define-key sql-interactive-mode-map (kbd "C-c C-j") 'sql-reconnect)
 
 
-;; Dealing with remote dbs
+;; Deal with remote dbs
 
 
 (defun sql-handle-remote-db (f product params &rest args)
@@ -4004,7 +4001,7 @@ Process .+
           'sql-setup-output-preprocessing)
 
 
-;; Alternative table view (for too wide tables)
+;; Alternative table view
 
 
 (define-key sql-interactive-mode-map (kbd "C-c C-p") 'org-table-to-list)
