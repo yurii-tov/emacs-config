@@ -3126,11 +3126,9 @@ Also grabs a selected region, if any."
 
 
 (defun update-vc-git-dir-extra-headers (headers)
-  (let* ((status (replace-regexp-in-string
-                  "  *" " "
-                  (string-trim-right
-                   (shell-command-to-string
-                    "git branch -v | sed -n 's:^\* :: p'"))))
+  (let* ((status (string-trim-right
+                  (shell-command-to-string
+                   "git branch -v | sed -n 's:^\* ::p' | sed 's:  *: :'")))
          (p1 (string-match-p "\\[\\(ahead\\|behind\\)" status))
          (p2 (when p1 (string-match-p "\\]" status p1))))
     (set-text-properties
