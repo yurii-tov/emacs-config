@@ -398,7 +398,7 @@
   (global-ligature-mode t))
 
 
-;; Spacious-padding
+;; Spacious padding
 
 
 (spacious-padding-mode 1)
@@ -488,7 +488,7 @@
   (set-fontset-font t 'unicode (font-spec :family "Segoe UI Emoji") nil 'append))
 
 
-;; Color themes
+;; Colors
 
 
 (advice-add 'load-theme
@@ -572,6 +572,14 @@
   (scroll-up-command 5))
 
 
+;; Scaling
+
+
+(defun text-scale-reset ()
+  (interactive)
+  (text-scale-set 0))
+
+
 ;; Word wrap
 
 
@@ -602,7 +610,7 @@
 (advice-add 'kill-buffer-and-window :around #'kill-buffer-and-window-fix)
 
 
-;; Remove confirmation when creating new buffer
+;; Don't confirm when creating new buffer
 
 
 (setq confirm-nonexistent-file-or-buffer nil)
@@ -632,7 +640,7 @@
                 (apply f args))))
 
 
-;; Unique buffer names
+;; Unique names
 
 
 (require 'uniquify)
@@ -1182,33 +1190,33 @@ The search string is queried first, followed by the directory."
               css-indent-offset 2)
 
 
+(defun reindent-region (start end)
+  "Reindent selected region, untabify it, cleanup whitespaces"
+  (interactive (buffer-or-region))
+  (untabify start end)
+  (indent-region start end)
+  (whitespace-cleanup))
+
+
 ;; Overwrite selected text
 
 
 (delete-selection-mode t)
 
 
-;; Char inspector
+;; Inspecting
 
 
 (setq what-cursor-show-names t)
 
 
-;; Duplicating text
+;; Duplicating
 
 
 (setq duplicate-line-final-position -1)
 
 
-;; Scaling
-
-
-(defun text-scale-reset ()
-  (interactive)
-  (text-scale-set 0))
-
-
-;; Auxiliary commands
+;; Auxiliary edit commands
 
 
 (defun buffer-or-region ()
@@ -1365,7 +1373,30 @@ The search string is queried first, followed by the directory."
   (move-line 'down))
 
 
-;; Enclose text with brackets (and similar things)
+;; Fixes
+
+
+(defun fix-flush-lines (f &rest args)
+  "Fixes flush-lines in various ways. Now it:
+   - Operates on whole buffer instead of \"from current point\".
+   - Restores current position after flushing.
+   - When empty line provided, flushes empty lines"
+  (let* ((s (car args))
+         (args (if (string-empty-p s)
+                   (cons "^$" (cdr args))
+                 args)))
+    (if (use-region-p)
+        (apply f args)
+      (save-excursion
+        (apply f (append (list (car args) (point-min) (point-max))
+                         (cdddr args)))))))
+
+
+(dolist (x '(flush-lines keep-lines))
+  (advice-add x :around #'fix-flush-lines))
+
+
+;; Enclosing into parenthesis (or similar)
 
 
 (defun enclose-text (b1 b2 &optional lisp-style-p)
@@ -1491,30 +1522,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   (enclose-text "{" "}" t))
 
 
-;; Fixes
-
-
-(defun fix-flush-lines (f &rest args)
-  "Fixes flush-lines in various ways. Now it:
-   - Operates on whole buffer instead of \"from current point\".
-   - Restores current position after flushing.
-   - When empty line provided, flushes empty lines"
-  (let* ((s (car args))
-         (args (if (string-empty-p s)
-                   (cons "^$" (cdr args))
-                 args)))
-    (if (use-region-p)
-        (apply f args)
-      (save-excursion
-        (apply f (append (list (car args) (point-min) (point-max))
-                         (cdddr args)))))))
-
-
-(dolist (x '(flush-lines keep-lines))
-  (advice-add x :around #'fix-flush-lines))
-
-
-;; Make text nicely formatted, like in books
+;; Formatting
 
 
 (setq-default fill-column 80)
@@ -1552,18 +1560,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (advice-add 'hexl-mode :around 'wrap-hexl-mode)
 
 
-;; Reindenting
-
-
-(defun reindent-region (start end)
-  "Reindent selected region, untabify it, cleanup whitespaces"
-  (interactive (buffer-or-region))
-  (untabify start end)
-  (indent-region start end)
-  (whitespace-cleanup))
-
-
-;; Pretty-printing buffers
+;; Buffer pretty-printing
 
 
 (setq pretty-printers
@@ -2247,7 +2244,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (async-shell-command command)))
 
 
-;; Descriptive buffer names
+;; Descriptive buffer name
 
 
 (defun asc-make-buffer-name (command)
@@ -2309,7 +2306,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (advice-add 'async-shell-command :filter-return 'asc-setup-histfile)
 
 
-;; Output command/wd
+;; Display the command and working directory
 
 
 (defun asc-echo-startup-info (f &rest args)
@@ -2547,7 +2544,7 @@ reports termination status, kills the buffer"
     (comint-send-input)))
 
 
-;; Use prefix-style matching when scrolling through history
+;; Prefix-style matching
 
 
 (defun comint-previous-input-prefixed (&optional n)
@@ -2693,7 +2690,7 @@ reports termination status, kills the buffer"
 (add-hook 'sh-mode-hook 'sh-cleanup-capf)
 
 
-;; Elevate to root
+;; Elevating to root
 
 
 (defun shell-elevate ()
@@ -2774,7 +2771,7 @@ reports termination status, kills the buffer"
       org-adapt-indentation t)
 
 
-;; Capture
+;; Capturing
 
 
 (setq org-capture-templates
@@ -2977,7 +2974,7 @@ Example input:
           (goto-char (1- (org-table-end))))))))
 
 
-;; Alternative (list-like) view for tables
+;; List-like table view
 
 
 (defun org-table-to-list ()
@@ -3380,7 +3377,7 @@ Also grabs a selected region, if any."
                "C-c C-l" eglot-code-action-organize-imports)
              eglot-mode-map)
 
-  ;; Do not clutter company settings
+  ;; Don't clutter company settings
   (add-to-list 'eglot-stay-out-of 'company)
 
   ;; Auto-shutdown the server
