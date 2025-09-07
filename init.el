@@ -235,13 +235,13 @@
 ;; Help
 
 
-(define-keymap :keymap global-map
-  "C-h C-h" 'describe-symbol
-  "C-h h" 'describe-symbol
-  "C-h r" 'man
-  "C-h s" 'yas-describe-tables
-  "C-h f" 'list-faces-display
-  "C-h v" 'company-diag)
+(define-keymap :keymap help-map
+  "C-h" 'describe-symbol
+  "h" 'describe-symbol
+  "r" 'man
+  "s" 'yas-describe-tables
+  "f" 'list-faces-display
+  "v" 'company-diag)
 
 
 ;; Keyboard macro
