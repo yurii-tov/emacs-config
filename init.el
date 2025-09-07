@@ -1515,7 +1515,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (dolist (x (number-sequence ?\  ?~))
-  (define-key rectangle-mark-mode-map (kbd (char-to-string x)) 'ignore))
+  (push (cons x 'ignore) (cdr rectangle-mark-mode-map)))
 
 
 (define-keymap :keymap rectangle-mark-mode-map
@@ -2055,8 +2055,8 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (progn
   ;; Disable M-digit keybindings
   (dotimes (n 10)
-    (define-key company-active-map
-                (kbd (format "M-%d" n)) nil))
+    (keymap-set company-active-map
+                (format "M-%d" n) nil))
 
   ;; (Un)bind some things
   (dolist (x (list company-active-map
