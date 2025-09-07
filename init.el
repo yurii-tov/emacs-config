@@ -81,6 +81,22 @@
 (setq calendar-week-start-day 1)
 
 
+;; Scratch buffer
+
+
+(defun scratch-buffer-setup ()
+  (with-current-buffer "*scratch*"
+    (delete-region (point-min) (point-max))
+    (insert (replace-regexp-in-string "\n" "" (emacs-version)))
+    (newline 3)
+    (insert-fortune)
+    (comment-region (point-min) (point-max))
+    (newline 3)))
+
+
+(add-hook 'emacs-startup-hook 'scratch-buffer-setup)
+
+
 ;; Shutdown
 
 
@@ -402,23 +418,7 @@
        (menu-bar-mode -1))
 
 
-;; Welcome message
-
-
-(defun welcome ()
-  (with-current-buffer "*scratch*"
-    (delete-region (point-min) (point-max))
-    (insert (replace-regexp-in-string "\n" "" (emacs-version)))
-    (newline 3)
-    (insert-fortune)
-    (comment-region (point-min) (point-max))
-    (newline 3)))
-
-
-(add-hook 'emacs-startup-hook 'welcome)
-
-
-;; Highlight current line
+;; Current line indicator
 
 
 (global-hl-line-mode)
@@ -435,7 +435,7 @@
   (add-hook x 'disable-hl-line-mode))
 
 
-;; Enumerate lines
+;; Line numbers
 
 
 (dolist (x '(prog-mode-hook
