@@ -731,7 +731,7 @@
 
 
 (with-eval-after-load 'ibuffer
-  (define-key ibuffer-mode-map (kbd "j") 'ibuffer-jump-to-filter-group))
+  (keymap-set ibuffer-mode-map "j" 'ibuffer-jump-to-filter-group))
 
 
 ;; =====
@@ -1108,7 +1108,7 @@ The search string is queried first, followed by the directory."
 
 
 (when ripgrep
-  (define-key search-map (kbd "g") 'ripgrep-regexp)
+  (keymap-set search-map "g" 'ripgrep-regexp)
   (advice-add 'project-find-regexp :override 'project-ripgrep))
 
 
@@ -1752,7 +1752,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (minibuffer-keyboard-quit)))
 
 
-(define-key ido-file-completion-map (kbd "C-o") 'ido-open-in-external-app)
+(keymap-set ido-file-completion-map "C-o" 'ido-open-in-external-app)
 
 
 (defun ido-open-with-sudo ()
@@ -1762,7 +1762,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   (exit-minibuffer))
 
 
-(define-key ido-file-completion-map (kbd "C-x u") 'ido-open-with-sudo)
+(keymap-set ido-file-completion-map "C-x u" 'ido-open-with-sudo)
 
 
 (setq ido-work-directory-list-ignore-regexps '("[/|]sudo:"))
@@ -2001,7 +2001,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (yas-next-field-or-maybe-expand)))
 
 
-(define-key yas-keymap (kbd "C-f") 'yas-company-c-f)
+(keymap-set yas-keymap "C-f" 'yas-company-c-f)
 
 
 ;; =======
@@ -2687,7 +2687,7 @@ reports termination status, kills the buffer"
     (setq-local rootp (not rootp))))
 
 
-(define-key shell-mode-map (kbd "C-x u") 'shell-elevate)
+(keymap-set shell-mode-map "C-x u" 'shell-elevate)
 
 
 ;; ==========================
@@ -2821,13 +2821,13 @@ reports termination status, kills the buffer"
     (org-ctrl-c-ctrl-c)))
 
 
-(define-key org-mode-map (kbd "C-c C-/") 'org-insert-checklist-status)
+(keymap-set org-mode-map "C-c C-/" 'org-insert-checklist-status)
 
 
 ;; Blocks insertion
 
 
-(define-key org-mode-map (kbd "M-p") 'org-insert-structure-template)
+(keymap-set org-mode-map "M-p" 'org-insert-structure-template)
 
 
 ;; Agenda
@@ -3802,7 +3802,7 @@ Process .+
     ))
 
 
-(define-key sql-interactive-mode-map (kbd "C-c C-j") 'sql-reconnect)
+(keymap-set sql-interactive-mode-map "C-c C-j" 'sql-reconnect)
 
 
 ;; Deal with remote dbs
@@ -3971,7 +3971,7 @@ Process .+
 ;; Alternative table view
 
 
-(define-key sql-interactive-mode-map (kbd "C-c C-p") 'org-table-to-list)
+(keymap-set sql-interactive-mode-map "C-c C-p" 'org-table-to-list)
 
 
 ;; Interbase
