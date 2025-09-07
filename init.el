@@ -612,10 +612,9 @@
             (lambda (f &rest args)
               (minibuffer-with-setup-hook
                   (:append (lambda ()
-                             (use-local-map (copy-keymap (current-local-map)))
-                             (local-set-key
-                              (kbd "M-j")
-                              'switch-to-buffer-make-scratch-buffer)))
+                             (use-local-map
+                              (define-keymap :parent (current-local-map)
+                                "M-j" 'switch-to-buffer-make-scratch-buffer))))
                 (apply f args))))
 
 
@@ -3462,15 +3461,13 @@ Also grabs a selected region, if any."
   (let ((b (apply f args)))
     (prog1 b
       (with-current-buffer b
-        (when-let (m (current-local-map))
-          (use-local-map (copy-keymap m))
-          (local-set-key (kbd "RET") 'eldoc-open-url-at-point)
-          (local-set-key (kbd "TAB")
-                         (eldoc-make-nav-link-command
-                          'next-property-change))
-          (local-set-key (kbd "<backtab>")
-                         (eldoc-make-nav-link-command
-                          'previous-property-change)))))))
+        (use-local-map
+         (define-keymap :parent (current-local-map)
+           "RET" 'eldoc-open-url-at-point
+           "TAB" (eldoc-make-nav-link-command
+                  'next-property-change)
+           "<backtab>"(eldoc-make-nav-link-command
+                       'previous-property-change)))))))
 
 
 (advice-add 'eldoc--format-doc-buffer :around 'eldoc-fix-link-navigation)
@@ -3610,10 +3607,6 @@ Also grabs a selected region, if any."
 ;; ====
 
 
-(add-hook 'java-mode-hook
-          (lambda () (c-set-style "user")))
-
-
 (defun copy-java-class-full-name ()
   "Copy full name of current class/interface/enum etc. in a form, suitable for import"
   (interactive)
@@ -3629,11 +3622,8 @@ Also grabs a selected region, if any."
     (kill-new class-full-name)))
 
 
-(defun java-setup-keybindings ()
-  (local-set-key (kbd "C-c C-c") 'copy-java-class-full-name))
-
-
-(add-hook 'java-mode-hook 'java-setup-keybindings)
+(with-eval-after-load 'cc-mode
+  (keymap-set java-mode-map "C-c C-c" 'copy-java-class-full-name))
 
 
 ;; =======
