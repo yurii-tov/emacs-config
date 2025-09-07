@@ -148,8 +148,9 @@
 
 (when (and (eq system-type 'android)
            (getenv "TERMUX_VERSION"))
-  (global-set-key (kbd "<wheel-down>") 'scroll-up-line)
-  (global-set-key (kbd "<wheel-up>") 'scroll-down-line)
+  (define-keymap :keymap global-map
+    "<wheel-down>" 'scroll-up-line
+    "<wheel-up>" 'scroll-down-line)
   (unless small-temporary-file-directory
     (customize-set-variable
      'small-temporary-file-directory
@@ -162,33 +163,6 @@
 ;; ===========
 
 
-;; Remove unneeded shortcuts
-
-
-(dotimes (n 10)
-  (global-unset-key (kbd (format "C-%d" n)))
-  (global-unset-key (kbd (format "M-%d" n))))
-
-
-;; Deal with boilerplate
-
-
-(defun bind-keys (keybindings &optional keymap)
-  (dotimes (i (length keybindings))
-    (when (zerop (mod i 2))
-      (let ((key (kbd (nth i keybindings)))
-            (command (nth (1+ i) keybindings)))
-        (if keymap
-            (define-key keymap key command)
-          (local-set-key key command))))))
-
-
-(defmacro define-custom-keymap (name prefix-key &rest bindings)
-  `(progn (define-prefix-command ',name)
-          (global-set-key (kbd ,prefix-key) ',name)
-          (bind-keys ',bindings ',name)))
-
-
 ;; User-friendly hints
 
 
@@ -198,145 +172,148 @@
 ;; Search
 
 
-(bind-keys '("f" find-dired
-             "g" rgrep
-             "l" gptel-chat
-             "s" browse-url-or-search
-             "d" camd
-             "t" translate-en-ru-online)
-           search-map)
+(define-keymap :keymap search-map
+  "f" 'find-dired
+  "g" 'rgrep
+  "l" 'gptel-chat
+  "s" 'browse-url-or-search
+  "d" 'camd
+  "t" 'translate-en-ru-online)
 
 
 ;; Text editing
 
 
-(define-custom-keymap text-transform-map "M-c"
-                      "c" toggle-char-case
-                      "M-c" duplicate-dwim
-                      "o" sort-lines-bor "M-o" shuffle-lines
-                      "s" replace-string "M-s" replace-regexp
-                      "l" upcase-dwim    "M-l" downcase-dwim
-                      "j" join-lines     "M-j" break-line
-                      "k" flush-lines    "M-k" keep-lines
-                      "p" fill-paragraph "M-p" fill-region-justify
-                      "u" uniq-lines
-                      "i" invert-chars
-                      "e" enumerate-lines
-                      "r" reverse-lines
-                      "w" enclose-text)
-
-
-;; Insertions
-
-
-(define-custom-keymap insert-map "C-x i"
-                      "j" emoji-insert
-                      "e" emoji-list
-                      "f" insert-file
-                      "a" insert-fortune
-                      "b" insert-buffer
-                      "i" insert-char)
+(define-keymap :prefix 'text-edit-map
+  "c" 'toggle-char-case
+  "M-c" 'duplicate-dwim
+  "o" 'sort-lines-bor
+  "s" 'replace-string
+  "l" 'upcase-dwim
+  "j" 'join-lines
+  "k" 'flush-lines
+  "p" 'fill-paragraph
+  "M-o" 'shuffle-lines
+  "M-s" 'replace-regexp
+  "M-l" 'downcase-dwim
+  "M-j" 'break-line
+  "M-k" 'keep-lines
+  "M-p" 'fill-region-justify
+  "u" 'uniq-lines
+  "/" 'invert-chars
+  "e" 'enumerate-lines
+  "r" 'reverse-lines
+  "w" 'enclose-text
+  "i" (define-keymap
+        "j" 'emoji-insert
+        "e" 'emoji-list
+        "f" 'insert-file
+        "a" 'insert-fortune
+        "b" 'insert-buffer
+        "i" 'insert-char))
 
 
 ;; Diff
 
 
-(define-custom-keymap diff-map "C-x d"
-                      "f" diff
-                      "b" diff-buffers
-                      "d" diff-current-buffer)
+(define-keymap :prefix 'diff-map
+  "f" 'diff
+  "b" 'diff-buffers
+  "d" 'diff-current-buffer)
 
 
 ;; Project
 
 
-(bind-keys '("/" project-switch-project
-             "SPC" project-dired
-             "i" project-reformat
-             "a" project-async-shell-command)
-           project-prefix-map)
+(define-keymap :keymap project-prefix-map
+  "/" 'project-switch-project
+  "SPC" 'project-dired
+  "i" 'project-reformat
+  "a" 'project-async-shell-command)
 
 
 ;; Help
 
 
-(bind-keys '("C-h C-h" describe-symbol
-             "C-h h" describe-symbol
-             "C-h r" man
-             "C-h s" yas-describe-tables
-             "C-h f" list-faces-display
-             "C-h v" company-diag)
-           global-map)
+(define-keymap :keymap global-map
+  "C-h C-h" 'describe-symbol
+  "C-h h" 'describe-symbol
+  "C-h r" 'man
+  "C-h s" 'yas-describe-tables
+  "C-h f" 'list-faces-display
+  "C-h v" 'company-diag)
 
 
 ;; Keyboard macro
 
 
-(bind-keys '("<f1>" kmacro-start-macro-or-insert-counter
-             "<f2>" kmacro-end-or-call-macro
-             "<f3>" kmacro-cycle-ring-previous
-             "<f4>" kmacro-set-counter
-             "C-x e" kmacro-edit-macro-repeat)
-           global-map)
+(define-keymap :keymap global-map
+  "<f1>" 'kmacro-start-macro-or-insert-counter
+  "<f2>" 'kmacro-end-or-call-macro
+  "<f3>" 'kmacro-cycle-ring-previous
+  "<f4>" 'kmacro-set-counter
+  "C-x e" 'kmacro-edit-macro-repeat)
 
 
 ;; Misc
 
 
-(bind-keys `("M-o" other-window
-             "C-1" delete-other-windows
-             "C-2" split-window-below
-             "C-3" split-window-right
-             "C-0" delete-window
-             "M-k" kill-line-to-indentation
-             "M-=" count-words
-             "M-q" hippie-expand
-             "C-v" scroll-up-5-lines
-             "M-v" scroll-down-5-lines
-             "M-1" shell-command
-             "M-!" asc-at-directory
-             "M-2" enclose-text-cycle-m2
-             "M-3" enclose-text-cycle-m3
-             "M-9" enclose-text-parenthesis
-             "M-0" enclose-text-square-brackets
-             "M-)" enclose-text-curly-brackets
-             "M-i" pretty-print-buffer
-             "M-u" force-revert-buffer
-             "M-j" switch-to-buffer
-             "M-`" shell
-             "M-g" goto-line
-             "M-/" ,project-prefix-map
-             "M-'" recompile
-             "C-'" compile
-             "M-l" move-line-up
-             "C-M-l" move-line-down
-             "C-=" text-scale-increase
-             "C-M-=" text-scale-decrease
-             "C-+" text-scale-reset
-             "C-x p" copy-file-name-to-clipboard
-             "C-x b" bookmark-set
-             "C-x B" bookmark-delete
-             "C-x j" bookmark-jump
-             "C-x u" reopen-with-sudo
-             "C-x l" eglot
-             "C-x C-b" ibuffer
-             "C-x C-k" kill-buffer-and-window
-             "C-x C-=" display-line-numbers-mode
-             "C-x C-l" gptel-menu
-             "C-c RET" gptel-send
-             "C-c j" cider-start-map
-             "C-c k" sql-connect
-             "C-c i" ielm
-             "C-c s" ssh
-             "C-c d" serve-directory
-             "C-c v" capture-video
-             "C-c h" hexl-mode
-             "C-c c" org-capture
-             "C-c a" org-agenda
-             "C-c o" org-push
-             "C-c O" org-pull
-             "C-c w" watch-file)
-           global-map)
+(define-keymap :keymap global-map
+  "M-c" 'text-edit-map
+  "M-o" 'other-window
+  "C-1" 'delete-other-windows
+  "C-2" 'split-window-below
+  "C-3" 'split-window-right
+  "C-0" 'delete-window
+  "M-k" 'kill-line-to-indentation
+  "M-=" 'count-words
+  "M-q" 'hippie-expand
+  "C-v" 'scroll-up-5-lines
+  "M-v" 'scroll-down-5-lines
+  "M-1" 'shell-command
+  "M-!" 'asc-at-directory
+  "M-2" 'enclose-text-cycle-m2
+  "M-3" 'enclose-text-cycle-m3
+  "M-9" 'enclose-text-parenthesis
+  "M-0" 'enclose-text-square-brackets
+  "M-)" 'enclose-text-curly-brackets
+  "M-i" 'pretty-print-buffer
+  "M-u" 'force-revert-buffer
+  "M-j" 'switch-to-buffer
+  "M-`" 'shell
+  "M-g" 'goto-line
+  "M-/" project-prefix-map
+  "M-'" 'recompile
+  "C-'" 'compile
+  "M-l" 'move-line-up
+  "C-M-l" 'move-line-down
+  "C-=" 'text-scale-increase
+  "C-M-=" 'text-scale-decrease
+  "C-+" 'text-scale-reset
+  "C-x d" 'diff-map
+  "C-x p" 'copy-file-name-to-clipboard
+  "C-x b" 'bookmark-set
+  "C-x B" 'bookmark-delete
+  "C-x j" 'bookmark-jump
+  "C-x u" 'reopen-with-sudo
+  "C-x l" 'eglot
+  "C-x C-b" 'ibuffer
+  "C-x C-k" 'kill-buffer-and-window
+  "C-x C-=" 'display-line-numbers-mode
+  "C-x C-l" 'gptel-menu
+  "C-c RET" 'gptel-send
+  "C-c j" 'cider-start-map
+  "C-c k" 'sql-connect
+  "C-c i" 'ielm
+  "C-c s" 'ssh
+  "C-c d" 'serve-directory
+  "C-c v" 'capture-video
+  "C-c h" 'hexl-mode
+  "C-c c" 'org-capture
+  "C-c a" 'org-agenda
+  "C-c o" 'org-push
+  "C-c O" 'org-pull
+  "C-c w" 'watch-file)
 
 
 ;; Prevent keybindings shadowing
@@ -927,25 +904,25 @@
 
 
 (with-eval-after-load 'dired
-  (bind-keys '("w" copy-file-name-to-clipboard
-               "o" dired-display-file
-               "h" dired-hide-details-mode
-               "l" dired-up-directory
-               "a" dired-archive
-               "A" dired-extract-archive
-               "f" dired-flatten-directory
-               "s" dired-calculate-size
-               "S" dired-calculate-size-tree
-               "M" dired-mark-files-regexp
-               "c" dired-do-copy
-               "r" dired-do-rename
-               "k" dired-do-delete
-               "e" dired-toggle-read-only
-               "1" dired-do-chmod
-               "2" dired-do-chown
-               "3" dired-do-touch
-               "y" dired-do-symlink)
-             dired-mode-map))
+  (define-keymap :keymap dired-mode-map
+    "w" 'copy-file-name-to-clipboard
+    "o" 'dired-display-file
+    "h" 'dired-hide-details-mode
+    "l" 'dired-up-directory
+    "a" 'dired-archive
+    "A" 'dired-extract-archive
+    "f" 'dired-flatten-directory
+    "s" 'dired-calculate-size
+    "S" 'dired-calculate-size-tree
+    "M" 'dired-mark-files-regexp
+    "c" 'dired-do-copy
+    "r" 'dired-do-rename
+    "k" 'dired-do-delete
+    "e" 'dired-toggle-read-only
+    "1" 'dired-do-chmod
+    "2" 'dired-do-chown
+    "3" 'dired-do-touch
+    "y" 'dired-do-symlink))
 
 
 (add-hook 'dired-mode-hook 'auto-revert-mode)
@@ -1160,14 +1137,14 @@ The search string is queried first, followed by the directory."
 
 
 (with-eval-after-load 'ripgrep
-  (bind-keys '("TAB" compilation-next-error
-               "<backtab>" compilation-previous-error
-               "d" ripgrep-dired
-               "n" next-error-no-select
-               "p" previous-error-no-select
-               "o" compilation-display-error
-               "e" wgrep-change-to-wgrep-mode)
-             ripgrep-search-mode-map)
+  (define-keymap :keymap ripgrep-search-mode-map
+    "TAB" 'compilation-next-error
+    "<backtab>" 'compilation-previous-error
+    "d" 'ripgrep-dired
+    "n" 'next-error-no-select
+    "p" 'previous-error-no-select
+    "o" 'compilation-display-error
+    "e" 'wgrep-change-to-wgrep-mode)
   (add-hook 'ripgrep-search-mode-hook
             'ripgrep-setup)
   (setq wgrep-auto-save-buffer t))
@@ -1540,9 +1517,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   (define-key rectangle-mark-mode-map (kbd (char-to-string x)) 'ignore))
 
 
-(bind-keys '("w" enclose-text
-             "SPC" string-rectangle)
-           rectangle-mark-mode-map)
+(define-keymap :keymap rectangle-mark-mode-map
+  "w" 'enclose-text
+  "SPC" 'string-rectangle)
 
 
 ;; Hex mode on regions
@@ -1619,10 +1596,10 @@ with ability to \"cycle\" different variants with provided KEYBINDING
              isearch-string)))
 
 
-(bind-keys '("M-w" isearch-toggle-word
-             "M-q" isearch-query-replace
-             "C-SPC" isearch-select-search-string)
-           isearch-mode-map)
+(define-keymap :keymap isearch-mode-map
+  "M-w" 'isearch-toggle-word
+  "M-q" 'isearch-query-replace
+  "C-SPC" 'isearch-select-search-string)
 
 
 ;; =====================
@@ -1633,11 +1610,11 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (fido-vertical-mode)
 
 
-(bind-keys '("C-j" icomplete-fido-exit
-             "M-j" icomplete-force-complete
-             "SPC" self-insert-command
-             "?" self-insert-command)
-           icomplete-minibuffer-map)
+(define-keymap :keymap icomplete-minibuffer-map
+  "C-j" 'icomplete-fido-exit
+  "M-j" 'icomplete-force-complete
+  "SPC" 'self-insert-command
+  "?" 'self-insert-command)
 
 
 (setq completion-auto-select t
@@ -1725,14 +1702,15 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; Keybindings
 
 
-(progn
-  (bind-keys '("C-f" nil
-               "C-b" nil
-               "C-n" ido-grid-mode-next
-               "C-p" ido-grid-mode-previous
-               "SPC" ido-merge-work-directories)
-             ido-file-dir-completion-map)
-  (setq ido-grid-mode-keys '(up down left right)))
+(define-keymap :keymap ido-file-dir-completion-map
+  "C-f" nil
+  "C-b" nil
+  "C-n" 'ido-grid-mode-next
+  "C-p" 'ido-grid-mode-previous
+  "SPC" 'ido-merge-work-directories)
+
+
+(setq ido-grid-mode-keys '(up down left right))
 
 
 ;; Counter
@@ -1815,8 +1793,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (minibuffer-keyboard-quit)))
 
 
-(bind-keys '("C-v" ido-insert-path)
-           ido-file-dir-completion-map)
+(keymap-set ido-file-dir-completion-map "C-v" 'ido-insert-path)
 
 
 ;; Wide find file fixes
@@ -2083,11 +2060,11 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   ;; (Un)bind some things
   (dolist (x (list company-active-map
                    company-search-map))
-    (bind-keys '("M-p" nil
-                 "M-n" nil
-                 "M-SPC" company-other-backend
-                 "SPC" company-smart-complete)
-               x)))
+    (define-keymap :keymap x
+      "M-p" nil
+      "M-n" nil
+      "M-SPC" 'company-other-backend
+      "SPC" 'company-smart-complete)))
 
 
 ;; Smart completion
@@ -2515,13 +2492,13 @@ reports termination status, kills the buffer"
 ;; Keybindings
 
 
-(bind-keys '("C-c C-k" comint-kill-subjob
-             "M-r" comint-browse-command-history
-             "M-p" comint-previous-input-prefixed
-             "M-n" comint-next-input-prefixed
-             "<up>" comint-previous-input-prefixed
-             "<down>" comint-next-input-prefixed)
-           comint-mode-map)
+(define-keymap :keymap comint-mode-map
+  "C-c C-k" 'comint-kill-subjob
+  "M-r" 'comint-browse-command-history
+  "M-p" 'comint-previous-input-prefixed
+  "M-n" 'comint-next-input-prefixed
+  "<up>" 'comint-previous-input-prefixed
+  "<down>" 'comint-next-input-prefixed)
 
 
 ;; History browsing
@@ -3094,12 +3071,13 @@ Also grabs a selected region, if any."
  '(gptel-rewrite-highlight-face ((t (:inherit diff-added)))))
 
 
-(bind-keys '("=" gptel--rewrite-diff
-             "r" gptel--rewrite-iterate
-             "SPC" gptel--rewrite-accept
-             "m" gptel--rewrite-merge
-             "k" gptel--rewrite-reject)
-           gptel-rewrite-actions-map)
+(define-keymap :keymap gptel-rewrite-actions-map
+  "=" 'gptel--rewrite-diff
+  "r" 'gptel--rewrite-iterate
+  "SPC" 'gptel--rewrite-accept
+  "m" 'gptel--rewrite-merge
+  "k" 'gptel--rewrite-reject)
+
 
 ;; ===
 ;; VCS
@@ -3234,26 +3212,26 @@ Also grabs a selected region, if any."
 
 
 (with-eval-after-load 'vc-dir
-  (bind-keys '("TAB" vc-dir-next-line
-               "<backtab>" vc-dir-previous-line
-               "n" nil
-               "+" nil
-               "p" vc-pull
-               "l" vc-print-root-log
-               "s" vc-switch-branch
-               "c" vc-create-branch
-               "r" vc-reset
-               "R" vc-reset-hard)
-             vc-dir-mode-map))
+  (define-keymap :keymap vc-dir-mode-map
+    "TAB" 'vc-dir-next-line
+    "<backtab>" 'vc-dir-previous-line
+    "n" nil
+    "+" nil
+    "p" 'vc-pull
+    "l" 'vc-print-root-log
+    "s" 'vc-switch-branch
+    "c" 'vc-create-branch
+    "r" 'vc-reset
+    "R" 'vc-reset-hard))
 
 
 (with-eval-after-load 'log-view
-  (bind-keys '("j" vc-print-branch-log
-               "w" log-view-copy-revision)
-             log-view-mode-map))
+  (define-keymap :keymap log-view-mode-map
+    "j" 'vc-print-branch-log
+    "w" 'log-view-copy-revision))
 
 
-(bind-keys '("p" vc-pull "+" nil) vc-prefix-map)
+(define-keymap :keymap vc-prefix-map "p" 'vc-pull "+" nil)
 
 
 ;; ========
@@ -3366,16 +3344,16 @@ Also grabs a selected region, if any."
 
 (with-eval-after-load 'eglot
   ;; Keybindings
-  (bind-keys '("M-p" eglot-code-actions
-               "M-." xref-find-definitions
-               "C-c C-n" eglot-rename
-               "C-c C-e" eglot-code-action-extract
-               "C-h C-h" eldoc-print-current-symbol-info
-               "C-c C-i" eglot-code-action-inline
-               "C-c C-j" eglot-code-action-quickfix
-               "C-c C-k" eglot-code-action-rewrite
-               "C-c C-l" eglot-code-action-organize-imports)
-             eglot-mode-map)
+  (define-keymap :keymap eglot-mode-map
+    "M-p" 'eglot-code-actions
+    "M-." 'xref-find-definitions
+    "C-c C-n" 'eglot-rename
+    "C-c C-e" 'eglot-code-action-extract
+    "C-h C-h" 'eldoc-print-current-symbol-info
+    "C-c C-i" 'eglot-code-action-inline
+    "C-c C-j" 'eglot-code-action-quickfix
+    "C-c C-k" 'eglot-code-action-rewrite
+    "C-c C-l" 'eglot-code-action-organize-imports)
 
   ;; Don't clutter company settings
   (add-to-list 'eglot-stay-out-of 'company)
@@ -3396,11 +3374,11 @@ Also grabs a selected region, if any."
 
 
 (with-eval-after-load 'flymake
-  (bind-keys '("C-," flymake-goto-prev-error
-               "C-." flymake-goto-next-error
-               "C-c C-o" flymake-show-buffer-diagnostics
-               "C-c C-p" flymake-show-project-diagnostics)
-             flymake-mode-map))
+  (define-keymap :keymap flymake-mode-map
+    "C-," 'flymake-goto-prev-error
+    "C-." 'flymake-goto-next-error
+    "C-c C-o" 'flymake-show-buffer-diagnostics
+    "C-c C-p" 'flymake-show-project-diagnostics))
 
 
 (defun flymake-display-diagnostics-fix (f &rest args)
@@ -4269,33 +4247,19 @@ Process .+
 ;; ===========
 
 
-(require 'nov)
-
-
 (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
 
 
-(setq nov-text-width 70)
-
-
-(defun nov-scroll-up-1 ()
-  (interactive)
-  (scroll-up-command 1))
-
-
-(defun nov-scroll-down-1 ()
-  (interactive)
-  (scroll-down-command 1))
-
-
-(bind-keys '("j" nov-scroll-up-1
-             "k" nov-scroll-down-1
-             "h" nov-previous-document
-             "l" nov-next-document
-             "p" nov-history-back
-             "n" nov-history-forward
-             "<down>" nov-scroll-up-1
-             "<up>" nov-scroll-down-1
-             "<left>" nov-previous-document
-             "<right>" nov-next-document)
-           nov-mode-map)
+(with-eval-after-load 'nov
+  (setq nov-text-width 70)
+  (define-keymap :keymap nov-mode-map
+    "j" 'scroll-up-line
+    "k" 'scroll-down-line
+    "h" 'nov-previous-document
+    "l" 'nov-next-document
+    "p" 'nov-history-back
+    "n" 'nov-history-forward
+    "<down>" 'scroll-up-line
+    "<up>" 'scroll-down-line
+    "<left>" 'nov-previous-document
+    "<right>" 'nov-next-document))
