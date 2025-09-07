@@ -290,6 +290,8 @@
   "C-=" 'text-scale-increase
   "C-M-=" 'text-scale-decrease
   "C-+" 'text-scale-reset
+  "C-x =" 'hl-line-mode
+  "C-x i" 'what-cursor-position
   "C-x d" 'diff-map
   "C-x p" 'copy-file-name-to-clipboard
   "C-x b" 'bookmark-set
