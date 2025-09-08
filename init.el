@@ -2756,7 +2756,7 @@ reports termination status, kills the buffer"
 (setq org-refile-allow-creating-parent-nodes 'confirm)
 
 
-;; Use Git repo as storage
+;; Store org files in Git repo
 
 
 (defun org-push ()
@@ -3042,22 +3042,16 @@ Also grabs a selected region, if any."
 ;; Rewrite facility
 
 
-(require 'diff-mode)
-
-
-(require 'gptel-rewrite)
-
-
-(custom-set-faces
- '(gptel-rewrite-highlight-face ((t (:inherit diff-added)))))
-
-
-(define-keymap :keymap gptel-rewrite-actions-map
-  "=" 'gptel--rewrite-diff
-  "r" 'gptel--rewrite-iterate
-  "SPC" 'gptel--rewrite-accept
-  "m" 'gptel--rewrite-merge
-  "k" 'gptel--rewrite-reject)
+(with-eval-after-load 'gptel-rewrite
+  (require 'diff-mode)
+  (custom-set-faces
+   '(gptel-rewrite-highlight-face ((t (:inherit diff-added)))))
+  (define-keymap :keymap gptel-rewrite-actions-map
+    "=" 'gptel--rewrite-diff
+    "r" 'gptel--rewrite-iterate
+    "SPC" 'gptel--rewrite-accept
+    "m" 'gptel--rewrite-merge
+    "k" 'gptel--rewrite-reject))
 
 
 ;; ===
