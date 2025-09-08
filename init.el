@@ -1148,6 +1148,9 @@ The search string is queried first, followed by the directory."
 ;; ===========
 
 
+(require 'rect)
+
+
 ;; Formatting
 
 
@@ -1365,12 +1368,13 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; Multiline editing
 
 
-(with-eval-after-load 'rect
-  (dolist (x (number-sequence ?\  ?~))
-    (push (cons x 'ignore) (cdr rectangle-mark-mode-map)))
-  (define-keymap :keymap rectangle-mark-mode-map
-    "w" 'enclose-text
-    "SPC" 'string-rectangle))
+(dolist (x (number-sequence ?\  ?~))
+  (push (cons x 'ignore) (cdr rectangle-mark-mode-map)))
+
+
+(define-keymap :keymap rectangle-mark-mode-map
+  "w" 'enclose-text
+  "SPC" 'string-rectangle)
 
 
 ;; Auxiliary edit commands
