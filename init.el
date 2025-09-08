@@ -1148,10 +1148,7 @@ The search string is queried first, followed by the directory."
 ;; ===========
 
 
-(require 'rect)
-
-
-;; Indentation
+;; Formatting
 
 
 (setq-default indent-tabs-mode nil
@@ -1168,7 +1165,48 @@ The search string is queried first, followed by the directory."
   (whitespace-cleanup))
 
 
-;; Overwrite selected text
+(setq-default fill-column 80)
+
+
+(defun fill-region-justify (start end)
+  (interactive (buffer-or-region))
+  (fill-region start end 'full))
+
+
+(setq pretty-printers
+      '((js-json-mode . json-pretty-print-buffer)
+        (rust-mode . rust-format-buffer)))
+
+
+(defun pretty-print-buffer (&optional command)
+  (interactive)
+  (if command
+      (let ((shell-file-name "sh")
+            (p (point))
+            (b (current-buffer))
+            (s (buffer-substring-no-properties
+                (point-min) (point-max))))
+        (with-temp-buffer
+          (insert s)
+          (shell-command-on-region (point-min) (point-max) command nil t)
+          (let ((pprinted (buffer-substring-no-properties
+                           (point-min) (point-max))))
+            (with-current-buffer b
+              (unless (string-equal pprinted s)
+                (erase-buffer)
+                (insert pprinted)
+                (goto-char p))))))
+    (let ((f (cdr (assoc major-mode pretty-printers))))
+      (if (and f (not (use-region-p)))
+          (progn (message "Reformatting with %s..." f)
+                 (apply f nil)
+                 (if (buffer-modified-p)
+                     (message "Reformatting with %s...Done" f)
+                   (message "Already well-formatted")))
+        (call-interactively 'reindent-region)))))
+
+
+;; Overwriting
 
 
 (delete-selection-mode t)
@@ -1180,10 +1218,159 @@ The search string is queried first, followed by the directory."
 (setq what-cursor-show-names t)
 
 
+(defun wrap-hexl-mode (f &rest args)
+  (if (use-region-p)
+      (shell-command-on-region
+       (region-beginning)
+       (region-end)
+       "hexdump -C")
+    (apply f args)))
+
+
+(advice-add 'hexl-mode :around 'wrap-hexl-mode)
+
+
 ;; Duplicating
 
 
 (setq duplicate-line-final-position -1)
+
+
+;; Enclosing into parenthesis (or similar)
+
+
+(defun enclose-text (b1 b2 &optional lisp-style-p)
+  "Encloses current word (or region) into provided \"bracket-like\" strings
+   Also operates on rectangular selections, applying the enclosing for each line"
+  (interactive (let* ((default-item (car minibuffer-history))
+                      (s (read-string
+                          (format "Wrap with arbitrary brackets (use %s char if needed)%s: "
+                                  (propertize "?" 'face 'font-lock-builtin-face)
+                                  (if default-item
+                                      (format " (default %s)"
+                                              (propertize default-item
+                                                          'face
+                                                          'font-lock-builtin-face))
+                                    ""))
+                          nil nil (car minibuffer-history)))
+                      (bs (split-string s "\\?")))
+                 (if (> (length bs) 1) bs
+                   (list (substring s 0 (/ (length s) 2))
+                         (substring s (/ (length s) 2) (length s))))))
+  (let* (b1-pos
+         b2-pos
+         (insert-b1 (lambda () (setq b1-pos (point)) (insert b1)))
+         (insert-b2 (lambda () (setq b2-pos (point)) (insert b2))))
+    (cond (rectangle-mark-mode
+           (let* ((bounds (list (region-beginning) (region-end)))
+                  (lines (mapcar #'string-trim-right
+                                 (split-string (apply #'buffer-substring bounds) "\n")))
+                  (col (save-excursion (goto-char (car bounds)) (current-column))))
+             (apply #'delete-region bounds)
+             (insert (string-join
+                      (cons (format "%s%s%s" b1 (car lines) b2)
+                            (mapcar (lambda (x)
+                                      (let ((offset (min col (length x))))
+                                        (format "%s%s" (concat (substring x 0 offset)
+                                                               b1
+                                                               (substring x offset))
+                                                b2)))
+                                    (cdr lines)))
+                      "\n"))))
+          ((use-region-p)
+           (let ((s (region-beginning))
+                 (e (region-end)))
+             (goto-char s)
+             (funcall insert-b1)
+             (goto-char e)
+             (forward-char (length b2))
+             (funcall insert-b2)
+             (when lisp-style-p (goto-char (1+ s)))))
+          ((and lisp-style-p (looking-at "[\[({]"))
+           (funcall insert-b1)
+           (forward-sexp)
+           (funcall insert-b2)
+           (backward-char)
+           (backward-sexp))
+          ((or (eobp) (looking-at "[\](){}<>*\s\n.,;:\[\"']"))
+           (funcall insert-b1)
+           (funcall insert-b2)
+           (backward-char))
+          (t (forward-word)
+             (backward-word)
+             (funcall insert-b1)
+             (forward-word)
+             (funcall insert-b2)
+             (when lisp-style-p
+               (backward-char)
+               (backward-word))))
+    (list b1-pos b2-pos)))
+
+
+(defun enclose-text-cycle (brackets keybinding)
+  "Encloses current word/region into brackets from provided BRACKETS set,
+with ability to \"cycle\" different variants with provided KEYBINDING
+(as numeric value, can be obtained e.g. from (`read-key') invocation)"
+  (when (not rectangle-mark-mode)
+    (let* ((positions (enclose-text (substring (car brackets) 0 1)
+                                    (substring (car brackets) 1 2)
+                                    t))
+           (p1 (car positions))
+           (p2 (cadr positions))
+           (i 0)
+           key)
+      (while (= (setq key (read-key)) keybinding)
+        (let* ((bs (nth (mod (cl-incf i) (length brackets)) brackets))
+               (b1 (aref bs 0))
+               (b2 (aref bs 1)))
+          (save-excursion
+            (goto-char p1)
+            (delete-char 1)
+            (insert b1)
+            (goto-char p2)
+            (delete-char 1)
+            (insert b2))
+          (forward-char)))
+      (push key unread-command-events))))
+
+
+(defun enclose-text-cycle-m2 ()
+  "Cycle through quotes using M-2 keybinding"
+  (interactive)
+  (enclose-text-cycle '("\"\"" "''" "``" "<>") 134217778))
+
+
+(defun enclose-text-cycle-m3 ()
+  "Cycle through more brackets using M-3 keybinding"
+  (interactive)
+  (enclose-text-cycle '("**" "==" "//" "~~")
+                      134217779))
+
+
+(defun enclose-text-parenthesis ()
+  (interactive)
+  (enclose-text "(" ")" t))
+
+
+(defun enclose-text-square-brackets ()
+  (interactive)
+  (enclose-text "[" "]" t))
+
+
+(defun enclose-text-curly-brackets ()
+  (interactive)
+  (enclose-text "{" "}" t))
+
+
+;; Multiline editing
+
+
+(with-eval-after-load 'rect
+  (dolist (x (number-sequence ?\  ?~))
+    (push (cons x 'ignore) (cdr rectangle-mark-mode-map)))
+  (define-keymap :keymap rectangle-mark-mode-map
+    "w" 'enclose-text
+    "SPC" 'string-rectangle))
 
 
 ;; Auxiliary edit commands
@@ -1364,206 +1551,6 @@ The search string is queried first, followed by the directory."
 
 (dolist (x '(flush-lines keep-lines))
   (advice-add x :around #'fix-flush-lines))
-
-
-;; Enclosing into parenthesis (or similar)
-
-
-(defun enclose-text (b1 b2 &optional lisp-style-p)
-  "Encloses current word (or region) into provided \"bracket-like\" strings
-   Also operates on rectangular selections, applying the enclosing for each line"
-  (interactive (let* ((default-item (car minibuffer-history))
-                      (s (read-string
-                          (format "Wrap with arbitrary brackets (use %s char if needed)%s: "
-                                  (propertize "?" 'face 'font-lock-builtin-face)
-                                  (if default-item
-                                      (format " (default %s)"
-                                              (propertize default-item
-                                                          'face
-                                                          'font-lock-builtin-face))
-                                    ""))
-                          nil nil (car minibuffer-history)))
-                      (bs (split-string s "\\?")))
-                 (if (> (length bs) 1) bs
-                   (list (substring s 0 (/ (length s) 2))
-                         (substring s (/ (length s) 2) (length s))))))
-  (let* (b1-pos
-         b2-pos
-         (insert-b1 (lambda () (setq b1-pos (point)) (insert b1)))
-         (insert-b2 (lambda () (setq b2-pos (point)) (insert b2))))
-    (cond (rectangle-mark-mode
-           (let* ((bounds (list (region-beginning) (region-end)))
-                  (lines (mapcar #'string-trim-right
-                                 (split-string (apply #'buffer-substring bounds) "\n")))
-                  (col (save-excursion (goto-char (car bounds)) (current-column))))
-             (apply #'delete-region bounds)
-             (insert (string-join
-                      (cons (format "%s%s%s" b1 (car lines) b2)
-                            (mapcar (lambda (x)
-                                      (let ((offset (min col (length x))))
-                                        (format "%s%s" (concat (substring x 0 offset)
-                                                               b1
-                                                               (substring x offset))
-                                                b2)))
-                                    (cdr lines)))
-                      "\n"))))
-          ((use-region-p)
-           (let ((s (region-beginning))
-                 (e (region-end)))
-             (goto-char s)
-             (funcall insert-b1)
-             (goto-char e)
-             (forward-char (length b2))
-             (funcall insert-b2)
-             (when lisp-style-p (goto-char (1+ s)))))
-          ((and lisp-style-p (looking-at "[\[({]"))
-           (funcall insert-b1)
-           (forward-sexp)
-           (funcall insert-b2)
-           (backward-char)
-           (backward-sexp))
-          ((or (eobp) (looking-at "[\](){}<>*\s\n.,;:\[\"']"))
-           (funcall insert-b1)
-           (funcall insert-b2)
-           (backward-char))
-          (t (forward-word)
-             (backward-word)
-             (funcall insert-b1)
-             (forward-word)
-             (funcall insert-b2)
-             (when lisp-style-p
-               (backward-char)
-               (backward-word))))
-    (list b1-pos b2-pos)))
-
-
-(defun enclose-text-cycle (brackets keybinding)
-  "Encloses current word/region into brackets from provided BRACKETS set,
-with ability to \"cycle\" different variants with provided KEYBINDING
-(as numeric value, can be obtained e.g. from (`read-key') invocation)"
-  (when (not rectangle-mark-mode)
-    (let* ((positions (enclose-text (substring (car brackets) 0 1)
-                                    (substring (car brackets) 1 2)
-                                    t))
-           (p1 (car positions))
-           (p2 (cadr positions))
-           (i 0)
-           key)
-      (while (= (setq key (read-key)) keybinding)
-        (let* ((bs (nth (mod (cl-incf i) (length brackets)) brackets))
-               (b1 (aref bs 0))
-               (b2 (aref bs 1)))
-          (save-excursion
-            (goto-char p1)
-            (delete-char 1)
-            (insert b1)
-            (goto-char p2)
-            (delete-char 1)
-            (insert b2))
-          (forward-char)))
-      (push key unread-command-events))))
-
-
-(defun enclose-text-cycle-m2 ()
-  "Cycle through quotes using M-2 keybinding"
-  (interactive)
-  (enclose-text-cycle '("\"\"" "''" "``" "<>") 134217778))
-
-
-(defun enclose-text-cycle-m3 ()
-  "Cycle through more brackets using M-3 keybinding"
-  (interactive)
-  (enclose-text-cycle '("**" "==" "//" "~~")
-                      134217779))
-
-
-(defun enclose-text-parenthesis ()
-  (interactive)
-  (enclose-text "(" ")" t))
-
-
-(defun enclose-text-square-brackets ()
-  (interactive)
-  (enclose-text "[" "]" t))
-
-
-(defun enclose-text-curly-brackets ()
-  (interactive)
-  (enclose-text "{" "}" t))
-
-
-;; Formatting
-
-
-(setq-default fill-column 80)
-
-
-(defun fill-region-justify (start end)
-  (interactive (buffer-or-region))
-  (fill-region start end 'full))
-
-
-;; Multiline editing
-
-
-(dolist (x (number-sequence ?\  ?~))
-  (push (cons x 'ignore) (cdr rectangle-mark-mode-map)))
-
-
-(define-keymap :keymap rectangle-mark-mode-map
-  "w" 'enclose-text
-  "SPC" 'string-rectangle)
-
-
-;; Hex mode on regions
-
-
-(defun wrap-hexl-mode (f &rest args)
-  (if (use-region-p)
-      (shell-command-on-region
-       (region-beginning)
-       (region-end)
-       "hexdump -C")
-    (apply f args)))
-
-
-(advice-add 'hexl-mode :around 'wrap-hexl-mode)
-
-
-;; Buffer pretty-printing
-
-
-(setq pretty-printers
-      '((js-json-mode . json-pretty-print-buffer)
-        (rust-mode . rust-format-buffer)))
-
-
-(defun pretty-print-buffer (&optional command)
-  (interactive)
-  (if command
-      (let ((shell-file-name "sh")
-            (p (point))
-            (b (current-buffer))
-            (s (buffer-substring-no-properties
-                (point-min) (point-max))))
-        (with-temp-buffer
-          (insert s)
-          (shell-command-on-region (point-min) (point-max) command nil t)
-          (let ((pprinted (buffer-substring-no-properties
-                           (point-min) (point-max))))
-            (with-current-buffer b
-              (unless (string-equal pprinted s)
-                (erase-buffer)
-                (insert pprinted)
-                (goto-char p))))))
-    (let ((f (cdr (assoc major-mode pretty-printers))))
-      (if (and f (not (use-region-p)))
-          (progn (message "Reformatting with %s..." f)
-                 (apply f nil)
-                 (if (buffer-modified-p)
-                     (message "Reformatting with %s...Done" f)
-                   (message "Already well-formatted")))
-        (call-interactively 'reindent-region)))))
 
 
 ;; =======
