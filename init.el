@@ -172,12 +172,6 @@
 ;; ===========
 
 
-;; User-friendly hints
-
-
-(which-key-mode)
-
-
 ;; Search
 
 
@@ -383,6 +377,12 @@
        ("+" ">")
        ("+" "\\++")))
   (global-ligature-mode t))
+
+
+;; Display keybindings as-you-type
+
+
+(which-key-mode)
 
 
 ;; Spacious padding
