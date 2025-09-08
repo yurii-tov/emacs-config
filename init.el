@@ -619,7 +619,7 @@
 (setq uniquify-buffer-name-style 'forward)
 
 
-;; Annotate list in switch-to-buffer
+;; Display working directories in switch list
 
 
 (defun shrink-path (path bound)
