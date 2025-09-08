@@ -319,7 +319,6 @@
   "C-x C-k" 'kill-buffer-and-window
   "C-x C-=" 'display-line-numbers-mode
   "C-x C-l" 'gptel-menu
-  "C-c RET" 'gptel-send
   "C-c j" 'cider-start-map
   "C-c k" 'sql-connect
   "C-c i" 'ielm
@@ -338,8 +337,8 @@
 
 
 (defun prevent-key-shadowing ()
-  (dolist (x '("M-j" "M-s" "M-o" "M-q" "M-!" "C-c RET"))
-    (local-unset-key (kbd x))))
+  (dolist (x '("M-j" "M-s" "M-o" "M-q" "M-!"))
+    (keymap-local-unset x)))
 
 
 (add-hook 'after-change-major-mode-hook 'prevent-key-shadowing)
