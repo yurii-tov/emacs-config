@@ -3183,7 +3183,9 @@ Also grabs a selected region, if any."
   (interactive)
   (let* ((default "HEAD^")
          (dir (expand-file-name (vc-root-dir)))
-         (revision (vc-read-revision (format "%s to (default %s): " (or action "Reset") default)
+         (revision (vc-read-revision (format "%s to (default %s): "
+                                             (or action "Reset")
+                                             default)
                                      (list dir)
                                      (vc-responsible-backend dir)
                                      default)))
