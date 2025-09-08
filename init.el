@@ -42,13 +42,6 @@
       (package-install p))))
 
 
-;; Useful APIs
-
-
-(dolist (lib '(cl-lib subr-x compile ffap))
-  (require lib))
-
-
 ;; Text encoding
 
 
@@ -525,7 +518,7 @@
                                    (t "")))))
                 ,(unless (and (not window-system) (eq system-type 'windows-nt))
                    '(:eval (if (get-buffer-process (current-buffer))
-                               (propertize "• " 'face 'compilation-mode-line-run)
+                               (propertize "• " 'face 'warning)
                              "")))
                 ,(propertize "%b" 'face 'mode-line-buffer-id)
                 ,(propertize " %l:%C" 'face 'shadow)
@@ -886,7 +879,7 @@
          (args (mapcar (lambda (x) (format "'%s'" x)) files)))
     (message "Calculating size of %s..."
              (string-join (mapcar (lambda (x)
-                                    (propertize x 'face 'compilation-info))
+                                    (propertize x 'face 'success))
                                   files)
                           ", "))
     (shell-command
@@ -1063,7 +1056,7 @@ The search string is queried first, followed by the directory."
                    (format "Search for %s at: "
                            (propertize (if (string-empty-p query)
                                            "*" query)
-                                       'face 'compilation-info)))
+                                       'face 'success)))
                 dir)))
     (funcall f dir query)))
 
@@ -2214,7 +2207,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   (interactive (list (read-shell-command "Async shell command: ") nil))
   (let* ((command-colorized (propertize (reverse (string-truncate-left
                                                   (reverse command) 20))
-                                        'face 'compilation-info))
+                                        'face 'success))
          (default-directory (or working-directory
                                 (read-directory-name
                                  (format "Run `%s` at: " command-colorized)))))
@@ -2341,7 +2334,7 @@ reports termination status, kills the buffer"
                                      'face (if (string-match "exited abnormally.*" e)
                                                'error 'shadow))
                          (propertize ,(car args)
-                                     'face 'compilation-info)
+                                     'face 'success)
                          (propertize ,(abbreviate-file-name default-directory)
                                      'face 'completions-annotations))
                 (kill-buffer ,b)))))))))
@@ -2368,7 +2361,7 @@ reports termination status, kills the buffer"
           (switch-to-buffer b)
           (message
            "Running `%s` at %s"
-           (propertize (car args) 'face 'compilation-info)
+           (propertize (car args) 'face 'success)
            (propertize (abbreviate-file-name default-directory)
                        'face 'completions-annotations)))))))
 
@@ -2492,13 +2485,14 @@ reports termination status, kills the buffer"
 ;; Keybindings
 
 
-(define-keymap :keymap comint-mode-map
-  "C-c C-k" 'comint-kill-subjob
-  "M-r" 'comint-browse-command-history
-  "M-p" 'comint-previous-input-prefixed
-  "M-n" 'comint-next-input-prefixed
-  "<up>" 'comint-previous-input-prefixed
-  "<down>" 'comint-next-input-prefixed)
+(with-eval-after-load 'comint
+  (define-keymap :keymap comint-mode-map
+    "C-c C-k" 'comint-kill-subjob
+    "M-r" 'comint-browse-command-history
+    "M-p" 'comint-previous-input-prefixed
+    "M-n" 'comint-next-input-prefixed
+    "<up>" 'comint-previous-input-prefixed
+    "<down>" 'comint-next-input-prefixed))
 
 
 ;; History browsing
@@ -3115,7 +3109,7 @@ Also grabs a selected region, if any."
       (set-text-properties
        0 (1- p1) '(face vc-dir-header-value) status)
       (set-text-properties
-       p1 (1+ p2) '(face compilation-info) status)
+       p1 (1+ p2) '(face success) status)
       (set-text-properties
        (1+ p2) (length status) '(face vc-dir-header-value) status))
     (replace-regexp-in-string
@@ -3167,7 +3161,7 @@ Also grabs a selected region, if any."
                                     (assoc ',vc-command vc-command-overrides)))))
           (progn (message "Running %s..."
                           (propertize command
-                                      'face 'compilation-info))
+                                      'face 'success))
                  (shell-command command)
                  (cond ((eq major-mode 'vc-dir-mode)
                         (vc-refresh-headers))
@@ -3259,7 +3253,7 @@ Also grabs a selected region, if any."
          (command (cdr (cl-find-if (lambda (x) (file-exists-p (car x)))
                                    '(("Cargo.toml" . "cargo fmt"))))))
     (cond (command (let ((msg (format "Running %s on %s..."
-                                      (propertize command 'face 'compilation-info)
+                                      (propertize command 'face 'success)
                                       (abbreviate-file-name default-directory))))
                      (message msg)
                      (when (zerop (shell-command command))
