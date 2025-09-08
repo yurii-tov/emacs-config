@@ -97,7 +97,7 @@
       confirm-kill-emacs 'y-or-n-p)
 
 
-;; Persistence across sessions
+;; History persistence
 
 
 (setq savehist-additional-variables '(kill-ring
@@ -109,7 +109,7 @@
 (add-hook 'emacs-startup-hook 'savehist-mode)
 
 
-;; Site-specific
+;; Site-specific config
 
 
 (progn (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
