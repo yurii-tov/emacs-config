@@ -384,24 +384,39 @@
 (spacious-padding-mode 1)
 
 
-;; Remove noisy things
+;; Reduce distractions
 
 
-(progn (setq inhibit-startup-message t
-             inhibit-startup-echo-area-message t
-             use-short-answers t
-             ring-bell-function 'ignore
-             kill-buffer-query-functions nil
-             disabled-command-function nil
-             confirm-kill-processes nil
-             confirm-kill-emacs 'y-or-n-p)
-       (when fringe-indicator-alist
-         (setf (cdr (assq 'continuation fringe-indicator-alist)) '(nil nil)))
-       (when (fboundp 'toggle-scroll-bar)
-         (toggle-scroll-bar -1))
-       (blink-cursor-mode 0)
-       (tool-bar-mode -1)
-       (menu-bar-mode -1))
+(setq inhibit-startup-message t
+      inhibit-startup-echo-area-message t
+      ring-bell-function 'ignore
+      use-short-answers t
+      kill-buffer-query-functions nil
+      disabled-command-function nil
+      confirm-kill-processes nil)
+
+
+(when fringe-indicator-alist
+  (setf (cdr (assq 'continuation fringe-indicator-alist)) '(nil nil)))
+
+
+(when (fboundp 'toggle-scroll-bar)
+  (toggle-scroll-bar -1))
+
+
+(blink-cursor-mode 0)
+
+
+(tool-bar-mode -1)
+
+
+(menu-bar-mode -1)
+
+
+;; Confirm shutdown
+
+
+(setq confirm-kill-emacs 'y-or-n-p)
 
 
 ;; Current line indicator
