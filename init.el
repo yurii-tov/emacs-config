@@ -1946,16 +1946,15 @@ The search string is queried first, followed by the directory."
 
 
 (setq hippie-expand-try-functions-list
-      ;; try expand to...
-      '(try-expand-dabbrev ;; thing from current buffer
+      '(try-expand-dabbrev
         try-expand-line
         try-expand-list
-        try-complete-file-name-partially ;; filename
+        try-complete-file-name-partially
         try-complete-file-name
-        try-expand-dabbrev-visible ;; thing from visible buffers
-        try-expand-dabbrev-from-kill ;; thing from kill-ring
+        try-expand-dabbrev-visible
+        try-expand-dabbrev-from-kill
         try-expand-whole-kill
-        try-expand-dabbrev-all-buffers ;; thing from all buffers
+        try-expand-dabbrev-all-buffers
         try-expand-line-all-buffers
         try-expand-list-all-buffers))
 
