@@ -805,6 +805,12 @@
       (message "Copied to clipboard: %s" names))))
 
 
+(defun diff-current-buffer ()
+  "Invoke `diff-buffer-with-file' for current buffer"
+  (interactive)
+  (diff-buffer-with-file))
+
+
 ;; ===========
 ;; Text editor
 ;; ===========
@@ -1570,17 +1576,6 @@ The search string is queried first, followed by the directory."
   (add-hook 'ripgrep-search-mode-hook
             'ripgrep-setup)
   (setq wgrep-auto-save-buffer t))
-
-
-;; ====
-;; Diff
-;; ====
-
-
-(defun diff-current-buffer ()
-  "Invoke `diff-buffer-with-file' for current buffer"
-  (interactive)
-  (diff-buffer-with-file))
 
 
 ;; =====================
