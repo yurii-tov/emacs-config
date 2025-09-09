@@ -68,34 +68,6 @@
     (advice-add x :around 'windows-fix-args-encoding)))
 
 
-;; Scratch buffer
-
-
-(defun scratch-buffer-setup ()
-  (with-current-buffer "*scratch*"
-    (delete-region (point-min) (point-max))
-    (insert (replace-regexp-in-string "\n" "" (emacs-version)))
-    (newline 3)
-    (insert-fortune)
-    (comment-region (point-min) (point-max))
-    (newline 3)))
-
-
-(add-hook 'emacs-startup-hook 'scratch-buffer-setup)
-
-
-;; History
-
-
-(setq savehist-additional-variables '(kill-ring
-                                      search-ring
-                                      regexp-search-ring)
-      history-delete-duplicates t)
-
-
-(add-hook 'emacs-startup-hook 'savehist-mode)
-
-
 ;; Site-specific config
 
 
@@ -152,6 +124,18 @@
      'small-temporary-file-directory
      "/data/data/com.termux/cache/emacs/")
     (make-directory small-temporary-file-directory t)))
+
+
+;; History
+
+
+(setq savehist-additional-variables '(kill-ring
+                                      search-ring
+                                      regexp-search-ring)
+      history-delete-duplicates t)
+
+
+(add-hook 'emacs-startup-hook 'savehist-mode)
 
 
 ;; ===========
@@ -366,55 +350,10 @@
   (global-ligature-mode t))
 
 
-;; Display keybindings as-you-type
-
-
-(which-key-mode)
-
-
 ;; Spacious padding
 
 
 (spacious-padding-mode 1)
-
-
-;; Reduce distractions
-
-
-(setq inhibit-startup-message t
-      inhibit-startup-echo-area-message t
-      ring-bell-function 'ignore
-      use-short-answers t
-      kill-buffer-query-functions nil
-      disabled-command-function nil
-      confirm-kill-processes nil)
-
-
-(when fringe-indicator-alist
-  (setf (cdr (assq 'continuation fringe-indicator-alist)) '(nil nil)))
-
-
-(unless window-system
-  (set-display-table-slot standard-display-table 'wrap ?\ ))
-
-
-(when (fboundp 'toggle-scroll-bar)
-  (toggle-scroll-bar -1))
-
-
-(blink-cursor-mode 0)
-
-
-(tool-bar-mode -1)
-
-
-(menu-bar-mode -1)
-
-
-;; Confirm shutdown
-
-
-(setq confirm-kill-emacs 'y-or-n-p)
 
 
 ;; Current line indicator
@@ -537,6 +476,60 @@
                 " "))
 
 
+;; Text wrapping
+
+
+(dolist (x '(man-common-hook
+             flymake-diagnostics-buffer-mode-hook
+             flymake-project-diagnostics-mode-hook))
+  (add-hook x 'visual-line-mode))
+
+
+;; Display keybindings as-you-type
+
+
+(which-key-mode)
+
+
+;; Reduce distractions
+
+
+(setq inhibit-startup-message t
+      inhibit-startup-echo-area-message t
+      ring-bell-function 'ignore
+      use-short-answers t
+      kill-buffer-query-functions nil
+      disabled-command-function nil
+      confirm-kill-processes nil)
+
+
+(when fringe-indicator-alist
+  (setf (cdr (assq 'continuation fringe-indicator-alist)) '(nil nil)))
+
+
+(unless window-system
+  (set-display-table-slot standard-display-table 'wrap ?\ ))
+
+
+(when (fboundp 'toggle-scroll-bar)
+  (toggle-scroll-bar -1))
+
+
+(blink-cursor-mode 0)
+
+
+(tool-bar-mode -1)
+
+
+(menu-bar-mode -1)
+
+
+;; Explicitly ask on shutdown
+
+
+(setq confirm-kill-emacs 'y-or-n-p)
+
+
 ;; Scrolling
 
 
@@ -558,19 +551,26 @@
   (text-scale-set 0))
 
 
-;; Text wrapping
-
-
-(dolist (x '(man-common-hook
-             flymake-diagnostics-buffer-mode-hook
-             flymake-project-diagnostics-mode-hook))
-  (add-hook x 'visual-line-mode))
-
-
 ;; Monday-based calendar
 
 
 (setq calendar-week-start-day 1)
+
+
+;; Scratch buffer
+
+
+(defun scratch-buffer-setup ()
+  (with-current-buffer "*scratch*"
+    (delete-region (point-min) (point-max))
+    (insert (replace-regexp-in-string "\n" "" (emacs-version)))
+    (newline 3)
+    (insert-fortune)
+    (comment-region (point-min) (point-max))
+    (newline 3)))
+
+
+(add-hook 'emacs-startup-hook 'scratch-buffer-setup)
 
 
 ;; =======
