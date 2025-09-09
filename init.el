@@ -68,12 +68,6 @@
     (advice-add x :around 'windows-fix-args-encoding)))
 
 
-;; Calendar
-
-
-(setq calendar-week-start-day 1)
-
-
 ;; Scratch buffer
 
 
@@ -571,6 +565,12 @@
 
 (unless window-system
   (set-display-table-slot standard-display-table 'wrap ?\ ))
+
+
+;; Monday-based calendar
+
+
+(setq calendar-week-start-day 1)
 
 
 ;; =======
