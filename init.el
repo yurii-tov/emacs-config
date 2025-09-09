@@ -90,13 +90,6 @@
 (add-hook 'emacs-startup-hook 'scratch-buffer-setup)
 
 
-;; Shutdown
-
-
-(setq confirm-kill-processes nil
-      confirm-kill-emacs 'y-or-n-p)
-
-
 ;; History
 
 
@@ -400,7 +393,9 @@
              ring-bell-function 'ignore
              kill-buffer-query-functions (remq 'process-kill-buffer-query-function
                                                kill-buffer-query-functions)
-             disabled-command-function nil)
+             disabled-command-function nil
+             confirm-kill-processes nil
+             confirm-kill-emacs 'y-or-n-p)
        (when fringe-indicator-alist
          (setf (cdr (assq 'continuation fringe-indicator-alist)) '(nil nil)))
        (when (fboundp 'toggle-scroll-bar)
