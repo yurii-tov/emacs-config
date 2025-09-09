@@ -659,79 +659,6 @@
 (advice-add 'kill-buffer-and-window :around #'kill-buffer-and-window-fix)
 
 
-;; =======
-;; Ibuffer
-;; =======
-
-
-(setq ibuffer-expert t
-      ibuffer-default-sorting-mode 'alphabetic
-      ibuffer-show-empty-filter-groups nil
-      ibuffer-formats '((mark modified read-only locked " "
-                              (name 16 -1)
-                              " " filename))
-      ibuffer-saved-filter-groups
-      '(("default"
-         ("System" (or (mode . messages-buffer-mode)
-                       (and (mode . lisp-interaction-mode)
-                            (name . "\\*scratch"))))
-         ("REPL" (and (or (and (mode . shell-mode)
-                               (name . "\\*\\(.*shell\\|ssh-\\)"))
-                          (mode . inferior-emacs-lisp-mode)
-                          (mode . sql-interactive-mode)
-                          (mode . inferior-groovy-mode)
-                          (mode . python-mode)
-                          (mode . slime-repl-mode)
-                          (mode . cider-repl-mode))
-                      (predicate . (get-buffer-process (current-buffer)))))
-         ("⚗️ Build" (and (mode . compilation-mode)
-                         (predicate . (get-buffer-process (current-buffer)))))
-         ("🦄 Org" (mode . org-mode))
-         ("Program" (derived-mode . prog-mode))
-         ("Text" (and (or (derived-mode . text-mode)
-                          (mode . fundamental-mode)
-                          (derived-mode . conf-mode))
-                      (not (name . "\\*"))))
-         ("📖 Docs" (or (mode . Man-mode)
-                        (mode . Info-mode)
-                        (mode . help-mode)))
-         ("📚 Book" (mode . nov-mode))
-         ("🌐 EWW" (or (mode . eww-buffers-mode)
-                       (mode . eww-mode)
-                       (mode . eww-history-mode)
-                       (mode . eww-bookmark-mode)))
-         ("📁 Directory" (mode . dired-mode))
-         ("🧠 LSP" (name . "\\*EGLOT"))
-         ("Process" (predicate . (get-buffer-process (current-buffer))))
-         ("📦 Misc" (predicate . t)))))
-
-
-(defun ibuffer-setup ()
-  (ibuffer-auto-mode 1)
-  (ibuffer-switch-to-saved-filter-groups "default"))
-
-
-(add-hook 'ibuffer-mode-hook 'ibuffer-setup)
-
-
-(defun ibuffer-toggle-last-filter (f &rest args)
-  "When there is no active filters, switches to last filter we used;
-   Otherwise, removes filtering"
-  (if ibuffer-filtering-qualifiers
-      (progn (setq-local last-filter ibuffer-filtering-qualifiers)
-             (apply f args))
-    (when (boundp 'last-filter)
-      (setq ibuffer-filtering-qualifiers last-filter)
-      (ibuffer-update nil))))
-
-
-(advice-add 'ibuffer-filter-disable :around 'ibuffer-toggle-last-filter)
-
-
-(with-eval-after-load 'ibuffer
-  (keymap-set ibuffer-mode-map "j" 'ibuffer-jump-to-filter-group))
-
-
 ;; =====
 ;; Files
 ;; =====
@@ -809,6 +736,356 @@
   "Invoke `diff-buffer-with-file' for current buffer"
   (interactive)
   (diff-buffer-with-file))
+
+
+;; =======
+;; Isearch
+;; =======
+
+
+(setq isearch-lazy-count t)
+
+
+(defun isearch-select-search-string ()
+  (interactive)
+  (isearch-done)
+  (set-mark (point))
+  (if isearch-forward
+      (funcall (if isearch-regexp
+                   #'search-backward-regexp
+                 #'search-backward)
+               isearch-string)
+    (funcall (if isearch-regexp
+                 #'search-forward-regexp
+               #'search-forward)
+             isearch-string)))
+
+
+(define-keymap :keymap isearch-mode-map
+  "M-w" 'isearch-toggle-word
+  "M-q" 'isearch-query-replace
+  "C-SPC" 'isearch-select-search-string)
+
+
+;; =====================
+;; Minibuffer completion
+;; =====================
+
+
+(fido-vertical-mode)
+
+
+(define-keymap :keymap icomplete-minibuffer-map
+  "C-j" 'icomplete-fido-exit
+  "M-j" 'icomplete-force-complete
+  "SPC" 'self-insert-command
+  "?" 'self-insert-command)
+
+
+(setq completion-auto-select t
+      max-mini-window-height 12)
+
+
+(defun completion-flex-restrict (f &rest args)
+  "Do not activate `flex` algorithm on long inputs"
+  (when (<= (length (car args)) 16)
+    (apply f args)))
+
+
+(dolist (x '(completion-flex-try-completion
+             completion-flex-all-completions))
+  (advice-add x :around 'completion-flex-restrict))
+
+
+(defun minibuffer-setup-completion-style ()
+  (setq-local completion-styles '(substring flex)
+              completion-category-defaults nil))
+
+
+(add-hook 'icomplete-minibuffer-setup-hook
+          'minibuffer-setup-completion-style)
+
+
+(defun read-string-completing-history (f &rest args)
+  (let* ((prompt (car args))
+         (initial-input (cadr args))
+         (history-arg (caddr args))
+         (history-symbol (if (consp history-arg)
+                             (car history-arg)
+                           history-arg))
+         (history (and (not (member history-symbol
+                                    '(string-rectangle-history
+                                      junk-hist
+                                      org-read-date-history
+                                      transient--history)))
+                       (boundp history-symbol)
+                       (symbol-value history-symbol))))
+    (if history
+        (completing-read prompt history nil nil initial-input history-symbol)
+      (apply f args))))
+
+
+(advice-add 'read-string :around #'read-string-completing-history)
+
+
+;; ===
+;; IDO
+;; ===
+
+
+(progn (ido-mode 'files)
+       (ido-grid-mode)
+       (add-function :override read-file-name-function #'ido-read-file-name))
+
+
+(setq ido-enable-flex-matching t
+      ido-use-filename-at-point 'guess
+      ido-use-url-at-point t
+      ido-grid-mode-prefix ""
+      ido-grid-mode-exact-match-prefix ""
+      ido-auto-merge-work-directories-length -1
+      ido-grid-mode-max-rows 10
+      ido-grid-mode-min-rows 5
+      ido-show-dot-for-dired t
+      ido-report-no-match nil
+      ido-max-work-directory-list 100)
+
+
+;; Styles
+
+
+(custom-set-faces
+ '(ido-first-match ((t (:inherit icomplete-selected-match))))
+ '(ido-only-match ((t (:inherit icomplete-selected-match))))
+ '(ido-grid-mode-match ((t (:inherit completions-common-part))))
+ '(ido-subdir ((t (:inherit default)))))
+
+
+;; Keybindings
+
+
+(define-keymap :keymap ido-file-dir-completion-map
+  "C-f" nil
+  "C-b" nil
+  "C-n" 'ido-grid-mode-next
+  "C-p" 'ido-grid-mode-previous
+  "SPC" 'ido-merge-work-directories)
+
+
+(setq ido-grid-mode-keys '(up down left right))
+
+
+;; Counter
+
+
+(defun ido-colorize-counter (f &rest args)
+  (propertize (format "[%s]" (apply f args)) 'face 'font-lock-comment-face))
+
+
+(advice-add 'ido-grid-mode-count
+            :around
+            'ido-colorize-counter)
+
+
+(setq ido-grid-mode-first-line '(" " ido-grid-mode-count))
+
+
+;; Auto-select buffer with completions
+
+
+(defun ido-jump-to-completions ()
+  (let ((w (get-buffer-window ido-completion-buffer)))
+    (when w (select-window w))))
+
+
+(advice-add 'ido-complete :after #'ido-jump-to-completions)
+
+
+;; Advanced commands
+
+
+(defun ido-open-in-external-app ()
+  (interactive)
+  (let ((file-name (expand-file-name (ido-name (car ido-matches))
+                                     ido-current-directory)))
+    (message "Open in external app: %s" file-name)
+    (open-in-external-app file-name)
+    (minibuffer-keyboard-quit)))
+
+
+(keymap-set ido-file-completion-map "C-o" 'ido-open-in-external-app)
+
+
+(defun ido-open-with-sudo ()
+  (interactive)
+  (ido-record-work-directory ido-current-directory)
+  (setq ido-current-directory (sudoify ido-current-directory))
+  (exit-minibuffer))
+
+
+(keymap-set ido-file-completion-map "C-x u" 'ido-open-with-sudo)
+
+
+(setq ido-work-directory-list-ignore-regexps '("[/|]sudo:"))
+
+
+(defun ido-insert-path ()
+  (interactive)
+  (let* ((fname (expand-file-name (ido-name (car ido-matches))
+                                  ido-current-directory))
+         (fname (or (file-remote-p fname 'localname) fname))
+         (default-directory (or (file-remote-p default-directory 'localname)
+                                default-directory)))
+    (run-with-timer
+     0.1 nil
+     `(lambda () (let ((path (if (string-prefix-p ,default-directory ,fname)
+                                 (file-relative-name
+                                  (substring ,fname (length ,default-directory)))
+                               ,fname))
+                       (p2 (point))
+                       (p1 (save-excursion
+                             (or (and (re-search-backward
+                                       "\s" (line-beginning-position) t)
+                                      (1+ (point)))
+                                 (line-beginning-position)))))
+                   (when (string-prefix-p (buffer-substring p1 p2) path)
+                     (delete-region p1 p2))
+                   (insert path))
+        (keyboard-quit)))
+    (minibuffer-keyboard-quit)))
+
+
+(keymap-set ido-file-dir-completion-map "C-v" 'ido-insert-path)
+
+
+;; Wide find file fixes
+
+
+(defun ido-wide-find-file (&optional file)
+  "Redefinition of the original ido-wide-find-file from ido.el:
+   Starts search immediately using current input"
+  (interactive)
+  (unless file
+    (let ((enable-recursive-minibuffers t))
+      (setq file
+            (condition-case nil
+                (if (equal ido-text "") "*" ido-text)
+              (quit "")))))
+  (when (> (length file) 0)
+    (setq ido-use-merged-list t ido-try-merged-list 'wide)
+    (setq ido-exit 'refresh)
+    (setq ido-text-init file)
+    (when (equal file "*")
+      (setq ido-text-init ""))
+    (setq ido-rotate-temp t)
+    (exit-minibuffer)))
+
+
+(defun ido-wide-find-dirs-or-files (dir file &optional prefix finddir)
+  "Overrides original function. Now it:
+   - Is able to search remote directories
+   - Finds files as well as directories
+   - Splits 'find' output with newline symbol"
+  (let* ((remote-prefix (file-remote-p dir))
+         (default-directory dir)
+         (filenames
+          (delq nil
+                (mapcar (lambda (name)
+                          (unless (ido-ignore-item-p name ido-ignore-files t)
+                            name))
+                        (split-string
+                         (shell-command-to-string
+                          (concat "find "
+                                  (shell-quote-argument
+                                   (if remote-prefix
+                                       (string-remove-prefix remote-prefix dir) dir))
+                                  (if ido-case-fold " -iname " " -name ")
+                                  (shell-quote-argument
+                                   (concat (if prefix "" "*") file "*"))
+                                  " -print"))
+                         "\n"))))
+         filename d f
+         res)
+    (while filenames
+      (setq filename (format "%s%s" (or remote-prefix "") (car filenames))
+            filenames (cdr filenames))
+      (if (and (file-name-absolute-p filename)
+               (file-exists-p filename))
+          (setq d (file-name-directory filename)
+                f (file-name-nondirectory filename)
+                res (cons (cons (if (file-directory-p filename) (ido-final-slash f t) f) d) res))))
+    res))
+
+
+;; Work directory recording fixes
+
+
+(defun ido-fix-record-work-directory (f &rest args)
+  "For directories, record their parent"
+  (if (and ido-current-directory
+           (equal "." (car ido-work-file-list)))
+      (funcall f (file-name-parent-directory
+                  ido-current-directory))
+    (apply f args)))
+
+
+(advice-add 'ido-record-work-directory :around 'ido-fix-record-work-directory)
+
+
+(defun ido-record-file-work-directory (file-name)
+  (prog1 file-name
+    (ido-record-work-directory
+     (file-name-directory file-name))))
+
+
+(advice-add 'ido-read-file-name :filter-return 'ido-record-file-work-directory)
+
+
+(defun ido-get-work-directory (&optional incr must-match)
+  "Overrides original function from ido.el.
+   Now it filters out directories from disconnected remote hosts"
+  (let ((n (length ido-work-directory-list))
+        (i ido-work-directory-index)
+        (j 0)
+        dir)
+    (if (or (not ido-text) (= (length ido-text) 0))
+        (setq must-match nil))
+    (while (< j n)
+      (setq i (+ i incr)
+            j (1+ j))
+      (if (> incr 0)
+          (if (>= i n) (setq i 0))
+        (if (< i 0) (setq i (1- n))))
+      (setq dir (nth i ido-work-directory-list))
+      (if (and dir
+               (not (equal dir ido-current-directory))
+               (not (and (file-remote-p dir) (not (file-remote-p dir nil t))))
+               (file-directory-p dir)
+               (or (not must-match)
+                   (ido-set-matches-1
+                    (if (eq ido-cur-item 'file)
+                        (ido-make-file-list-1 dir)
+                      (ido-make-dir-list-1 dir)))))
+          (setq j n)
+        (setq dir nil)))
+    (if dir
+        (setq ido-work-directory-index i))
+    dir))
+
+
+;; Grid mode fixes
+
+
+(defun ido-fix-grid-mode (f &rest args)
+  "Prevent global settings tampering"
+  (let ((h max-mini-window-height)
+        (r resize-mini-windows))
+    (apply f args)
+    (setq max-mini-window-height h
+          resize-mini-windows r)))
+
+
+(advice-add 'ido-grid-mode-ido-setup :around 'ido-fix-grid-mode)
 
 
 ;; ===========
@@ -1225,33 +1502,304 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   (advice-add x :around #'fix-flush-lines))
 
 
-;; =======
-;; Isearch
-;; =======
+;; ===================
+;; Completion at point
+;; ===================
 
 
-(setq isearch-lazy-count t)
+(setq tab-always-indent 'complete)
 
 
-(defun isearch-select-search-string ()
+;; Fix CAPF completion
+
+
+(defun fix-capf-exclusiveness (f &rest args)
+  (let ((fn (car args)))
+    (apply f (cons `(lambda ()
+                      (let ((r (funcall ',fn)))
+                        (when r
+                          (if (sequencep r)
+                              (append r '(:exclusive no))
+                            r))))
+                   (cdr args)))))
+
+
+(advice-add 'completion--capf-wrapper :around 'fix-capf-exclusiveness)
+
+
+;; Fix "magical" completion-at-point wrappers
+
+
+(dolist (x '(python-shell-completion-complete-or-indent
+             ielm-tab))
+  (advice-add x :override 'completion-at-point))
+
+
+;; =============
+;; Hippie-expand
+;; =============
+
+
+(setq hippie-expand-try-functions-list
+      '(try-expand-dabbrev
+        try-expand-line
+        try-expand-list
+        try-complete-file-name-partially
+        try-complete-file-name
+        try-expand-dabbrev-visible
+        try-expand-dabbrev-from-kill
+        try-expand-whole-kill
+        try-expand-dabbrev-all-buffers
+        try-expand-line-all-buffers
+        try-expand-list-all-buffers))
+
+
+;; =========
+;; Yasnippet
+;; =========
+
+
+(setq yas-verbosity 1)
+
+
+(yas-global-mode 1)
+
+
+(defun yas-company-c-f ()
+  "Company conflict workaround"
   (interactive)
-  (isearch-done)
-  (set-mark (point))
-  (if isearch-forward
-      (funcall (if isearch-regexp
-                   #'search-backward-regexp
-                 #'search-backward)
-               isearch-string)
-    (funcall (if isearch-regexp
-                 #'search-forward-regexp
-               #'search-forward)
-             isearch-string)))
+  (if (get-char-property (point) 'yas--field)
+      (forward-char)
+    (when company-selection
+      (company-complete))
+    (yas-next-field-or-maybe-expand)))
 
 
-(define-keymap :keymap isearch-mode-map
-  "M-w" 'isearch-toggle-word
-  "M-q" 'isearch-query-replace
-  "C-SPC" 'isearch-select-search-string)
+(keymap-set yas-keymap "C-f" 'yas-company-c-f)
+
+
+;; =======
+;; Company
+;; =======
+
+
+(progn (global-company-mode)
+       (company-tng-mode))
+
+
+(setq-default company-tooltip-offset-display 'lines
+              company-selection-wrap-around t
+              company-dabbrev-downcase nil
+              company-dabbrev-ignore-case nil
+              company-dabbrev-ignore-buffers "\\`[ ]"
+              company-backends '(company-files
+                                 (company-capf :with company-yasnippet)
+                                 (company-dabbrev-code
+                                  company-yasnippet)
+                                 company-dabbrev))
+
+
+;; Complete instantly in some cases
+
+
+(defun company-instant-complete (f &rest args)
+  "If a complete Yasnippet has been typed, or if sole candidate present, confirms the selection right away"
+  (cond (company-selection (apply f args))
+        ((yas-expand) (company-abort))
+        ((= 1 (length company-candidates))
+         (let ((snippet-p (eq (get-text-property
+                               0 'company-backend
+                               (car company-candidates))
+                              'company-yasnippet)))
+           (company-select-first)
+           (company-complete)
+           (when snippet-p (yas-expand))))
+        (t (apply f args))))
+
+
+(advice-add 'company-select-next :around 'company-instant-complete)
+
+
+;; Explicit completion
+
+
+(defun company-smart-complete ()
+  "Does special action depending on context.
+   - When navigating filesystem: Proceeds to deeper level
+   - When expanding a snippet: Prevents any extra edits"
+  (interactive)
+  (cond ((and company-selection
+              (eq company-backend 'company-files)
+              (progn (company-complete-selection)
+                     (looking-back "/")))
+         (company-manual-begin))
+        ((or (not company-selection)
+             (let ((p (point)))
+               (company-complete)
+               (let* ((m (car company-last-metadata))
+                      (pp (point))
+                      (l (- p (- (length m)
+                                 (length (buffer-substring p pp)))))
+                      (s (buffer-substring (max 1 l) pp)))
+                 (equal m s))))
+         (call-interactively 'self-insert-command))))
+
+
+;; Keybindings
+
+
+(dotimes (n 10)
+  (keymap-set company-active-map
+              (format "M-%d" n) nil))
+
+
+(dolist (x (list company-active-map
+                 company-search-map))
+  (define-keymap :keymap x
+    "M-p" nil
+    "M-n" nil
+    "M-SPC" 'company-other-backend
+    "SPC" 'company-smart-complete))
+
+
+;; Merge company-dabbrev-code with company-keywords
+
+
+(defun company-dabbrev-merge-keywords (f &rest args)
+  (cl-case (car args)
+    (prefix (or (apply f args)
+                (apply #'company-keywords args)))
+    (candidates (append
+                 (apply #'company-keywords args)
+                 (apply f args)))
+    (kind 'keyword)
+    (t (apply f args))))
+
+
+(advice-add 'company-dabbrev-code :around 'company-dabbrev-merge-keywords)
+
+
+;; Fix backends
+;; - Prevent completion on empty prefix
+;; - Disallow empty candidates list
+
+
+(defun fix-company-backend (f &rest args)
+  (cl-case (car args)
+    (prefix (let* ((result (funcall f 'prefix))
+                   (prefix (cond ((stringp result)
+                                  (when (not (string-empty-p result)) result))
+                                 ((listp result)
+                                  (when (not (string-empty-p (car result)))
+                                    (car result))))))
+              (when (or (setq-local fix-company-backend-candidates
+                                    (when prefix
+                                      (funcall f 'candidates prefix)))
+                        (symbolp result))
+                result)))
+    (candidates fix-company-backend-candidates)
+    (t (apply f args))))
+
+
+(dolist (x '(company-dabbrev
+             company-dabbrev-code
+             company-yasnippet))
+  (advice-add x :around 'fix-company-backend))
+
+
+;; Make company the default
+
+
+(defun company-override-cap ()
+  (advice-add 'completion-at-point
+              :override
+              'company-complete-common))
+
+
+(defun company-reset-cap ()
+  (advice-remove 'completion-at-point
+                 'company-complete-common))
+
+
+(dolist (x '(emacs-startup-hook
+             minibuffer-exit-hook))
+  (add-hook x 'company-override-cap))
+
+
+(add-hook 'minibuffer-setup-hook 'company-reset-cap)
+
+
+;; =======
+;; Ibuffer
+;; =======
+
+
+(setq ibuffer-expert t
+      ibuffer-default-sorting-mode 'alphabetic
+      ibuffer-show-empty-filter-groups nil
+      ibuffer-formats '((mark modified read-only locked " "
+                              (name 16 -1)
+                              " " filename))
+      ibuffer-saved-filter-groups
+      '(("default"
+         ("System" (or (mode . messages-buffer-mode)
+                       (and (mode . lisp-interaction-mode)
+                            (name . "\\*scratch"))))
+         ("REPL" (and (or (and (mode . shell-mode)
+                               (name . "\\*\\(.*shell\\|ssh-\\)"))
+                          (mode . inferior-emacs-lisp-mode)
+                          (mode . sql-interactive-mode)
+                          (mode . inferior-groovy-mode)
+                          (mode . python-mode)
+                          (mode . slime-repl-mode)
+                          (mode . cider-repl-mode))
+                      (predicate . (get-buffer-process (current-buffer)))))
+         ("⚗️ Build" (and (mode . compilation-mode)
+                         (predicate . (get-buffer-process (current-buffer)))))
+         ("🦄 Org" (mode . org-mode))
+         ("Program" (derived-mode . prog-mode))
+         ("Text" (and (or (derived-mode . text-mode)
+                          (mode . fundamental-mode)
+                          (derived-mode . conf-mode))
+                      (not (name . "\\*"))))
+         ("📖 Docs" (or (mode . Man-mode)
+                        (mode . Info-mode)
+                        (mode . help-mode)))
+         ("📚 Book" (mode . nov-mode))
+         ("🌐 EWW" (or (mode . eww-buffers-mode)
+                       (mode . eww-mode)
+                       (mode . eww-history-mode)
+                       (mode . eww-bookmark-mode)))
+         ("📁 Directory" (mode . dired-mode))
+         ("🧠 LSP" (name . "\\*EGLOT"))
+         ("Process" (predicate . (get-buffer-process (current-buffer))))
+         ("📦 Misc" (predicate . t)))))
+
+
+(defun ibuffer-setup ()
+  (ibuffer-auto-mode 1)
+  (ibuffer-switch-to-saved-filter-groups "default"))
+
+
+(add-hook 'ibuffer-mode-hook 'ibuffer-setup)
+
+
+(defun ibuffer-toggle-last-filter (f &rest args)
+  "When there is no active filters, switches to last filter we used;
+   Otherwise, removes filtering"
+  (if ibuffer-filtering-qualifiers
+      (progn (setq-local last-filter ibuffer-filtering-qualifiers)
+             (apply f args))
+    (when (boundp 'last-filter)
+      (setq ibuffer-filtering-qualifiers last-filter)
+      (ibuffer-update nil))))
+
+
+(advice-add 'ibuffer-filter-disable :around 'ibuffer-toggle-last-filter)
+
+
+(with-eval-after-load 'ibuffer
+  (keymap-set ibuffer-mode-map "j" 'ibuffer-jump-to-filter-group))
 
 
 ;; =====
@@ -1576,557 +2124,6 @@ The search string is queried first, followed by the directory."
   (add-hook 'ripgrep-search-mode-hook
             'ripgrep-setup)
   (setq wgrep-auto-save-buffer t))
-
-
-;; =====================
-;; Minibuffer completion
-;; =====================
-
-
-(fido-vertical-mode)
-
-
-(define-keymap :keymap icomplete-minibuffer-map
-  "C-j" 'icomplete-fido-exit
-  "M-j" 'icomplete-force-complete
-  "SPC" 'self-insert-command
-  "?" 'self-insert-command)
-
-
-(setq completion-auto-select t
-      max-mini-window-height 12)
-
-
-(defun completion-flex-restrict (f &rest args)
-  "Do not activate `flex` algorithm on long inputs"
-  (when (<= (length (car args)) 16)
-    (apply f args)))
-
-
-(dolist (x '(completion-flex-try-completion
-             completion-flex-all-completions))
-  (advice-add x :around 'completion-flex-restrict))
-
-
-(defun minibuffer-setup-completion-style ()
-  (setq-local completion-styles '(substring flex)
-              completion-category-defaults nil))
-
-
-(add-hook 'icomplete-minibuffer-setup-hook
-          'minibuffer-setup-completion-style)
-
-
-;; History completion for read-string
-
-
-(defun read-string-completing-history (f &rest args)
-  (let* ((prompt (car args))
-         (initial-input (cadr args))
-         (history-arg (caddr args))
-         (history-symbol (if (consp history-arg)
-                             (car history-arg)
-                           history-arg))
-         (history (and (not (member history-symbol
-                                    '(string-rectangle-history
-                                      junk-hist
-                                      org-read-date-history
-                                      transient--history)))
-                       (boundp history-symbol)
-                       (symbol-value history-symbol))))
-    (if history
-        (completing-read prompt history nil nil initial-input history-symbol)
-      (apply f args))))
-
-
-(advice-add 'read-string :around #'read-string-completing-history)
-
-
-;; ===
-;; IDO
-;; ===
-
-
-(progn (ido-mode 'files)
-       (ido-grid-mode)
-       (add-function :override read-file-name-function #'ido-read-file-name))
-
-
-(setq ido-enable-flex-matching t
-      ido-use-filename-at-point 'guess
-      ido-use-url-at-point t
-      ido-grid-mode-prefix ""
-      ido-grid-mode-exact-match-prefix ""
-      ido-auto-merge-work-directories-length -1
-      ido-grid-mode-max-rows 10
-      ido-grid-mode-min-rows 5
-      ido-show-dot-for-dired t
-      ido-report-no-match nil
-      ido-max-work-directory-list 100)
-
-
-;; Styles
-
-
-(custom-set-faces
- '(ido-first-match ((t (:inherit icomplete-selected-match))))
- '(ido-only-match ((t (:inherit icomplete-selected-match))))
- '(ido-grid-mode-match ((t (:inherit completions-common-part))))
- '(ido-subdir ((t (:inherit default)))))
-
-
-;; Keybindings
-
-
-(define-keymap :keymap ido-file-dir-completion-map
-  "C-f" nil
-  "C-b" nil
-  "C-n" 'ido-grid-mode-next
-  "C-p" 'ido-grid-mode-previous
-  "SPC" 'ido-merge-work-directories)
-
-
-(setq ido-grid-mode-keys '(up down left right))
-
-
-;; Counter
-
-
-(defun ido-colorize-counter (f &rest args)
-  (propertize (format "[%s]" (apply f args)) 'face 'font-lock-comment-face))
-
-
-(advice-add 'ido-grid-mode-count
-            :around
-            'ido-colorize-counter)
-
-
-(setq ido-grid-mode-first-line '(" " ido-grid-mode-count))
-
-
-;; Auto-select buffer with completions
-
-
-(defun ido-jump-to-completions ()
-  (let ((w (get-buffer-window ido-completion-buffer)))
-    (when w (select-window w))))
-
-
-(advice-add 'ido-complete :after #'ido-jump-to-completions)
-
-
-;; Advanced commands
-
-
-(defun ido-open-in-external-app ()
-  (interactive)
-  (let ((file-name (expand-file-name (ido-name (car ido-matches))
-                                     ido-current-directory)))
-    (message "Open in external app: %s" file-name)
-    (open-in-external-app file-name)
-    (minibuffer-keyboard-quit)))
-
-
-(keymap-set ido-file-completion-map "C-o" 'ido-open-in-external-app)
-
-
-(defun ido-open-with-sudo ()
-  (interactive)
-  (ido-record-work-directory ido-current-directory)
-  (setq ido-current-directory (sudoify ido-current-directory))
-  (exit-minibuffer))
-
-
-(keymap-set ido-file-completion-map "C-x u" 'ido-open-with-sudo)
-
-
-(setq ido-work-directory-list-ignore-regexps '("[/|]sudo:"))
-
-
-(defun ido-insert-path ()
-  (interactive)
-  (let* ((fname (expand-file-name (ido-name (car ido-matches))
-                                  ido-current-directory))
-         (fname (or (file-remote-p fname 'localname) fname))
-         (default-directory (or (file-remote-p default-directory 'localname)
-                                default-directory)))
-    (run-with-timer
-     0.1 nil
-     `(lambda () (let ((path (if (string-prefix-p ,default-directory ,fname)
-                                 (file-relative-name
-                                  (substring ,fname (length ,default-directory)))
-                               ,fname))
-                       (p2 (point))
-                       (p1 (save-excursion
-                             (or (and (re-search-backward
-                                       "\s" (line-beginning-position) t)
-                                      (1+ (point)))
-                                 (line-beginning-position)))))
-                   (when (string-prefix-p (buffer-substring p1 p2) path)
-                     (delete-region p1 p2))
-                   (insert path))
-        (keyboard-quit)))
-    (minibuffer-keyboard-quit)))
-
-
-(keymap-set ido-file-dir-completion-map "C-v" 'ido-insert-path)
-
-
-;; Wide find file fixes
-
-
-(defun ido-wide-find-file (&optional file)
-  "Redefinition of the original ido-wide-find-file from ido.el:
-   Starts search immediately using current input"
-  (interactive)
-  (unless file
-    (let ((enable-recursive-minibuffers t))
-      (setq file
-            (condition-case nil
-                (if (equal ido-text "") "*" ido-text)
-              (quit "")))))
-  (when (> (length file) 0)
-    (setq ido-use-merged-list t ido-try-merged-list 'wide)
-    (setq ido-exit 'refresh)
-    (setq ido-text-init file)
-    (when (equal file "*")
-      (setq ido-text-init ""))
-    (setq ido-rotate-temp t)
-    (exit-minibuffer)))
-
-
-(defun ido-wide-find-dirs-or-files (dir file &optional prefix finddir)
-  "Overrides original function. Now it:
-   - Is able to search remote directories
-   - Finds files as well as directories
-   - Splits 'find' output with newline symbol"
-  (let* ((remote-prefix (file-remote-p dir))
-         (default-directory dir)
-         (filenames
-          (delq nil
-                (mapcar (lambda (name)
-                          (unless (ido-ignore-item-p name ido-ignore-files t)
-                            name))
-                        (split-string
-                         (shell-command-to-string
-                          (concat "find "
-                                  (shell-quote-argument
-                                   (if remote-prefix
-                                       (string-remove-prefix remote-prefix dir) dir))
-                                  (if ido-case-fold " -iname " " -name ")
-                                  (shell-quote-argument
-                                   (concat (if prefix "" "*") file "*"))
-                                  " -print"))
-                         "\n"))))
-         filename d f
-         res)
-    (while filenames
-      (setq filename (format "%s%s" (or remote-prefix "") (car filenames))
-            filenames (cdr filenames))
-      (if (and (file-name-absolute-p filename)
-               (file-exists-p filename))
-          (setq d (file-name-directory filename)
-                f (file-name-nondirectory filename)
-                res (cons (cons (if (file-directory-p filename) (ido-final-slash f t) f) d) res))))
-    res))
-
-
-;; Work directory recording fixes
-
-
-(defun ido-fix-record-work-directory (f &rest args)
-  "For directories, record their parent"
-  (if (and ido-current-directory
-           (equal "." (car ido-work-file-list)))
-      (funcall f (file-name-parent-directory
-                  ido-current-directory))
-    (apply f args)))
-
-
-(advice-add 'ido-record-work-directory :around 'ido-fix-record-work-directory)
-
-
-(defun ido-record-file-work-directory (file-name)
-  (prog1 file-name
-    (ido-record-work-directory
-     (file-name-directory file-name))))
-
-
-(advice-add 'ido-read-file-name :filter-return 'ido-record-file-work-directory)
-
-
-(defun ido-get-work-directory (&optional incr must-match)
-  "Overrides original function from ido.el.
-   Now it filters out directories from disconnected remote hosts"
-  (let ((n (length ido-work-directory-list))
-        (i ido-work-directory-index)
-        (j 0)
-        dir)
-    (if (or (not ido-text) (= (length ido-text) 0))
-        (setq must-match nil))
-    (while (< j n)
-      (setq i (+ i incr)
-            j (1+ j))
-      (if (> incr 0)
-          (if (>= i n) (setq i 0))
-        (if (< i 0) (setq i (1- n))))
-      (setq dir (nth i ido-work-directory-list))
-      (if (and dir
-               (not (equal dir ido-current-directory))
-               (not (and (file-remote-p dir) (not (file-remote-p dir nil t))))
-               (file-directory-p dir)
-               (or (not must-match)
-                   (ido-set-matches-1
-                    (if (eq ido-cur-item 'file)
-                        (ido-make-file-list-1 dir)
-                      (ido-make-dir-list-1 dir)))))
-          (setq j n)
-        (setq dir nil)))
-    (if dir
-        (setq ido-work-directory-index i))
-    dir))
-
-
-;; Grid mode fixes
-
-
-(defun ido-fix-grid-mode (f &rest args)
-  "Prevent global settings tampering"
-  (let ((h max-mini-window-height)
-        (r resize-mini-windows))
-    (apply f args)
-    (setq max-mini-window-height h
-          resize-mini-windows r)))
-
-
-(advice-add 'ido-grid-mode-ido-setup :around 'ido-fix-grid-mode)
-
-
-;; ===================
-;; Completion at point
-;; ===================
-
-
-(setq tab-always-indent 'complete)
-
-
-;; Fix CAPF completion
-
-
-(defun fix-capf-exclusiveness (f &rest args)
-  (let ((fn (car args)))
-    (apply f (cons `(lambda ()
-                      (let ((r (funcall ',fn)))
-                        (when r
-                          (if (sequencep r)
-                              (append r '(:exclusive no))
-                            r))))
-                   (cdr args)))))
-
-
-(advice-add 'completion--capf-wrapper :around 'fix-capf-exclusiveness)
-
-
-;; Fix "magical" completion-at-point wrappers
-
-
-(dolist (x '(python-shell-completion-complete-or-indent
-             ielm-tab))
-  (advice-add x :override 'completion-at-point))
-
-
-;; =============
-;; Hippie-expand
-;; =============
-
-
-(setq hippie-expand-try-functions-list
-      '(try-expand-dabbrev
-        try-expand-line
-        try-expand-list
-        try-complete-file-name-partially
-        try-complete-file-name
-        try-expand-dabbrev-visible
-        try-expand-dabbrev-from-kill
-        try-expand-whole-kill
-        try-expand-dabbrev-all-buffers
-        try-expand-line-all-buffers
-        try-expand-list-all-buffers))
-
-
-;; =========
-;; Yasnippet
-;; =========
-
-
-(setq yas-verbosity 1)
-
-
-(yas-global-mode 1)
-
-
-(defun yas-company-c-f ()
-  "Company conflict workaround"
-  (interactive)
-  (if (get-char-property (point) 'yas--field)
-      (forward-char)
-    (when company-selection
-      (company-complete))
-    (yas-next-field-or-maybe-expand)))
-
-
-(keymap-set yas-keymap "C-f" 'yas-company-c-f)
-
-
-;; =======
-;; Company
-;; =======
-
-
-(progn (global-company-mode)
-       (company-tng-mode))
-
-
-(setq-default company-tooltip-offset-display 'lines
-              company-selection-wrap-around t
-              company-dabbrev-downcase nil
-              company-dabbrev-ignore-case nil
-              company-dabbrev-ignore-buffers "\\`[ ]"
-              company-backends '(company-files
-                                 (company-capf :with company-yasnippet)
-                                 (company-dabbrev-code
-                                  company-yasnippet)
-                                 company-dabbrev))
-
-
-;; Complete instantly in some cases
-
-
-(defun company-instant-complete (f &rest args)
-  "If a complete Yasnippet has been typed, or if sole candidate present, confirms the selection right away"
-  (cond (company-selection (apply f args))
-        ((yas-expand) (company-abort))
-        ((= 1 (length company-candidates))
-         (let ((snippet-p (eq (get-text-property
-                               0 'company-backend
-                               (car company-candidates))
-                              'company-yasnippet)))
-           (company-select-first)
-           (company-complete)
-           (when snippet-p (yas-expand))))
-        (t (apply f args))))
-
-
-(advice-add 'company-select-next :around 'company-instant-complete)
-
-
-;; Explicit completion
-
-
-(defun company-smart-complete ()
-  "Does special action depending on context.
-   - When navigating filesystem: Proceeds to deeper level
-   - When expanding a snippet: Prevents any extra edits"
-  (interactive)
-  (cond ((and company-selection
-              (eq company-backend 'company-files)
-              (progn (company-complete-selection)
-                     (looking-back "/")))
-         (company-manual-begin))
-        ((or (not company-selection)
-             (let ((p (point)))
-               (company-complete)
-               (let* ((m (car company-last-metadata))
-                      (pp (point))
-                      (l (- p (- (length m)
-                                 (length (buffer-substring p pp)))))
-                      (s (buffer-substring (max 1 l) pp)))
-                 (equal m s))))
-         (call-interactively 'self-insert-command))))
-
-
-;; Keybindings
-
-
-(dotimes (n 10)
-  (keymap-set company-active-map
-              (format "M-%d" n) nil))
-
-
-(dolist (x (list company-active-map
-                 company-search-map))
-  (define-keymap :keymap x
-    "M-p" nil
-    "M-n" nil
-    "M-SPC" 'company-other-backend
-    "SPC" 'company-smart-complete))
-
-
-;; Merge company-dabbrev-code with company-keywords
-
-
-(defun company-dabbrev-merge-keywords (f &rest args)
-  (cl-case (car args)
-    (prefix (or (apply f args)
-                (apply #'company-keywords args)))
-    (candidates (append
-                 (apply #'company-keywords args)
-                 (apply f args)))
-    (kind 'keyword)
-    (t (apply f args))))
-
-
-(advice-add 'company-dabbrev-code :around 'company-dabbrev-merge-keywords)
-
-
-;; Fix backends
-;; - Prevent completion on empty prefix
-;; - Disallow empty candidates list
-
-
-(defun fix-company-backend (f &rest args)
-  (cl-case (car args)
-    (prefix (let* ((result (funcall f 'prefix))
-                   (prefix (cond ((stringp result)
-                                  (when (not (string-empty-p result)) result))
-                                 ((listp result)
-                                  (when (not (string-empty-p (car result)))
-                                    (car result))))))
-              (when (or (setq-local fix-company-backend-candidates
-                                    (when prefix
-                                      (funcall f 'candidates prefix)))
-                        (symbolp result))
-                result)))
-    (candidates fix-company-backend-candidates)
-    (t (apply f args))))
-
-
-(dolist (x '(company-dabbrev
-             company-dabbrev-code
-             company-yasnippet))
-  (advice-add x :around 'fix-company-backend))
-
-
-;; Make company the default
-
-
-(defun company-override-cap ()
-  (advice-add 'completion-at-point
-              :override
-              'company-complete-common))
-
-
-(defun company-reset-cap ()
-  (advice-remove 'completion-at-point
-                 'company-complete-common))
-
-
-(dolist (x '(emacs-startup-hook
-             minibuffer-exit-hook))
-  (add-hook x 'company-override-cap))
-
-
-(add-hook 'minibuffer-setup-hook 'company-reset-cap)
 
 
 ;; ==============
