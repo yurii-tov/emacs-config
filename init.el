@@ -391,8 +391,7 @@
              inhibit-startup-echo-area-message t
              use-short-answers t
              ring-bell-function 'ignore
-             kill-buffer-query-functions (remq 'process-kill-buffer-query-function
-                                               kill-buffer-query-functions)
+             kill-buffer-query-functions nil
              disabled-command-function nil
              confirm-kill-processes nil
              confirm-kill-emacs 'y-or-n-p)
