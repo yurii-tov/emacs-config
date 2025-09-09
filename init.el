@@ -394,6 +394,10 @@
   (setf (cdr (assq 'continuation fringe-indicator-alist)) '(nil nil)))
 
 
+(unless window-system
+  (set-display-table-slot standard-display-table 'wrap ?\ ))
+
+
 (when (fboundp 'toggle-scroll-bar)
   (toggle-scroll-bar -1))
 
@@ -554,17 +558,13 @@
   (text-scale-set 0))
 
 
-;; Word wrap
+;; Text wrapping
 
 
 (dolist (x '(man-common-hook
              flymake-diagnostics-buffer-mode-hook
              flymake-project-diagnostics-mode-hook))
   (add-hook x 'visual-line-mode))
-
-
-(unless window-system
-  (set-display-table-slot standard-display-table 'wrap ?\ ))
 
 
 ;; Monday-based calendar
@@ -578,25 +578,10 @@
 ;; =======
 
 
-;; Fix kill-buffer-and-window
-
-
-(defun kill-buffer-and-window-fix (f &rest args)
-  (if (> (length (window-list)) 1)
-      (apply f args)
-    (kill-buffer)))
-
-
-(advice-add 'kill-buffer-and-window :around #'kill-buffer-and-window-fix)
-
-
-;; Don't confirm when creating new buffer
+;; Creating
 
 
 (setq confirm-nonexistent-file-or-buffer nil)
-
-
-;; Convenient "new buffer" shortcut
 
 
 (defun switch-to-buffer-make-scratch-buffer ()
@@ -619,16 +604,7 @@
                 (apply f args))))
 
 
-;; Unique names
-
-
-(require 'uniquify)
-
-
-(setq uniquify-buffer-name-style 'forward)
-
-
-;; Display working directories in switch list
+;; Switching
 
 
 (defun shrink-path (path bound)
@@ -660,6 +636,27 @@
 
 
 (advice-add 'read-buffer-to-switch :around #'switch-to-buffer-annotate-wd)
+
+
+;; Unique names
+
+
+(require 'uniquify)
+
+
+(setq uniquify-buffer-name-style 'forward)
+
+
+;; Fixes
+
+
+(defun kill-buffer-and-window-fix (f &rest args)
+  (if (> (length (window-list)) 1)
+      (apply f args)
+    (kill-buffer)))
+
+
+(advice-add 'kill-buffer-and-window :around #'kill-buffer-and-window-fix)
 
 
 ;; =======
@@ -806,350 +803,6 @@
     (when names
       (kill-new names)
       (message "Copied to clipboard: %s" names))))
-
-
-;; =====
-;; Dired
-;; =====
-
-
-(require 'ls-lisp)
-
-
-(setq ls-lisp-use-insert-directory-program nil
-      ls-lisp-format-time-list
-      '("%Y-%m-%d %H:%M"
-        "%Y-%m-%d %H:%M")
-      ls-lisp-use-localized-time-format t
-      ls-lisp-dirs-first t
-      dired-listing-switches "-alh"
-      dired-recursive-copies 'always
-      dired-recursive-deletes 'always
-      dired-dwim-target t
-      dired-hide-details-hide-symlink-targets nil
-      dired-kill-when-opening-new-dired-buffer t)
-
-
-(defun dired-archive ()
-  (interactive)
-  (let* ((output (file-truename (read-file-name "Add file(s) to archive: ")))
-         (files (string-join (mapcar (lambda (x) (format "'%s'" (file-relative-name x)))
-                                     (dired-get-marked-files))
-                             " "))
-         (tar-command (format "tar -vcz %s -f '%s'" files (replace-regexp-in-string
-                                                           "^\\([a-zA-Z]\\):/"
-                                                           "/\\1/"
-                                                           output)))
-         (zip-command (format "zip -r '%s' %s" output files))
-         (command (if (string-match-p ".tar.gz$" output)
-                      tar-command
-                    zip-command)))
-    (async-shell-command command)))
-
-
-(defun dired-extract-command (archive output-dir)
-  (let* ((tar-command (format "tar -xvzC '%s' < '%s'"
-                              (replace-regexp-in-string "^\\([a-zA-Z]\\):/"
-                                                        "/\\1/"
-                                                        output-dir)
-                              archive))
-         (zip-command (format "unzip -o '%s' -d '%s'" archive output-dir))
-         (7z-command (format "7z x -y '%s' -o'%s'" archive output-dir)))
-    (cond ((string-match-p ".tar.gz$" archive) tar-command)
-          ((string-match-p ".\\(rar\\|7z\\)$" archive) 7z-command)
-          (t zip-command))))
-
-
-(defun dired-extract-archive ()
-  (interactive)
-  (let* ((output-dir (read-directory-name "Extract to: "))
-         (commands (mapcar (lambda (x)
-                             (dired-extract-command (file-relative-name x)
-                                                    output-dir))
-                           (dired-get-marked-files)))
-         (command (string-join commands "; ")))
-    (async-shell-command command)))
-
-
-(defun dired-flatten-directory ()
-  "Run find program on selected directory"
-  (interactive)
-  (let ((directory (file-truename (car (dired-get-marked-files)))))
-    (if (file-directory-p directory)
-        (progn (kill-buffer)
-               (find-dired directory ""))
-      (message "This command works only for directories"))))
-
-
-(defun dired-calculate-size (&optional tree-p)
-  (interactive)
-  (let* ((files (mapcar #'file-relative-name
-                        (dired-get-marked-files)))
-         (args (mapcar (lambda (x) (format "'%s'" x)) files)))
-    (message "Calculating size of %s..."
-             (string-join (mapcar (lambda (x)
-                                    (propertize x 'face 'success))
-                                  files)
-                          ", "))
-    (shell-command
-     (if tree-p
-         (format "tree --du -h %s"
-                 (string-join args  " "))
-       (format "du -hs%s %s"
-               (if (> (length args) 1) "c" "")
-               (string-join args  " "))))))
-
-
-(defun dired-calculate-size-tree ()
-  (interactive)
-  (dired-calculate-size t))
-
-
-(with-eval-after-load 'dired
-  (define-keymap :keymap dired-mode-map
-    "w" 'copy-file-name-to-clipboard
-    "o" 'dired-display-file
-    "h" 'dired-hide-details-mode
-    "l" 'dired-up-directory
-    "a" 'dired-archive
-    "A" 'dired-extract-archive
-    "f" 'dired-flatten-directory
-    "s" 'dired-calculate-size
-    "S" 'dired-calculate-size-tree
-    "M" 'dired-mark-files-regexp
-    "c" 'dired-do-copy
-    "r" 'dired-do-rename
-    "k" 'dired-do-delete
-    "e" 'dired-toggle-read-only
-    "1" 'dired-do-chmod
-    "2" 'dired-do-chown
-    "3" 'dired-do-touch
-    "y" 'dired-do-symlink))
-
-
-(add-hook 'dired-mode-hook 'auto-revert-mode)
-
-
-(defun dired-colorize ()
-  (highlight-regexp " [0-9]+\\-[0-9][0-9]\\-[0-9][0-9] [0-9][0-9]:[0-9][0-9] "
-                    'font-lock-doc-face)
-  (highlight-regexp " [0-9]+\\(\\.[0-9]+\\)?\\(k\\|M\\|G\\)? "
-                    'font-lock-comment-face))
-
-
-(add-hook 'dired-after-readin-hook 'dired-colorize)
-
-
-(defun dired-disable-ffap ()
-  (setq-local ido-use-filename-at-point nil))
-
-
-(add-hook 'dired-mode-hook 'dired-disable-ffap)
-
-
-;; Hide details
-
-
-(defvar *dired-hide-details-p* t)
-
-
-(defun dired-setup-hide-details ()
-  (dired-hide-details-mode
-   (or *dired-hide-details-p* -1)))
-
-
-(add-hook 'dired-mode-hook 'dired-setup-hide-details)
-
-
-(defun dired-propogate-hide-details (f &rest args)
-  (let ((*dired-hide-details-p* dired-hide-details-mode))
-    (apply f args)))
-
-
-(dolist (x '(dired-find-file dired-up-directory))
-  (advice-add x :around 'dired-propogate-hide-details))
-
-
-;; Copy remote files with scp
-
-
-(defun dired-copy-force-scp (f from to &rest args)
-  (apply f (append (mapcar (lambda (x) (replace-regexp-in-string "^/ssh" "/scp" x))
-                           (list from to))
-                   args)))
-
-
-(advice-add 'dired-copy-file :around #'dired-copy-force-scp)
-
-
-;; Record IDO work directory
-
-
-(defun dired-record-ido-wd (f &rest args)
-  (let ((file (car args)))
-    (unless (file-directory-p file)
-      (ido-record-work-directory
-       (file-name-directory file)))
-    (apply f args)))
-
-
-(advice-add 'dired--find-possibly-alternative-file
-            :around
-            'dired-record-ido-wd)
-
-
-;; ====
-;; Find
-;; ====
-
-
-(setq find-ls-option '("-exec ls -ldh {} +" . "-ldh"))
-
-
-(defun find-dired-setup-buffer (f &rest args)
-  (let* ((working-directory (directory-file-name (car args)))
-         (name (file-name-base working-directory))
-         (existing (get-buffer name)))
-    (when (and existing
-               (equal (with-current-buffer existing
-                        (directory-file-name default-directory))
-                      working-directory)
-               (eq (with-current-buffer existing major-mode)
-                   'dired-mode))
-      (kill-buffer existing))
-    (apply f args)
-    (set (make-local-variable 'revert-buffer-function)
-         `(lambda (ignore-auto noconfirm)
-            (kill-buffer (current-buffer))
-            (apply #'find-dired ',args)))
-    (rename-buffer name t)))
-
-
-(advice-add 'find-dired :around #'find-dired-setup-buffer)
-
-
-(defun find-dired-dwim (f &rest args)
-  "Simplify most frequent scenario
-   (case-insensitive search using part of a file name)"
-  (let ((query (cadr args)))
-    (unless (string-prefix-p "-" query)
-      (setf (cadr args)
-            (format "-iname '*%s*'" query)))
-    (apply f args)))
-
-
-(advice-add 'find-dired :around #'find-dired-dwim)
-
-
-(defun find-dired-prevent-prompt-clutter (f &rest args)
-  "Set find-args to empty string, therefore prevent input prompt cluttering"
-  (apply f args)
-  (setq find-args ""))
-
-
-(advice-add 'find-dired :around #'find-dired-prevent-prompt-clutter)
-
-
-(defun find-dired-fix-prompt (f &rest xs)
-  "More consistent querying of user inputs:
-The search string is queried first, followed by the directory."
-  (interactive)
-  (let* ((prompt (format "Search for files: "))
-         (query (cadr xs))
-         (dir (car xs))
-         (query (if (called-interactively-p)
-                    (read-string prompt nil 'find-args-history)
-                  query))
-         (dir (if (called-interactively-p)
-                  (read-directory-name
-                   (format "Search for %s at: "
-                           (propertize (if (string-empty-p query)
-                                           "*" query)
-                                       'face 'success)))
-                dir)))
-    (funcall f dir query)))
-
-
-(advice-add 'find-dired :around 'find-dired-fix-prompt)
-
-
-;; ====
-;; Diff
-;; ====
-
-
-(defun diff-current-buffer ()
-  "Invoke `diff-buffer-with-file' for current buffer"
-  (interactive)
-  (diff-buffer-with-file))
-
-
-;; ===============
-;; Man page reader
-;; ===============
-
-
-(with-eval-after-load 'man
-  (setq Man-support-remote-systems t))
-
-
-;; =======
-;; Ripgrep
-;; =======
-
-
-(setq ripgrep (executable-find "rg")
-      ripgrep-arguments '("-uu"))
-
-
-(defun project-ripgrep (regexp)
-  (interactive (list (project--read-regexp)))
-  (let ((ripgrep-arguments nil))
-    (ripgrep-regexp regexp (project-root (project-current t)))))
-
-
-(when ripgrep
-  (keymap-set search-map "g" 'ripgrep-regexp)
-  (advice-add 'project-find-regexp :override 'project-ripgrep))
-
-
-(defun ripgrep-dired ()
-  "Collect the files into Dired buffer"
-  (interactive)
-  (let (result)
-    (save-excursion
-      (goto-line 4)
-      (end-of-line)
-      (while-let ((p (re-search-forward "^[^:]+:[0-9]" nil t)))
-        (cl-pushnew (buffer-substring-no-properties
-                     (line-beginning-position)
-                     (- p 2))
-                    result
-                    :test #'equal)))
-    (pop result)
-    (if result
-        (dired-other-window
-         (cons compilation-directory
-               (nreverse (mapcar #'file-relative-name result))))
-      (message "File list is empty"))))
-
-
-(defun ripgrep-setup ()
-  (setq-local compilation-scroll-output nil))
-
-
-(with-eval-after-load 'ripgrep
-  (define-keymap :keymap ripgrep-search-mode-map
-    "TAB" 'compilation-next-error
-    "<backtab>" 'compilation-previous-error
-    "d" 'ripgrep-dired
-    "n" 'next-error-no-select
-    "p" 'previous-error-no-select
-    "o" 'compilation-display-error
-    "e" 'wgrep-change-to-wgrep-mode)
-  (add-hook 'ripgrep-search-mode-hook
-            'ripgrep-setup)
-  (setq wgrep-auto-save-buffer t))
 
 
 ;; ===========
@@ -1593,6 +1246,341 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   "M-w" 'isearch-toggle-word
   "M-q" 'isearch-query-replace
   "C-SPC" 'isearch-select-search-string)
+
+
+;; =====
+;; Dired
+;; =====
+
+
+(require 'ls-lisp)
+
+
+(setq ls-lisp-use-insert-directory-program nil
+      ls-lisp-format-time-list
+      '("%Y-%m-%d %H:%M"
+        "%Y-%m-%d %H:%M")
+      ls-lisp-use-localized-time-format t
+      ls-lisp-dirs-first t
+      dired-listing-switches "-alh"
+      dired-recursive-copies 'always
+      dired-recursive-deletes 'always
+      dired-dwim-target t
+      dired-hide-details-hide-symlink-targets nil
+      dired-kill-when-opening-new-dired-buffer t)
+
+
+(defun dired-archive ()
+  (interactive)
+  (let* ((output (file-truename (read-file-name "Add file(s) to archive: ")))
+         (files (string-join (mapcar (lambda (x) (format "'%s'" (file-relative-name x)))
+                                     (dired-get-marked-files))
+                             " "))
+         (tar-command (format "tar -vcz %s -f '%s'" files (replace-regexp-in-string
+                                                           "^\\([a-zA-Z]\\):/"
+                                                           "/\\1/"
+                                                           output)))
+         (zip-command (format "zip -r '%s' %s" output files))
+         (command (if (string-match-p ".tar.gz$" output)
+                      tar-command
+                    zip-command)))
+    (async-shell-command command)))
+
+
+(defun dired-extract-command (archive output-dir)
+  (let* ((tar-command (format "tar -xvzC '%s' < '%s'"
+                              (replace-regexp-in-string "^\\([a-zA-Z]\\):/"
+                                                        "/\\1/"
+                                                        output-dir)
+                              archive))
+         (zip-command (format "unzip -o '%s' -d '%s'" archive output-dir))
+         (7z-command (format "7z x -y '%s' -o'%s'" archive output-dir)))
+    (cond ((string-match-p ".tar.gz$" archive) tar-command)
+          ((string-match-p ".\\(rar\\|7z\\)$" archive) 7z-command)
+          (t zip-command))))
+
+
+(defun dired-extract-archive ()
+  (interactive)
+  (let* ((output-dir (read-directory-name "Extract to: "))
+         (commands (mapcar (lambda (x)
+                             (dired-extract-command (file-relative-name x)
+                                                    output-dir))
+                           (dired-get-marked-files)))
+         (command (string-join commands "; ")))
+    (async-shell-command command)))
+
+
+(defun dired-flatten-directory ()
+  "Run find program on selected directory"
+  (interactive)
+  (let ((directory (file-truename (car (dired-get-marked-files)))))
+    (if (file-directory-p directory)
+        (progn (kill-buffer)
+               (find-dired directory ""))
+      (message "This command works only for directories"))))
+
+
+(defun dired-calculate-size (&optional tree-p)
+  (interactive)
+  (let* ((files (mapcar #'file-relative-name
+                        (dired-get-marked-files)))
+         (args (mapcar (lambda (x) (format "'%s'" x)) files)))
+    (message "Calculating size of %s..."
+             (string-join (mapcar (lambda (x)
+                                    (propertize x 'face 'success))
+                                  files)
+                          ", "))
+    (shell-command
+     (if tree-p
+         (format "tree --du -h %s"
+                 (string-join args  " "))
+       (format "du -hs%s %s"
+               (if (> (length args) 1) "c" "")
+               (string-join args  " "))))))
+
+
+(defun dired-calculate-size-tree ()
+  (interactive)
+  (dired-calculate-size t))
+
+
+(with-eval-after-load 'dired
+  (define-keymap :keymap dired-mode-map
+    "w" 'copy-file-name-to-clipboard
+    "o" 'dired-display-file
+    "h" 'dired-hide-details-mode
+    "l" 'dired-up-directory
+    "a" 'dired-archive
+    "A" 'dired-extract-archive
+    "f" 'dired-flatten-directory
+    "s" 'dired-calculate-size
+    "S" 'dired-calculate-size-tree
+    "M" 'dired-mark-files-regexp
+    "c" 'dired-do-copy
+    "r" 'dired-do-rename
+    "k" 'dired-do-delete
+    "e" 'dired-toggle-read-only
+    "1" 'dired-do-chmod
+    "2" 'dired-do-chown
+    "3" 'dired-do-touch
+    "y" 'dired-do-symlink))
+
+
+(add-hook 'dired-mode-hook 'auto-revert-mode)
+
+
+(defun dired-colorize ()
+  (highlight-regexp " [0-9]+\\-[0-9][0-9]\\-[0-9][0-9] [0-9][0-9]:[0-9][0-9] "
+                    'font-lock-doc-face)
+  (highlight-regexp " [0-9]+\\(\\.[0-9]+\\)?\\(k\\|M\\|G\\)? "
+                    'font-lock-comment-face))
+
+
+(add-hook 'dired-after-readin-hook 'dired-colorize)
+
+
+(defun dired-disable-ffap ()
+  (setq-local ido-use-filename-at-point nil))
+
+
+(add-hook 'dired-mode-hook 'dired-disable-ffap)
+
+
+;; Hide details
+
+
+(defvar *dired-hide-details-p* t)
+
+
+(defun dired-setup-hide-details ()
+  (dired-hide-details-mode
+   (or *dired-hide-details-p* -1)))
+
+
+(add-hook 'dired-mode-hook 'dired-setup-hide-details)
+
+
+(defun dired-propogate-hide-details (f &rest args)
+  (let ((*dired-hide-details-p* dired-hide-details-mode))
+    (apply f args)))
+
+
+(dolist (x '(dired-find-file dired-up-directory))
+  (advice-add x :around 'dired-propogate-hide-details))
+
+
+;; Copy remote files with scp
+
+
+(defun dired-copy-force-scp (f from to &rest args)
+  (apply f (append (mapcar (lambda (x) (replace-regexp-in-string "^/ssh" "/scp" x))
+                           (list from to))
+                   args)))
+
+
+(advice-add 'dired-copy-file :around #'dired-copy-force-scp)
+
+
+;; Record IDO work directory
+
+
+(defun dired-record-ido-wd (f &rest args)
+  (let ((file (car args)))
+    (unless (file-directory-p file)
+      (ido-record-work-directory
+       (file-name-directory file)))
+    (apply f args)))
+
+
+(advice-add 'dired--find-possibly-alternative-file
+            :around
+            'dired-record-ido-wd)
+
+
+;; ====
+;; Find
+;; ====
+
+
+(setq find-ls-option '("-exec ls -ldh {} +" . "-ldh"))
+
+
+(defun find-dired-setup-buffer (f &rest args)
+  (let* ((working-directory (directory-file-name (car args)))
+         (name (file-name-base working-directory))
+         (existing (get-buffer name)))
+    (when (and existing
+               (equal (with-current-buffer existing
+                        (directory-file-name default-directory))
+                      working-directory)
+               (eq (with-current-buffer existing major-mode)
+                   'dired-mode))
+      (kill-buffer existing))
+    (apply f args)
+    (set (make-local-variable 'revert-buffer-function)
+         `(lambda (ignore-auto noconfirm)
+            (kill-buffer (current-buffer))
+            (apply #'find-dired ',args)))
+    (rename-buffer name t)))
+
+
+(advice-add 'find-dired :around #'find-dired-setup-buffer)
+
+
+(defun find-dired-dwim (f &rest args)
+  "Simplify most frequent scenario
+   (case-insensitive search using part of a file name)"
+  (let ((query (cadr args)))
+    (unless (string-prefix-p "-" query)
+      (setf (cadr args)
+            (format "-iname '*%s*'" query)))
+    (apply f args)))
+
+
+(advice-add 'find-dired :around #'find-dired-dwim)
+
+
+(defun find-dired-prevent-prompt-clutter (f &rest args)
+  "Set find-args to empty string, therefore prevent input prompt cluttering"
+  (apply f args)
+  (setq find-args ""))
+
+
+(advice-add 'find-dired :around #'find-dired-prevent-prompt-clutter)
+
+
+(defun find-dired-fix-prompt (f &rest xs)
+  "More consistent querying of user inputs:
+The search string is queried first, followed by the directory."
+  (interactive)
+  (let* ((prompt (format "Search for files: "))
+         (query (cadr xs))
+         (dir (car xs))
+         (query (if (called-interactively-p)
+                    (read-string prompt nil 'find-args-history)
+                  query))
+         (dir (if (called-interactively-p)
+                  (read-directory-name
+                   (format "Search for %s at: "
+                           (propertize (if (string-empty-p query)
+                                           "*" query)
+                                       'face 'success)))
+                dir)))
+    (funcall f dir query)))
+
+
+(advice-add 'find-dired :around 'find-dired-fix-prompt)
+
+
+;; =======
+;; Ripgrep
+;; =======
+
+
+(setq ripgrep (executable-find "rg")
+      ripgrep-arguments '("-uu"))
+
+
+(defun project-ripgrep (regexp)
+  (interactive (list (project--read-regexp)))
+  (let ((ripgrep-arguments nil))
+    (ripgrep-regexp regexp (project-root (project-current t)))))
+
+
+(when ripgrep
+  (keymap-set search-map "g" 'ripgrep-regexp)
+  (advice-add 'project-find-regexp :override 'project-ripgrep))
+
+
+(defun ripgrep-dired ()
+  "Collect the files into Dired buffer"
+  (interactive)
+  (let (result)
+    (save-excursion
+      (goto-line 4)
+      (end-of-line)
+      (while-let ((p (re-search-forward "^[^:]+:[0-9]" nil t)))
+        (cl-pushnew (buffer-substring-no-properties
+                     (line-beginning-position)
+                     (- p 2))
+                    result
+                    :test #'equal)))
+    (pop result)
+    (if result
+        (dired-other-window
+         (cons compilation-directory
+               (nreverse (mapcar #'file-relative-name result))))
+      (message "File list is empty"))))
+
+
+(defun ripgrep-setup ()
+  (setq-local compilation-scroll-output nil))
+
+
+(with-eval-after-load 'ripgrep
+  (define-keymap :keymap ripgrep-search-mode-map
+    "TAB" 'compilation-next-error
+    "<backtab>" 'compilation-previous-error
+    "d" 'ripgrep-dired
+    "n" 'next-error-no-select
+    "p" 'previous-error-no-select
+    "o" 'compilation-display-error
+    "e" 'wgrep-change-to-wgrep-mode)
+  (add-hook 'ripgrep-search-mode-hook
+            'ripgrep-setup)
+  (setq wgrep-auto-save-buffer t))
+
+
+;; ====
+;; Diff
+;; ====
+
+
+(defun diff-current-buffer ()
+  "Invoke `diff-buffer-with-file' for current buffer"
+  (interactive)
+  (diff-buffer-with-file))
 
 
 ;; =====================
@@ -2195,9 +2183,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (advice-add 'shell-command :around #'shell-command-dwim)
 
 
-;; ===================
-;; async-shell-command
-;; ===================
+;; ====================
+;; Async shell commands
+;; ====================
 
 
 (setq async-shell-command-mode 'shell-mode)
@@ -2214,7 +2202,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (async-shell-command command)))
 
 
-;; Descriptive buffer name
+;; Buffer
 
 
 (defun asc-make-buffer-name (command)
@@ -2300,7 +2288,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (advice-add 'async-shell-command :around 'asc-echo-startup-info)
 
 
-;; Handle termination
+;; Termination
 
 
 (defun asc-handle-termination (f &rest args)
@@ -2343,7 +2331,7 @@ reports termination status, kills the buffer"
 (advice-add 'async-shell-command :around 'asc-handle-termination)
 
 
-;; Hide output buffer
+;; Suppress popup
 
 
 (defvar *asc-popup* nil)
@@ -3260,7 +3248,7 @@ Also grabs a selected region, if any."
 (add-hook 'emacs-startup-hook 'project-forget-zombie-projects)
 
 
-;; Better project root detection
+;; Project root detection
 
 
 (defun project-try-file (dir)
@@ -4014,6 +4002,15 @@ Process .+
 
 
 (sql-set-product-feature 'sqlite :table-parser 'parse-sqlite-table)
+
+
+;; ===============
+;; Man page reader
+;; ===============
+
+
+(with-eval-after-load 'man
+  (setq Man-support-remote-systems t))
 
 
 ;; ===========
