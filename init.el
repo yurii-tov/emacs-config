@@ -3,7 +3,7 @@
 ;; ======
 
 
-;; Third-party packages
+;; Packages
 
 
 (require 'package)
@@ -97,7 +97,7 @@
       confirm-kill-emacs 'y-or-n-p)
 
 
-;; History persistence
+;; History
 
 
 (setq savehist-additional-variables '(kill-ring
