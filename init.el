@@ -2004,14 +2004,11 @@ The search string is queried first, followed by the directory."
                                  company-dabbrev))
 
 
-;; Improve TAB key behavior in TNG mode
+;; Complete instantly in some cases
 
 
-(defun company-fix-tng-tab (f &rest args)
-  "Improvements for TAB key in TNG mode:
-- Yasnippet snippets expand immediately
-(therefore conflict 'company vs yasnippet' is resolved)
-- When having sole candidate, completes immediately, with Yasnippet expansion"
+(defun company-instant-complete (f &rest args)
+  "If a complete Yasnippet has been typed, or if sole candidate present, confirms the selection right away"
   (cond (company-selection (apply f args))
         ((yas-expand) (company-abort))
         ((= 1 (length company-candidates))
@@ -2025,29 +2022,10 @@ The search string is queried first, followed by the directory."
         (t (apply f args))))
 
 
-(advice-add 'company-select-next :around 'company-fix-tng-tab)
+(advice-add 'company-select-next :around 'company-instant-complete)
 
 
-;; Keybindings
-
-
-(progn
-  ;; Disable M-digit keybindings
-  (dotimes (n 10)
-    (keymap-set company-active-map
-                (format "M-%d" n) nil))
-
-  ;; (Un)bind some things
-  (dolist (x (list company-active-map
-                   company-search-map))
-    (define-keymap :keymap x
-      "M-p" nil
-      "M-n" nil
-      "M-SPC" 'company-other-backend
-      "SPC" 'company-smart-complete)))
-
-
-;; Smart completion
+;; Explicit completion
 
 
 (defun company-smart-complete ()
@@ -2070,6 +2048,23 @@ The search string is queried first, followed by the directory."
                       (s (buffer-substring (max 1 l) pp)))
                  (equal m s))))
          (call-interactively 'self-insert-command))))
+
+
+;; Keybindings
+
+
+(dotimes (n 10)
+  (keymap-set company-active-map
+              (format "M-%d" n) nil))
+
+
+(dolist (x (list company-active-map
+                 company-search-map))
+  (define-keymap :keymap x
+    "M-p" nil
+    "M-n" nil
+    "M-SPC" 'company-other-backend
+    "SPC" 'company-smart-complete))
 
 
 ;; Merge company-dabbrev-code with company-keywords
@@ -2117,7 +2112,7 @@ The search string is queried first, followed by the directory."
   (advice-add x :around 'fix-company-backend))
 
 
-;; Override out-of-the box TAB completion (except minibuffer)
+;; Make company the default
 
 
 (defun company-override-cap ()
