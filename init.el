@@ -14,32 +14,28 @@
         ("melpa" . "https://melpa.org/packages/")))
 
 
-(let ((packages '(ido-grid-mode
-                  spacious-padding
-                  ligature
-                  ef-themes
-                  doric-themes
-                  company
-                  yasnippet
-                  ripgrep
-                  wgrep
-                  markdown-mode
-                  htmlize
-                  gptel
-                  cider
-                  powershell
-                  groovy-mode
-                  rust-mode
-                  slime
-                  slime-company
-                  nov))
-      refreshed)
-  (dolist (p packages)
-    (unless (package-installed-p p)
-      (unless refreshed
-        (package-refresh-contents)
-        (setq refreshed t))
-      (package-install p))))
+(when-let ((packages (cl-remove-if #'package-installed-p
+                                   '(ido-grid-mode
+                                     spacious-padding
+                                     ligature
+                                     ef-themes
+                                     doric-themes
+                                     company
+                                     yasnippet
+                                     ripgrep
+                                     wgrep
+                                     markdown-mode
+                                     htmlize
+                                     gptel
+                                     cider
+                                     powershell
+                                     groovy-mode
+                                     rust-mode
+                                     slime
+                                     slime-company
+                                     nov))))
+  (package-refresh-contents)
+  (mapc #'package-install packages))
 
 
 ;; Text encoding
