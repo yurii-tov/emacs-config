@@ -112,9 +112,6 @@
 
 (when (and (eq system-type 'android)
            (getenv "TERMUX_VERSION"))
-  (define-keymap :keymap global-map
-    "<wheel-down>" 'scroll-up-line
-    "<wheel-up>" 'scroll-down-line)
   (unless small-temporary-file-directory
     (customize-set-variable
      'small-temporary-file-directory
@@ -527,6 +524,12 @@
 
 
 ;; Scrolling
+
+
+(when (eq system-type 'android)
+  (define-keymap :keymap global-map
+    "<wheel-down>" 'scroll-up-line
+    "<wheel-up>" 'scroll-down-line))
 
 
 (defun scroll-down-5-lines ()
