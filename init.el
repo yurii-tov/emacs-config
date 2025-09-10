@@ -38,6 +38,23 @@
   (mapc #'package-install packages))
 
 
+;; Site-specific config
+
+
+(progn (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+       (load custom-file t))
+
+
+(defun load-site-settings ()
+  (let ((site-file (expand-file-name "site.el" user-emacs-directory)))
+    (if (file-exists-p site-file)
+        (load-file site-file)
+      (with-temp-buffer (write-file site-file)))))
+
+
+(add-hook 'emacs-startup-hook 'load-site-settings)
+
+
 ;; Text encoding
 
 
@@ -64,21 +81,16 @@
     (advice-add x :around 'windows-fix-args-encoding)))
 
 
-;; Site-specific config
+;; History
 
 
-(progn (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-       (load custom-file t))
+(setq savehist-additional-variables '(kill-ring
+                                      search-ring
+                                      regexp-search-ring)
+      history-delete-duplicates t)
 
 
-(defun load-site-settings ()
-  (let ((site-file (expand-file-name "site.el" user-emacs-directory)))
-    (if (file-exists-p site-file)
-        (load-file site-file)
-      (with-temp-buffer (write-file site-file)))))
-
-
-(add-hook 'emacs-startup-hook 'load-site-settings)
+(add-hook 'emacs-startup-hook 'savehist-mode)
 
 
 ;; MSYS2
@@ -117,18 +129,6 @@
      'small-temporary-file-directory
      "/data/data/com.termux/cache/emacs/")
     (make-directory small-temporary-file-directory t)))
-
-
-;; History
-
-
-(setq savehist-additional-variables '(kill-ring
-                                      search-ring
-                                      regexp-search-ring)
-      history-delete-duplicates t)
-
-
-(add-hook 'emacs-startup-hook 'savehist-mode)
 
 
 ;; ===========
