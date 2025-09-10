@@ -573,6 +573,67 @@
 (add-hook 'emacs-startup-hook 'scratch-buffer-setup)
 
 
+;; =====================
+;; Minibuffer completion
+;; =====================
+
+
+(fido-vertical-mode)
+
+
+(define-keymap :keymap icomplete-minibuffer-map
+  "C-j" 'icomplete-fido-exit
+  "M-j" 'icomplete-force-complete
+  "SPC" 'self-insert-command
+  "?" 'self-insert-command)
+
+
+(setq completion-auto-select t
+      max-mini-window-height 12)
+
+
+(defun completion-flex-restrict (f &rest args)
+  "Do not activate `flex` algorithm on long inputs"
+  (when (<= (length (car args)) 16)
+    (apply f args)))
+
+
+(dolist (x '(completion-flex-try-completion
+             completion-flex-all-completions))
+  (advice-add x :around 'completion-flex-restrict))
+
+
+(defun minibuffer-setup-completion-style ()
+  (setq-local completion-styles '(substring flex)
+              completion-category-defaults nil))
+
+
+(add-hook 'icomplete-minibuffer-setup-hook
+          'minibuffer-setup-completion-style)
+
+
+(defun read-string-completing-history (f &rest args)
+  (let* ((prompt (car args))
+         (initial-input (cadr args))
+         (history-arg (caddr args))
+         (history-symbol (if (consp history-arg)
+                             (car history-arg)
+                           history-arg))
+         (history (and (not (member history-symbol
+                                    '(string-rectangle-history
+                                      junk-hist
+                                      org-read-date-history
+                                      transient--history)))
+                       (boundp history-symbol)
+                       (symbol-value history-symbol))))
+    (if history
+        (completing-read prompt history nil nil initial-input history-symbol)
+      (apply f args))))
+
+
+(advice-add 'read-string :around #'read-string-completing-history)
+
+
 ;; =======
 ;; Buffers
 ;; =======
@@ -659,6 +720,79 @@
 (advice-add 'kill-buffer-and-window :around #'kill-buffer-and-window-fix)
 
 
+;; =======
+;; Ibuffer
+;; =======
+
+
+(setq ibuffer-expert t
+      ibuffer-default-sorting-mode 'alphabetic
+      ibuffer-show-empty-filter-groups nil
+      ibuffer-formats '((mark modified read-only locked " "
+                              (name 16 -1)
+                              " " filename))
+      ibuffer-saved-filter-groups
+      '(("default"
+         ("System" (or (mode . messages-buffer-mode)
+                       (and (mode . lisp-interaction-mode)
+                            (name . "\\*scratch"))))
+         ("REPL" (and (or (and (mode . shell-mode)
+                               (name . "\\*\\(.*shell\\|ssh-\\)"))
+                          (mode . inferior-emacs-lisp-mode)
+                          (mode . sql-interactive-mode)
+                          (mode . inferior-groovy-mode)
+                          (mode . python-mode)
+                          (mode . slime-repl-mode)
+                          (mode . cider-repl-mode))
+                      (predicate . (get-buffer-process (current-buffer)))))
+         ("⚗️ Build" (and (mode . compilation-mode)
+                         (predicate . (get-buffer-process (current-buffer)))))
+         ("🦄 Org" (mode . org-mode))
+         ("Program" (derived-mode . prog-mode))
+         ("Text" (and (or (derived-mode . text-mode)
+                          (mode . fundamental-mode)
+                          (derived-mode . conf-mode))
+                      (not (name . "\\*"))))
+         ("📖 Docs" (or (mode . Man-mode)
+                        (mode . Info-mode)
+                        (mode . help-mode)))
+         ("📚 Book" (mode . nov-mode))
+         ("🌐 EWW" (or (mode . eww-buffers-mode)
+                       (mode . eww-mode)
+                       (mode . eww-history-mode)
+                       (mode . eww-bookmark-mode)))
+         ("📁 Directory" (mode . dired-mode))
+         ("🧠 LSP" (name . "\\*EGLOT"))
+         ("Process" (predicate . (get-buffer-process (current-buffer))))
+         ("📦 Misc" (predicate . t)))))
+
+
+(defun ibuffer-setup ()
+  (ibuffer-auto-mode 1)
+  (ibuffer-switch-to-saved-filter-groups "default"))
+
+
+(add-hook 'ibuffer-mode-hook 'ibuffer-setup)
+
+
+(defun ibuffer-toggle-last-filter (f &rest args)
+  "When there is no active filters, switches to last filter we used;
+   Otherwise, removes filtering"
+  (if ibuffer-filtering-qualifiers
+      (progn (setq-local last-filter ibuffer-filtering-qualifiers)
+             (apply f args))
+    (when (boundp 'last-filter)
+      (setq ibuffer-filtering-qualifiers last-filter)
+      (ibuffer-update nil))))
+
+
+(advice-add 'ibuffer-filter-disable :around 'ibuffer-toggle-last-filter)
+
+
+(with-eval-after-load 'ibuffer
+  (keymap-set ibuffer-mode-map "j" 'ibuffer-jump-to-filter-group))
+
+
 ;; =====
 ;; Files
 ;; =====
@@ -736,67 +870,6 @@
   "Invoke `diff-buffer-with-file' for current buffer"
   (interactive)
   (diff-buffer-with-file))
-
-
-;; =====================
-;; Minibuffer completion
-;; =====================
-
-
-(fido-vertical-mode)
-
-
-(define-keymap :keymap icomplete-minibuffer-map
-  "C-j" 'icomplete-fido-exit
-  "M-j" 'icomplete-force-complete
-  "SPC" 'self-insert-command
-  "?" 'self-insert-command)
-
-
-(setq completion-auto-select t
-      max-mini-window-height 12)
-
-
-(defun completion-flex-restrict (f &rest args)
-  "Do not activate `flex` algorithm on long inputs"
-  (when (<= (length (car args)) 16)
-    (apply f args)))
-
-
-(dolist (x '(completion-flex-try-completion
-             completion-flex-all-completions))
-  (advice-add x :around 'completion-flex-restrict))
-
-
-(defun minibuffer-setup-completion-style ()
-  (setq-local completion-styles '(substring flex)
-              completion-category-defaults nil))
-
-
-(add-hook 'icomplete-minibuffer-setup-hook
-          'minibuffer-setup-completion-style)
-
-
-(defun read-string-completing-history (f &rest args)
-  (let* ((prompt (car args))
-         (initial-input (cadr args))
-         (history-arg (caddr args))
-         (history-symbol (if (consp history-arg)
-                             (car history-arg)
-                           history-arg))
-         (history (and (not (member history-symbol
-                                    '(string-rectangle-history
-                                      junk-hist
-                                      org-read-date-history
-                                      transient--history)))
-                       (boundp history-symbol)
-                       (symbol-value history-symbol))))
-    (if history
-        (completing-read prompt history nil nil initial-input history-symbol)
-      (apply f args))))
-
-
-(advice-add 'read-string :around #'read-string-completing-history)
 
 
 ;; ===
@@ -1059,33 +1132,194 @@
 (advice-add 'ido-grid-mode-ido-setup :around 'ido-fix-grid-mode)
 
 
-;; =======
-;; Isearch
-;; =======
+;; =====
+;; Dired
+;; =====
 
 
-(setq isearch-lazy-count t)
+(require 'ls-lisp)
 
 
-(defun isearch-select-search-string ()
+(setq ls-lisp-use-insert-directory-program nil
+      ls-lisp-format-time-list
+      '("%Y-%m-%d %H:%M"
+        "%Y-%m-%d %H:%M")
+      ls-lisp-use-localized-time-format t
+      ls-lisp-dirs-first t
+      dired-listing-switches "-alh"
+      dired-recursive-copies 'always
+      dired-recursive-deletes 'always
+      dired-dwim-target t
+      dired-hide-details-hide-symlink-targets nil
+      dired-kill-when-opening-new-dired-buffer t)
+
+
+(defun dired-archive ()
   (interactive)
-  (isearch-done)
-  (set-mark (point))
-  (if isearch-forward
-      (funcall (if isearch-regexp
-                   #'search-backward-regexp
-                 #'search-backward)
-               isearch-string)
-    (funcall (if isearch-regexp
-                 #'search-forward-regexp
-               #'search-forward)
-             isearch-string)))
+  (let* ((output (file-truename (read-file-name "Add file(s) to archive: ")))
+         (files (string-join (mapcar (lambda (x) (format "'%s'" (file-relative-name x)))
+                                     (dired-get-marked-files))
+                             " "))
+         (tar-command (format "tar -vcz %s -f '%s'" files (replace-regexp-in-string
+                                                           "^\\([a-zA-Z]\\):/"
+                                                           "/\\1/"
+                                                           output)))
+         (zip-command (format "zip -r '%s' %s" output files))
+         (command (if (string-match-p ".tar.gz$" output)
+                      tar-command
+                    zip-command)))
+    (async-shell-command command)))
 
 
-(define-keymap :keymap isearch-mode-map
-  "M-w" 'isearch-toggle-word
-  "M-q" 'isearch-query-replace
-  "C-SPC" 'isearch-select-search-string)
+(defun dired-extract-command (archive output-dir)
+  (let* ((tar-command (format "tar -xvzC '%s' < '%s'"
+                              (replace-regexp-in-string "^\\([a-zA-Z]\\):/"
+                                                        "/\\1/"
+                                                        output-dir)
+                              archive))
+         (zip-command (format "unzip -o '%s' -d '%s'" archive output-dir))
+         (7z-command (format "7z x -y '%s' -o'%s'" archive output-dir)))
+    (cond ((string-match-p ".tar.gz$" archive) tar-command)
+          ((string-match-p ".\\(rar\\|7z\\)$" archive) 7z-command)
+          (t zip-command))))
+
+
+(defun dired-extract-archive ()
+  (interactive)
+  (let* ((output-dir (read-directory-name "Extract to: "))
+         (commands (mapcar (lambda (x)
+                             (dired-extract-command (file-relative-name x)
+                                                    output-dir))
+                           (dired-get-marked-files)))
+         (command (string-join commands "; ")))
+    (async-shell-command command)))
+
+
+(defun dired-flatten-directory ()
+  "Run find program on selected directory"
+  (interactive)
+  (let ((directory (file-truename (car (dired-get-marked-files)))))
+    (if (file-directory-p directory)
+        (progn (kill-buffer)
+               (find-dired directory ""))
+      (message "This command works only for directories"))))
+
+
+(defun dired-calculate-size (&optional tree-p)
+  (interactive)
+  (let* ((files (mapcar #'file-relative-name
+                        (dired-get-marked-files)))
+         (args (mapcar (lambda (x) (format "'%s'" x)) files)))
+    (message "Calculating size of %s..."
+             (string-join (mapcar (lambda (x)
+                                    (propertize x 'face 'success))
+                                  files)
+                          ", "))
+    (shell-command
+     (if tree-p
+         (format "tree --du -h %s"
+                 (string-join args  " "))
+       (format "du -hs%s %s"
+               (if (> (length args) 1) "c" "")
+               (string-join args  " "))))))
+
+
+(defun dired-calculate-size-tree ()
+  (interactive)
+  (dired-calculate-size t))
+
+
+(with-eval-after-load 'dired
+  (define-keymap :keymap dired-mode-map
+    "w" 'copy-file-name-to-clipboard
+    "o" 'dired-display-file
+    "h" 'dired-hide-details-mode
+    "l" 'dired-up-directory
+    "a" 'dired-archive
+    "A" 'dired-extract-archive
+    "f" 'dired-flatten-directory
+    "s" 'dired-calculate-size
+    "S" 'dired-calculate-size-tree
+    "M" 'dired-mark-files-regexp
+    "c" 'dired-do-copy
+    "r" 'dired-do-rename
+    "k" 'dired-do-delete
+    "e" 'dired-toggle-read-only
+    "1" 'dired-do-chmod
+    "2" 'dired-do-chown
+    "3" 'dired-do-touch
+    "y" 'dired-do-symlink))
+
+
+(add-hook 'dired-mode-hook 'auto-revert-mode)
+
+
+(defun dired-colorize ()
+  (highlight-regexp " [0-9]+\\-[0-9][0-9]\\-[0-9][0-9] [0-9][0-9]:[0-9][0-9] "
+                    'font-lock-doc-face)
+  (highlight-regexp " [0-9]+\\(\\.[0-9]+\\)?\\(k\\|M\\|G\\)? "
+                    'font-lock-comment-face))
+
+
+(add-hook 'dired-after-readin-hook 'dired-colorize)
+
+
+(defun dired-disable-ffap ()
+  (setq-local ido-use-filename-at-point nil))
+
+
+(add-hook 'dired-mode-hook 'dired-disable-ffap)
+
+
+;; Hide details
+
+
+(defvar *dired-hide-details-p* t)
+
+
+(defun dired-setup-hide-details ()
+  (dired-hide-details-mode
+   (or *dired-hide-details-p* -1)))
+
+
+(add-hook 'dired-mode-hook 'dired-setup-hide-details)
+
+
+(defun dired-propogate-hide-details (f &rest args)
+  (let ((*dired-hide-details-p* dired-hide-details-mode))
+    (apply f args)))
+
+
+(dolist (x '(dired-find-file dired-up-directory))
+  (advice-add x :around 'dired-propogate-hide-details))
+
+
+;; Copy remote files with scp
+
+
+(defun dired-copy-force-scp (f from to &rest args)
+  (apply f (append (mapcar (lambda (x) (replace-regexp-in-string "^/ssh" "/scp" x))
+                           (list from to))
+                   args)))
+
+
+(advice-add 'dired-copy-file :around #'dired-copy-force-scp)
+
+
+;; Record IDO work directory
+
+
+(defun dired-record-ido-wd (f &rest args)
+  (let ((file (car args)))
+    (unless (file-directory-p file)
+      (ido-record-work-directory
+       (file-name-directory file)))
+    (apply f args)))
+
+
+(advice-add 'dired--find-possibly-alternative-file
+            :around
+            'dired-record-ido-wd)
 
 
 ;; ===========
@@ -1479,6 +1713,29 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   (move-line 'down))
 
 
+;; Dummy text inserting
+
+
+(setq fortune-file (expand-file-name "fortune.txt" user-emacs-directory))
+
+
+(defun fortune ()
+  (with-temp-buffer
+    (insert-file-contents fortune-file)
+    (goto-char (1+ (cl-random (point-max))))
+    (let* ((e (search-forward-regexp "^%$" nil t))
+           (e (if e (- e 2) (point-max))))
+      (goto-char e)
+      (let* ((s (search-backward-regexp "^%$" nil t))
+             (s (if s (+ 2 s) 1)))
+        (buffer-substring s e)))))
+
+
+(defun insert-fortune ()
+  (interactive)
+  (insert (fortune)))
+
+
 ;; Fixes
 
 
@@ -1500,6 +1757,35 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 (dolist (x '(flush-lines keep-lines))
   (advice-add x :around #'fix-flush-lines))
+
+
+;; =======
+;; Isearch
+;; =======
+
+
+(setq isearch-lazy-count t)
+
+
+(defun isearch-select-search-string ()
+  (interactive)
+  (isearch-done)
+  (set-mark (point))
+  (if isearch-forward
+      (funcall (if isearch-regexp
+                   #'search-backward-regexp
+                 #'search-backward)
+               isearch-string)
+    (funcall (if isearch-regexp
+                 #'search-forward-regexp
+               #'search-forward)
+             isearch-string)))
+
+
+(define-keymap :keymap isearch-mode-map
+  "M-w" 'isearch-toggle-word
+  "M-q" 'isearch-query-replace
+  "C-SPC" 'isearch-select-search-string)
 
 
 ;; ===================
@@ -1727,403 +2013,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (add-hook 'minibuffer-setup-hook 'company-reset-cap)
-
-
-;; =======
-;; Ibuffer
-;; =======
-
-
-(setq ibuffer-expert t
-      ibuffer-default-sorting-mode 'alphabetic
-      ibuffer-show-empty-filter-groups nil
-      ibuffer-formats '((mark modified read-only locked " "
-                              (name 16 -1)
-                              " " filename))
-      ibuffer-saved-filter-groups
-      '(("default"
-         ("System" (or (mode . messages-buffer-mode)
-                       (and (mode . lisp-interaction-mode)
-                            (name . "\\*scratch"))))
-         ("REPL" (and (or (and (mode . shell-mode)
-                               (name . "\\*\\(.*shell\\|ssh-\\)"))
-                          (mode . inferior-emacs-lisp-mode)
-                          (mode . sql-interactive-mode)
-                          (mode . inferior-groovy-mode)
-                          (mode . python-mode)
-                          (mode . slime-repl-mode)
-                          (mode . cider-repl-mode))
-                      (predicate . (get-buffer-process (current-buffer)))))
-         ("⚗️ Build" (and (mode . compilation-mode)
-                         (predicate . (get-buffer-process (current-buffer)))))
-         ("🦄 Org" (mode . org-mode))
-         ("Program" (derived-mode . prog-mode))
-         ("Text" (and (or (derived-mode . text-mode)
-                          (mode . fundamental-mode)
-                          (derived-mode . conf-mode))
-                      (not (name . "\\*"))))
-         ("📖 Docs" (or (mode . Man-mode)
-                        (mode . Info-mode)
-                        (mode . help-mode)))
-         ("📚 Book" (mode . nov-mode))
-         ("🌐 EWW" (or (mode . eww-buffers-mode)
-                       (mode . eww-mode)
-                       (mode . eww-history-mode)
-                       (mode . eww-bookmark-mode)))
-         ("📁 Directory" (mode . dired-mode))
-         ("🧠 LSP" (name . "\\*EGLOT"))
-         ("Process" (predicate . (get-buffer-process (current-buffer))))
-         ("📦 Misc" (predicate . t)))))
-
-
-(defun ibuffer-setup ()
-  (ibuffer-auto-mode 1)
-  (ibuffer-switch-to-saved-filter-groups "default"))
-
-
-(add-hook 'ibuffer-mode-hook 'ibuffer-setup)
-
-
-(defun ibuffer-toggle-last-filter (f &rest args)
-  "When there is no active filters, switches to last filter we used;
-   Otherwise, removes filtering"
-  (if ibuffer-filtering-qualifiers
-      (progn (setq-local last-filter ibuffer-filtering-qualifiers)
-             (apply f args))
-    (when (boundp 'last-filter)
-      (setq ibuffer-filtering-qualifiers last-filter)
-      (ibuffer-update nil))))
-
-
-(advice-add 'ibuffer-filter-disable :around 'ibuffer-toggle-last-filter)
-
-
-(with-eval-after-load 'ibuffer
-  (keymap-set ibuffer-mode-map "j" 'ibuffer-jump-to-filter-group))
-
-
-;; =====
-;; Dired
-;; =====
-
-
-(require 'ls-lisp)
-
-
-(setq ls-lisp-use-insert-directory-program nil
-      ls-lisp-format-time-list
-      '("%Y-%m-%d %H:%M"
-        "%Y-%m-%d %H:%M")
-      ls-lisp-use-localized-time-format t
-      ls-lisp-dirs-first t
-      dired-listing-switches "-alh"
-      dired-recursive-copies 'always
-      dired-recursive-deletes 'always
-      dired-dwim-target t
-      dired-hide-details-hide-symlink-targets nil
-      dired-kill-when-opening-new-dired-buffer t)
-
-
-(defun dired-archive ()
-  (interactive)
-  (let* ((output (file-truename (read-file-name "Add file(s) to archive: ")))
-         (files (string-join (mapcar (lambda (x) (format "'%s'" (file-relative-name x)))
-                                     (dired-get-marked-files))
-                             " "))
-         (tar-command (format "tar -vcz %s -f '%s'" files (replace-regexp-in-string
-                                                           "^\\([a-zA-Z]\\):/"
-                                                           "/\\1/"
-                                                           output)))
-         (zip-command (format "zip -r '%s' %s" output files))
-         (command (if (string-match-p ".tar.gz$" output)
-                      tar-command
-                    zip-command)))
-    (async-shell-command command)))
-
-
-(defun dired-extract-command (archive output-dir)
-  (let* ((tar-command (format "tar -xvzC '%s' < '%s'"
-                              (replace-regexp-in-string "^\\([a-zA-Z]\\):/"
-                                                        "/\\1/"
-                                                        output-dir)
-                              archive))
-         (zip-command (format "unzip -o '%s' -d '%s'" archive output-dir))
-         (7z-command (format "7z x -y '%s' -o'%s'" archive output-dir)))
-    (cond ((string-match-p ".tar.gz$" archive) tar-command)
-          ((string-match-p ".\\(rar\\|7z\\)$" archive) 7z-command)
-          (t zip-command))))
-
-
-(defun dired-extract-archive ()
-  (interactive)
-  (let* ((output-dir (read-directory-name "Extract to: "))
-         (commands (mapcar (lambda (x)
-                             (dired-extract-command (file-relative-name x)
-                                                    output-dir))
-                           (dired-get-marked-files)))
-         (command (string-join commands "; ")))
-    (async-shell-command command)))
-
-
-(defun dired-flatten-directory ()
-  "Run find program on selected directory"
-  (interactive)
-  (let ((directory (file-truename (car (dired-get-marked-files)))))
-    (if (file-directory-p directory)
-        (progn (kill-buffer)
-               (find-dired directory ""))
-      (message "This command works only for directories"))))
-
-
-(defun dired-calculate-size (&optional tree-p)
-  (interactive)
-  (let* ((files (mapcar #'file-relative-name
-                        (dired-get-marked-files)))
-         (args (mapcar (lambda (x) (format "'%s'" x)) files)))
-    (message "Calculating size of %s..."
-             (string-join (mapcar (lambda (x)
-                                    (propertize x 'face 'success))
-                                  files)
-                          ", "))
-    (shell-command
-     (if tree-p
-         (format "tree --du -h %s"
-                 (string-join args  " "))
-       (format "du -hs%s %s"
-               (if (> (length args) 1) "c" "")
-               (string-join args  " "))))))
-
-
-(defun dired-calculate-size-tree ()
-  (interactive)
-  (dired-calculate-size t))
-
-
-(with-eval-after-load 'dired
-  (define-keymap :keymap dired-mode-map
-    "w" 'copy-file-name-to-clipboard
-    "o" 'dired-display-file
-    "h" 'dired-hide-details-mode
-    "l" 'dired-up-directory
-    "a" 'dired-archive
-    "A" 'dired-extract-archive
-    "f" 'dired-flatten-directory
-    "s" 'dired-calculate-size
-    "S" 'dired-calculate-size-tree
-    "M" 'dired-mark-files-regexp
-    "c" 'dired-do-copy
-    "r" 'dired-do-rename
-    "k" 'dired-do-delete
-    "e" 'dired-toggle-read-only
-    "1" 'dired-do-chmod
-    "2" 'dired-do-chown
-    "3" 'dired-do-touch
-    "y" 'dired-do-symlink))
-
-
-(add-hook 'dired-mode-hook 'auto-revert-mode)
-
-
-(defun dired-colorize ()
-  (highlight-regexp " [0-9]+\\-[0-9][0-9]\\-[0-9][0-9] [0-9][0-9]:[0-9][0-9] "
-                    'font-lock-doc-face)
-  (highlight-regexp " [0-9]+\\(\\.[0-9]+\\)?\\(k\\|M\\|G\\)? "
-                    'font-lock-comment-face))
-
-
-(add-hook 'dired-after-readin-hook 'dired-colorize)
-
-
-(defun dired-disable-ffap ()
-  (setq-local ido-use-filename-at-point nil))
-
-
-(add-hook 'dired-mode-hook 'dired-disable-ffap)
-
-
-;; Hide details
-
-
-(defvar *dired-hide-details-p* t)
-
-
-(defun dired-setup-hide-details ()
-  (dired-hide-details-mode
-   (or *dired-hide-details-p* -1)))
-
-
-(add-hook 'dired-mode-hook 'dired-setup-hide-details)
-
-
-(defun dired-propogate-hide-details (f &rest args)
-  (let ((*dired-hide-details-p* dired-hide-details-mode))
-    (apply f args)))
-
-
-(dolist (x '(dired-find-file dired-up-directory))
-  (advice-add x :around 'dired-propogate-hide-details))
-
-
-;; Copy remote files with scp
-
-
-(defun dired-copy-force-scp (f from to &rest args)
-  (apply f (append (mapcar (lambda (x) (replace-regexp-in-string "^/ssh" "/scp" x))
-                           (list from to))
-                   args)))
-
-
-(advice-add 'dired-copy-file :around #'dired-copy-force-scp)
-
-
-;; Record IDO work directory
-
-
-(defun dired-record-ido-wd (f &rest args)
-  (let ((file (car args)))
-    (unless (file-directory-p file)
-      (ido-record-work-directory
-       (file-name-directory file)))
-    (apply f args)))
-
-
-(advice-add 'dired--find-possibly-alternative-file
-            :around
-            'dired-record-ido-wd)
-
-
-;; ====
-;; Find
-;; ====
-
-
-(setq find-ls-option '("-exec ls -ldh {} +" . "-ldh"))
-
-
-(defun find-dired-setup-buffer (f &rest args)
-  (let* ((working-directory (directory-file-name (car args)))
-         (name (file-name-base working-directory))
-         (existing (get-buffer name)))
-    (when (and existing
-               (equal (with-current-buffer existing
-                        (directory-file-name default-directory))
-                      working-directory)
-               (eq (with-current-buffer existing major-mode)
-                   'dired-mode))
-      (kill-buffer existing))
-    (apply f args)
-    (set (make-local-variable 'revert-buffer-function)
-         `(lambda (ignore-auto noconfirm)
-            (kill-buffer (current-buffer))
-            (apply #'find-dired ',args)))
-    (rename-buffer name t)))
-
-
-(advice-add 'find-dired :around #'find-dired-setup-buffer)
-
-
-(defun find-dired-dwim (f &rest args)
-  "Simplify most frequent scenario
-   (case-insensitive search using part of a file name)"
-  (let ((query (cadr args)))
-    (unless (string-prefix-p "-" query)
-      (setf (cadr args)
-            (format "-iname '*%s*'" query)))
-    (apply f args)))
-
-
-(advice-add 'find-dired :around #'find-dired-dwim)
-
-
-(defun find-dired-prevent-prompt-clutter (f &rest args)
-  "Set find-args to empty string, therefore prevent input prompt cluttering"
-  (apply f args)
-  (setq find-args ""))
-
-
-(advice-add 'find-dired :around #'find-dired-prevent-prompt-clutter)
-
-
-(defun find-dired-fix-prompt (f &rest xs)
-  "More consistent querying of user inputs:
-The search string is queried first, followed by the directory."
-  (interactive)
-  (let* ((prompt (format "Search for files: "))
-         (query (cadr xs))
-         (dir (car xs))
-         (query (if (called-interactively-p)
-                    (read-string prompt nil 'find-args-history)
-                  query))
-         (dir (if (called-interactively-p)
-                  (read-directory-name
-                   (format "Search for %s at: "
-                           (propertize (if (string-empty-p query)
-                                           "*" query)
-                                       'face 'success)))
-                dir)))
-    (funcall f dir query)))
-
-
-(advice-add 'find-dired :around 'find-dired-fix-prompt)
-
-
-;; =======
-;; Ripgrep
-;; =======
-
-
-(setq ripgrep (executable-find "rg")
-      ripgrep-arguments '("-uu"))
-
-
-(defun project-ripgrep (regexp)
-  (interactive (list (project--read-regexp)))
-  (let ((ripgrep-arguments nil))
-    (ripgrep-regexp regexp (project-root (project-current t)))))
-
-
-(when ripgrep
-  (keymap-set search-map "g" 'ripgrep-regexp)
-  (advice-add 'project-find-regexp :override 'project-ripgrep))
-
-
-(defun ripgrep-dired ()
-  "Collect the files into Dired buffer"
-  (interactive)
-  (let (result)
-    (save-excursion
-      (goto-line 4)
-      (end-of-line)
-      (while-let ((p (re-search-forward "^[^:]+:[0-9]" nil t)))
-        (cl-pushnew (buffer-substring-no-properties
-                     (line-beginning-position)
-                     (- p 2))
-                    result
-                    :test #'equal)))
-    (pop result)
-    (if result
-        (dired-other-window
-         (cons compilation-directory
-               (nreverse (mapcar #'file-relative-name result))))
-      (message "File list is empty"))))
-
-
-(defun ripgrep-setup ()
-  (setq-local compilation-scroll-output nil))
-
-
-(with-eval-after-load 'ripgrep
-  (define-keymap :keymap ripgrep-search-mode-map
-    "TAB" 'compilation-next-error
-    "<backtab>" 'compilation-previous-error
-    "d" 'ripgrep-dired
-    "n" 'next-error-no-select
-    "p" 'previous-error-no-select
-    "o" 'compilation-display-error
-    "e" 'wgrep-change-to-wgrep-mode)
-  (add-hook 'ripgrep-search-mode-hook
-            'ripgrep-setup)
-  (setq wgrep-auto-save-buffer t))
 
 
 ;; ==============
@@ -2657,6 +2546,397 @@ reports termination status, kills the buffer"
 (keymap-set shell-mode-map "C-x u" 'shell-elevate)
 
 
+;; ====
+;; Find
+;; ====
+
+
+(setq find-ls-option '("-exec ls -ldh {} +" . "-ldh"))
+
+
+(defun find-dired-setup-buffer (f &rest args)
+  (let* ((working-directory (directory-file-name (car args)))
+         (name (file-name-base working-directory))
+         (existing (get-buffer name)))
+    (when (and existing
+               (equal (with-current-buffer existing
+                        (directory-file-name default-directory))
+                      working-directory)
+               (eq (with-current-buffer existing major-mode)
+                   'dired-mode))
+      (kill-buffer existing))
+    (apply f args)
+    (set (make-local-variable 'revert-buffer-function)
+         `(lambda (ignore-auto noconfirm)
+            (kill-buffer (current-buffer))
+            (apply #'find-dired ',args)))
+    (rename-buffer name t)))
+
+
+(advice-add 'find-dired :around #'find-dired-setup-buffer)
+
+
+(defun find-dired-dwim (f &rest args)
+  "Simplify most frequent scenario
+   (case-insensitive search using part of a file name)"
+  (let ((query (cadr args)))
+    (unless (string-prefix-p "-" query)
+      (setf (cadr args)
+            (format "-iname '*%s*'" query)))
+    (apply f args)))
+
+
+(advice-add 'find-dired :around #'find-dired-dwim)
+
+
+(defun find-dired-prevent-prompt-clutter (f &rest args)
+  "Set find-args to empty string, therefore prevent input prompt cluttering"
+  (apply f args)
+  (setq find-args ""))
+
+
+(advice-add 'find-dired :around #'find-dired-prevent-prompt-clutter)
+
+
+(defun find-dired-fix-prompt (f &rest xs)
+  "More consistent querying of user inputs:
+The search string is queried first, followed by the directory."
+  (interactive)
+  (let* ((prompt (format "Search for files: "))
+         (query (cadr xs))
+         (dir (car xs))
+         (query (if (called-interactively-p)
+                    (read-string prompt nil 'find-args-history)
+                  query))
+         (dir (if (called-interactively-p)
+                  (read-directory-name
+                   (format "Search for %s at: "
+                           (propertize (if (string-empty-p query)
+                                           "*" query)
+                                       'face 'success)))
+                dir)))
+    (funcall f dir query)))
+
+
+(advice-add 'find-dired :around 'find-dired-fix-prompt)
+
+
+;; =======
+;; Ripgrep
+;; =======
+
+
+(setq ripgrep (executable-find "rg")
+      ripgrep-arguments '("-uu"))
+
+
+(defun project-ripgrep (regexp)
+  (interactive (list (project--read-regexp)))
+  (let ((ripgrep-arguments nil))
+    (ripgrep-regexp regexp (project-root (project-current t)))))
+
+
+(when ripgrep
+  (keymap-set search-map "g" 'ripgrep-regexp)
+  (advice-add 'project-find-regexp :override 'project-ripgrep))
+
+
+(defun ripgrep-dired ()
+  "Collect the files into Dired buffer"
+  (interactive)
+  (let (result)
+    (save-excursion
+      (goto-line 4)
+      (end-of-line)
+      (while-let ((p (re-search-forward "^[^:]+:[0-9]" nil t)))
+        (cl-pushnew (buffer-substring-no-properties
+                     (line-beginning-position)
+                     (- p 2))
+                    result
+                    :test #'equal)))
+    (pop result)
+    (if result
+        (dired-other-window
+         (cons compilation-directory
+               (nreverse (mapcar #'file-relative-name result))))
+      (message "File list is empty"))))
+
+
+(defun ripgrep-setup ()
+  (setq-local compilation-scroll-output nil))
+
+
+(with-eval-after-load 'ripgrep
+  (define-keymap :keymap ripgrep-search-mode-map
+    "TAB" 'compilation-next-error
+    "<backtab>" 'compilation-previous-error
+    "d" 'ripgrep-dired
+    "n" 'next-error-no-select
+    "p" 'previous-error-no-select
+    "o" 'compilation-display-error
+    "e" 'wgrep-change-to-wgrep-mode)
+  (add-hook 'ripgrep-search-mode-hook
+            'ripgrep-setup)
+  (setq wgrep-auto-save-buffer t))
+
+
+;; ===========
+;; Web browser
+;; ===========
+
+
+;; EWW
+
+
+(with-eval-after-load 'eww
+  (when (eq system-type 'windows-nt)
+    (setq eww-download-directory
+          (expand-file-name "Downloads" (getenv "USERPROFILE")))))
+
+
+(with-eval-after-load 'shr
+  (setq shr-use-fonts nil
+        shr-inhibit-images t))
+
+
+;; External
+
+
+(setq search-engines
+      '(("wb". "https://www.wildberries.ru/catalog/0/search.aspx?search=%s")))
+
+
+(defun browse-url-or-search (query)
+  (interactive (list (read-string "Browse (WWW search): "
+                                  (when (use-region-p)
+                                    (prog1 (buffer-substring (region-beginning)
+                                                             (region-end))
+                                      (deactivate-mark)))
+                                  'browser-query-history)))
+  (let ((browse-url-browser-function (if (display-graphic-p)
+                                         'browse-url-default-browser
+                                       'eww-browse-url))
+        (ddg (concat (if (display-graphic-p)
+                         "https://duckduckgo.com"
+                       "https://html.duckduckgo.com/html/")
+                     "?q=%s")))
+    (cond ((string-match-p "^[a-zA-Z0-9]+://" query)
+           (browse-url query))
+          ((string-prefix-p "!" query)
+           (let* ((engine (cdr (assoc query search-engines
+                                      (lambda (a b) (string-prefix-p (format "!%s " a) b)))))
+                  (query (if engine
+                             (replace-regexp-in-string "^!.+? " "" query)
+                           query)))
+             (browse-url (format (or engine ddg) query))))
+          (t (browse-url (format ddg query))))))
+
+
+(setq ffap-url-fetcher
+      (lambda (x)
+        (browse-url-or-search x)
+        (add-to-history 'browser-query-history x)))
+
+
+;; ===================
+;; EN ⇔ RU translator
+;; ===================
+
+
+(defun translate-en-ru (query)
+  "Translate QUERY from english to russian (or vice versa)"
+  (interactive (list (or (and (use-region-p)
+                              (buffer-substring-no-properties
+                               (region-beginning)
+                               (region-end)))
+                         (read-string "Translate: " (word-at-point)))))
+  (let* ((default-directory "~")
+         (query-encoded (url-encode-url (replace-regexp-in-string "'" "" query)))
+         (query-message (propertize query 'face 'font-lock-constant-face))
+         (en-ru `((description . "from English to Russian")
+                  (command . ,(concat "bash -c \"curl -sL -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0' '%s"
+                                      "' | sed -rn '/span class=.trans/ {s:.*<span.*>(.*[^ ]) *<.span>.*:\\1:g ; p}'"
+                                      " | uniq | head -5\""))
+                  (link . ,(format "https://dictionary.cambridge.org/search/direct/?datasetsearch=english-russian&q=%s"
+                                   query-encoded))))
+         (ru-en `((description . "from Russian to English")
+                  (command . ,(concat "bash -c \"curl -sL '%s"
+                                      "' | grep -oP '(?<=class=.tl.>)[^<]+' | head -5 | tail -n +2\""))
+                  (link . ,(format "https://en.openrussian.org/ru/%s"
+                                   query-encoded))))
+         (preset (if (string-match "[a-zA-Z]" query)
+                     en-ru ru-en))
+         (link (cdr (assoc 'link preset)))
+         (command (format (cdr (assoc 'command preset)) link))
+         translation)
+    (message "%s =>\n%s"
+             query-message
+             (propertize "translating..." 'face 'shadow))
+    (setq translation (string-trim (shell-command-to-string command)))
+    (if (zerop (length translation))
+        (let ((gptel-backend mistral)
+              (gptel-model 'mistral-medium-latest))
+          (gptel-request
+              (format "Translate %s: %s"
+                      (cdr (assoc 'description preset))
+                      query)
+            :callback `(lambda (response _)
+                         (message "%s =>\n%s" ,query-message response))))
+      (message "%s =>\n%s" query-message translation))))
+
+
+;; ====================
+;; Cambridge dictionary
+;; ====================
+
+
+(defun camd (word)
+  "Retrieves word definitions from the Cambridge Dictionary"
+  (interactive (list (read-string "Find in Cambridge dictionary: "
+                                  (word-at-point))))
+  (let* ((query (propertize word 'face 'font-lock-constant-face))
+         (answer (progn
+                   (message "%s =>\n%s" query
+                            (propertize "searching dictionary..."
+                                        'face 'shadow))
+                   (shell-command-to-string
+                    (format "curl -sLA 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0' https://dictionary.cambridge.org/dictionary/english/%s | sed -e '0,/Meaning/ d' -e 's:<[^>]*>: :g; s:</[^>]*>: :g; s:  *: :g' -e '/^ *$/ d' -e '/<a/ d; /if(typeof/,$ d' -e '0,/login-sign-in/ d; /Add to word list/ d' -e '/SMART Vocabulary/,$ d' -e '/{ .src.: ..images/ d; /GettyImages/ d; /Thesaurus: / d; / / d; /on=/ d; /open.>/ d; /See more/ d; s:&#[0-9][0-9]*;::g; s: *[A-Z][0-9]* ::g; s: *\\[\\] *::g; s: ,:,:g; s: \\.:\\.:g; s:^ *::g' | sed  -e '/More examples Fewer examples/,$ d'"
+                            (downcase word))))))
+    (if (string-empty-p answer)
+        (message "Can't find definition of %s" query)
+      (message "%s =>\n%s" query answer))))
+
+
+;; ===============
+;; Man page reader
+;; ===============
+
+
+(with-eval-after-load 'man
+  (setq Man-support-remote-systems t))
+
+
+;; ===========
+;; ePub reader
+;; ===========
+
+
+(add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
+
+
+(with-eval-after-load 'nov
+  (setq nov-text-width 70)
+  (define-keymap :keymap nov-mode-map
+    "j" 'scroll-up-line
+    "k" 'scroll-down-line
+    "h" 'nov-previous-document
+    "l" 'nov-next-document
+    "p" 'nov-history-back
+    "n" 'nov-history-forward
+    "<down>" 'scroll-up-line
+    "<up>" 'scroll-down-line
+    "<left>" 'nov-previous-document
+    "<right>" 'nov-next-document))
+
+
+;; ===============
+;; LLM integration
+;; ===============
+
+
+(require 'gptel)
+
+
+(setf (gptel-get-backend "ChatGPT") nil)
+
+
+(setq openrouter (gptel-make-openai "OpenRouter"
+                   :host "openrouter.ai"
+                   :endpoint "/api/v1/chat/completions"
+                   :stream t
+                   :key 'openrouter-api-key
+                   :models '(deepseek/deepseek-r1-0528:free))
+      mistral (gptel-make-openai "MistralLeChat"
+                :host "api.mistral.ai"
+                :endpoint "/v1/chat/completions"
+                :protocol "https"
+                :key 'mistral-api-key
+                :models '(codestral-latest
+                          mistral-medium-latest))
+      gptel-backend mistral
+      gptel-model 'mistral-medium-latest
+      gptel--system-message "You are a large language model and a conversation partner. Respond concisely."
+      gptel--set-buffer-locally t
+      gptel-default-mode 'org-mode
+      gptel-prompt-prefix-alist '((org-mode . "* "))
+      gptel-track-media t
+      gptel-include-reasoning 'ignore
+      gptel-expert-commands t)
+
+
+;; The Chat
+
+
+(setq gptel-chat-buffer-name "*LLM-chat*")
+
+
+(defun gptel-chat ()
+  "\"Just drop me into LLM chat, now!\"
+Also grabs a selected region, if any."
+  (interactive)
+  (let* ((buffer-name gptel-chat-buffer-name)
+         (exists-p (get-buffer buffer-name))
+         (region (when (use-region-p)
+                   (prog1 (buffer-substring
+                           (region-beginning)
+                           (region-end))
+                     (deactivate-mark)))))
+    (gptel buffer-name nil region t)
+    (when (and region exists-p)
+      (with-current-buffer buffer-name
+        (end-of-buffer)
+        (insert " " region)))))
+
+
+(defun gptel-chat-setup ()
+  (when (string-prefix-p gptel-chat-buffer-name
+                         (buffer-name))
+    (setq-local gptel-backend openrouter
+                gptel-model 'deepseek/deepseek-r1-0528:free)))
+
+
+(add-hook 'gptel-mode-hook 'gptel-chat-setup)
+
+
+;; Enable "coder" model in programming modes
+
+
+(defun gptel-enable-code-model ()
+  (setq-local gptel-model 'codestral-latest))
+
+
+(dolist (x '(prog-mode-hook
+             conf-mode-hook
+             sgml-mode-hook
+             comint-mode-hook))
+  (add-hook x 'gptel-enable-code-model))
+
+
+;; Rewrite facility
+
+
+(with-eval-after-load 'gptel-rewrite
+  (require 'diff-mode)
+  (custom-set-faces
+   '(gptel-rewrite-highlight-face ((t (:inherit diff-added)))))
+  (define-keymap :keymap gptel-rewrite-actions-map
+    "=" 'gptel--rewrite-diff
+    "r" 'gptel--rewrite-iterate
+    "SPC" 'gptel--rewrite-accept
+    "m" 'gptel--rewrite-merge
+    "k" 'gptel--rewrite-reject))
+
+
 ;; ==========================
 ;; Statistics / combinatorics
 ;; ==========================
@@ -2943,104 +3223,6 @@ Example input:
        (defconst org-table--separator-space-post " "))
 
 
-;; ===============
-;; LLM integration
-;; ===============
-
-
-(require 'gptel)
-
-
-(setf (gptel-get-backend "ChatGPT") nil)
-
-
-(setq openrouter (gptel-make-openai "OpenRouter"
-                   :host "openrouter.ai"
-                   :endpoint "/api/v1/chat/completions"
-                   :stream t
-                   :key 'openrouter-api-key
-                   :models '(deepseek/deepseek-r1-0528:free))
-      mistral (gptel-make-openai "MistralLeChat"
-                :host "api.mistral.ai"
-                :endpoint "/v1/chat/completions"
-                :protocol "https"
-                :key 'mistral-api-key
-                :models '(codestral-latest
-                          mistral-medium-latest))
-      gptel-backend mistral
-      gptel-model 'mistral-medium-latest
-      gptel--system-message "You are a large language model and a conversation partner. Respond concisely."
-      gptel--set-buffer-locally t
-      gptel-default-mode 'org-mode
-      gptel-prompt-prefix-alist '((org-mode . "* "))
-      gptel-track-media t
-      gptel-include-reasoning 'ignore
-      gptel-expert-commands t)
-
-
-;; The Chat
-
-
-(setq gptel-chat-buffer-name "*LLM-chat*")
-
-
-(defun gptel-chat ()
-  "\"Just drop me into LLM chat, now!\"
-Also grabs a selected region, if any."
-  (interactive)
-  (let* ((buffer-name gptel-chat-buffer-name)
-         (exists-p (get-buffer buffer-name))
-         (region (when (use-region-p)
-                   (prog1 (buffer-substring
-                           (region-beginning)
-                           (region-end))
-                     (deactivate-mark)))))
-    (gptel buffer-name nil region t)
-    (when (and region exists-p)
-      (with-current-buffer buffer-name
-        (end-of-buffer)
-        (insert " " region)))))
-
-
-(defun gptel-chat-setup ()
-  (when (string-prefix-p gptel-chat-buffer-name
-                         (buffer-name))
-    (setq-local gptel-backend openrouter
-                gptel-model 'deepseek/deepseek-r1-0528:free)))
-
-
-(add-hook 'gptel-mode-hook 'gptel-chat-setup)
-
-
-;; Enable "coder" model in programming modes
-
-
-(defun gptel-enable-code-model ()
-  (setq-local gptel-model 'codestral-latest))
-
-
-(dolist (x '(prog-mode-hook
-             conf-mode-hook
-             sgml-mode-hook
-             comint-mode-hook))
-  (add-hook x 'gptel-enable-code-model))
-
-
-;; Rewrite facility
-
-
-(with-eval-after-load 'gptel-rewrite
-  (require 'diff-mode)
-  (custom-set-faces
-   '(gptel-rewrite-highlight-face ((t (:inherit diff-added)))))
-  (define-keymap :keymap gptel-rewrite-actions-map
-    "=" 'gptel--rewrite-diff
-    "r" 'gptel--rewrite-iterate
-    "SPC" 'gptel--rewrite-accept
-    "m" 'gptel--rewrite-merge
-    "k" 'gptel--rewrite-reject))
-
-
 ;; ===
 ;; VCS
 ;; ===
@@ -3234,9 +3416,6 @@ Also grabs a selected region, if any."
 (add-hook 'emacs-startup-hook 'project-forget-zombie-projects)
 
 
-;; Project root detection
-
-
 (defun project-try-file (dir)
   (cl-loop for pattern in '("pom.xml" ; Java
                             "*.iml"
@@ -3358,9 +3537,9 @@ Also grabs a selected region, if any."
   (advice-add x :around 'flymake-display-diagnostics-fix))
 
 
-;; ============================
-;; ElDoc (documentation viewer)
-;; ============================
+;; =====
+;; ElDoc
+;; =====
 
 
 (setq eldoc-echo-area-use-multiline-p nil)
@@ -3990,15 +4169,6 @@ Process .+
 (sql-set-product-feature 'sqlite :table-parser 'parse-sqlite-table)
 
 
-;; ===============
-;; Man page reader
-;; ===============
-
-
-(with-eval-after-load 'man
-  (setq Man-support-remote-systems t))
-
-
 ;; ===========
 ;; File server
 ;; ===========
@@ -4015,75 +4185,6 @@ Process .+
              (propertize (abbreviate-file-name default-directory)
                          'face 'bold-italic)
              (propertize socket 'face 'bold))))
-
-
-;; ===================
-;; EN ⇔ RU translator
-;; ===================
-
-
-(defun translate-en-ru (query)
-  "Translate QUERY from english to russian (or vice versa)"
-  (interactive (list (or (and (use-region-p)
-                              (buffer-substring-no-properties
-                               (region-beginning)
-                               (region-end)))
-                         (read-string "Translate: " (word-at-point)))))
-  (let* ((default-directory "~")
-         (query-encoded (url-encode-url (replace-regexp-in-string "'" "" query)))
-         (query-message (propertize query 'face 'font-lock-constant-face))
-         (en-ru `((description . "from English to Russian")
-                  (command . ,(concat "bash -c \"curl -sL -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0' '%s"
-                                      "' | sed -rn '/span class=.trans/ {s:.*<span.*>(.*[^ ]) *<.span>.*:\\1:g ; p}'"
-                                      " | uniq | head -5\""))
-                  (link . ,(format "https://dictionary.cambridge.org/search/direct/?datasetsearch=english-russian&q=%s"
-                                   query-encoded))))
-         (ru-en `((description . "from Russian to English")
-                  (command . ,(concat "bash -c \"curl -sL '%s"
-                                      "' | grep -oP '(?<=class=.tl.>)[^<]+' | head -5 | tail -n +2\""))
-                  (link . ,(format "https://en.openrussian.org/ru/%s"
-                                   query-encoded))))
-         (preset (if (string-match "[a-zA-Z]" query)
-                     en-ru ru-en))
-         (link (cdr (assoc 'link preset)))
-         (command (format (cdr (assoc 'command preset)) link))
-         translation)
-    (message "%s =>\n%s"
-             query-message
-             (propertize "translating..." 'face 'shadow))
-    (setq translation (string-trim (shell-command-to-string command)))
-    (if (zerop (length translation))
-        (let ((gptel-backend mistral)
-              (gptel-model 'mistral-medium-latest))
-          (gptel-request
-              (format "Translate %s: %s"
-                      (cdr (assoc 'description preset))
-                      query)
-            :callback `(lambda (response _)
-                         (message "%s =>\n%s" ,query-message response))))
-      (message "%s =>\n%s" query-message translation))))
-
-
-;; ====================
-;; Cambridge dictionary
-;; ====================
-
-
-(defun camd (word)
-  "Retrieves word definitions from the Cambridge Dictionary"
-  (interactive (list (read-string "Find in Cambridge dictionary: "
-                                  (word-at-point))))
-  (let* ((query (propertize word 'face 'font-lock-constant-face))
-         (answer (progn
-                   (message "%s =>\n%s" query
-                            (propertize "searching dictionary..."
-                                        'face 'shadow))
-                   (shell-command-to-string
-                    (format "curl -sLA 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0' https://dictionary.cambridge.org/dictionary/english/%s | sed -e '0,/Meaning/ d' -e 's:<[^>]*>: :g; s:</[^>]*>: :g; s:  *: :g' -e '/^ *$/ d' -e '/<a/ d; /if(typeof/,$ d' -e '0,/login-sign-in/ d; /Add to word list/ d' -e '/SMART Vocabulary/,$ d' -e '/{ .src.: ..images/ d; /GettyImages/ d; /Thesaurus: / d; / / d; /on=/ d; /open.>/ d; /See more/ d; s:&#[0-9][0-9]*;::g; s: *[A-Z][0-9]* ::g; s: *\\[\\] *::g; s: ,:,:g; s: \\.:\\.:g; s:^ *::g' | sed  -e '/More examples Fewer examples/,$ d'"
-                            (downcase word))))))
-    (if (string-empty-p answer)
-        (message "Can't find definition of %s" query)
-      (message "%s =>\n%s" query answer))))
 
 
 ;; ===============
@@ -4122,109 +4223,3 @@ Process .+
           (setq-local capture-file-name capture-file-name))
         (message "Capturing video to file: %s"
                  (propertize capture-file-name 'face 'font-lock-constant-face))))))
-
-
-;; =======
-;; Fortune
-;; =======
-
-
-(setq fortune-file (expand-file-name "fortune.txt" user-emacs-directory))
-
-
-(defun fortune ()
-  (with-temp-buffer
-    (insert-file-contents fortune-file)
-    (goto-char (1+ (cl-random (point-max))))
-    (let* ((e (search-forward-regexp "^%$" nil t))
-           (e (if e (- e 2) (point-max))))
-      (goto-char e)
-      (let* ((s (search-backward-regexp "^%$" nil t))
-             (s (if s (+ 2 s) 1)))
-        (buffer-substring s e)))))
-
-
-(defun insert-fortune ()
-  (interactive)
-  (insert (fortune)))
-
-
-;; ===========
-;; Web browser
-;; ===========
-
-
-;; EWW
-
-
-(with-eval-after-load 'eww
-  (when (eq system-type 'windows-nt)
-    (setq eww-download-directory
-          (expand-file-name "Downloads" (getenv "USERPROFILE")))))
-
-
-(with-eval-after-load 'shr
-  (setq shr-use-fonts nil
-        shr-inhibit-images t))
-
-
-;; External
-
-
-(setq search-engines
-      '(("wb". "https://www.wildberries.ru/catalog/0/search.aspx?search=%s")))
-
-
-(defun browse-url-or-search (query)
-  (interactive (list (read-string "Browse (WWW search): "
-                                  (when (use-region-p)
-                                    (prog1 (buffer-substring (region-beginning)
-                                                             (region-end))
-                                      (deactivate-mark)))
-                                  'browser-query-history)))
-  (let ((browse-url-browser-function (if (display-graphic-p)
-                                         'browse-url-default-browser
-                                       'eww-browse-url))
-        (ddg (concat (if (display-graphic-p)
-                         "https://duckduckgo.com"
-                       "https://html.duckduckgo.com/html/")
-                     "?q=%s")))
-    (cond ((string-match-p "^[a-zA-Z0-9]+://" query)
-           (browse-url query))
-          ((string-prefix-p "!" query)
-           (let* ((engine (cdr (assoc query search-engines
-                                      (lambda (a b) (string-prefix-p (format "!%s " a) b)))))
-                  (query (if engine
-                             (replace-regexp-in-string "^!.+? " "" query)
-                           query)))
-             (browse-url (format (or engine ddg) query))))
-          (t (browse-url (format ddg query))))))
-
-
-(setq ffap-url-fetcher
-      (lambda (x)
-        (browse-url-or-search x)
-        (add-to-history 'browser-query-history x)))
-
-
-;; ===========
-;; ePub reader
-;; ===========
-
-
-(add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
-
-
-(with-eval-after-load 'nov
-  (setq nov-text-width 70)
-  (define-keymap :keymap nov-mode-map
-    "j" 'scroll-up-line
-    "k" 'scroll-down-line
-    "h" 'nov-previous-document
-    "l" 'nov-next-document
-    "p" 'nov-history-back
-    "n" 'nov-history-forward
-    "<down>" 'scroll-up-line
-    "<up>" 'scroll-down-line
-    "<left>" 'nov-previous-document
-    "<right>" 'nov-next-document))
