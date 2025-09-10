@@ -517,7 +517,7 @@
 (menu-bar-mode -1)
 
 
-;; Explicitly ask on shutdown
+;; Confirm shutdown explicitly
 
 
 (setq confirm-kill-emacs 'y-or-n-p)
