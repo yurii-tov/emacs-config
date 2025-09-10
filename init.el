@@ -4149,9 +4149,9 @@ Process .+
   (insert (fortune)))
 
 
-;; ============
-;; Web browsing
-;; ============
+;; ===========
+;; Web browser
+;; ===========
 
 
 ;; EWW
@@ -4168,7 +4168,7 @@ Process .+
         shr-inhibit-images t))
 
 
-;; GUI browser
+;; External
 
 
 (setq search-engines
