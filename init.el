@@ -1329,6 +1329,33 @@
 (require 'rect)
 
 
+;; Search
+
+
+(setq isearch-lazy-count t)
+
+
+(defun isearch-select-search-string ()
+  (interactive)
+  (isearch-done)
+  (set-mark (point))
+  (if isearch-forward
+      (funcall (if isearch-regexp
+                   #'search-backward-regexp
+                 #'search-backward)
+               isearch-string)
+    (funcall (if isearch-regexp
+                 #'search-forward-regexp
+               #'search-forward)
+             isearch-string)))
+
+
+(define-keymap :keymap isearch-mode-map
+  "M-w" 'isearch-toggle-word
+  "M-q" 'isearch-query-replace
+  "C-SPC" 'isearch-select-search-string)
+
+
 ;; Formatting
 
 
@@ -1756,35 +1783,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 (dolist (x '(flush-lines keep-lines))
   (advice-add x :around #'fix-flush-lines))
-
-
-;; =======
-;; Isearch
-;; =======
-
-
-(setq isearch-lazy-count t)
-
-
-(defun isearch-select-search-string ()
-  (interactive)
-  (isearch-done)
-  (set-mark (point))
-  (if isearch-forward
-      (funcall (if isearch-regexp
-                   #'search-backward-regexp
-                 #'search-backward)
-               isearch-string)
-    (funcall (if isearch-regexp
-                 #'search-forward-regexp
-               #'search-forward)
-             isearch-string)))
-
-
-(define-keymap :keymap isearch-mode-map
-  "M-w" 'isearch-toggle-word
-  "M-q" 'isearch-query-replace
-  "C-SPC" 'isearch-select-search-string)
 
 
 ;; ===================
