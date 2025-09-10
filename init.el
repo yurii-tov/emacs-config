@@ -1321,6 +1321,140 @@
             'dired-record-ido-wd)
 
 
+;; ====
+;; Find
+;; ====
+
+
+(setq find-ls-option '("-exec ls -ldh {} +" . "-ldh"))
+
+
+(defun find-dired-setup-buffer (f &rest args)
+  (let* ((working-directory (directory-file-name (car args)))
+         (name (file-name-base working-directory))
+         (existing (get-buffer name)))
+    (when (and existing
+               (equal (with-current-buffer existing
+                        (directory-file-name default-directory))
+                      working-directory)
+               (eq (with-current-buffer existing major-mode)
+                   'dired-mode))
+      (kill-buffer existing))
+    (apply f args)
+    (set (make-local-variable 'revert-buffer-function)
+         `(lambda (ignore-auto noconfirm)
+            (kill-buffer (current-buffer))
+            (apply #'find-dired ',args)))
+    (rename-buffer name t)))
+
+
+(advice-add 'find-dired :around #'find-dired-setup-buffer)
+
+
+(defun find-dired-dwim (f &rest args)
+  "Simplify most frequent scenario
+   (case-insensitive search using part of a file name)"
+  (let ((query (cadr args)))
+    (unless (string-prefix-p "-" query)
+      (setf (cadr args)
+            (format "-iname '*%s*'" query)))
+    (apply f args)))
+
+
+(advice-add 'find-dired :around #'find-dired-dwim)
+
+
+(defun find-dired-prevent-prompt-clutter (f &rest args)
+  "Set find-args to empty string, therefore prevent input prompt cluttering"
+  (apply f args)
+  (setq find-args ""))
+
+
+(advice-add 'find-dired :around #'find-dired-prevent-prompt-clutter)
+
+
+(defun find-dired-fix-prompt (f &rest xs)
+  "More consistent querying of user inputs:
+The search string is queried first, followed by the directory."
+  (interactive)
+  (let* ((prompt (format "Search for files: "))
+         (query (cadr xs))
+         (dir (car xs))
+         (query (if (called-interactively-p)
+                    (read-string prompt nil 'find-args-history)
+                  query))
+         (dir (if (called-interactively-p)
+                  (read-directory-name
+                   (format "Search for %s at: "
+                           (propertize (if (string-empty-p query)
+                                           "*" query)
+                                       'face 'success)))
+                dir)))
+    (funcall f dir query)))
+
+
+(advice-add 'find-dired :around 'find-dired-fix-prompt)
+
+
+;; =======
+;; Ripgrep
+;; =======
+
+
+(setq ripgrep (executable-find "rg")
+      ripgrep-arguments '("-uu"))
+
+
+(defun project-ripgrep (regexp)
+  (interactive (list (project--read-regexp)))
+  (let ((ripgrep-arguments nil))
+    (ripgrep-regexp regexp (project-root (project-current t)))))
+
+
+(when ripgrep
+  (keymap-set search-map "g" 'ripgrep-regexp)
+  (advice-add 'project-find-regexp :override 'project-ripgrep))
+
+
+(defun ripgrep-dired ()
+  "Collect the files into Dired buffer"
+  (interactive)
+  (let (result)
+    (save-excursion
+      (goto-line 4)
+      (end-of-line)
+      (while-let ((p (re-search-forward "^[^:]+:[0-9]" nil t)))
+        (cl-pushnew (buffer-substring-no-properties
+                     (line-beginning-position)
+                     (- p 2))
+                    result
+                    :test #'equal)))
+    (pop result)
+    (if result
+        (dired-other-window
+         (cons compilation-directory
+               (nreverse (mapcar #'file-relative-name result))))
+      (message "File list is empty"))))
+
+
+(defun ripgrep-setup ()
+  (setq-local compilation-scroll-output nil))
+
+
+(with-eval-after-load 'ripgrep
+  (define-keymap :keymap ripgrep-search-mode-map
+    "TAB" 'compilation-next-error
+    "<backtab>" 'compilation-previous-error
+    "d" 'ripgrep-dired
+    "n" 'next-error-no-select
+    "p" 'previous-error-no-select
+    "o" 'compilation-display-error
+    "e" 'wgrep-change-to-wgrep-mode)
+  (add-hook 'ripgrep-search-mode-hook
+            'ripgrep-setup)
+  (setq wgrep-auto-save-buffer t))
+
+
 ;; ===========
 ;; Text editor
 ;; ===========
@@ -2541,140 +2675,6 @@ reports termination status, kills the buffer"
 
 
 (keymap-set shell-mode-map "C-x u" 'shell-elevate)
-
-
-;; ====
-;; Find
-;; ====
-
-
-(setq find-ls-option '("-exec ls -ldh {} +" . "-ldh"))
-
-
-(defun find-dired-setup-buffer (f &rest args)
-  (let* ((working-directory (directory-file-name (car args)))
-         (name (file-name-base working-directory))
-         (existing (get-buffer name)))
-    (when (and existing
-               (equal (with-current-buffer existing
-                        (directory-file-name default-directory))
-                      working-directory)
-               (eq (with-current-buffer existing major-mode)
-                   'dired-mode))
-      (kill-buffer existing))
-    (apply f args)
-    (set (make-local-variable 'revert-buffer-function)
-         `(lambda (ignore-auto noconfirm)
-            (kill-buffer (current-buffer))
-            (apply #'find-dired ',args)))
-    (rename-buffer name t)))
-
-
-(advice-add 'find-dired :around #'find-dired-setup-buffer)
-
-
-(defun find-dired-dwim (f &rest args)
-  "Simplify most frequent scenario
-   (case-insensitive search using part of a file name)"
-  (let ((query (cadr args)))
-    (unless (string-prefix-p "-" query)
-      (setf (cadr args)
-            (format "-iname '*%s*'" query)))
-    (apply f args)))
-
-
-(advice-add 'find-dired :around #'find-dired-dwim)
-
-
-(defun find-dired-prevent-prompt-clutter (f &rest args)
-  "Set find-args to empty string, therefore prevent input prompt cluttering"
-  (apply f args)
-  (setq find-args ""))
-
-
-(advice-add 'find-dired :around #'find-dired-prevent-prompt-clutter)
-
-
-(defun find-dired-fix-prompt (f &rest xs)
-  "More consistent querying of user inputs:
-The search string is queried first, followed by the directory."
-  (interactive)
-  (let* ((prompt (format "Search for files: "))
-         (query (cadr xs))
-         (dir (car xs))
-         (query (if (called-interactively-p)
-                    (read-string prompt nil 'find-args-history)
-                  query))
-         (dir (if (called-interactively-p)
-                  (read-directory-name
-                   (format "Search for %s at: "
-                           (propertize (if (string-empty-p query)
-                                           "*" query)
-                                       'face 'success)))
-                dir)))
-    (funcall f dir query)))
-
-
-(advice-add 'find-dired :around 'find-dired-fix-prompt)
-
-
-;; =======
-;; Ripgrep
-;; =======
-
-
-(setq ripgrep (executable-find "rg")
-      ripgrep-arguments '("-uu"))
-
-
-(defun project-ripgrep (regexp)
-  (interactive (list (project--read-regexp)))
-  (let ((ripgrep-arguments nil))
-    (ripgrep-regexp regexp (project-root (project-current t)))))
-
-
-(when ripgrep
-  (keymap-set search-map "g" 'ripgrep-regexp)
-  (advice-add 'project-find-regexp :override 'project-ripgrep))
-
-
-(defun ripgrep-dired ()
-  "Collect the files into Dired buffer"
-  (interactive)
-  (let (result)
-    (save-excursion
-      (goto-line 4)
-      (end-of-line)
-      (while-let ((p (re-search-forward "^[^:]+:[0-9]" nil t)))
-        (cl-pushnew (buffer-substring-no-properties
-                     (line-beginning-position)
-                     (- p 2))
-                    result
-                    :test #'equal)))
-    (pop result)
-    (if result
-        (dired-other-window
-         (cons compilation-directory
-               (nreverse (mapcar #'file-relative-name result))))
-      (message "File list is empty"))))
-
-
-(defun ripgrep-setup ()
-  (setq-local compilation-scroll-output nil))
-
-
-(with-eval-after-load 'ripgrep
-  (define-keymap :keymap ripgrep-search-mode-map
-    "TAB" 'compilation-next-error
-    "<backtab>" 'compilation-previous-error
-    "d" 'ripgrep-dired
-    "n" 'next-error-no-select
-    "p" 'previous-error-no-select
-    "o" 'compilation-display-error
-    "e" 'wgrep-change-to-wgrep-mode)
-  (add-hook 'ripgrep-search-mode-hook
-            'ripgrep-setup)
-  (setq wgrep-auto-save-buffer t))
 
 
 ;; ===========
