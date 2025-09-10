@@ -3358,9 +3358,6 @@ Example input:
   (define-keymap :keymap vc-dir-mode-map
     "TAB" 'vc-dir-next-line
     "<backtab>" 'vc-dir-previous-line
-    "n" nil
-    "+" nil
-    "p" 'vc-pull
     "l" 'vc-print-root-log
     "s" 'vc-switch-branch
     "c" 'vc-create-branch
@@ -3372,9 +3369,6 @@ Example input:
   (define-keymap :keymap log-view-mode-map
     "j" 'vc-print-branch-log
     "w" 'log-view-copy-revision))
-
-
-(define-keymap :keymap vc-prefix-map "p" 'vc-pull "+" nil)
 
 
 ;; ========
