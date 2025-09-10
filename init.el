@@ -2779,9 +2779,7 @@ reports termination status, kills the buffer"
                       query)
             :callback `(lambda (response _)
                          (message "%s =>\n%s" ,query-message response))))
-      (display-message-or-buffer (format "%s =>\n%s"
-                                         query-message
-                                         translation)))))
+      (message "%s =>\n%s" query-message translation))))
 
 
 ;; ====================
@@ -2803,7 +2801,7 @@ reports termination status, kills the buffer"
                             (downcase word))))))
     (if (string-empty-p answer)
         (message "Can't find definition of %s" query)
-      (display-message-or-buffer (format "%s =>\n%s" query answer)))))
+      (message "%s =>\n%s" query answer))))
 
 
 ;; ===============
