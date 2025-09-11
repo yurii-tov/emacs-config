@@ -614,10 +614,7 @@
 (defun read-string-completing-history (f &rest args)
   (let* ((prompt (car args))
          (initial-input (cadr args))
-         (history-arg (caddr args))
-         (history-symbol (if (consp history-arg)
-                             (car history-arg)
-                           history-arg))
+         (history-symbol (or (car-safe (caddr args)) (caddr args)))
          (history (and (boundp history-symbol)
                        (symbol-value history-symbol))))
     (if (and history
@@ -2159,9 +2156,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 (defun read-string-shell-command (f &rest args)
   (let* ((history-arg (or (caddr args) 'shell-command-history))
-         (history-symbol (if (consp history-arg)
-                             (car history-arg)
-                           history-arg))
+         (history-symbol (or (car-safe history-arg) history-arg))
          (history (and (boundp history-symbol)
                        (symbol-value history-symbol))))
     (if history
