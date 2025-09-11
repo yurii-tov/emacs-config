@@ -3576,15 +3576,14 @@ Example input:
      (interactive)
      (let (p found)
        (save-excursion
-         (while
-             (and (setq p (funcall ',prop-change-fn (point)))
-                  (goto-char p)
-                  (let ((prop (get-text-property p 'face)))
-                    (not (setq found
-                               (if (listp prop)
-                                   (memq 'markdown-link-face prop)
-                                 (memq prop '(markdown-link-face
-                                              markdown-plain-url-face)))))))))
+         (while (and (setq p (funcall ',prop-change-fn (point)))
+                     (goto-char p)
+                     (let ((prop (get-text-property p 'face)))
+                       (not (setq found
+                                  (if (listp prop)
+                                      (memq 'markdown-link-face prop)
+                                    (memq prop '(markdown-link-face
+                                                 markdown-plain-url-face)))))))))
        (when found
          (goto-char p)
          (message (eldoc-url-at-point))))))
