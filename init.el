@@ -618,12 +618,12 @@
          (history-symbol (if (consp history-arg)
                              (car history-arg)
                            history-arg))
-         (history (and (not (memq history-symbol
+         (history (and (boundp history-symbol)
+                       (not (memq history-symbol
                                   '(string-rectangle-history
                                     junk-hist
                                     org-read-date-history
                                     transient--history)))
-                       (boundp history-symbol)
                        (symbol-value history-symbol))))
     (if history
         (completing-read prompt history nil nil initial-input history-symbol)
