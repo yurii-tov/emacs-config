@@ -615,7 +615,8 @@
   (let* ((prompt (car args))
          (initial-input (cadr args))
          (history-symbol (or (car-safe (caddr args)) (caddr args)))
-         (history (and (boundp history-symbol)
+         (history (and (not (eq history-symbol t))
+                       (boundp history-symbol)
                        (symbol-value history-symbol))))
     (if (and history
              (not (memq history-symbol
