@@ -432,12 +432,12 @@
 
 (setq-default mode-line-format
               `(" "
-                (:eval (if (member buffer-file-coding-system
-                                   '(utf-8-unix
-                                     prefer-utf-8-unix
-                                     undecided-unix
-                                     mule-utf-8-unix
-                                     no-conversion))
+                (:eval (if (memq buffer-file-coding-system
+                                 '(utf-8-unix
+                                   prefer-utf-8-unix
+                                   undecided-unix
+                                   mule-utf-8-unix
+                                   no-conversion))
                            ""
                          (format "%s " (propertize
                                         (symbol-name buffer-file-coding-system)
@@ -618,11 +618,11 @@
          (history-symbol (if (consp history-arg)
                              (car history-arg)
                            history-arg))
-         (history (and (not (member history-symbol
-                                    '(string-rectangle-history
-                                      junk-hist
-                                      org-read-date-history
-                                      transient--history)))
+         (history (and (not (memq history-symbol
+                                  '(string-rectangle-history
+                                    junk-hist
+                                    org-read-date-history
+                                    transient--history)))
                        (boundp history-symbol)
                        (symbol-value history-symbol))))
     (if history
@@ -3582,9 +3582,9 @@ Example input:
                   (let ((prop (get-text-property p 'face)))
                     (not (setq found
                                (if (listp prop)
-                                   (member 'markdown-link-face prop)
-                                 (member prop '(markdown-link-face
-                                                markdown-plain-url-face)))))))))
+                                   (memq 'markdown-link-face prop)
+                                 (memq prop '(markdown-link-face
+                                              markdown-plain-url-face)))))))))
        (when found
          (goto-char p)
          (message (eldoc-url-at-point))))))
