@@ -4100,10 +4100,12 @@ Process .+
           'sql-setup-output-preprocessing)
 
 
-;; Alternative table view
+;; Keybindings
 
 
-(keymap-set sql-interactive-mode-map "C-c C-p" 'org-table-to-list)
+(define-keymap :keymap sql-interactive-mode-map
+  "C-c C-p" 'org-table-to-list
+  "TAB" 'completion-at-point)
 
 
 ;; Interbase
