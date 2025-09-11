@@ -619,13 +619,13 @@
                              (car history-arg)
                            history-arg))
          (history (and (boundp history-symbol)
-                       (not (memq history-symbol
-                                  '(string-rectangle-history
-                                    junk-hist
-                                    org-read-date-history
-                                    transient--history)))
                        (symbol-value history-symbol))))
-    (if history
+    (if (and history
+             (not (memq history-symbol
+                        '(string-rectangle-history
+                          junk-hist
+                          org-read-date-history
+                          transient--history))))
         (completing-read prompt history nil nil initial-input history-symbol)
       (apply f args))))
 
