@@ -70,6 +70,8 @@ Real knowledge is to know the extent of one’s ignorance.
 As a rule, software systems do not work well until they have been used, and have failed repeatedly, in real applications.
 -- Dave Parnas
 %
+Time spent in sharpening the axe may well be spared from swinging it.
+%
 The art of programming is the art of organizing complexity.
 -- Edsger Dijkstra
 %
