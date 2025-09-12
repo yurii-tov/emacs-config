@@ -457,7 +457,7 @@
                                    (t "")))))
                 ,(unless (and (not window-system) (eq system-type 'windows-nt))
                    '(:eval (if (get-buffer-process (current-buffer))
-                               (propertize "• " 'face 'warning)
+                               (propertize "• " 'face 'success)
                              "")))
                 ,(propertize "%b" 'face 'mode-line-buffer-id)
                 ,(propertize " %l:%C" 'face 'shadow)
