@@ -2819,18 +2819,7 @@ reports termination status, kills the buffer"
 
 
 (with-eval-after-load 'nov
-  (setq nov-text-width 70)
-  (define-keymap :keymap nov-mode-map
-    "n" 'scroll-up-line
-    "p" 'scroll-down-line
-    "P" 'nov-previous-document
-    "N" 'nov-next-document
-    "l" 'nov-history-back
-    "L" 'nov-history-forward
-    "<down>" 'scroll-up-line
-    "<up>" 'scroll-down-line
-    "<left>" 'nov-previous-document
-    "<right>" 'nov-next-document))
+  (setq nov-text-width 70))
 
 
 ;; ===============
