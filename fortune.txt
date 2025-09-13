@@ -114,12 +114,6 @@ Thank goodness we don't have only serious problems, but ridiculous ones as well.
 It used to be the program's purpose to instruct our computers; it became the computer's purpose to execute our programs.
 -- Edsger Dijkstra
 %
-In the software business there are many enterprises for which it is not clear that science can help them; that science should try is not clear either.
--- Edsger Dijkstra
-%
-There is very little point in trying to urge the world to mend its ways as long as that world is still convinced that its ways are perfectly adequate.
--- Edsger Dijkstra
-%
 The key to understanding complicated things is knowing what not to look at.
 -- Gerald Jay Sussman
 %
