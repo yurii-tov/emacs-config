@@ -632,6 +632,9 @@
 ;; History
 
 
+(require 'savehist)
+
+
 (setq history-delete-duplicates t)
 
 
@@ -3348,6 +3351,12 @@ Example input:
   (let ((r (cadr (log-view-current-entry))))
     (kill-new r)
     (message "Copied to clipboard: %s" r)))
+
+
+;; Commit message history
+
+
+(add-to-list 'savehist-additional-variables 'log-edit-comment-ring)
 
 
 ;; Keybindings
