@@ -41,56 +41,17 @@
 ;; Site-specific config
 
 
-(progn (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
-       (load custom-file t))
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+
+
+(load custom-file t)
 
 
 (defun load-site-settings ()
-  (let ((site-file (expand-file-name "site.el" user-emacs-directory)))
-    (if (file-exists-p site-file)
-        (load-file site-file)
-      (with-temp-buffer (write-file site-file)))))
+  (load (expand-file-name "site.el" user-emacs-directory) t))
 
 
 (add-hook 'emacs-startup-hook 'load-site-settings)
-
-
-;; Text encoding
-
-
-(reset-language-environment)
-
-
-(when (eq system-type 'windows-nt)
-  (set-coding-system-priority 'cp1251-dos))
-
-
-(prefer-coding-system 'utf-8-unix)
-
-
-(setq default-input-method 'russian-computer)
-
-
-(defun windows-fix-args-encoding (f &rest args)
-  (let ((coding-system-for-write 'cp1251-unix))
-    (apply f args)))
-
-
-(when (eq system-type 'windows-nt)
-  (dolist (x '(compilation-start shell-command))
-    (advice-add x :around 'windows-fix-args-encoding)))
-
-
-;; History
-
-
-(setq savehist-additional-variables '(kill-ring
-                                      search-ring
-                                      regexp-search-ring)
-      history-delete-duplicates t)
-
-
-(add-hook 'emacs-startup-hook 'savehist-mode)
 
 
 ;; MSYS2
@@ -129,6 +90,40 @@
      'small-temporary-file-directory
      "/data/data/com.termux/cache/emacs/")
     (make-directory small-temporary-file-directory t)))
+
+
+;; ====================
+;; Language environment
+;; ====================
+
+
+(reset-language-environment)
+
+
+;; Text encoding
+
+
+(when (eq system-type 'windows-nt)
+  (set-coding-system-priority 'cp1251-dos))
+
+
+(prefer-coding-system 'utf-8-unix)
+
+
+(defun windows-fix-args-encoding (f &rest args)
+  (let ((coding-system-for-write 'cp1251-unix))
+    (apply f args)))
+
+
+(when (eq system-type 'windows-nt)
+  (dolist (x '(compilation-start shell-command))
+    (advice-add x :around 'windows-fix-args-encoding)))
+
+
+;; Input methods
+
+
+(setq default-input-method 'russian-computer)
 
 
 ;; ===========
@@ -629,6 +624,20 @@
 
 
 (advice-add 'read-string :around #'read-string-completing-history)
+
+
+;; =======
+;; History
+;; =======
+
+
+(setq savehist-additional-variables '(kill-ring
+                                      search-ring
+                                      regexp-search-ring)
+      history-delete-duplicates t)
+
+
+(add-hook 'emacs-startup-hook 'savehist-mode)
 
 
 ;; =======
