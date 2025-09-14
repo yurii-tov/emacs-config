@@ -567,9 +567,12 @@
 (add-hook 'emacs-startup-hook 'scratch-buffer-setup)
 
 
-;; =====================
-;; Minibuffer completion
-;; =====================
+;; ==========
+;; Minibuffer
+;; ==========
+
+
+;; Completions
 
 
 (fido-vertical-mode)
@@ -626,18 +629,21 @@
 (advice-add 'read-string :around #'read-string-completing-history)
 
 
-;; =======
 ;; History
-;; =======
 
 
-(setq savehist-additional-variables '(kill-ring
-                                      search-ring
-                                      regexp-search-ring)
-      history-delete-duplicates t)
+(setq history-delete-duplicates t)
 
 
 (add-hook 'emacs-startup-hook 'savehist-mode)
+
+
+;; =========
+;; Kill Ring
+;; =========
+
+
+(add-to-list 'savehist-additional-variables 'kill-ring)
 
 
 ;; =======
