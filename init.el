@@ -2244,26 +2244,12 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (when (and (get-buffer buffer-name)
                (get-buffer-process buffer-name))
       (let* ((dir (with-current-buffer buffer-name
-                    (abbreviate-file-name default-directory)))
-             (key (read-key
-                   (concat
-                    (format "The process is already running at %s.\n"
-                            (propertize dir 'face 'completions-annotations))
-                    "Choose: "
-                    (mapconcat (lambda (x)
-                                 (format "%s %s"
-                                         (propertize (car x)
-                                                     'face 'help-key-binding)
-                                         (cdr x)))
-                               '(("k" . "Kill it before running the new one")
-                                 ("n" . "Leave it as is, run the new one in another buffer")
-                                 ("any other" . "Do nothing"))
-                               "  ")))))
-        (cl-case key
-          (?k (kill-buffer buffer-name)
-              (sit-for 0.5))
-          (?n (setq buffer-name (generate-new-buffer-name buffer-name)))
-          (t (keyboard-quit)))))
+                    (abbreviate-file-name default-directory))))
+        (if (y-or-n-p (format "The process is already running at %s. Kill it?"
+                              (propertize dir 'face 'completions-annotations)))
+            (progn (kill-buffer buffer-name)
+                   (sit-for 0.5))
+          (setq buffer-name (generate-new-buffer-name buffer-name)))))
     (apply f command buffer-name (cddr args))))
 
 
