@@ -2215,9 +2215,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; ====================
 
 
-(setq async-shell-command-mode 'shell-mode)
-
-
 (defun asc-at-directory (command working-directory)
   (interactive (list (read-shell-command "Async shell command: ") nil))
   (let* ((command-colorized (propertize (reverse (string-truncate-left
@@ -2271,24 +2268,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (advice-add 'async-shell-command :around 'asc-setup-buffer)
-
-
-;; Histfile
-
-
-(defun asc-setup-histfile (r)
-  (let ((b (if (windowp r)
-               (window-buffer r)
-             (process-buffer r))))
-    (prog1 r
-      (with-current-buffer b
-        (setq-local comint-input-ring-file-name
-                    (comint-make-input-ring-file-name "shell"))
-        (when (zerop (ring-length comint-input-ring))
-          (comint-read-input-ring t))))))
-
-
-(advice-add 'async-shell-command :filter-return 'asc-setup-histfile)
 
 
 ;; Display the command and working directory
