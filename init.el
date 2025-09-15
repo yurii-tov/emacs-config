@@ -649,6 +649,15 @@
 (add-to-list 'savehist-additional-variables 'kill-ring)
 
 
+;; =====
+;; TRAMP
+;; =====
+
+
+(setq tramp-remote-path '(tramp-default-remote-path
+                          "/data/data/com.termux/files/usr/bin"))
+
+
 ;; =======
 ;; Buffers
 ;; =======
