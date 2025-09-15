@@ -1472,15 +1472,6 @@ The search string is queried first, followed by the directory."
   (setq wgrep-auto-save-buffer t))
 
 
-;; =====
-;; TRAMP
-;; =====
-
-
-(with-eval-after-load 'tramp
-  (add-to-list 'tramp-remote-path 'tramp-own-remote-path))
-
-
 ;; ===========
 ;; Text editor
 ;; ===========
