@@ -2608,9 +2608,6 @@ reports termination status, kills the buffer"
 ;; =====
 
 
-(require 'shell)
-
-
 (defun shell-find-same-dir-buffer (name)
   (let ((current-dir default-directory))
     (cl-find-if (lambda (x)
@@ -2696,7 +2693,8 @@ reports termination status, kills the buffer"
     (setq-local rootp (not rootp))))
 
 
-(keymap-set shell-mode-map "C-x u" 'shell-elevate)
+(with-eval-after-load 'shell
+  (keymap-set shell-mode-map "C-x u" 'shell-elevate))
 
 
 ;; ===========
