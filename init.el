@@ -2995,9 +2995,6 @@ Also grabs a selected region, if any."
 ;; ===========
 
 
-(require 'org)
-
-
 (setq org-startup-truncated nil
       org-adapt-indentation t)
 
@@ -3049,9 +3046,6 @@ Also grabs a selected region, if any."
 ;; Export
 
 
-(require 'ox-md)
-
-
 (setq org-export-with-section-numbers 0
       org-export-preserve-breaks t
       org-export-with-toc nil
@@ -3074,30 +3068,20 @@ Also grabs a selected region, if any."
     (org-ctrl-c-ctrl-c)))
 
 
-(keymap-set org-mode-map "C-c C-/" 'org-insert-checklist-status)
+;; Keybindings
 
 
-;; Blocks insertion
-
-
-(keymap-set org-mode-map "M-p" 'org-insert-structure-template)
+(with-eval-after-load 'org
+  (define-keymap :keymap org-mode-map
+    "C-c C-/" 'org-insert-checklist-status
+    "M-p" 'org-insert-structure-template))
 
 
 ;; Agenda
 
 
-(setq org-agenda-files (list org-directory))
-
-
-(defun try-switch-to-agenda (f &rest args)
-  (let ((agenda-buffer "*Org Agenda*"))
-    (if (get-buffer agenda-buffer)
-        (progn (switch-to-buffer agenda-buffer)
-               (org-agenda-redo-all))
-      (apply f args))))
-
-
-(advice-add 'org-agenda :around 'try-switch-to-agenda)
+(with-eval-after-load 'org
+  (setq org-agenda-files (list org-directory)))
 
 
 ;; Babel
