@@ -2349,7 +2349,7 @@ reports termination status, kills the buffer"
 (advice-add 'async-shell-command :around 'asc-handle-popup)
 
 
-;; Restart
+;; Restarting
 
 
 (defun asc-restart ()
