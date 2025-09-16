@@ -1515,6 +1515,10 @@ The search string is queried first, followed by the directory."
   "C-SPC" 'isearch-select-search-string)
 
 
+(dolist (x '(regexp-search-ring search-ring))
+  (add-to-list 'savehist-additional-variables x))
+
+
 ;; Formatting
 
 
