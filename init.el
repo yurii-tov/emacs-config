@@ -2349,6 +2349,23 @@ reports termination status, kills the buffer"
 (advice-add 'async-shell-command :around 'asc-handle-popup)
 
 
+;; Restart
+
+
+(defun asc-restart ()
+  (interactive)
+  (if-let* ((p (get-buffer-process (current-buffer)))
+            (c (car (last (process-command p)))))
+      (progn (kill-process p)
+             (sit-for 0.5)
+             (async-shell-command c (current-buffer)))
+    (message "The buffer doesn't have any process")))
+
+
+(with-eval-after-load 'shell
+  (keymap-set shell-command-mode-map "M-r" 'asc-restart))
+
+
 ;; ======
 ;; Comint
 ;; ======
