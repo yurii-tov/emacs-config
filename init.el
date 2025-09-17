@@ -44,10 +44,8 @@
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 
 
-(load custom-file t)
-
-
 (defun load-site-settings ()
+  (load custom-file t)
   (load (expand-file-name "site.el" user-emacs-directory) t))
 
 
