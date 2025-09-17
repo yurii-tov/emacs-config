@@ -1318,18 +1318,6 @@
   (advice-add x :around 'dired-propogate-hide-details))
 
 
-;; Copy remote files with scp
-
-
-(defun dired-copy-force-scp (f from to &rest args)
-  (apply f (append (mapcar (lambda (x) (replace-regexp-in-string "^/ssh" "/scp" x))
-                           (list from to))
-                   args)))
-
-
-(advice-add 'dired-copy-file :around #'dired-copy-force-scp)
-
-
 ;; Record IDO work directory
 
 
