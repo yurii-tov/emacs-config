@@ -90,15 +90,12 @@
     (make-directory small-temporary-file-directory t)))
 
 
-;; ====================
-;; Language environment
-;; ====================
+;; =============
+;; Text encoding
+;; =============
 
 
 (reset-language-environment)
-
-
-;; Text encoding
 
 
 (when (eq system-type 'windows-nt)
@@ -118,7 +115,9 @@
     (advice-add x :around 'windows-fix-args-encoding)))
 
 
+;; =============
 ;; Input methods
+;; =============
 
 
 (setq default-input-method 'russian-computer)
