@@ -115,14 +115,6 @@
     (advice-add x :around 'windows-fix-args-encoding)))
 
 
-;; =============
-;; Input methods
-;; =============
-
-
-(setq default-input-method 'russian-computer)
-
-
 ;; ===========
 ;; Keybindings
 ;; ===========
@@ -1471,6 +1463,12 @@ The search string is queried first, followed by the directory."
 
 
 (require 'rect)
+
+
+;; Input methods
+
+
+(setq default-input-method 'russian-computer)
 
 
 ;; Search
