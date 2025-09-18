@@ -206,6 +206,12 @@
   "C-x e" 'kmacro-edit-macro-repeat)
 
 
+;; Prog-mode
+
+
+(keymap-unset prog-mode-map "M-q")
+
+
 ;; Misc
 
 
@@ -266,17 +272,6 @@
   "C-c o" 'org-push
   "C-c O" 'org-pull
   "C-c w" 'watch-file)
-
-
-;; Prevent keybindings shadowing
-
-
-(defun prevent-key-shadowing ()
-  (dolist (x '("M-j" "M-s" "M-o" "M-q" "M-!"))
-    (keymap-local-unset x)))
-
-
-(add-hook 'after-change-major-mode-hook 'prevent-key-shadowing)
 
 
 ;; =============
@@ -803,7 +798,10 @@
 
 
 (with-eval-after-load 'ibuffer
-  (keymap-set ibuffer-mode-map "j" 'ibuffer-jump-to-filter-group))
+  (define-keymap :keymap ibuffer-mode-map
+    "M-j" nil
+    "M-o" nil
+    "j" 'ibuffer-jump-to-filter-group))
 
 
 ;; =====
@@ -3043,6 +3041,7 @@ Also grabs a selected region, if any."
 
 (with-eval-after-load 'org
   (define-keymap :keymap org-mode-map
+    "C-'" nil
     "C-c C-/" 'org-insert-checklist-status
     "M-p" 'org-insert-structure-template))
 
