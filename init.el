@@ -1462,9 +1462,6 @@ The search string is queried first, followed by the directory."
 ;; ===========
 
 
-(require 'rect)
-
-
 ;; Input methods
 
 
@@ -1591,6 +1588,9 @@ The search string is queried first, followed by the directory."
 
 
 ;; Enclosing into parenthesis (or similar)
+
+
+(require 'rect)
 
 
 (defun enclose-text (b1 b2 &optional lisp-style-p)
