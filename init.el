@@ -1528,14 +1528,6 @@ The search string is queried first, followed by the directory."
               css-indent-offset 2)
 
 
-(defun reindent-region (start end)
-  "Reindent selected region, untabify it, cleanup whitespaces"
-  (interactive (buffer-or-region))
-  (untabify start end)
-  (indent-region start end)
-  (whitespace-cleanup))
-
-
 (setq-default fill-column 80)
 
 
@@ -1574,7 +1566,10 @@ The search string is queried first, followed by the directory."
                  (if (buffer-modified-p)
                      (message "Reformatting with %s...Done" f)
                    (message "Already well-formatted")))
-        (call-interactively 'reindent-region)))))
+        (let ((bounds (buffer-or-region)))
+          (untabify (car bounds) (cadr bounds))
+          (indent-region (car bounds) (cadr bounds))
+          (whitespace-cleanup))))))
 
 
 ;; Overwriting
