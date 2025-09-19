@@ -1165,6 +1165,13 @@
       dired-kill-when-opening-new-dired-buffer t)
 
 
+(defun ls-lisp-force-options (r)
+  (prog1 r (setq ls-lisp-dirs-first t)))
+
+
+(advice-add 'ls-lisp-set-options :filter-return 'ls-lisp-force-options)
+
+
 (defun dired-archive ()
   (interactive)
   (let* ((output (file-truename (read-file-name "Add file(s) to archive: ")))
