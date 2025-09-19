@@ -1172,6 +1172,34 @@
 (advice-add 'ls-lisp-set-options :filter-return 'ls-lisp-force-options)
 
 
+;; Keybindings
+
+
+(with-eval-after-load 'dired
+  (define-keymap :keymap dired-mode-map
+    "w" 'copy-file-name-to-clipboard
+    "o" 'dired-display-file
+    "h" 'dired-hide-details-mode
+    "l" 'dired-up-directory
+    "a" 'dired-archive
+    "A" 'dired-extract-archive
+    "f" 'dired-flatten-directory
+    "s" 'dired-calculate-size
+    "S" 'dired-calculate-size-tree
+    "M" 'dired-mark-files-regexp
+    "c" 'dired-do-copy
+    "r" 'dired-do-rename
+    "k" 'dired-do-delete
+    "e" 'dired-toggle-read-only
+    "1" 'dired-do-chmod
+    "2" 'dired-do-chown
+    "3" 'dired-do-touch
+    "y" 'dired-do-symlink))
+
+
+;; Extra commands
+
+
 (defun dired-archive ()
   (interactive)
   (let* ((output (file-truename (read-file-name "Add file(s) to archive: ")))
@@ -1247,29 +1275,13 @@
   (dired-calculate-size t))
 
 
-(with-eval-after-load 'dired
-  (define-keymap :keymap dired-mode-map
-    "w" 'copy-file-name-to-clipboard
-    "o" 'dired-display-file
-    "h" 'dired-hide-details-mode
-    "l" 'dired-up-directory
-    "a" 'dired-archive
-    "A" 'dired-extract-archive
-    "f" 'dired-flatten-directory
-    "s" 'dired-calculate-size
-    "S" 'dired-calculate-size-tree
-    "M" 'dired-mark-files-regexp
-    "c" 'dired-do-copy
-    "r" 'dired-do-rename
-    "k" 'dired-do-delete
-    "e" 'dired-toggle-read-only
-    "1" 'dired-do-chmod
-    "2" 'dired-do-chown
-    "3" 'dired-do-touch
-    "y" 'dired-do-symlink))
+;; Auto-reverting
 
 
 (add-hook 'dired-mode-hook 'auto-revert-mode)
+
+
+;; Colourful listing
 
 
 (defun dired-colorize ()
@@ -1282,6 +1294,9 @@
 (add-hook 'dired-after-readin-hook 'dired-colorize)
 
 
+;; Suppress ffap
+
+
 (defun dired-disable-ffap ()
   (setq-local ido-use-filename-at-point nil))
 
@@ -1289,7 +1304,7 @@
 (add-hook 'dired-mode-hook 'dired-disable-ffap)
 
 
-;; Hide details
+;; Details hiding
 
 
 (defvar *dired-hide-details-p* t)
@@ -1312,7 +1327,7 @@
   (advice-add x :around 'dired-propogate-hide-details))
 
 
-;; Record IDO work directory
+;; IDO work directory recording
 
 
 (defun dired-record-ido-wd (f &rest args)
