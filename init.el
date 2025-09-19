@@ -234,7 +234,7 @@
   "M-9" 'enclose-text-parenthesis
   "M-0" 'enclose-text-square-brackets
   "M-)" 'enclose-text-curly-brackets
-  "M-i" 'pretty-print-buffer
+  "M-i" 'reformat-buffer
   "M-u" 'force-revert-buffer
   "M-j" 'switch-to-buffer
   "M-`" 'shell
@@ -1536,12 +1536,12 @@ The search string is queried first, followed by the directory."
   (fill-region start end 'full))
 
 
-(setq pretty-printers
+(setq reformat-commands
       '((js-json-mode . json-pretty-print-buffer)
         (rust-mode . rust-format-buffer)))
 
 
-(defun pretty-print-buffer (&optional command)
+(defun reformat-buffer (&optional command)
   (interactive)
   (if command
       (let ((shell-file-name "sh")
@@ -1559,7 +1559,7 @@ The search string is queried first, followed by the directory."
                 (erase-buffer)
                 (insert pprinted)
                 (goto-char p))))))
-    (let ((f (cdr (assoc major-mode pretty-printers))))
+    (let ((f (cdr (assoc major-mode reformat-commands))))
       (if (and f (not (use-region-p)))
           (progn (message "Reformatting with %s..." f)
                  (apply f nil)
@@ -3385,7 +3385,7 @@ Example input:
                      (when (zerop (shell-command command))
                        (message "%sDone" msg))))
           ((executable-find "prettier")
-           (prettier-pprint-folder default-directory))
+           (prettier-reformat-folder default-directory))
           (t (error "There is no formatting tools available")))))
 
 
@@ -3598,18 +3598,18 @@ Example input:
 (setq clang-format (executable-find "clang-format"))
 
 
-(defun clang-pretty-print-buffer ()
+(defun clang-reformat-buffer ()
   (interactive)
   (let* ((extension (or (file-name-extension (or (buffer-file-name) ""))
                         (replace-regexp-in-string "-mode" "" (symbol-name major-mode))))
          (style "'{IndentWidth: 4}'"))
-    (pretty-print-buffer
+    (reformat-buffer
      (format "%s --assume-filename=.%s --style=%s" clang-format extension style))))
 
 
 (when clang-format
   (dolist (x '(c-mode java-mode js-mode))
-    (add-to-list 'pretty-printers (cons x 'clang-pretty-print-buffer))))
+    (add-to-list 'reformat-commands (cons x 'clang-reformat-buffer))))
 
 
 ;; ========
@@ -3639,7 +3639,7 @@ Example input:
           (write-file config-file))))))
 
 
-(defun prettier-pprint-folder (directory)
+(defun prettier-reformat-folder (directory)
   (interactive "DReformat files in: ")
   (let ((default-directory directory)
         (pattern (if current-prefix-arg
@@ -3650,7 +3650,8 @@ Example input:
     (shell-command (format "prettier --write --no-color --ignore-unknown %s" pattern))))
 
 
-(defun prettier-pprint-buffer ()
+(defun prettier ()
+  "Reformat current buffer with Prettier"
   (interactive)
   (let* ((fname (buffer-file-name))
          (default-directory "~")
@@ -3670,7 +3671,7 @@ Example input:
                                                       (1- (search-forward ">"))))
                                   "|")))
                             :test #'equal))))
-    (pretty-print-buffer
+    (reformat-buffer
      (format
       "prettier --no-color %s"
       (cond (fname (format "--stdin-filepath file.%s"
@@ -3682,7 +3683,7 @@ Example input:
 (when (executable-find "prettier")
   (prettier-create-config)
   (dolist (m '(js-mode java-mode mhtml-mode html-mode css-mode))
-    (add-to-list 'pretty-printers (cons m 'prettier-pprint-buffer))))
+    (add-to-list 'reformat-commands (cons m 'prettier))))
 
 
 ;; ===
@@ -3697,14 +3698,13 @@ Example input:
 (setq xmllint (executable-find "xmllint"))
 
 
-(defun xml-pretty-print-buffer ()
+(defun xml-reformat-buffer ()
   (interactive)
-  (pretty-print-buffer (format "%s --format -" xmllint)))
+  (reformat-buffer (format "%s --format -" xmllint)))
 
 
 (when xmllint
-  (add-to-list 'pretty-printers
-               '(sgml-mode . xml-pretty-print-buffer)))
+  (add-to-list 'reformat-commands '(sgml-mode . xml-reformat-buffer)))
 
 
 ;; ==========
