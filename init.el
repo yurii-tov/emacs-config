@@ -1536,43 +1536,44 @@ The search string is queried first, followed by the directory."
   (fill-region start end 'full))
 
 
+(defun reformat-buffer (command)
+  (let ((shell-file-name "sh")
+        (p (point))
+        (b (current-buffer))
+        (s (buffer-substring-no-properties
+            (point-min) (point-max))))
+    (with-temp-buffer
+      (insert s)
+      (shell-command-on-region (point-min) (point-max) command nil t)
+      (let ((pprinted (buffer-substring-no-properties
+                       (point-min) (point-max))))
+        (with-current-buffer b
+          (unless (string-equal pprinted s)
+            (erase-buffer)
+            (insert pprinted)
+            (goto-char p)))))))
+
+
 (setq reformat-commands
       '((js-json-mode . json-pretty-print-buffer)
         (rust-mode . rust-format-buffer)))
 
 
-(defun reformat (&optional command)
+(defun reformat ()
   "Reformats the buffer with appropriate command from `reformat-commands'.
-If no command found, or region is selected, falls back to simple reindent/cleanup.
-If COMMAND provided, reformats the buffer with it."
+If no command found, or region is selected, falls back to simple reindent/cleanup."
   (interactive)
-  (if command
-      (let ((shell-file-name "sh")
-            (p (point))
-            (b (current-buffer))
-            (s (buffer-substring-no-properties
-                (point-min) (point-max))))
-        (with-temp-buffer
-          (insert s)
-          (shell-command-on-region (point-min) (point-max) command nil t)
-          (let ((pprinted (buffer-substring-no-properties
-                           (point-min) (point-max))))
-            (with-current-buffer b
-              (unless (string-equal pprinted s)
-                (erase-buffer)
-                (insert pprinted)
-                (goto-char p))))))
-    (if-let ((f (cdr (assoc major-mode reformat-commands)))
-             ((not (use-region-p))))
-        (progn (message "Reformatting with %s..." f)
-               (apply f nil)
-               (if (buffer-modified-p)
-                   (message "Reformatting with %s...Done" f)
-                 (message "Already well-formatted")))
-      (let ((bounds (buffer-or-region)))
-        (untabify (car bounds) (cadr bounds))
-        (indent-region (car bounds) (cadr bounds))
-        (whitespace-cleanup)))))
+  (if-let ((f (cdr (assoc major-mode reformat-commands)))
+           ((not (use-region-p))))
+      (progn (message "Reformatting with %s..." f)
+             (apply f nil)
+             (if (buffer-modified-p)
+                 (message "Reformatting with %s...Done" f)
+               (message "Already well-formatted")))
+    (let ((bounds (buffer-or-region)))
+      (untabify (car bounds) (cadr bounds))
+      (indent-region (car bounds) (cadr bounds))
+      (whitespace-cleanup))))
 
 
 ;; Overwriting
@@ -3610,7 +3611,7 @@ Example input:
   (let* ((extension (or (file-name-extension (or (buffer-file-name) ""))
                         (replace-regexp-in-string "-mode" "" (symbol-name major-mode))))
          (style "'{IndentWidth: 4}'"))
-    (reformat
+    (reformat-buffer
      (format "%s --assume-filename=.%s --style=%s" clang-format extension style))))
 
 
@@ -3678,7 +3679,7 @@ Example input:
                                                       (1- (search-forward ">"))))
                                   "|")))
                             :test #'equal))))
-    (reformat
+    (reformat-buffer
      (format
       "prettier --no-color %s"
       (cond (fname (format "--stdin-filepath file.%s"
@@ -3707,7 +3708,7 @@ Example input:
 
 (defun xml-reformat-buffer ()
   (interactive)
-  (reformat (format "%s --format -" xmllint)))
+  (reformat-buffer (format "%s --format -" xmllint)))
 
 
 (when xmllint
