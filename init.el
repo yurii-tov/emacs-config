@@ -234,7 +234,7 @@
   "M-9" 'enclose-text-parenthesis
   "M-0" 'enclose-text-square-brackets
   "M-)" 'enclose-text-curly-brackets
-  "M-i" 'reformat-buffer
+  "M-i" 'reformat
   "M-u" 'force-revert-buffer
   "M-j" 'switch-to-buffer
   "M-`" 'shell
@@ -1541,7 +1541,7 @@ The search string is queried first, followed by the directory."
         (rust-mode . rust-format-buffer)))
 
 
-(defun reformat-buffer (&optional command)
+(defun reformat (&optional command)
   "Reformats the buffer with appropriate command from `reformat-commands'.
 If no command found, or region is selected, falls back to simple reindent/cleanup.
 With shell COMMAND provided, uses it to reformat the buffer."
@@ -3610,7 +3610,7 @@ Example input:
   (let* ((extension (or (file-name-extension (or (buffer-file-name) ""))
                         (replace-regexp-in-string "-mode" "" (symbol-name major-mode))))
          (style "'{IndentWidth: 4}'"))
-    (reformat-buffer
+    (reformat
      (format "%s --assume-filename=.%s --style=%s" clang-format extension style))))
 
 
@@ -3678,7 +3678,7 @@ Example input:
                                                       (1- (search-forward ">"))))
                                   "|")))
                             :test #'equal))))
-    (reformat-buffer
+    (reformat
      (format
       "prettier --no-color %s"
       (cond (fname (format "--stdin-filepath file.%s"
@@ -3707,7 +3707,7 @@ Example input:
 
 (defun xml-reformat-buffer ()
   (interactive)
-  (reformat-buffer (format "%s --format -" xmllint)))
+  (reformat (format "%s --format -" xmllint)))
 
 
 (when xmllint
