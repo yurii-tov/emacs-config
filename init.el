@@ -1544,7 +1544,7 @@ The search string is queried first, followed by the directory."
 (defun reformat (&optional command)
   "Reformats the buffer with appropriate command from `reformat-commands'.
 If no command found, or region is selected, falls back to simple reindent/cleanup.
-With shell COMMAND provided, uses it to reformat the buffer."
+If COMMAND provided, reformats the buffer with it."
   (interactive)
   (if command
       (let ((shell-file-name "sh")
