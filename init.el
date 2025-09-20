@@ -3359,6 +3359,10 @@ Example input:
     "w" 'log-view-copy-revision))
 
 
+(with-eval-after-load 'log-edit
+  (keymap-unset log-edit-mode-map "M-s"))
+
+
 ;; ========
 ;; Projects
 ;; ========
