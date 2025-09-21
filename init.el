@@ -179,7 +179,6 @@
 (define-keymap :keymap project-prefix-map
   "/" 'project-switch-project
   "SPC" 'project-dired
-  "i" 'project-reformat
   "a" 'project-async-shell-command)
 
 
@@ -3377,24 +3376,7 @@ Example input:
         (project-vc-dir "View VCS status")
         (project-shell "Shell")
         (project-async-shell-command "Run async shell command")
-        (project-compile "Compile")
-        (project-reformat "Reformat project files")))
-
-
-(defun project-reformat ()
-  (interactive)
-  (let* ((default-directory (project-root (project-current t)))
-         (command (cdr (cl-find-if (lambda (x) (file-exists-p (car x)))
-                                   '(("Cargo.toml" . "cargo fmt"))))))
-    (cond (command (let ((msg (format "Running %s on %s..."
-                                      (propertize command 'face 'success)
-                                      (abbreviate-file-name default-directory))))
-                     (message msg)
-                     (when (zerop (shell-command command))
-                       (message "%sDone" msg))))
-          ((executable-find "prettier")
-           (prettier-reformat-folder default-directory))
-          (t (error "There is no formatting tools available")))))
+        (project-compile "Compile")))
 
 
 (add-hook 'emacs-startup-hook 'project-forget-zombie-projects)
@@ -3645,17 +3627,6 @@ Example input:
           (insert (json-encode config))
           (json-pretty-print-buffer)
           (write-file config-file))))))
-
-
-(defun prettier-reformat-folder (directory)
-  (interactive "DReformat files in: ")
-  (let ((default-directory directory)
-        (pattern (if current-prefix-arg
-                     (read-string "Pattern: " "./*")
-                   "./*")))
-    (message "Formatting '%s' with Prettier..."
-             (abbreviate-file-name directory))
-    (shell-command (format "prettier --write --no-color --ignore-unknown %s" pattern))))
 
 
 (defun prettier ()
