@@ -1562,15 +1562,14 @@ Optionally, formats the buffer with COMMAND (if provided)"
                 (goto-char p))))))
     (if-let ((f (cdr (assoc major-mode format-buffer-functions))))
         (progn (message "Formatting buffer...")
-               (apply f nil)
+               (funcall f)
                (message
                 (if (buffer-modified-p)
                     "Formatting buffer...Done"
                   "Already well-formatted")))
-      (let ((bounds (buffer-or-region)))
-        (untabify (car bounds) (cadr bounds))
-        (indent-region (car bounds) (cadr bounds))
-        (whitespace-cleanup)))))
+      (deactivate-mark)
+      (whitespace-cleanup)
+      (indent-region (point-min) (point-max)))))
 
 
 ;; Overwriting
