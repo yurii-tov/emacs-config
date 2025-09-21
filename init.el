@@ -233,7 +233,7 @@
   "M-9" 'enclose-text-parenthesis
   "M-0" 'enclose-text-square-brackets
   "M-)" 'enclose-text-curly-brackets
-  "M-i" 'reformat
+  "M-i" 'format-buffer
   "M-u" 'force-revert-buffer
   "M-j" 'switch-to-buffer
   "M-`" 'shell
@@ -1535,44 +1535,42 @@ The search string is queried first, followed by the directory."
   (fill-region start end 'full))
 
 
-(defun format-buffer (command)
-  (let ((shell-file-name "sh")
-        (p (point))
-        (b (current-buffer))
-        (s (buffer-substring-no-properties
-            (point-min) (point-max))))
-    (with-temp-buffer
-      (insert s)
-      (shell-command-on-region (point-min) (point-max) command nil t)
-      (let ((pprinted (buffer-substring-no-properties
-                       (point-min) (point-max))))
-        (with-current-buffer b
-          (unless (string-equal pprinted s)
-            (erase-buffer)
-            (insert pprinted)
-            (goto-char p)))))))
-
-
 (setq format-buffer-functions
       '((js-json-mode . json-pretty-print-buffer)
         (rust-mode . rust-format-buffer)))
 
 
-(defun reformat ()
-  "Reformats the buffer with appropriate command from `format-buffer-functions'.
-If no command found, or region is selected, falls back to simple reindent/cleanup."
+(defun format-buffer (&optional command)
+  "Formats current buffer with suitable function from `format-buffer-functions', using reindent/cleanup as fallback.
+Optionally, formats the buffer with COMMAND (if provided)"
   (interactive)
-  (if-let ((f (cdr (assoc major-mode format-buffer-functions)))
-           ((not (use-region-p))))
-      (progn (message "Reformatting with %s..." f)
-             (apply f nil)
-             (if (buffer-modified-p)
-                 (message "Reformatting with %s...Done" f)
-               (message "Already well-formatted")))
-    (let ((bounds (buffer-or-region)))
-      (untabify (car bounds) (cadr bounds))
-      (indent-region (car bounds) (cadr bounds))
-      (whitespace-cleanup))))
+  (if command
+      (let ((shell-file-name "sh")
+            (p (point))
+            (b (current-buffer))
+            (s (buffer-substring-no-properties
+                (point-min) (point-max))))
+        (with-temp-buffer
+          (insert s)
+          (shell-command-on-region (point-min) (point-max) command nil t)
+          (let ((pprinted (buffer-substring-no-properties
+                           (point-min) (point-max))))
+            (with-current-buffer b
+              (unless (string-equal pprinted s)
+                (erase-buffer)
+                (insert pprinted)
+                (goto-char p))))))
+    (if-let ((f (cdr (assoc major-mode format-buffer-functions))))
+        (progn (message "Formatting buffer...")
+               (apply f nil)
+               (message
+                (if (buffer-modified-p)
+                    "Formatting buffer...Done"
+                  "Already well-formatted")))
+      (let ((bounds (buffer-or-region)))
+        (untabify (car bounds) (cadr bounds))
+        (indent-region (car bounds) (cadr bounds))
+        (whitespace-cleanup)))))
 
 
 ;; Overwriting
@@ -3630,7 +3628,7 @@ Example input:
 
 
 (defun prettier ()
-  "Reformat current buffer with Prettier"
+  "Format current buffer with Prettier"
   (interactive)
   (let* ((fname (buffer-file-name))
          (default-directory "~")
