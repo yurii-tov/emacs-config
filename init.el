@@ -1535,7 +1535,7 @@ The search string is queried first, followed by the directory."
   (fill-region start end 'full))
 
 
-(defun reformat-buffer (command)
+(defun format-buffer (command)
   (let ((shell-file-name "sh")
         (p (point))
         (b (current-buffer))
@@ -1553,16 +1553,16 @@ The search string is queried first, followed by the directory."
             (goto-char p)))))))
 
 
-(setq reformat-commands
+(setq format-buffer-functions
       '((js-json-mode . json-pretty-print-buffer)
         (rust-mode . rust-format-buffer)))
 
 
 (defun reformat ()
-  "Reformats the buffer with appropriate command from `reformat-commands'.
+  "Reformats the buffer with appropriate command from `format-buffer-functions'.
 If no command found, or region is selected, falls back to simple reindent/cleanup."
   (interactive)
-  (if-let ((f (cdr (assoc major-mode reformat-commands)))
+  (if-let ((f (cdr (assoc major-mode format-buffer-functions)))
            ((not (use-region-p))))
       (progn (message "Reformatting with %s..." f)
              (apply f nil)
@@ -3588,18 +3588,18 @@ Example input:
 (setq clang-format (executable-find "clang-format"))
 
 
-(defun clang-reformat-buffer ()
+(defun clang-format-buffer ()
   (interactive)
   (let* ((extension (or (file-name-extension (or (buffer-file-name) ""))
                         (replace-regexp-in-string "-mode" "" (symbol-name major-mode))))
          (style "'{IndentWidth: 4}'"))
-    (reformat-buffer
+    (format-buffer
      (format "%s --assume-filename=.%s --style=%s" clang-format extension style))))
 
 
 (when clang-format
   (dolist (x '(c-mode java-mode js-mode))
-    (add-to-list 'reformat-commands (cons x 'clang-reformat-buffer))))
+    (add-to-list 'format-buffer-functions (cons x 'clang-format-buffer))))
 
 
 ;; ========
@@ -3650,7 +3650,7 @@ Example input:
                                                       (1- (search-forward ">"))))
                                   "|")))
                             :test #'equal))))
-    (reformat-buffer
+    (format-buffer
      (format
       "prettier --no-color %s"
       (cond (fname (format "--stdin-filepath file.%s"
@@ -3662,7 +3662,7 @@ Example input:
 (when (executable-find "prettier")
   (prettier-create-config)
   (dolist (m '(js-mode java-mode mhtml-mode html-mode css-mode))
-    (add-to-list 'reformat-commands (cons m 'prettier))))
+    (add-to-list 'format-buffer-functions (cons m 'prettier))))
 
 
 ;; ===
@@ -3677,13 +3677,13 @@ Example input:
 (setq xmllint (executable-find "xmllint"))
 
 
-(defun xml-reformat-buffer ()
+(defun xml-format-buffer ()
   (interactive)
-  (reformat-buffer (format "%s --format -" xmllint)))
+  (format-buffer (format "%s --format -" xmllint)))
 
 
 (when xmllint
-  (add-to-list 'reformat-commands '(sgml-mode . xml-reformat-buffer)))
+  (add-to-list 'format-buffer-functions '(sgml-mode . xml-format-buffer)))
 
 
 ;; ==========
