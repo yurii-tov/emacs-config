@@ -3731,6 +3731,10 @@ Example input:
 (setq cider-show-error-buffer nil)
 
 
+(with-eval-after-load 'cider-repl
+  (keymap-unset cider-repl-mode-map "M-s"))
+
+
 ;; ===========
 ;; Common lisp
 ;; ===========
