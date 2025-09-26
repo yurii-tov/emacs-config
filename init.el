@@ -173,6 +173,10 @@
   "d" 'diff-current-buffer)
 
 
+(with-eval-after-load 'diff-mode
+  (keymap-unset diff-mode-map "M-o"))
+
+
 ;; Project
 
 
