@@ -173,10 +173,6 @@
   "d" 'diff-current-buffer)
 
 
-(with-eval-after-load 'diff-mode
-  (keymap-unset diff-mode-map "M-o"))
-
-
 ;; Project
 
 
@@ -207,12 +203,6 @@
   "<f3>" 'kmacro-cycle-ring-previous
   "<f4>" 'kmacro-set-counter
   "C-x e" 'kmacro-edit-macro-repeat)
-
-
-;; Prog-mode
-
-
-(keymap-unset prog-mode-map "M-q")
 
 
 ;; Misc
@@ -275,6 +265,16 @@
   "C-c o" 'org-push
   "C-c O" 'org-pull
   "C-c w" 'watch-file)
+
+
+;; Conflicts
+
+
+(keymap-unset prog-mode-map "M-q")
+
+
+(with-eval-after-load 'diff-mode
+  (keymap-unset diff-mode-map "M-o"))
 
 
 ;; =============
