@@ -891,9 +891,13 @@
 ;; ===
 
 
-(progn (ido-mode 'files)
-       (ido-grid-mode)
-       (add-function :override read-file-name-function #'ido-read-file-name))
+(ido-mode 'files)
+
+
+(ido-grid-mode)
+
+
+(add-function :override read-file-name-function #'ido-read-file-name)
 
 
 (setq ido-enable-flex-matching t
