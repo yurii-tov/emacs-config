@@ -1256,7 +1256,7 @@
     (if (file-directory-p directory)
         (progn (kill-buffer)
                (find-dired directory ""))
-      (message "This command works only for directories"))))
+      (message "This command works only on directories"))))
 
 
 (defun dired-calculate-size (&optional tree-p)
