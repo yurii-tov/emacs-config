@@ -2240,6 +2240,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; Buffer
 
 
+(add-hook 'shell-command-mode-hook 'read-only-mode)
+
+
 (defun asc-make-buffer-name (command)
   (let ((max-chars 40))
     (format "*%s*"
@@ -2376,7 +2379,7 @@ reports termination status, kills the buffer"
 
 
 (with-eval-after-load 'shell
-  (keymap-set shell-command-mode-map "M-r" 'asc-restart))
+  (keymap-set shell-command-mode-map "g" 'asc-restart))
 
 
 ;; ======
