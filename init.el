@@ -2343,7 +2343,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (advice-add 'async-shell-command :around 'asc-handle-signal)
 
 
-;; Suppress popup
+;; Popup suppressing
 
 
 (defvar *asc-popup* nil)
@@ -2384,8 +2384,13 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (message "The buffer doesn't have any process")))
 
 
+;; Keybindings
+
+
 (with-eval-after-load 'shell
-  (keymap-set shell-command-mode-map "g" 'asc-restart))
+  (define-keymap :keymap shell-command-mode-map
+    "g" 'asc-restart
+    "q" 'quit-window))
 
 
 ;; ======
