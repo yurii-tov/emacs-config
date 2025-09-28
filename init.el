@@ -2294,12 +2294,26 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (advice-add 'async-shell-command :around 'asc-echo-startup-info)
 
 
-;; Termination
+;; Signals handling
 
 
-(defun asc-handle-termination (f &rest args)
-  "Handles command termination when in background:
-reports termination status, kills the buffer"
+(defun asc-handle-background-termination (buffer)
+  (let ((output (ignore-errors
+                  (with-current-buffer buffer
+                    (string-trim
+                     (buffer-substring-no-properties
+                      (max (progn (goto-char (point-min))
+                                  (end-of-line)
+                                  (1+ (point)))
+                           (- (point-max)
+                              1024))
+                      (point-max)))))))
+    (kill-buffer buffer)
+    (if (and output (not (string-empty-p output)))
+        (concat output "\n") "")))
+
+
+(defun asc-handle-signal (f &rest args)
   (let (r b)
     (prog1 (setq r (apply f args))
       (setq b (if (windowp r)
@@ -2310,32 +2324,23 @@ reports termination status, kills the buffer"
           (set-process-sentinel
            (get-process (get-buffer-process (current-buffer)))
            `(lambda (p e)
-              (read-only-mode -1)
-              (unless (member ,b (mapcar #'window-buffer (window-list)))
-                (message "%s%s `%s` at %s"
-                         (let ((output (ignore-errors
-                                         (with-current-buffer ,b
-                                           (string-trim
-                                            (buffer-substring
-                                             (max (progn (goto-char (point-min))
-                                                         (end-of-line)
-                                                         (1+ (point)))
-                                                  (- (point-max)
-                                                     1024))
-                                             (point-max)))))))
-                           (if (and output (not (string-empty-p output)))
-                               (concat output "\n") ""))
-                         (propertize (format "[%s]" (string-trim-right e))
-                                     'face (if (string-match "exited abnormally.*" e)
-                                               'error 'shadow))
-                         (propertize ,(car args)
-                                     'face 'success)
-                         (propertize ,(abbreviate-file-name default-directory)
-                                     'face 'completions-annotations))
-                (kill-buffer ,b)))))))))
+              (let ((info (format "%s `%s` at %s"
+                                  (propertize (format "[%s]" (string-trim-right e))
+                                              'face 'shadow)
+                                  (propertize ,(car args)
+                                              'face 'success)
+                                  (propertize ,(abbreviate-file-name default-directory)
+                                              'face 'completions-annotations))))
+                (if (member (car (string-split e)) '("stopped" "run"))
+                    (message info)
+                  (read-only-mode -1)
+                  (message "%s%s"
+                           (if (member ,b (mapcar #'window-buffer (window-list)))
+                               "" (asc-handle-background-termination ,b))
+                           info))))))))))
 
 
-(advice-add 'async-shell-command :around 'asc-handle-termination)
+(advice-add 'async-shell-command :around 'asc-handle-signal)
 
 
 ;; Suppress popup
