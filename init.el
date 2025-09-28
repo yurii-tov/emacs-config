@@ -2310,6 +2310,7 @@ reports termination status, kills the buffer"
           (set-process-sentinel
            (get-process (get-buffer-process (current-buffer)))
            `(lambda (p e)
+              (read-only-mode -1)
               (unless (member ,b (mapcar #'window-buffer (window-list)))
                 (message "%s%s `%s` at %s"
                          (let ((output (ignore-errors
