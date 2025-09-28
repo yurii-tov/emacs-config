@@ -1057,13 +1057,14 @@
                             name))
                         (split-string
                          (shell-command-to-string
-                          (format "find %s -name .git -prune -o \\( -%sname %s -print \\)"
+                          (concat "find "
                                   (shell-quote-argument
                                    (if remote-prefix
                                        (string-remove-prefix remote-prefix dir) dir))
-                                  (if ido-case-fold "i" "")
+                                  (if ido-case-fold " -iname " " -name ")
                                   (shell-quote-argument
-                                   (concat (if prefix "" "*") file "*"))))
+                                   (concat (if prefix "" "*") file "*"))
+                                  " -print"))
                          "\n"))))
          filename d f
          res)
