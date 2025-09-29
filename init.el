@@ -952,7 +952,7 @@
 (setq ido-grid-mode-first-line '(" " ido-grid-mode-count))
 
 
-;; Auto-select buffer with completions
+;; Completions buffer
 
 
 (defun ido-jump-to-completions ()
@@ -1020,7 +1020,7 @@
 (keymap-set ido-file-dir-completion-map "C-v" 'ido-insert-path)
 
 
-;; Wide find file fixes
+;; Wide find file
 
 
 (defun ido-wide-find-file (&optional file)
@@ -1079,7 +1079,7 @@
     res))
 
 
-;; Work directory recording fixes
+;; Work directory recording
 
 
 (defun ido-fix-record-work-directory (f &rest args)
@@ -1135,7 +1135,7 @@
     dir))
 
 
-;; Grid mode fixes
+;; Grid mode
 
 
 (defun ido-fix-grid-mode (f &rest args)
