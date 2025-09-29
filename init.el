@@ -1005,13 +1005,11 @@
 
 (defun ido-dired-jump ()
   (interactive)
-  (run-with-timer
-   0.2 nil `(lambda () (dired-jump
-                        nil ,(expand-file-name
-                              (ido-name (car ido-matches))
-                              ido-current-directory))))
-  (setq ido-exit 'done ido-text nil)
-  (exit-minibuffer))
+  (let ((path (expand-file-name
+               (ido-name (car ido-matches))
+               ido-current-directory)))
+    (run-with-timer 0.05 nil `(lambda () (dired-jump nil ,path)))
+    (minibuffer-keyboard-quit)))
 
 
 ;; Wide find file
