@@ -998,7 +998,8 @@
                     (ido-name (car ido-matches))
                     ido-current-directory))
          (path (if (file-remote-p ido-path)
-                   (file-remote-p ido-path 'localname))))
+                   (file-remote-p ido-path 'localname)
+                 ido-path)))
     (kill-new path)
     (message "Copied to clipboard: %s" path)))
 
