@@ -932,7 +932,13 @@
   "M-f" nil
   "C-n" 'ido-grid-mode-next
   "C-p" 'ido-grid-mode-previous
-  "SPC" 'ido-wide-find-file-or-pop-dir)
+  "SPC" 'ido-wide-find-file-or-pop-dir
+  "C-v" 'ido-insert-path)
+
+
+(define-keymap :keymap ido-file-completion-map
+  "C-x u" 'ido-open-with-sudo
+  "C-o" 'ido-open-in-external-app)
 
 
 (setq ido-grid-mode-keys '(up down left right))
@@ -976,17 +982,11 @@
     (minibuffer-keyboard-quit)))
 
 
-(keymap-set ido-file-completion-map "C-o" 'ido-open-in-external-app)
-
-
 (defun ido-open-with-sudo ()
   (interactive)
   (ido-record-work-directory ido-current-directory)
   (setq ido-current-directory (sudoify ido-current-directory))
   (exit-minibuffer))
-
-
-(keymap-set ido-file-completion-map "C-x u" 'ido-open-with-sudo)
 
 
 (setq ido-work-directory-list-ignore-regexps '("[/|]sudo:"))
@@ -1016,9 +1016,6 @@
                    (insert path))
         (keyboard-quit)))
     (minibuffer-keyboard-quit)))
-
-
-(keymap-set ido-file-dir-completion-map "C-v" 'ido-insert-path)
 
 
 ;; Wide find file
