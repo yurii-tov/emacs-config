@@ -933,7 +933,7 @@
   "C-n" 'ido-grid-mode-next
   "C-p" 'ido-grid-mode-previous
   "SPC" 'ido-wide-find-file-or-pop-dir
-  "C-v" 'ido-insert-path)
+  "M-w" 'ido-copy-path)
 
 
 (define-keymap :keymap ido-file-completion-map
@@ -992,30 +992,15 @@
 (setq ido-work-directory-list-ignore-regexps '("[/|]sudo:"))
 
 
-(defun ido-insert-path ()
+(defun ido-copy-path ()
   (interactive)
-  (let* ((fname (expand-file-name (ido-name (car ido-matches))
-                                  ido-current-directory))
-         (fname (or (file-remote-p fname 'localname) fname))
-         (default-directory (or (file-remote-p default-directory 'localname)
-                                default-directory)))
-    (run-with-timer
-     0.1 nil
-     `(lambda () (let ((path (if (string-prefix-p ,default-directory ,fname)
-                                 (file-relative-name
-                                  (substring ,fname (length ,default-directory)))
-                               ,fname))
-                       (p2 (point))
-                       (p1 (save-excursion
-                             (or (and (re-search-backward
-                                       "\s" (line-beginning-position) t)
-                                      (1+ (point)))
-                                 (line-beginning-position)))))
-                   (when (string-prefix-p (buffer-substring p1 p2) path)
-                     (delete-region p1 p2))
-                   (insert path))
-        (keyboard-quit)))
-    (minibuffer-keyboard-quit)))
+  (let* ((ido-path (expand-file-name
+                    (ido-name (car ido-matches))
+                    ido-current-directory))
+         (path (if (file-remote-p ido-path)
+                   (file-remote-p ido-path 'localname))))
+    (kill-new path)
+    (message "Copied to clipboard: %s" path)))
 
 
 ;; Wide find file
