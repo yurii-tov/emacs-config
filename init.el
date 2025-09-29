@@ -910,7 +910,8 @@
       ido-grid-mode-min-rows 5
       ido-show-dot-for-dired t
       ido-report-no-match nil
-      ido-max-work-directory-list 100)
+      ido-max-work-directory-list 100
+      ido-work-directory-list-ignore-regexps '("[/|]sudo:"))
 
 
 ;; Styles
@@ -933,7 +934,8 @@
   "C-n" 'ido-grid-mode-next
   "C-p" 'ido-grid-mode-previous
   "SPC" 'ido-wide-find-file-or-pop-dir
-  "M-w" 'ido-copy-path)
+  "M-w" 'ido-copy-path
+  "C-x C-j" 'ido-dired-jump)
 
 
 (define-keymap :keymap ido-file-completion-map
@@ -989,9 +991,6 @@
   (exit-minibuffer))
 
 
-(setq ido-work-directory-list-ignore-regexps '("[/|]sudo:"))
-
-
 (defun ido-copy-path ()
   (interactive)
   (let* ((ido-path (expand-file-name
@@ -1002,6 +1001,17 @@
                  ido-path)))
     (kill-new path)
     (message "Copied to clipboard: %s" path)))
+
+
+(defun ido-dired-jump ()
+  (interactive)
+  (run-with-timer
+   0.2 nil `(lambda () (dired-jump
+                        nil ,(expand-file-name
+                              (ido-name (car ido-matches))
+                              ido-current-directory))))
+  (setq ido-exit 'done ido-text nil)
+  (exit-minibuffer))
 
 
 ;; Wide find file
