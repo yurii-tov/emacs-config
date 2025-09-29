@@ -929,9 +929,10 @@
 (define-keymap :keymap ido-file-dir-completion-map
   "C-f" nil
   "C-b" nil
+  "M-f" nil
   "C-n" 'ido-grid-mode-next
   "C-p" 'ido-grid-mode-previous
-  "SPC" 'ido-merge-work-directories)
+  "SPC" 'ido-wide-find-file-or-pop-dir)
 
 
 (setq ido-grid-mode-keys '(up down left right))
@@ -1024,52 +1025,25 @@
 
 
 (defun ido-wide-find-file (&optional file)
-  "Redefinition of the original ido-wide-find-file from ido.el:
-   Starts search immediately using current input"
+  "Overrides the original function"
   (interactive)
-  (unless file
-    (let ((enable-recursive-minibuffers t))
-      (setq file
-            (condition-case nil
-                (if (equal ido-text "") "*" ido-text)
-              (quit "")))))
-  (when (> (length file) 0)
-    (setq ido-use-merged-list t ido-try-merged-list 'wide)
-    (setq ido-exit 'refresh)
-    (setq ido-text-init file)
-    (when (equal file "*")
-      (setq ido-text-init ""))
-    (setq ido-rotate-temp t)
-    (exit-minibuffer)))
+  (setq ido-use-merged-list t ido-try-merged-list 'wide)
+  (setq ido-exit 'refresh)
+  (setq ido-text-init file)
+  (setq ido-text-init "")
+  (setq ido-rotate-temp t)
+  (exit-minibuffer))
 
 
 (defun ido-wide-find-dirs-or-files (dir file &optional prefix finddir)
-  "Overrides original function. Now it:
-   - Is able to search remote directories
-   - Finds files as well as directories
-   - Splits 'find' output with newline symbol"
-  (let* ((remote-prefix (file-remote-p dir))
-         (default-directory dir)
-         (filenames
-          (delq nil
-                (mapcar (lambda (name)
-                          (unless (ido-ignore-item-p name ido-ignore-files t)
-                            name))
-                        (split-string
-                         (shell-command-to-string
-                          (concat "find "
-                                  (shell-quote-argument
-                                   (if remote-prefix
-                                       (string-remove-prefix remote-prefix dir) dir))
-                                  (if ido-case-fold " -iname " " -name ")
-                                  (shell-quote-argument
-                                   (concat (if prefix "" "*") file "*"))
-                                  " -print"))
-                         "\n"))))
+  "Overrides the original function"
+  (let* ((exclusions (mapcar (lambda (dir) (concat dir "/"))
+                             vc-directory-exclusion-list))
+         (filenames (project--files-in-directory dir exclusions))
          filename d f
          res)
     (while filenames
-      (setq filename (format "%s%s" (or remote-prefix "") (car filenames))
+      (setq filename (car filenames)
             filenames (cdr filenames))
       (if (and (file-name-absolute-p filename)
                (file-exists-p filename))
@@ -1079,10 +1053,19 @@
     res))
 
 
+(defun ido-wide-find-progress (f &rest args)
+  (message (propertize "Searching..." 'face 'shadow))
+  (let ((inhibit-message t))
+    (apply f args)))
+
+
+(advice-add 'ido-make-merged-file-list :around 'ido-wide-find-progress)
+
+
 ;; Work directory recording
 
 
-(defun ido-fix-record-work-directory (f &rest args)
+(defun ido-record-parent (f &rest args)
   "For directories, record their parent"
   (if (and ido-current-directory
            (equal "." (car ido-work-file-list)))
@@ -1091,7 +1074,7 @@
     (apply f args)))
 
 
-(advice-add 'ido-record-work-directory :around 'ido-fix-record-work-directory)
+(advice-add 'ido-record-work-directory :around 'ido-record-parent)
 
 
 (defun ido-record-file-work-directory (file-name)
