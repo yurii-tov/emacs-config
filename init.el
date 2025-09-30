@@ -938,7 +938,6 @@
 
 
 (define-keymap :keymap ido-file-completion-map
-  "C-x u" 'ido-open-with-sudo
   "C-o" 'ido-open-in-external-app)
 
 
@@ -970,13 +969,6 @@
     (message "Open in external app: %s" file-name)
     (open-in-external-app file-name)
     (minibuffer-keyboard-quit)))
-
-
-(defun ido-open-with-sudo ()
-  (interactive)
-  (ido-record-work-directory ido-current-directory)
-  (setq ido-current-directory (sudoify ido-current-directory))
-  (exit-minibuffer))
 
 
 (defun ido-copy-path ()
