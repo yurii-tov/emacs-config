@@ -1008,7 +1008,12 @@
   (let ((path (expand-file-name
                (ido-name (car ido-matches))
                ido-current-directory)))
-    (run-with-timer 0.05 nil `(lambda () (dired-jump nil ,path)))
+    (run-with-timer 0.05 nil
+                    `(lambda ()
+                       (message nil)
+                       (dired-jump nil ,path)
+                       (when (file-directory-p ,path)
+                         (dired-up-directory))))
     (minibuffer-keyboard-quit)))
 
 
