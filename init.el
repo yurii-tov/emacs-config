@@ -927,12 +927,12 @@
 
 
 (define-keymap :keymap ido-file-dir-completion-map
-  "C-f" nil
   "C-b" nil
-  "M-f" nil
+  "C-f" nil
   "C-n" 'ido-grid-mode-next
   "C-p" 'ido-grid-mode-previous
-  "SPC" 'ido-search-subdirs
+  "SPC" 'ido-recent
+  "M-f" 'ido-search-subdirs
   "M-w" 'ido-copy-path
   "C-x C-j" 'ido-dired-jump)
 
@@ -1022,6 +1022,22 @@
                 files nil t)))
     (when-let ((d (file-name-directory file)))
       (setq ido-current-directory (expand-file-name d ido-current-directory)))
+    (setq ido-matches (list (file-name-nondirectory file)))
+    (exit-minibuffer)))
+
+
+(defun ido-recent ()
+  (interactive)
+  (let* ((enable-recursive-minibuffers t)
+         (icomplete-mode t)
+         (files (thread-last
+                  ido-work-directory-list
+                  (cl-remove-if (lambda (x)
+                                  (and (file-remote-p x)
+                                       (not (file-remote-p x nil t)))))
+                  (mapcan (lambda (x) (file-expand-wildcards (concat x "*"))))))
+         (file (completing-read "Find recent: " files nil t nil 'file-name-history)))
+    (setq ido-current-directory (file-name-directory file))
     (setq ido-matches (list (file-name-nondirectory file)))
     (exit-minibuffer)))
 
