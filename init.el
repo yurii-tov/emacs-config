@@ -932,7 +932,7 @@
   "M-f" nil
   "C-n" 'ido-grid-mode-next
   "C-p" 'ido-grid-mode-previous
-  "SPC" 'ido-wide-find-file-or-pop-dir
+  "SPC" 'ido-search-subdirs
   "M-w" 'ido-copy-path
   "C-x C-j" 'ido-dired-jump)
 
@@ -1016,44 +1016,25 @@
     (minibuffer-keyboard-quit)))
 
 
-;; Wide find file
-
-
-(defun ido-wide-find-file (&optional file)
-  "Overrides the original function"
+(defun ido-search-subdirs ()
   (interactive)
-  (setq ido-use-merged-list t ido-try-merged-list 'wide)
-  (setq ido-exit 'refresh)
-  (setq ido-text-init file)
-  (setq ido-text-init "")
-  (setq ido-rotate-temp t)
-  (exit-minibuffer))
-
-
-(defun ido-wide-find-dirs-or-files (dir file &optional prefix finddir)
-  "Overrides the original function"
-  (let* ((exclusions (mapcar (lambda (dir) (concat dir "/"))
+  (let* ((enable-recursive-minibuffers t)
+         (icomplete-mode t)
+         (exclusions (mapcar (lambda (dir) (concat dir "/"))
                              vc-directory-exclusion-list))
-         (filenames (project--files-in-directory dir exclusions))
-         filename d f
-         res)
-    (while filenames
-      (setq filename (car filenames)
-            filenames (cdr filenames))
-      (setq d (file-name-directory filename)
-            f (file-name-nondirectory filename)
-            res (cons (cons f d) res)))
-    res))
-
-
-(defun ido-wide-find-progress (f &rest args)
-  (message (propertize (format "Searching %s..." ido-current-directory)
-                       'face 'shadow))
-  (let ((inhibit-message t))
-    (apply f args)))
-
-
-(advice-add 'ido-make-merged-file-list :around 'ido-wide-find-progress)
+         (files (mapcar (lambda  (x) (file-relative-name
+                                      x ido-current-directory))
+                        (project--files-in-directory
+                         ido-current-directory
+                         exclusions)))
+         (file (completing-read
+                (format "Find file in %s: "
+                        (abbreviate-file-name ido-current-directory))
+                files nil t)))
+    (when-let ((d (file-name-directory file)))
+      (setq ido-current-directory (expand-file-name d ido-current-directory)))
+    (setq ido-matches (list (file-name-nondirectory file)))
+    (exit-minibuffer)))
 
 
 ;; Work directory recording
