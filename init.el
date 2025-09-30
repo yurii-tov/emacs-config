@@ -960,17 +960,6 @@
 (setq ido-grid-mode-first-line '(" " ido-grid-mode-count))
 
 
-;; Completions buffer
-
-
-(defun ido-jump-to-completions ()
-  (let ((w (get-buffer-window ido-completion-buffer)))
-    (when w (select-window w))))
-
-
-(advice-add 'ido-complete :after #'ido-jump-to-completions)
-
-
 ;; Advanced commands
 
 
@@ -1038,18 +1027,6 @@
 
 
 ;; Work directory recording
-
-
-(defun ido-record-parent (f &rest args)
-  "For directories, record their parent"
-  (if (and ido-current-directory
-           (equal "." (car ido-work-file-list)))
-      (funcall f (file-name-parent-directory
-                  ido-current-directory))
-    (apply f args)))
-
-
-(advice-add 'ido-record-work-directory :around 'ido-record-parent)
 
 
 (defun ido-record-file-work-directory (file-name)
