@@ -1042,7 +1042,7 @@
             filenames (cdr filenames))
       (setq d (file-name-directory filename)
             f (file-name-nondirectory filename)
-            res (cons (cons (if (file-directory-p filename) (ido-final-slash f t) f) d) res)))
+            res (cons (cons f d) res)))
     res))
 
 
