@@ -1047,7 +1047,8 @@
 
 
 (defun ido-wide-find-progress (f &rest args)
-  (message (propertize "Searching..." 'face 'shadow))
+  (message (propertize (format "Searching %s..." ido-current-directory)
+                       'face 'shadow))
   (let ((inhibit-message t))
     (apply f args)))
 
