@@ -1040,11 +1040,9 @@
     (while filenames
       (setq filename (car filenames)
             filenames (cdr filenames))
-      (if (and (file-name-absolute-p filename)
-               (file-exists-p filename))
-          (setq d (file-name-directory filename)
-                f (file-name-nondirectory filename)
-                res (cons (cons (if (file-directory-p filename) (ido-final-slash f t) f) d) res))))
+      (setq d (file-name-directory filename)
+            f (file-name-nondirectory filename)
+            res (cons (cons (if (file-directory-p filename) (ido-final-slash f t) f) d) res)))
     res))
 
 
