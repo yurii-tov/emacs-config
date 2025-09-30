@@ -909,7 +909,6 @@
       ido-grid-mode-max-rows 10
       ido-grid-mode-min-rows 5
       ido-report-no-match nil
-      ido-max-work-directory-list 100
       ido-work-directory-list-ignore-regexps '("[/|]sudo:"))
 
 
