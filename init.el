@@ -932,7 +932,6 @@
   "C-p" 'ido-grid-mode-previous
   "SPC" 'ido-recent
   "M-f" 'ido-search-subdirs
-  "M-w" 'ido-copy-path
   "C-x C-j" 'ido-dired-jump)
 
 
@@ -968,18 +967,6 @@
     (message "Open in external app: %s" file-name)
     (open-in-external-app file-name)
     (minibuffer-keyboard-quit)))
-
-
-(defun ido-copy-path ()
-  (interactive)
-  (let* ((ido-path (expand-file-name
-                    (ido-name (car ido-matches))
-                    ido-current-directory))
-         (path (if (file-remote-p ido-path)
-                   (file-remote-p ido-path 'localname)
-                 ido-path)))
-    (kill-new path)
-    (message "Copied to clipboard: %s" path)))
 
 
 (defun ido-dired-jump ()
