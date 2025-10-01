@@ -925,10 +925,8 @@
 
 
 (define-keymap :keymap ido-file-dir-completion-map
-  "C-b" nil
-  "C-f" nil
-  "M-f" nil
-  "M-k" nil
+  "C-b" nil "M-f" nil "M-p" nil
+  "C-f" nil "M-k" nil "M-n" nil
   "C-n" 'ido-grid-mode-next
   "C-p" 'ido-grid-mode-previous
   "SPC" 'ido-recent
