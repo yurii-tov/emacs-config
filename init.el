@@ -158,9 +158,9 @@
   "i" (define-keymap
         "j" 'emoji-insert
         "e" 'emoji-list
-        "f" 'insert-file
+        "f" 'insert-path
+        "c" 'insert-file
         "a" 'insert-fortune
-        "b" 'insert-buffer
         "i" 'insert-char))
 
 
@@ -1843,7 +1843,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   (move-line 'down))
 
 
-;; Dummy text inserting
+;; Inserting
 
 
 (defun fortune ()
@@ -1862,6 +1862,11 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (defun insert-fortune ()
   (interactive)
   (insert (fortune)))
+
+
+(defun insert-path (path)
+  (interactive "fInsert path: ")
+  (insert path))
 
 
 ;; Fixes
