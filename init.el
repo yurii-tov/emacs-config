@@ -1545,6 +1545,32 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (setq duplicate-line-final-position -1)
 
 
+;; Inserting
+
+
+(defun fortune ()
+  (with-temp-buffer
+    (insert-file-contents (expand-file-name "fortune.txt"
+                                            user-emacs-directory))
+    (goto-char (1+ (cl-random (point-max))))
+    (let* ((e (search-forward-regexp "^%$" nil t))
+           (e (if e (- e 2) (point-max))))
+      (goto-char e)
+      (let* ((s (search-backward-regexp "^%$" nil t))
+             (s (if s (+ 2 s) 1)))
+        (buffer-substring s e)))))
+
+
+(defun insert-fortune ()
+  (interactive)
+  (insert (fortune)))
+
+
+(defun insert-path (path)
+  (interactive "fInsert path: ")
+  (insert path))
+
+
 ;; Enclosing into parenthesis (or similar)
 
 
@@ -1841,32 +1867,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (defun move-line-down ()
   (interactive)
   (move-line 'down))
-
-
-;; Inserting
-
-
-(defun fortune ()
-  (with-temp-buffer
-    (insert-file-contents (expand-file-name "fortune.txt"
-                                            user-emacs-directory))
-    (goto-char (1+ (cl-random (point-max))))
-    (let* ((e (search-forward-regexp "^%$" nil t))
-           (e (if e (- e 2) (point-max))))
-      (goto-char e)
-      (let* ((s (search-backward-regexp "^%$" nil t))
-             (s (if s (+ 2 s) 1)))
-        (buffer-substring s e)))))
-
-
-(defun insert-fortune ()
-  (interactive)
-  (insert (fortune)))
-
-
-(defun insert-path (path)
-  (interactive "fInsert path: ")
-  (insert path))
 
 
 ;; Fixes
