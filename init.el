@@ -1010,7 +1010,7 @@
          (file (completing-read
                 (format "Find file in %s: "
                         (abbreviate-file-name ido-current-directory))
-                files nil t)))
+                files nil t ido-text)))
     (when-let ((d (file-name-directory file)))
       (setq ido-current-directory (expand-file-name d ido-current-directory)))
     (setq ido-matches (list (file-name-nondirectory file)))
@@ -1032,7 +1032,7 @@
                   (nconc (cl-remove-if (lambda (x) (file-remote-p x nil t))
                                        file-name-history))))
          (file (completing-read
-                "Find recent: " files nil t nil 'file-name-history)))
+                "Find recent: " files nil t ido-text 'file-name-history)))
     (setq ido-current-directory (file-name-directory file))
     (setq ido-matches (list (file-name-nondirectory file)))
     (exit-minibuffer)))
