@@ -908,8 +908,7 @@
       ido-auto-merge-work-directories-length -1
       ido-grid-mode-max-rows 10
       ido-grid-mode-min-rows 5
-      ido-report-no-match nil
-      ido-work-directory-list-ignore-regexps '("[/|]sudo:"))
+      ido-report-no-match nil)
 
 
 ;; Styles
