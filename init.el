@@ -928,11 +928,12 @@
 (define-keymap :keymap ido-file-dir-completion-map
   "C-b" nil
   "C-f" nil
+  "M-f" nil
+  "M-k" nil
   "C-n" 'ido-grid-mode-next
   "C-p" 'ido-grid-mode-previous
   "SPC" 'ido-recent
-  "M-f" 'ido-search-subdirs
-  "C-x C-j" 'ido-dired-jump)
+  "M-SPC" 'ido-search-subdirs)
 
 
 (define-keymap :keymap ido-file-completion-map
@@ -966,20 +967,6 @@
                                      ido-current-directory)))
     (message "Open in external app: %s" file-name)
     (open-in-external-app file-name)
-    (minibuffer-keyboard-quit)))
-
-
-(defun ido-dired-jump ()
-  (interactive)
-  (let ((path (expand-file-name
-               (ido-name (car ido-matches))
-               ido-current-directory)))
-    (run-with-timer 0.05 nil
-                    `(lambda ()
-                       (message nil)
-                       (dired-jump nil ,path)
-                       (when (file-directory-p ,path)
-                         (dired-up-directory))))
     (minibuffer-keyboard-quit)))
 
 
