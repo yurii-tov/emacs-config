@@ -1028,7 +1028,9 @@
                                        (not (file-remote-p x nil t)))))
                   (mapcan (lambda (x)
                             (unless (ido-nonreadable-directory-p x)
-                              (file-expand-wildcards (concat x "*")))))))
+                              (file-expand-wildcards (concat x "*")))))
+                  (append (cl-remove-if (lambda (x) (file-remote-p x nil t))
+                                        file-name-history))))
          (file (completing-read
                 "Find recent: " files nil t nil 'file-name-history)))
     (setq ido-current-directory (file-name-directory file))
