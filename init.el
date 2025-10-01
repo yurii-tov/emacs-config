@@ -1027,7 +1027,8 @@
                                   (and (file-remote-p x)
                                        (not (file-remote-p x nil t)))))
                   (mapcan (lambda (x) (file-expand-wildcards (concat x "*"))))))
-         (file (completing-read "Find recent: " files nil t nil 'file-name-history)))
+         (file (completing-read
+                "Find recent: " files nil t nil 'file-name-history)))
     (setq ido-current-directory (file-name-directory file))
     (setq ido-matches (list (file-name-nondirectory file)))
     (exit-minibuffer)))
