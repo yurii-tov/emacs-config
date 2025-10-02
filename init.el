@@ -1001,13 +1001,16 @@
                             (unless (ido-nonreadable-directory-p x)
                               (when-let ((xs (file-expand-wildcards
                                               (concat x "*"))))
-                                (cons (concat x ".") xs)))))
+                                (cons x xs)))))
                   (nconc (cl-remove-if (lambda (x) (file-remote-p x nil t))
                                        file-name-history))))
-         (file (completing-read
-                "Find recent: " files nil t ido-text 'file-name-history)))
+         (file (completing-read "Find recent: "
+                                files nil t ido-text 'file-name-history)))
     (setq ido-current-directory (file-name-directory file)
           ido-matches (list (file-name-nondirectory file)))
+    (when (file-directory-p file)
+      (setq ido-current-directory file
+            ido-exit 'refresh))
     (exit-minibuffer)))
 
 
