@@ -925,8 +925,8 @@
 
 
 (define-keymap :keymap ido-file-dir-completion-map
-  "C-b" nil "M-f" nil "M-p" nil
-  "C-f" nil "M-k" nil "M-n" nil
+  "C-b" nil "M-f" nil
+  "C-f" nil "M-k" nil
   "C-n" 'ido-grid-mode-next
   "C-p" 'ido-grid-mode-previous
   "SPC" 'ido-recent
@@ -1026,36 +1026,9 @@
 (advice-add 'ido-read-file-name :filter-return 'ido-record-file-work-directory)
 
 
-(defun ido-get-work-directory (&optional incr must-match)
-  "Overrides original function from ido.el.
-   Now it filters out directories from disconnected remote hosts"
-  (let ((n (length ido-work-directory-list))
-        (i ido-work-directory-index)
-        (j 0)
-        dir)
-    (if (or (not ido-text) (= (length ido-text) 0))
-        (setq must-match nil))
-    (while (< j n)
-      (setq i (+ i incr)
-            j (1+ j))
-      (if (> incr 0)
-          (if (>= i n) (setq i 0))
-        (if (< i 0) (setq i (1- n))))
-      (setq dir (nth i ido-work-directory-list))
-      (if (and dir
-               (not (equal dir ido-current-directory))
-               (not (and (file-remote-p dir) (not (file-remote-p dir nil t))))
-               (file-directory-p dir)
-               (or (not must-match)
-                   (ido-set-matches-1
-                    (if (eq ido-cur-item 'file)
-                        (ido-make-file-list-1 dir)
-                      (ido-make-dir-list-1 dir)))))
-          (setq j n)
-        (setq dir nil)))
-    (if dir
-        (setq ido-work-directory-index i))
-    dir))
+(dolist (x '(ido-prev-work-directory
+             ido-next-work-directory))
+  (advice-add x :override 'ignore))
 
 
 ;; Grid mode
