@@ -992,18 +992,18 @@
   (interactive)
   (let* ((enable-recursive-minibuffers t)
          (icomplete-mode t)
+         (disconnected-p (lambda (x)
+                           (and (file-remote-p x)
+                                (not (file-remote-p x nil t)))))
          (files (thread-last
                   ido-work-directory-list
-                  (cl-remove-if (lambda (x)
-                                  (and (file-remote-p x)
-                                       (not (file-remote-p x nil t)))))
+                  (cl-remove-if disconnected-p)
                   (mapcan (lambda (x)
                             (unless (ido-nonreadable-directory-p x)
                               (when-let ((xs (file-expand-wildcards
                                               (concat x "*"))))
                                 (cons x xs)))))
-                  (nconc (cl-remove-if (lambda (x) (file-remote-p x nil t))
-                                       file-name-history))))
+                  (nconc (cl-remove-if-not disconnected-p file-name-history))))
          (file (completing-read "Find recent: "
                                 files nil t ido-text 'file-name-history)))
     (setq ido-current-directory (file-name-directory file)
