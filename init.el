@@ -325,12 +325,6 @@
   (global-ligature-mode t))
 
 
-;; Spacious padding
-
-
-(spacious-padding-mode 1)
-
-
 ;; Current line indicator
 
 
@@ -460,13 +454,13 @@
   (add-hook x 'visual-line-mode))
 
 
-;; Display keybindings as-you-type
+;; Hints about complex shortcuts
 
 
 (which-key-mode)
 
 
-;; Reduce distractions
+;; Fewer distractions
 
 
 (setq inhibit-startup-message t
@@ -476,6 +470,12 @@
       kill-buffer-query-functions nil
       disabled-command-function nil
       confirm-kill-processes nil)
+
+
+;; Clean UI
+
+
+(spacious-padding-mode 1)
 
 
 (when fringe-indicator-alist
@@ -499,7 +499,7 @@
 (menu-bar-mode -1)
 
 
-;; Confirm shutdown explicitly
+;; Fail-safe shutdown
 
 
 (setq confirm-kill-emacs 'y-or-n-p)
