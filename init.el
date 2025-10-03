@@ -897,7 +897,7 @@
 (ido-grid-mode)
 
 
-(add-function :override read-file-name-function #'ido-read-file-name)
+(advice-add 'read-file-name :override 'ido-read-file-name)
 
 
 (setq ido-enable-flex-matching t
