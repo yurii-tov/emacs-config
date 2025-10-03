@@ -1012,16 +1012,17 @@
     (exit-minibuffer)))
 
 
-;; Work directory recording
+;; History
 
 
-(defun ido-record-file-work-directory (file-name)
+(defun ido-record-history (file-name)
   (prog1 file-name
     (ido-record-work-directory
-     (file-name-directory file-name))))
+     (file-name-directory file-name))
+    (add-to-history 'file-name-history file-name)))
 
 
-(advice-add 'ido-read-file-name :filter-return 'ido-record-file-work-directory)
+(advice-add 'ido-read-file-name :filter-return 'ido-record-history)
 
 
 ;; Grid mode
