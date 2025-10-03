@@ -897,10 +897,8 @@
 (ido-grid-mode)
 
 
-(advice-add 'read-file-name :override 'ido-read-file-name)
-
-
-(setq ido-enable-flex-matching t
+(setq read-file-name-function #'ido-read-file-name
+      ido-enable-flex-matching t
       ido-use-filename-at-point 'guess
       ido-use-url-at-point t
       ido-grid-mode-prefix ""
@@ -925,8 +923,8 @@
 
 
 (define-keymap :keymap ido-file-dir-completion-map
-  "C-b" nil "M-f" nil
-  "C-f" nil "M-k" nil
+  "C-b" nil "M-f" nil "M-n" nil "M-<up>" nil
+  "C-f" nil "M-k" nil "M-p" nil "M-<down>" nil
   "C-n" 'ido-grid-mode-next
   "C-p" 'ido-grid-mode-previous
   "SPC" 'ido-recent
@@ -1024,11 +1022,6 @@
 
 
 (advice-add 'ido-read-file-name :filter-return 'ido-record-file-work-directory)
-
-
-(dolist (x '(ido-prev-work-directory
-             ido-next-work-directory))
-  (advice-add x :override 'ignore))
 
 
 ;; Grid mode
