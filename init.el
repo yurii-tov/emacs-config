@@ -560,7 +560,7 @@
 ;; ==========
 
 
-;; Completions
+;; Completion
 
 
 (fido-vertical-mode)
