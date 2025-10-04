@@ -2778,7 +2778,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
       gptel-default-mode 'org-mode
       gptel-prompt-prefix-alist '((org-mode . "* "))
       gptel-track-media t
-      gptel-include-reasoning 'ignore
+      gptel-include-reasoning nil
       gptel-expert-commands t)
 
 
