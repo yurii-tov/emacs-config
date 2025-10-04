@@ -277,6 +277,10 @@
   (keymap-unset diff-mode-map "M-o"))
 
 
+(with-eval-after-load 'sgml-mode
+  (keymap-unset html-mode-map "M-o"))
+
+
 ;; =============
 ;; Look and feel
 ;; =============
