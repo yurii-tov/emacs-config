@@ -1026,6 +1026,16 @@
 (advice-add 'ido-read-file-name :filter-return 'ido-record-history)
 
 
+;; Completions buffer
+
+
+(advice-add 'ido-complete
+            :after
+            (lambda ()
+              (when (cdr ido-matches)
+                (ido-switch-to-completions))))
+
+
 ;; Grid mode
 
 
