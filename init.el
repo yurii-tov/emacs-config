@@ -1865,27 +1865,8 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (setq tab-always-indent 'complete
-      completion-auto-select t)
-
-
-;; Fix CAPF completion
-
-
-(defun fix-capf-exclusiveness (f &rest args)
-  (let ((fn (car args)))
-    (apply f (cons `(lambda ()
-                      (let ((r (funcall ',fn)))
-                        (when r
-                          (if (sequencep r)
-                              (append r '(:exclusive no))
-                            r))))
-                   (cdr args)))))
-
-
-(advice-add 'completion--capf-wrapper :around 'fix-capf-exclusiveness)
-
-
-;; Fix "magical" completion-at-point wrappers
+      completion-auto-select t
+      completion-styles '(basic substring flex))
 
 
 (dolist (x '(python-shell-completion-complete-or-indent
