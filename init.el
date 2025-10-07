@@ -2426,25 +2426,17 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; Completion
 
 
-(defun set-company-history-candidates ()
-  (let* ((line (company-grab-line (concat comint-prompt-regexp ".*")))
-         (prefix (when line
-                   (replace-regexp-in-string comint-prompt-regexp "" line))))
-    (and prefix
-         (setq-local company-history-candidates
-                     (cl-remove-if-not
-                      (lambda (x) (string-prefix-p prefix x t))
-                      (ring-elements comint-input-ring)))
-         prefix)))
-
-
 (defun company-comint-hist-completion (command &optional arg &rest _ignored)
   (interactive (list 'interactive))
   (cl-case command
     (interactive (company-begin-backend 'company-comint-history))
     (prefix (and (eobp)
-                 (set-company-history-candidates)))
-    (candidates company-history-candidates)
+                 (when-let ((line (company-grab-line
+                                   (concat comint-prompt-regexp ".*"))))
+                   (replace-regexp-in-string comint-prompt-regexp "" line))))
+    (candidates (cl-remove-if-not
+                 (lambda (x) (string-prefix-p arg x t))
+                 (ring-elements comint-input-ring)))
     (post-completion (let ((i (cl-position arg
                                            (ring-elements comint-input-ring)
                                            :test #'equal)))
@@ -2461,11 +2453,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                pcomplete-completions-at-point))
     (setq-local comint-dynamic-complete-functions
                 (remove x comint-dynamic-complete-functions)))
-  (setq-local company-backends
-              (cons '(company-capf
-                      company-comint-hist-completion
-                      :separate)
-                    (cddr company-backends))
+  (setq-local company-backends '((company-capf
+                                  company-comint-hist-completion
+                                  :separate))
               company-transformers '(delete-consecutive-dups)))
 
 
