@@ -580,17 +580,6 @@
 (setq max-mini-window-height 12)
 
 
-(defun completion-flex-restrict (f &rest args)
-  "Do not activate `flex` algorithm on long inputs"
-  (when (<= (length (car args)) 16)
-    (apply f args)))
-
-
-(dolist (x '(completion-flex-try-completion
-             completion-flex-all-completions))
-  (advice-add x :around 'completion-flex-restrict))
-
-
 (defun minibuffer-setup-completion-style ()
   (setq-local completion-styles '(substring flex)
               completion-category-defaults nil))
@@ -1872,6 +1861,17 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (dolist (x '(python-shell-completion-complete-or-indent
              ielm-tab))
   (advice-add x :override 'completion-at-point))
+
+
+(defun completion-flex-restrict (f &rest args)
+  "Do not activate `flex` algorithm on long inputs"
+  (when (<= (length (car args)) 16)
+    (apply f args)))
+
+
+(dolist (x '(completion-flex-try-completion
+             completion-flex-all-completions))
+  (advice-add x :around 'completion-flex-restrict))
 
 
 ;; =============
