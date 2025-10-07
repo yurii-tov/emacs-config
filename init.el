@@ -1938,7 +1938,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
               company-backends '(company-files
                                  (company-capf :with company-yasnippet)
                                  (company-dabbrev-code :with company-yasnippet)
-                                 company-dabbrev)))
+                                 (company-dabbrev company-yasnippet)))
 
 
 ;; Complete instantly in some cases
