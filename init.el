@@ -564,6 +564,9 @@
 ;; ==========
 
 
+(setq max-mini-window-height 12)
+
+
 ;; Completion
 
 
@@ -575,9 +578,6 @@
   "M-j" 'icomplete-force-complete
   "SPC" 'self-insert-command
   "?" 'self-insert-command)
-
-
-(setq max-mini-window-height 12)
 
 
 (defun minibuffer-setup-completion-style ()
