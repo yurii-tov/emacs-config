@@ -1858,11 +1858,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
       completion-styles '(basic substring flex))
 
 
-(dolist (x '(python-shell-completion-complete-or-indent
-             ielm-tab))
-  (advice-add x :override 'completion-at-point))
-
-
 (defun completion-flex-restrict (f &rest args)
   "Do not activate `flex` algorithm on long inputs"
   (when (<= (length (car args)) 16)
@@ -1872,6 +1867,11 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (dolist (x '(completion-flex-try-completion
              completion-flex-all-completions))
   (advice-add x :around 'completion-flex-restrict))
+
+
+(dolist (x '(python-shell-completion-complete-or-indent
+             ielm-tab))
+  (advice-add x :override 'completion-at-point))
 
 
 ;; =============
