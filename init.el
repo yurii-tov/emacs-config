@@ -577,8 +577,7 @@
   "?" 'self-insert-command)
 
 
-(setq completion-auto-select t
-      max-mini-window-height 12)
+(setq max-mini-window-height 12)
 
 
 (defun completion-flex-restrict (f &rest args)
@@ -1865,7 +1864,8 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; ===================
 
 
-(setq tab-always-indent 'complete)
+(setq tab-always-indent 'complete
+      completion-auto-select t)
 
 
 ;; Fix CAPF completion
