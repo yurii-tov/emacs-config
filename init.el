@@ -1997,9 +1997,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (dolist (x (list company-active-map
                  company-search-map))
   (define-keymap :keymap x
-    "M-p" nil
-    "M-n" nil
-    "M-SPC" 'company-other-backend
+    "M-p" nil "M-n" nil
     "SPC" 'company-smart-complete))
 
 
@@ -2018,34 +2016,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (advice-add 'company-dabbrev-code :around 'company-dabbrev-merge-keywords)
-
-
-;; Fix backends
-;; - Prevent completion on empty prefix
-;; - Disallow empty candidates list
-
-
-(defun fix-company-backend (f &rest args)
-  (cl-case (car args)
-    (prefix (let* ((result (funcall f 'prefix))
-                   (prefix (cond ((stringp result)
-                                  (when (not (string-empty-p result)) result))
-                                 ((listp result)
-                                  (when (not (string-empty-p (car result)))
-                                    (car result))))))
-              (when (or (setq-local fix-company-backend-candidates
-                                    (when prefix
-                                      (funcall f 'candidates prefix)))
-                        (symbolp result))
-                result)))
-    (candidates fix-company-backend-candidates)
-    (t (apply f args))))
-
-
-(dolist (x '(company-dabbrev
-             company-dabbrev-code
-             company-yasnippet))
-  (advice-add x :around 'fix-company-backend))
 
 
 ;; Make company the default
