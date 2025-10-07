@@ -1032,6 +1032,7 @@
 (advice-add 'ido-complete
             :after
             (lambda ()
+              "Auto-switch to completions buffer"
               (when (cdr ido-matches)
                 (ido-switch-to-completions))))
 
