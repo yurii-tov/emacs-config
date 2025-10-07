@@ -1935,7 +1935,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
               company-dabbrev-ignore-buffers "\\`[ ]"
               company-dabbrev-code-completion-styles t
               company-dabbrev-code-ignore-case t
-              company-dabbrev-code-everywhere t
               company-backends '(company-files
                                  (company-capf :with company-yasnippet)
                                  (company-dabbrev-code :with company-yasnippet)
