@@ -2447,13 +2447,13 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (defun comint-setup-completion ()
-  (dolist (x '(comint-c-a-p-replace-by-expanded-history
-               shell-c-a-p-replace-by-expanded-directory
-               shell-command-completion
-               pcomplete-completions-at-point))
-    (setq-local comint-dynamic-complete-functions
-                (remove x comint-dynamic-complete-functions)))
-  (setq-local company-backends '((company-capf
+  (setq-local comint-dynamic-complete-functions
+              (seq-difference comint-dynamic-complete-functions
+                              '(comint-c-a-p-replace-by-expanded-history
+                                shell-c-a-p-replace-by-expanded-directory
+                                shell-command-completion
+                                pcomplete-completions-at-point))
+              company-backends '((company-capf
                                   company-comint-hist-completion
                                   :separate))
               company-transformers '(delete-consecutive-dups)))
