@@ -1904,19 +1904,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (yas-global-mode 1)
 
 
-(defun yas-company-c-f ()
-  "Company conflict workaround"
-  (interactive)
-  (if (get-char-property (point) 'yas--field)
-      (forward-char)
-    (when company-selection
-      (company-complete))
-    (yas-next-field-or-maybe-expand)))
-
-
-(keymap-set yas-keymap "C-f" 'yas-company-c-f)
-
-
 ;; =======
 ;; Company
 ;; =======
@@ -1967,24 +1954,28 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 (defun company-smart-complete ()
   "Does special action depending on context.
-   - When navigating filesystem: Proceeds to deeper level
-   - When expanding a snippet: Prevents any extra edits"
+   - When navigating filesystem: proceeds to deeper level
+   - When expanding a snippet: prevents any extra edits
+   - When on active snippet field: skips to the next field"
   (interactive)
   (cond ((and company-selection
-              (eq company-backend 'company-files)
-              (progn (company-complete-selection)
-                     (looking-back "/")))
-         (company-manual-begin))
-        ((or (not company-selection)
-             (let ((p (point)))
-               (company-complete)
-               (let* ((m (car company-last-metadata))
-                      (pp (point))
-                      (l (- p (- (length m)
-                                 (length (buffer-substring p pp)))))
-                      (s (buffer-substring (max 1 l) pp)))
-                 (equal m s))))
-         (call-interactively 'self-insert-command))))
+              (eq company-backend 'company-files))
+         (company-complete-selection)
+         (if (looking-back "/")
+             (company-manual-begin)
+           (call-interactively 'self-insert-command)))
+        ((and company-selection
+              (memq (company-call-backend 'kind (nth company-selection
+                                                     company-candidates))
+                    '(snippet method)))
+         (company-complete))
+        ((and company-selection
+              (get-char-property (1- (point)) 'yas--field))
+         (company-complete)
+         (yas-next-field-or-maybe-expand))
+        (t (when company-selection
+             (company-complete))
+           (call-interactively 'self-insert-command))))
 
 
 ;; Keybindings
