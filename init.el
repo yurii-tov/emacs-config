@@ -1993,23 +1993,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     "SPC" 'company-smart-complete))
 
 
-;; Merge company-dabbrev-code with company-keywords
-
-
-(defun company-dabbrev-merge-keywords (f &rest args)
-  (cl-case (car args)
-    (prefix (or (apply f args)
-                (apply #'company-keywords args)))
-    (candidates (append
-                 (apply #'company-keywords args)
-                 (apply f args)))
-    (kind 'keyword)
-    (t (apply f args))))
-
-
-(advice-add 'company-dabbrev-code :around 'company-dabbrev-merge-keywords)
-
-
 ;; Make company the default
 
 
