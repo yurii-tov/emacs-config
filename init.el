@@ -548,7 +548,7 @@
 
 (defun scratch-buffer-setup ()
   (with-current-buffer "*scratch*"
-    (delete-region (point-min) (point-max))
+    (erase-buffer)
     (insert (replace-regexp-in-string "\n" "" (emacs-version)))
     (newline 3)
     (insert-fortune)
