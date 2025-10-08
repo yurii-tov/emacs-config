@@ -2364,11 +2364,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (with-eval-after-load 'comint
   (define-keymap :keymap comint-mode-map
     "C-c C-k" 'comint-kill-subjob
-    "M-r" 'comint-browse-command-history
-    "M-p" 'comint-previous-input-prefixed
-    "M-n" 'comint-next-input-prefixed
-    "<up>" 'comint-previous-input-prefixed
-    "<down>" 'comint-next-input-prefixed))
+    "M-r" 'comint-browse-command-history))
 
 
 ;; History browsing
@@ -2389,29 +2385,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (comint-delete-input)
     (insert command)
     (comint-send-input)))
-
-
-;; Prefix-style matching
-
-
-(defun comint-previous-input-prefixed (&optional n)
-  (interactive)
-  (unless (memq last-command '(comint-previous-input-prefixed
-                               comint-next-input-prefixed
-                               comint-history-isearch-backward-regexp))
-    (setq comint-matching-input-from-input-string
-          (buffer-substring
-           (or (marker-position comint-accum-marker)
-               (process-mark (get-buffer-process (current-buffer))))
-           (point))))
-  (comint-previous-matching-input
-   (format "^%s.*" (regexp-quote comint-matching-input-from-input-string))
-   (or n 1)))
-
-
-(defun comint-next-input-prefixed ()
-  (interactive)
-  (comint-previous-input-prefixed -1))
 
 
 ;; Completion
