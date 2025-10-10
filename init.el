@@ -1933,6 +1933,15 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                         company-dabbrev-code-completion-styles t)))
 
 
+(advice-add 'completion-at-point
+            :around
+            (lambda (f)
+              "Override completion-at-point with Company everywhere except minibuffer"
+              (if (minibufferp)
+                  (funcall f)
+                (company-complete-common))))
+
+
 ;; Complete instantly in some cases
 
 
@@ -1987,8 +1996,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (dotimes (n 10)
-  (keymap-set company-active-map
-              (format "M-%d" n) nil))
+  (keymap-unset company-active-map (format "M-%d" n)))
 
 
 (dolist (x (list company-active-map
@@ -1996,17 +2004,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   (define-keymap :keymap x
     "M-p" nil "M-n" nil
     "SPC" 'company-smart-complete))
-
-
-;; Make company the default
-
-
-(advice-add 'completion-at-point
-            :around
-            (lambda (f)
-              (if (minibufferp)
-                  (funcall f)
-                (company-complete-common))))
 
 
 ;; ==============
