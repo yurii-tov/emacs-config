@@ -1917,14 +1917,20 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 (setq-default company-tooltip-offset-display 'lines
               company-selection-wrap-around t
-              company-dabbrev-downcase nil
-              company-dabbrev-ignore-case nil
               company-dabbrev-ignore-buffers "\\`[ ]"
-              company-dabbrev-code-completion-styles t
+              company-dabbrev-code-completion-styles (remq 'flex completion-styles)
+              company-dabbrev-code-modes t
+              company-dabbrev-code-other-buffers 'all
+              company-dabbrev-code-everywhere t
               company-backends '(company-files
                                  (company-capf :with company-yasnippet)
-                                 (company-dabbrev-code :with company-yasnippet)
-                                 (company-dabbrev company-yasnippet)))
+                                 (company-dabbrev-code company-yasnippet)))
+
+
+(add-hook 'prog-mode-hook
+          (lambda ()
+            (setq-local company-dabbrev-code-other-buffers t
+                        company-dabbrev-code-completion-styles t)))
 
 
 ;; Complete instantly in some cases
@@ -2401,6 +2407,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                                 pcomplete-completions-at-point))
               company-backends '((company-capf
                                   company-comint-hist-completion
+                                  company-dabbrev-code
                                   :separate))
               company-transformers '(delete-consecutive-dups)))
 
@@ -3576,7 +3583,7 @@ Example input:
   (setq-local company-backends
               '(company-files
                 (company-slime :with company-yasnippet)
-                company-dabbrev)))
+                company-dabbrev-code)))
 
 
 (dolist (m '(lisp-mode-hook slime-repl-mode-hook))
