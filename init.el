@@ -1942,6 +1942,16 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                 (company-complete-common))))
 
 
+(advice-add 'company-dabbrev-code
+            :around
+            (lambda (f &rest args)
+              "Prevent completion on empty prefix"
+              (let ((r (apply f args)))
+                (cl-case (car args)
+                  (prefix (unless (string-empty-p (car r)) r))
+                  (t r)))))
+
+
 ;; Complete instantly in some cases
 
 
