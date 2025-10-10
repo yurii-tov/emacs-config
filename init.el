@@ -1936,7 +1936,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (advice-add 'completion-at-point
             :around
             (lambda (f)
-              "Override completion-at-point with Company everywhere except minibuffer"
+              "Use Company for explicit completion"
               (if (minibufferp)
                   (funcall f)
                 (company-complete-common))))
