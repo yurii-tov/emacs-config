@@ -1922,6 +1922,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
               company-dabbrev-code-modes t
               company-dabbrev-code-other-buffers 'all
               company-dabbrev-code-everywhere t
+              company-dabbrev-minimum-length 5
               company-backends '(company-files
                                  (company-capf :with company-yasnippet)
                                  (company-dabbrev-code company-yasnippet)))
