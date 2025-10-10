@@ -1918,7 +1918,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (setq-default company-tooltip-offset-display 'lines
               company-selection-wrap-around t
               company-dabbrev-ignore-buffers "\\`[ ]"
-              company-dabbrev-code-completion-styles (remq 'flex completion-styles)
+              company-dabbrev-code-completion-styles t
               company-dabbrev-code-modes t
               company-dabbrev-code-other-buffers 'all
               company-dabbrev-code-everywhere t
@@ -1928,9 +1928,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (add-hook 'prog-mode-hook
-          (lambda ()
-            (setq-local company-dabbrev-code-other-buffers t
-                        company-dabbrev-code-completion-styles t)))
+          (lambda () (setq-local company-dabbrev-code-other-buffers t)))
 
 
 (advice-add 'completion-at-point
