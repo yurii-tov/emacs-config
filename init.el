@@ -2001,23 +2001,12 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; Make company the default
 
 
-(defun company-override-cap ()
-  (advice-add 'completion-at-point
-              :override
-              'company-complete-common))
-
-
-(defun company-reset-cap ()
-  (advice-remove 'completion-at-point
-                 'company-complete-common))
-
-
-(dolist (x '(emacs-startup-hook
-             minibuffer-exit-hook))
-  (add-hook x 'company-override-cap))
-
-
-(add-hook 'minibuffer-setup-hook 'company-reset-cap)
+(advice-add 'completion-at-point
+            :around
+            (lambda (f)
+              (if (minibufferp)
+                  (funcall f)
+                (company-complete-common))))
 
 
 ;; ==============
