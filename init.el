@@ -1917,16 +1917,19 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 (setq-default company-tooltip-offset-display 'lines
               company-selection-wrap-around t
-              company-dabbrev-ignore-buffers "\\`[ ]\\|EGLOT"
+              company-dabbrev-ignore-buffers "^ "
               company-dabbrev-code-completion-styles t
-              company-dabbrev-code-modes t
-              company-dabbrev-code-other-buffers 'all
+              company-dabbrev-code-modes '(prog-mode
+                                           text-mode conf-mode
+                                           shell-mode inferior-python-mode
+                                           cider-repl-mode slime-repl-mode
+                                           sql-interactive-mode)
+              company-dabbrev-code-other-buffers 'code
               company-dabbrev-code-everywhere t
               company-dabbrev-minimum-length 5
               company-backends '(company-files
                                  (company-capf :with company-yasnippet)
                                  (company-dabbrev-code company-yasnippet)))
-
 
 (add-hook 'prog-mode-hook
           (lambda () (setq-local company-dabbrev-code-other-buffers t)))
