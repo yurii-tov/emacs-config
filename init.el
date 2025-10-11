@@ -1917,7 +1917,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 (setq-default company-tooltip-offset-display 'lines
               company-selection-wrap-around t
-              company-dabbrev-ignore-buffers "\\`[ ]"
+              company-dabbrev-ignore-buffers "\\`[ ]\\|EGLOT"
               company-dabbrev-code-completion-styles t
               company-dabbrev-code-modes t
               company-dabbrev-code-other-buffers 'all
