@@ -1970,16 +1970,15 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 (defun company-smart-complete ()
   "Does special action depending on context.
-   - When navigating filesystem: proceeds to deeper level
+   - When navigating paths: proceeds to deeper level
    - When expanding a snippet: prevents any extra edits
    - When on active snippet field: skips to the next field"
   (interactive)
   (cond ((and company-selection
-              (eq company-backend 'company-files))
+              (string-suffix-p "/" (nth company-selection
+                                        company-candidates)))
          (company-complete-selection)
-         (if (looking-back "/")
-             (company-manual-begin)
-           (call-interactively 'self-insert-command)))
+         (company-manual-begin))
         ((and company-selection
               (memq (company-call-backend 'kind (nth company-selection
                                                      company-candidates))
