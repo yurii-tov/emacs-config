@@ -1917,7 +1917,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 (setq-default company-tooltip-offset-display 'lines
               company-selection-wrap-around t
-              company-dabbrev-ignore-buffers "^ "
               company-dabbrev-code-completion-styles t
               company-backends '((company-capf :with company-yasnippet)
                                  (company-dabbrev-code :with company-yasnippet)
