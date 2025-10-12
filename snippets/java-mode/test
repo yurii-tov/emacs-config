@@ -3,6 +3,6 @@
 # key: test
 # --
 @Test
-public void ${1:Case}() {
+public void ${1:test}() {
         $0
 }
