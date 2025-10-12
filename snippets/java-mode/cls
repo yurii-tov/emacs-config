@@ -2,6 +2,6 @@
 # name: new Class
 # key: cl
 # --
-class ${1:Class} {
-      $0
+public class ${1:Class} {
+    $0
 }
