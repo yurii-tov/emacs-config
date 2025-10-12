@@ -1854,6 +1854,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (setq tab-always-indent 'complete
+      completion-styles '(basic flex)
       completion-auto-select t)
 
 
@@ -1916,7 +1917,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 (setq-default company-tooltip-offset-display 'lines
               company-selection-wrap-around t
-              company-dabbrev-code-completion-styles '(basic flex)
+              company-dabbrev-code-completion-styles t
               company-backends '(company-capf
                                  company-dabbrev-code
                                  company-files
