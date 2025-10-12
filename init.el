@@ -1917,10 +1917,10 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (setq-default company-tooltip-offset-display 'lines
               company-selection-wrap-around t
               company-dabbrev-code-completion-styles '(basic flex)
-              company-backends '((company-capf :with company-yasnippet)
-                                 (company-dabbrev-code :with company-yasnippet)
+              company-backends '(company-capf
+                                 company-dabbrev-code
                                  company-files
-                                 (company-dabbrev company-yasnippet)))
+                                 company-dabbrev))
 
 
 (advice-add 'completion-at-point
@@ -1949,14 +1949,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   "If a complete Yasnippet has been typed, or if sole candidate present, confirms the selection right away"
   (cond (company-selection (apply f args))
         ((yas-expand) (company-abort))
-        ((= 1 (length company-candidates))
-         (let ((snippet-p (eq (get-text-property
-                               0 'company-backend
-                               (car company-candidates))
-                              'company-yasnippet)))
-           (company-select-first)
-           (company-complete)
-           (when snippet-p (yas-expand))))
+        ((null (cdr company-candidates))
+         (company-select-first)
+         (company-complete))
         (t (apply f args))))
 
 
@@ -3565,9 +3560,7 @@ Example input:
 
 (defun common-lisp-setup-company ()
   (require 'slime-company)
-  (setq-local company-backends '((company-slime :with company-yasnippet)
-                                 company-files
-                                 (company-dabbrev company-yasnippet))))
+  (setq-local company-backends '(company-slime company-files company-dabbrev)))
 
 
 (dolist (m '(lisp-mode-hook slime-repl-mode-hook))
