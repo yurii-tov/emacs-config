@@ -1919,10 +1919,10 @@ with ability to \"cycle\" different variants with provided KEYBINDING
               company-selection-wrap-around t
               company-dabbrev-ignore-buffers "^ "
               company-dabbrev-code-completion-styles t
-              company-backends '(company-capf
-                                 company-dabbrev-code
+              company-backends '((company-capf :with company-yasnippet)
+                                 (company-dabbrev-code :with company-yasnippet)
                                  company-files
-                                 company-dabbrev))
+                                 (company-dabbrev company-yasnippet)))
 
 
 (advice-add 'completion-at-point
@@ -3567,7 +3567,9 @@ Example input:
 
 (defun common-lisp-setup-company ()
   (require 'slime-company)
-  (setq-local company-backends '(company-slime company-files company-dabbrev)))
+  (setq-local company-backends '((company-slime :with company-yasnippet)
+                                 company-files
+                                 (company-dabbrev company-yasnippet))))
 
 
 (dolist (m '(lisp-mode-hook slime-repl-mode-hook))
