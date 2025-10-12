@@ -1919,20 +1919,10 @@ with ability to \"cycle\" different variants with provided KEYBINDING
               company-selection-wrap-around t
               company-dabbrev-ignore-buffers "^ "
               company-dabbrev-code-completion-styles t
-              company-dabbrev-code-modes '(prog-mode
-                                           text-mode conf-mode
-                                           shell-mode inferior-python-mode
-                                           cider-repl-mode slime-repl-mode
-                                           sql-interactive-mode)
-              company-dabbrev-code-other-buffers 'code
-              company-dabbrev-code-everywhere t
-              company-dabbrev-minimum-length 5
-              company-backends '(company-files
-                                 (company-capf :with company-yasnippet)
-                                 (company-dabbrev-code company-yasnippet)))
-
-(add-hook 'prog-mode-hook
-          (lambda () (setq-local company-dabbrev-code-other-buffers t)))
+              company-backends '(company-capf
+                                 company-dabbrev-code
+                                 company-files
+                                 company-dabbrev))
 
 
 (advice-add 'completion-at-point
@@ -1944,7 +1934,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                 (company-complete-common))))
 
 
-(advice-add 'company-dabbrev-code
+(advice-add 'company-dabbrev
             :around
             (lambda (f &rest args)
               "Prevent completion on empty prefix"
@@ -2405,7 +2395,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                                 pcomplete-completions-at-point))
               company-backends '((company-capf
                                   company-comint-hist-completion
-                                  company-dabbrev-code
+                                  company-dabbrev
                                   :separate))
               company-transformers '(delete-consecutive-dups)))
 
@@ -3578,10 +3568,7 @@ Example input:
 
 (defun common-lisp-setup-company ()
   (require 'slime-company)
-  (setq-local company-backends
-              '(company-files
-                (company-slime :with company-yasnippet)
-                company-dabbrev-code)))
+  (setq-local company-backends '(company-slime company-files company-dabbrev)))
 
 
 (dolist (m '(lisp-mode-hook slime-repl-mode-hook))
