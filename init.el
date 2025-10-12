@@ -1854,8 +1854,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (setq tab-always-indent 'complete
-      completion-auto-select t
-      completion-styles '(basic substring flex))
+      completion-auto-select t)
 
 
 (defun completion-flex-restrict (f &rest args)
