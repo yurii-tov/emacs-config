@@ -1858,6 +1858,11 @@ with ability to \"cycle\" different variants with provided KEYBINDING
       completion-auto-select t)
 
 
+(add-hook 'emacs-lisp-mode-hook
+          (lambda ()
+            (setq-local completion-styles '(partial-completion substring))))
+
+
 (defun completion-flex-restrict (f &rest args)
   "Do not activate `flex` algorithm on long inputs"
   (when (<= (length (car args)) 16)
