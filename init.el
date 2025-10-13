@@ -1917,7 +1917,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 (setq-default company-tooltip-offset-display 'lines
               company-selection-wrap-around t
-              company-dabbrev-code-completion-styles t
+              company-dabbrev-code-completion-styles '(partial-completion flex)
               company-backends '(company-capf
                                  company-dabbrev-code
                                  company-files
