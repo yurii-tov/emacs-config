@@ -3561,7 +3561,7 @@ Example input:
 
 (defun common-lisp-setup-company ()
   (require 'slime-company)
-  (setq-local company-backends '(company-slime company-files company-dabbrev)))
+  (setq-local company-backends (cons 'company-slime (cdr company-backends))))
 
 
 (dolist (m '(lisp-mode-hook slime-repl-mode-hook))
