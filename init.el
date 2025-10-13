@@ -1854,13 +1854,8 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (setq tab-always-indent 'complete
-      completion-styles '(partial-completion substring flex)
+      completion-styles '(partial-completion substring)
       completion-auto-select t)
-
-
-(add-hook 'emacs-lisp-mode-hook
-          (lambda ()
-            (setq-local completion-styles '(partial-completion substring))))
 
 
 (defun completion-flex-restrict (f &rest args)
