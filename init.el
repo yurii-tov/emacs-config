@@ -1855,9 +1855,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
       completion-auto-select t)
 
 
-(add-hook 'prog-mode-hook
-          (lambda ()
-            (setq-local completion-styles '(partial-completion flex))))
+(dolist (hook '(prog-mode-hook comint-mode-hook))
+  (add-hook hook (lambda ()
+                   (setq-local completion-styles '(partial-completion flex)))))
 
 
 (defun completion-flex-restrict (f &rest args)
