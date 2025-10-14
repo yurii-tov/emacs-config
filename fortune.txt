@@ -158,3 +158,5 @@ There's never enough time to do all the nothing you want
 %
 Работа должна быть поднята если не до пафоса, то хотя бы до профессии, иначе она раздавит бездушностью.
 Можно халтурить попутно, но жить халтурой нестерпимо
+%
+Maybe it's not the config that is broken
