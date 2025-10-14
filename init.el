@@ -1858,6 +1858,11 @@ with ability to \"cycle\" different variants with provided KEYBINDING
       completion-auto-select t)
 
 
+(add-hook 'prog-mode-hook
+          (lambda ()
+            (setq-local completion-styles '(partial-completion flex))))
+
+
 (defun completion-flex-restrict (f &rest args)
   "Do not activate `flex` algorithm on long inputs"
   (when (<= (length (car args)) 16)
@@ -1917,7 +1922,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 (setq-default company-tooltip-offset-display 'lines
               company-selection-wrap-around t
-              company-dabbrev-code-completion-styles '(partial-completion flex)
+              company-dabbrev-code-completion-styles t
               company-backends '(company-capf
                                  company-dabbrev-code
                                  company-files
