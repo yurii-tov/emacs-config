@@ -2457,18 +2457,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (shell (format "*ssh-%s*" host))))
 
 
-;; Remove unneeded CAPF
-
-
-(defun sh-cleanup-capf ()
-  (setq-local completion-at-point-functions
-              (remove 'sh-completion-at-point-function
-                      completion-at-point-functions)))
-
-
-(add-hook 'sh-mode-hook 'sh-cleanup-capf)
-
-
 ;; Elevating to root
 
 
