@@ -580,13 +580,10 @@
   "?" 'self-insert-command)
 
 
-(defun minibuffer-setup-completion-style ()
-  (setq-local completion-styles '(substring flex)
-              completion-category-defaults nil))
-
-
 (add-hook 'icomplete-minibuffer-setup-hook
-          'minibuffer-setup-completion-style)
+          (lambda ()
+            (setq-local completion-styles '(substring flex)
+                        completion-category-defaults nil)))
 
 
 (defun read-string-completing-history (f &rest args)
