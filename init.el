@@ -1919,6 +1919,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 (setq-default company-tooltip-offset-display 'lines
               company-selection-wrap-around t
+              company-dabbrev-code-modes '(prog-mode)
               company-dabbrev-code-completion-styles t
               company-backends '(company-capf
                                  company-dabbrev-code
