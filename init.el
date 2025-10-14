@@ -2707,7 +2707,7 @@ Also grabs a selected region, if any."
 ;; Enable "coder" model in programming modes
 
 
-(add-hook prog-mode-hook
+(add-hook 'prog-mode-hook
           (lambda ()
             (setq-local gptel-model 'codestral-latest)))
 
