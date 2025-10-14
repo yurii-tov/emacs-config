@@ -2701,15 +2701,9 @@ Also grabs a selected region, if any."
 ;; Enable "coder" model in programming modes
 
 
-(defun gptel-enable-code-model ()
-  (setq-local gptel-model 'codestral-latest))
-
-
-(dolist (x '(prog-mode-hook
-             conf-mode-hook
-             sgml-mode-hook
-             comint-mode-hook))
-  (add-hook x 'gptel-enable-code-model))
+(add-hook prog-mode-hook
+          (lambda ()
+            (setq-local gptel-model 'codestral-latest)))
 
 
 ;; Rewrite facility
