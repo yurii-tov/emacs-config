@@ -1855,7 +1855,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
       completion-auto-select t)
 
 
-(dolist (hook '(prog-mode-hook comint-mode-hook))
+(dolist (hook '(prog-mode-hook ielm-mode-hook inferior-python-mode-hook))
   (add-hook hook (lambda ()
                    (setq-local completion-styles '(partial-completion flex)))))
 
