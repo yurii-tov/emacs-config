@@ -1854,7 +1854,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (setq tab-always-indent 'complete
-      completion-styles '(basic partial-completion)
+      completion-styles '(partial-completion)
       completion-auto-select t)
 
 
