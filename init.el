@@ -603,7 +603,7 @@
       (apply f args))))
 
 
-(advice-add 'read-string :around #'read-string-completing-history)
+(advice-add 'read-string :around 'read-string-completing-history)
 
 
 ;; History
@@ -697,7 +697,7 @@
     (apply f args)))
 
 
-(advice-add 'read-buffer-to-switch :around #'switch-to-buffer-annotate-wd)
+(advice-add 'read-buffer-to-switch :around 'switch-to-buffer-annotate-wd)
 
 
 ;; Unique names
@@ -718,7 +718,7 @@
     (kill-buffer)))
 
 
-(advice-add 'kill-buffer-and-window :around #'kill-buffer-and-window-fix)
+(advice-add 'kill-buffer-and-window :around 'kill-buffer-and-window-fix)
 
 
 ;; =======
@@ -1252,7 +1252,7 @@
     (rename-buffer name t)))
 
 
-(advice-add 'find-dired :around #'find-dired-setup-buffer)
+(advice-add 'find-dired :around 'find-dired-setup-buffer)
 
 
 (defun find-dired-dwim (f &rest args)
@@ -1265,7 +1265,7 @@
     (apply f args)))
 
 
-(advice-add 'find-dired :around #'find-dired-dwim)
+(advice-add 'find-dired :around 'find-dired-dwim)
 
 
 (defun find-dired-prevent-prompt-clutter (f &rest args)
@@ -1274,7 +1274,7 @@
   (setq find-args ""))
 
 
-(advice-add 'find-dired :around #'find-dired-prevent-prompt-clutter)
+(advice-add 'find-dired :around 'find-dired-prevent-prompt-clutter)
 
 
 (defun find-dired-fix-prompt (f &rest xs)
@@ -1829,7 +1829,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (dolist (x '(flush-lines keep-lines))
-  (advice-add x :around #'fix-flush-lines))
+  (advice-add x :around 'fix-flush-lines))
 
 
 ;; ===================
@@ -2013,7 +2013,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
       (apply f args))))
 
 
-(advice-add 'read-shell-command :around #'read-string-shell-command)
+(advice-add 'read-shell-command :around 'read-string-shell-command)
 
 
 ;; Pipe region into the command
@@ -2029,7 +2029,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (apply f args)))
 
 
-(advice-add 'shell-command :around #'shell-command-dwim)
+(advice-add 'shell-command :around 'shell-command-dwim)
 
 
 ;; ====================
@@ -2418,7 +2418,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (apply f (cons buffer (cdr args)))))
 
 
-(advice-add 'shell :around #'setup-shell-buffer)
+(advice-add 'shell :around 'setup-shell-buffer)
 
 
 (setq shell-prompt-pattern "^[^#$%>
