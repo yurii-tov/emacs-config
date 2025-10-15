@@ -2483,7 +2483,14 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; Completion
 
 
-(advice-add 'sh-completion-at-point-function :override 'ignore)
+(defun sh-setup-completion ()
+  (setq-local completion-at-point-functions '(comint-completion-at-point t)
+              comint-dynamic-complete-functions
+              '(shell-environment-variable-completion
+                shell-command-completion)))
+
+
+(add-hook 'sh-mode-hook 'sh-setup-completion)
 
 
 ;; ===========
