@@ -2387,7 +2387,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
               (seq-difference comint-dynamic-complete-functions
                               '(comint-c-a-p-replace-by-expanded-history
                                 shell-c-a-p-replace-by-expanded-directory
-                                shell-command-completion
                                 pcomplete-completions-at-point))
               company-backends '((company-capf
                                   company-comint-hist-completion
