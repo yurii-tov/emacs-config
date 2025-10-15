@@ -917,10 +917,6 @@
   "M-SPC" 'ido-search-subdirs)
 
 
-(define-keymap :keymap ido-file-completion-map
-  "C-o" 'ido-open-in-external-app)
-
-
 (setq ido-grid-mode-keys '(up down left right))
 
 
@@ -940,15 +936,6 @@
 
 
 ;; Advanced commands
-
-
-(defun ido-open-in-external-app ()
-  (interactive)
-  (let ((file-name (expand-file-name (ido-name (car ido-matches))
-                                     ido-current-directory)))
-    (message "Open in external app: %s" file-name)
-    (open-in-external-app file-name)
-    (minibuffer-keyboard-quit)))
 
 
 (defun ido-search-subdirs ()
