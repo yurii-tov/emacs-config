@@ -2480,6 +2480,12 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   (keymap-set shell-mode-map "C-x u" 'shell-elevate))
 
 
+;; Completion
+
+
+(advice-add 'sh-completion-at-point-function :override 'ignore)
+
+
 ;; ===========
 ;; Web browser
 ;; ===========
