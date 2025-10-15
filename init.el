@@ -1904,6 +1904,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (company-tng-mode)
 
 
+(advice-remove #'eglot--snippet-expansion-fn #'ignore)
+
+
 (setq-default company-tooltip-offset-display 'lines
               company-selection-wrap-around t
               company-dabbrev-code-modes '(prog-mode)
@@ -3260,9 +3263,6 @@ Example input:
 
   ;; Auto-shutdown the server
   (setq eglot-autoshutdown t)
-
-  ;; Fix snippets + company-tng
-  (advice-remove #'eglot--snippet-expansion-fn #'ignore)
 
   ;; Turn off flymake mode on exit
   (add-hook 'eglot-managed-mode-hook 'eglot-cleanup-flymake))
