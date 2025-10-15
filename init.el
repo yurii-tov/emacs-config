@@ -112,7 +112,7 @@
 
 (when (eq system-type 'windows-nt)
   (dolist (x '(compilation-start shell-command))
-    (advice-add x :around 'windows-fix-args-encoding)))
+    (advice-add x :around #'windows-fix-args-encoding)))
 
 
 ;; ===========
@@ -603,7 +603,7 @@
       (apply f args))))
 
 
-(advice-add 'read-string :around 'read-string-completing-history)
+(advice-add 'read-string :around #'read-string-completing-history)
 
 
 ;; History
@@ -697,7 +697,7 @@
     (apply f args)))
 
 
-(advice-add 'read-buffer-to-switch :around 'switch-to-buffer-annotate-wd)
+(advice-add 'read-buffer-to-switch :around #'switch-to-buffer-annotate-wd)
 
 
 ;; Unique names
@@ -718,7 +718,7 @@
     (kill-buffer)))
 
 
-(advice-add 'kill-buffer-and-window :around 'kill-buffer-and-window-fix)
+(advice-add 'kill-buffer-and-window :around #'kill-buffer-and-window-fix)
 
 
 ;; =======
@@ -783,7 +783,7 @@
       (ibuffer-update nil))))
 
 
-(advice-add 'ibuffer-filter-disable :around 'ibuffer-toggle-last-filter)
+(advice-add 'ibuffer-filter-disable :around #'ibuffer-toggle-last-filter)
 
 
 (with-eval-after-load 'ibuffer
@@ -929,7 +929,7 @@
 
 (advice-add 'ido-grid-mode-count
             :around
-            'ido-colorize-counter)
+            #'ido-colorize-counter)
 
 
 (setq ido-grid-mode-first-line '(" " ido-grid-mode-count))
@@ -995,7 +995,7 @@
     (add-to-history 'file-name-history file-name)))
 
 
-(advice-add 'ido-read-file-name :filter-return 'ido-record-history)
+(advice-add 'ido-read-file-name :filter-return #'ido-record-history)
 
 
 ;; Completions buffer
@@ -1021,7 +1021,7 @@
           resize-mini-windows r)))
 
 
-(advice-add 'ido-grid-mode-ido-setup :around 'ido-fix-grid-mode)
+(advice-add 'ido-grid-mode-ido-setup :around #'ido-fix-grid-mode)
 
 
 ;; =====
@@ -1050,7 +1050,7 @@
   (prog1 r (setq ls-lisp-dirs-first t)))
 
 
-(advice-add 'ls-lisp-set-options :filter-return 'ls-lisp-force-options)
+(advice-add 'ls-lisp-set-options :filter-return #'ls-lisp-force-options)
 
 
 ;; Keybindings
@@ -1206,7 +1206,7 @@
 
 
 (dolist (x '(dired-find-file dired-up-directory))
-  (advice-add x :around 'dired-propogate-hide-details))
+  (advice-add x :around #'dired-propogate-hide-details))
 
 
 ;; IDO work directory recording
@@ -1222,7 +1222,7 @@
 
 (advice-add 'dired--find-possibly-alternative-file
             :around
-            'dired-record-ido-wd)
+            #'dired-record-ido-wd)
 
 
 ;; ====
@@ -1252,7 +1252,7 @@
     (rename-buffer name t)))
 
 
-(advice-add 'find-dired :around 'find-dired-setup-buffer)
+(advice-add 'find-dired :around #'find-dired-setup-buffer)
 
 
 (defun find-dired-dwim (f &rest args)
@@ -1265,7 +1265,7 @@
     (apply f args)))
 
 
-(advice-add 'find-dired :around 'find-dired-dwim)
+(advice-add 'find-dired :around #'find-dired-dwim)
 
 
 (defun find-dired-prevent-prompt-clutter (f &rest args)
@@ -1274,7 +1274,7 @@
   (setq find-args ""))
 
 
-(advice-add 'find-dired :around 'find-dired-prevent-prompt-clutter)
+(advice-add 'find-dired :around #'find-dired-prevent-prompt-clutter)
 
 
 (defun find-dired-fix-prompt (f &rest xs)
@@ -1297,7 +1297,7 @@ The search string is queried first, followed by the directory."
     (funcall f dir query)))
 
 
-(advice-add 'find-dired :around 'find-dired-fix-prompt)
+(advice-add 'find-dired :around #'find-dired-fix-prompt)
 
 
 ;; =======
@@ -1317,7 +1317,7 @@ The search string is queried first, followed by the directory."
 
 (when ripgrep
   (keymap-set search-map "g" 'ripgrep-regexp)
-  (advice-add 'project-find-regexp :override 'project-ripgrep))
+  (advice-add 'project-find-regexp :override #'project-ripgrep))
 
 
 (defun ripgrep-dired ()
@@ -1476,7 +1476,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
     (apply f args)))
 
 
-(advice-add 'hexl-mode :around 'region-hexdump)
+(advice-add 'hexl-mode :around #'region-hexdump)
 
 
 ;; Duplicating
@@ -1829,7 +1829,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (dolist (x '(flush-lines keep-lines))
-  (advice-add x :around 'fix-flush-lines))
+  (advice-add x :around #'fix-flush-lines))
 
 
 ;; ===================
@@ -1855,12 +1855,12 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 (dolist (x '(completion-flex-try-completion
              completion-flex-all-completions))
-  (advice-add x :around 'completion-flex-restrict))
+  (advice-add x :around #'completion-flex-restrict))
 
 
 (dolist (x '(python-shell-completion-complete-or-indent
              ielm-tab))
-  (advice-add x :override 'completion-at-point))
+  (advice-add x :override #'completion-at-point))
 
 
 ;; =============
@@ -1949,7 +1949,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
         (t (apply f args))))
 
 
-(advice-add 'company-select-next :around 'company-instant-complete)
+(advice-add 'company-select-next :around #'company-instant-complete)
 
 
 ;; Explicit completion
@@ -2016,7 +2016,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
       (apply f args))))
 
 
-(advice-add 'read-shell-command :around 'read-string-shell-command)
+(advice-add 'read-shell-command :around #'read-string-shell-command)
 
 
 ;; Pipe region into the command
@@ -2032,7 +2032,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (apply f args)))
 
 
-(advice-add 'shell-command :around 'shell-command-dwim)
+(advice-add 'shell-command :around #'shell-command-dwim)
 
 
 ;; ====================
@@ -2081,7 +2081,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (apply f command buffer-name (cddr args))))
 
 
-(advice-add 'async-shell-command :around 'asc-setup-buffer)
+(advice-add 'async-shell-command :around #'asc-setup-buffer)
 
 
 ;; Display the command and working directory
@@ -2105,7 +2105,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
           (font-lock-update))))))
 
 
-(advice-add 'async-shell-command :around 'asc-echo-startup-info)
+(advice-add 'async-shell-command :around #'asc-echo-startup-info)
 
 
 ;; Signals handling
@@ -2154,7 +2154,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                            info))))))))))
 
 
-(advice-add 'async-shell-command :around 'asc-handle-signal)
+(advice-add 'async-shell-command :around #'asc-handle-signal)
 
 
 ;; Popup suppressing
@@ -2180,7 +2180,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                        'face 'completions-annotations)))))))
 
 
-(advice-add 'async-shell-command :around 'asc-handle-popup)
+(advice-add 'async-shell-command :around #'asc-handle-popup)
 
 
 ;; Restarting
@@ -2421,7 +2421,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (apply f (cons buffer (cdr args)))))
 
 
-(advice-add 'shell :around 'setup-shell-buffer)
+(advice-add 'shell :around #'setup-shell-buffer)
 
 
 (setq shell-prompt-pattern "^[^#$%>
@@ -3014,7 +3014,7 @@ Example input:
       (vc-edited-state (setf (caddr s) "● ")))))
 
 
-(advice-add 'vc-mode-line-state :filter-return 'vc-prettify-mode-line-state)
+(advice-add 'vc-mode-line-state :filter-return #'vc-prettify-mode-line-state)
 
 
 ;; Informative branch indicator in Git's vc-dir
@@ -3042,7 +3042,7 @@ Example input:
 
 (advice-add 'vc-git-dir-extra-headers
             :filter-return
-            'update-vc-git-dir-extra-headers)
+            #'update-vc-git-dir-extra-headers)
 
 
 ;; Update vc-dir buffer after commit
@@ -3232,7 +3232,7 @@ Example input:
   (apply f (cons nil (cdr args))))
 
 
-(advice-add 'compilation-read-command :around 'compile-suppress-initial)
+(advice-add 'compilation-read-command :around #'compile-suppress-initial)
 
 
 ;; ===
@@ -3291,7 +3291,7 @@ Example input:
 
 (dolist (x '(flymake-show-buffer-diagnostics
              flymake-show-project-diagnostics))
-  (advice-add x :around 'flymake-display-diagnostics-fix))
+  (advice-add x :around #'flymake-display-diagnostics-fix))
 
 
 ;; =====
@@ -3316,7 +3316,7 @@ Example input:
               (replace-match ""))))))))
 
 
-(advice-add 'eldoc--format-doc-buffer :around 'fix-eldoc)
+(advice-add 'eldoc--format-doc-buffer :around #'fix-eldoc)
 
 
 ;; Fix link navigation
@@ -3368,7 +3368,7 @@ Example input:
                        'previous-property-change)))))))
 
 
-(advice-add 'eldoc--format-doc-buffer :around 'eldoc-fix-link-navigation)
+(advice-add 'eldoc--format-doc-buffer :around #'eldoc-fix-link-navigation)
 
 
 ;; ===========
@@ -3591,7 +3591,7 @@ Example input:
     (apply f args)))
 
 
-(advice-add 'sql-connect :around 'ignore-sql-database)
+(advice-add 'sql-connect :around #'ignore-sql-database)
 
 
 ;; Initial setup
@@ -3742,7 +3742,7 @@ Process .+
                     nil t))))))
 
 
-(advice-add 'sql-comint :around 'sql-handle-remote-db)
+(advice-add 'sql-comint :around #'sql-handle-remote-db)
 
 
 ;; Output preprocessing
