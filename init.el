@@ -2212,39 +2212,13 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; ======
 
 
-;; Use vertical tab as separator in history file
-
-
-(setq comint-input-ring-separator "
-
-")
-
-
 ;; Persistent history
 
 
-(setq comint-input-ring-size 1500)
-
-
-(defvar *comint-histfile-id* nil)
-
-
-(defun comint-make-input-ring-file-name (histfile-id)
-  (expand-file-name (format ".%s-history" histfile-id)
-                    user-emacs-directory))
-
-
-(defun comint-setup-persistent-history ()
-  (let ((process (get-buffer-process (current-buffer))))
-    (when process
-      (let ((histfile-id (or *comint-histfile-id*
-                             (downcase (replace-regexp-in-string
-                                        "<.*>\\| .+\\|[^a-zA-Z]" ""
-                                        (process-name process))))))
-        (setq-local comint-input-ring-file-name
-                    (comint-make-input-ring-file-name histfile-id))
-        (add-hook 'kill-buffer-hook 'comint-save-history nil t)
-        (comint-read-input-ring t)))))
+(setq comint-input-ring-size 1500
+      comint-input-ring-separator "
+
+")
 
 
 (defun comint-save-history ()
@@ -2282,11 +2256,29 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                           :test #'equal))
          (history-final (cl-subseq history-merged
                                    (max 0 (- (length history-merged)
-                                             comint-input-ring-size))))
-         (comint-input-ring (cons 0 (cons (length history-final)
-                                          history-final))))
-    (comint-write-input-ring))
-  (comint-read-input-ring))
+                                             comint-input-ring-size)))))
+    (setq comint-input-ring (cons 0 (cons (length history-final)
+                                          history-final)))
+    (comint-write-input-ring)))
+
+
+(defvar *comint-histfile-id* nil)
+
+
+(defun comint-setup-persistent-history ()
+  (when-let* ((process (get-buffer-process (current-buffer)))
+              (histfile-id (or *comint-histfile-id*
+                               (downcase (replace-regexp-in-string
+                                          "<.*>\\| .+\\|[^a-zA-Z]" ""
+                                          (process-name process))))))
+    (setq comint-input-ring-file-name
+          (expand-file-name (format ".%s-history" histfile-id)
+                            user-emacs-directory))
+    (add-hook 'kill-buffer-hook 'comint-save-history nil t)
+    (comint-read-input-ring t)))
+
+
+(add-hook 'comint-mode-hook 'comint-setup-persistent-history)
 
 
 (defun comint-save-history-all ()
@@ -2296,12 +2288,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
            (comint-save-history)))))
 
 
-(add-hook 'comint-mode-hook
-          'comint-setup-persistent-history)
-
-
-(add-hook 'kill-emacs-hook
-          'comint-save-history-all)
+(add-hook 'kill-emacs-hook 'comint-save-history-all)
 
 
 ;; Disable autoscrolling
