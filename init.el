@@ -2212,26 +2212,22 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; ======
 
 
-;; Persistent history
-
-
-(setq comint-input-ring-size 1500
+(setq comint-scroll-show-maximum-output nil
+      comint-buffer-maximum-size (expt 2 13)
+      comint-input-ring-size 1500
       comint-input-ring-separator "
 
 ")
 
 
+(add-to-list 'comint-output-filter-functions 'comint-truncate-buffer)
+
+
+;; Persistent history
+
+
 (defun comint-save-history ()
-  "Save command history to `comint-input-ring-file-name'
-   (preserving existing history from that file).
-   * Features
-     - Preserving existing history
-       i.e. in-memory history merged with history from file
-     - Removing duplicated commands
-   * Bugs
-     - When comint-input-ring is overflowed *and* (car comint-input-ring) is zero,
-       all its contents treated as 'old' history
-       (and therefore goes to the tail of history file)"
+  "Read `comint-input-ring-file-name', merge with `comint-input-ring', save all to the file"
   (let* ((ir (cl-coerce (cl-coerce (cddr comint-input-ring) 'list) 'vector))
          (ir-items-count (cadr comint-input-ring))
          (ir-insertion-place (car comint-input-ring))
@@ -2291,31 +2287,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (add-hook 'kill-emacs-hook 'comint-save-history-all)
 
 
-;; Disable autoscrolling
-
-
-(setq-default comint-scroll-show-maximum-output nil)
-
-
-;; Limit output size
-
-
-(setq-default comint-buffer-maximum-size (expt 2 13))
-
-
-(add-to-list 'comint-output-filter-functions
-             'comint-truncate-buffer)
-
-
-;; Keybindings
-
-
-(with-eval-after-load 'comint
-  (define-keymap :keymap comint-mode-map
-    "C-c C-k" 'comint-kill-subjob
-    "M-r" 'comint-browse-command-history))
-
-
 ;; History browsing
 
 
@@ -2373,6 +2344,15 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (add-hook 'comint-mode-hook 'comint-setup-completion)
+
+
+;; Keybindings
+
+
+(with-eval-after-load 'comint
+  (define-keymap :keymap comint-mode-map
+    "C-c C-k" 'comint-kill-subjob
+    "M-r" 'comint-browse-command-history))
 
 
 ;; =====
