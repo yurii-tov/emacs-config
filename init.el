@@ -2364,34 +2364,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; =====
 
 
-(defun shell-find-same-dir-buffer (name)
-  (let ((current-dir default-directory))
-    (cl-find-if (lambda (x)
-                  (and (or (string-prefix-p name x)
-                           (string-suffix-p "-shell*" x)
-                           (string-prefix-p "*ssh-" x))
-                       (with-current-buffer x
-                         (apply #'equal
-                                (mapcar (lambda (d)
-                                          (file-name-as-directory
-                                           (expand-file-name
-                                            (file-name-as-directory d))))
-                                        (list default-directory current-dir))))))
-                (mapcar #'buffer-name (buffer-list)))))
-
-
-(defun setup-shell-buffer (f &rest args)
-  (let* ((name "*shell*")
-         (buffer (or (car args)
-                     (shell-find-same-dir-buffer name)
-                     (generate-new-buffer-name name))))
-    (switch-to-buffer buffer)
-    (apply f (cons buffer (cdr args)))))
-
-
-(advice-add 'shell :around #'setup-shell-buffer)
-
-
 (setq shell-prompt-pattern "^[^#$%>
 ]*#?[#$%>] *")
 
@@ -2415,7 +2387,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (shell (format "*ssh-%s*" host))))
 
 
-;; Elevating to root
+;; Elevation of privilege
 
 
 (defun shell-elevate ()
