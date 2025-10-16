@@ -2271,7 +2271,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
           (expand-file-name (format ".%s-history" histfile-id)
                             user-emacs-directory))
     (add-hook 'kill-buffer-hook 'comint-save-history nil t)
-    (comint-read-input-ring t)))
+    (if (ring-empty-p comint-input-ring)
+        (comint-read-input-ring t)
+      (comint-save-history))))
 
 
 (add-hook 'comint-mode-hook 'comint-setup-persistent-history)
@@ -2280,8 +2282,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (defun comint-save-history-all ()
   (dolist (b (buffer-list))
     (with-current-buffer b
-      (and comint-input-ring-file-name
-           (comint-save-history)))))
+      (when (and comint-input-ring
+                 (not (ring-empty-p comint-input-ring)))
+        (comint-save-history)))))
 
 
 (add-hook 'kill-emacs-hook 'comint-save-history-all)
@@ -2382,9 +2385,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                      (shell-find-same-dir-buffer name)
                      (generate-new-buffer-name name))))
     (switch-to-buffer buffer)
-    (when (and comint-input-ring
-               (not (get-buffer-process (current-buffer))))
-      (comint-save-history))
     (apply f (cons buffer (cdr args)))))
 
 
@@ -3623,7 +3623,6 @@ Example input:
                                            (t (delete-file ,sql-database-copy)
                                               (format "delete local copy: %s"
                                                       ,sql-database-copy))))))))))
-    (comint-save-history) ;; save current command history
     (setq-local comint-preoutput-filter-functions
                 (default-value 'comint-preoutput-filter-functions)) ;; force reset comint-preoutput-filter-functions
     (when (get-buffer-process (current-buffer))
