@@ -2368,6 +2368,35 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ]*#?[#$%>] *")
 
 
+(defun shell-pick-buffer (working-directory)
+  (cl-remove-if-not
+   (lambda (x)
+     (with-current-buffer x
+       (and (eq major-mode 'shell-mode)
+            (not (string-match-p "PowerShell" (buffer-name)))
+            (thread-last
+              (list working-directory default-directory)
+              (mapcar #'file-name-as-directory)
+              (mapcar #'expand-file-name)
+              (apply #'equal)))))
+   (buffer-list)))
+
+
+(advice-add 'shell :around
+            (lambda (f &rest args)
+              "Pick existing shell in same working directory, if available"
+              (interactive
+               (list (let* ((dir (abbreviate-file-name default-directory))
+                            (buffers (shell-pick-buffer dir)))
+                       (cond ((cdr buffers)
+                              (completing-read
+                               (format "Sessions at %s: " dir)
+                               (mapcar #'buffer-name buffers)))
+                             ((car buffers))
+                             (t (generate-new-buffer-name "*shell*"))))))
+              (apply f args)))
+
+
 ;; Ssh sessions
 
 
