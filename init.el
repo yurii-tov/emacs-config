@@ -2368,7 +2368,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ]*#?[#$%>] *")
 
 
-(defun shell-pick-buffer (working-directory)
+(defun shell-buffers (working-directory)
   (cl-remove-if-not
    (lambda (x)
      (with-current-buffer x
@@ -2387,7 +2387,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
               "Pick existing shell in same working directory, if available"
               (interactive
                (list (let* ((dir (abbreviate-file-name default-directory))
-                            (buffers (shell-pick-buffer dir)))
+                            (buffers (shell-buffers dir)))
                        (cond ((cdr buffers)
                               (completing-read
                                (format "Sessions at %s: " dir)
