@@ -2390,7 +2390,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                             (buffers (shell-buffers dir)))
                        (cond ((cdr buffers)
                               (completing-read
-                               (format "Sessions at %s: " dir)
+                               (format "Switch to existing session at %s: "
+                                       (propertize
+                                        dir 'face 'completions-annotations))
                                (mapcar #'buffer-name buffers)))
                              ((car buffers))
                              (t (generate-new-buffer-name "*shell*"))))))
@@ -3051,9 +3053,7 @@ Example input:
    `(lambda (f &rest args)
       (if-let ((command (cdr (assoc (car (vc-deduce-fileset t))
                                     (assoc ',vc-command vc-command-overrides)))))
-          (progn (message "Running %s..."
-                          (propertize command
-                                      'face 'success))
+          (progn (message "Running %s..." (propertize command 'face 'success))
                  (shell-command command)
                  (cond ((eq major-mode 'vc-dir-mode)
                         (vc-refresh-headers))
@@ -3899,7 +3899,7 @@ Process .+
     (async-shell-command command buffer)
     (message "Serving %s at %s"
              (propertize (abbreviate-file-name default-directory)
-                         'face 'bold-italic)
+                         'face 'completions-annotations)
              (propertize socket 'face 'bold))))
 
 
