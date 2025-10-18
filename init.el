@@ -3487,11 +3487,9 @@ Example input:
 ;; =======
 
 
-(setq cider-repl-history-file
-      (expand-file-name ".cider-history" user-emacs-directory))
-
-
-(setq cider-show-error-buffer nil)
+(setq cider-repl-history-file (expand-file-name ".cider-history"
+                                                user-emacs-directory)
+      cider-show-error-buffer nil)
 
 
 (with-eval-after-load 'cider-repl
