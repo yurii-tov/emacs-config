@@ -1907,14 +1907,15 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (advice-remove #'eglot--snippet-expansion-fn #'ignore)
 
 
-(setq-default company-tooltip-offset-display 'lines
-              company-selection-wrap-around t
-              company-dabbrev-code-modes '(prog-mode)
-              company-dabbrev-code-completion-styles t
-              company-backends '(company-capf
-                                 company-dabbrev-code
-                                 company-files
-                                 company-dabbrev))
+(setq company-search-regexp-function 'company-search-flex-regexp
+      company-tooltip-offset-display 'lines
+      company-selection-wrap-around t
+      company-dabbrev-code-modes '(prog-mode)
+      company-dabbrev-code-completion-styles t
+      company-backends '(company-capf
+                         company-dabbrev-code
+                         company-files
+                         company-dabbrev))
 
 
 (advice-add 'completion-at-point
