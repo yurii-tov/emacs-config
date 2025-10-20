@@ -2445,8 +2445,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (defun sh-setup-completion ()
-  (setq-local company-backends '(company-dabbrev-code
-                                 (company-capf company-dabbrev :separate))
+  (setq-local company-backends '((company-capf company-dabbrev-code :separate))
               completion-at-point-functions '(comint-completion-at-point t)))
 
 
