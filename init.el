@@ -1838,13 +1838,8 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (setq tab-always-indent 'complete
-      completion-styles '(partial-completion substring)
+      completion-styles '(partial-completion flex)
       completion-auto-select t)
-
-
-(dolist (hook '(prog-mode-hook ielm-mode-hook inferior-python-mode-hook))
-  (add-hook hook (lambda ()
-                   (setq-local completion-styles '(partial-completion flex)))))
 
 
 (defun completion-flex-restrict (f &rest args)
