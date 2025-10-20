@@ -1927,14 +1927,13 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                 (company-complete-common))))
 
 
-(advice-add 'company-dabbrev
-            :around
-            (lambda (f &rest args)
-              "Prevent completion on empty prefix"
-              (let ((r (apply f args)))
-                (cl-case (car args)
-                  (prefix (unless (string-empty-p (car r)) r))
-                  (t r)))))
+(dolist (x '(company-dabbrev-code company-dabbrev))
+  (advice-add x :around (lambda (f &rest args)
+                          "Prevent completion on empty prefix"
+                          (let ((r (apply f args)))
+                            (cl-case (car args)
+                              (prefix (unless (string-empty-p (car r)) r))
+                              (t r))))))
 
 
 ;; Complete instantly in some cases
@@ -2446,10 +2445,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (defun sh-setup-completion ()
-  (setq-local completion-at-point-functions '(comint-completion-at-point t)
-              comint-dynamic-complete-functions
-              '(shell-environment-variable-completion
-                shell-command-completion)))
+  (setq-local company-backends '(company-dabbrev-code
+                                 (company-capf company-dabbrev :separate))
+              completion-at-point-functions '(comint-completion-at-point t)))
 
 
 (add-hook 'sh-mode-hook 'sh-setup-completion)
