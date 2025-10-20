@@ -2428,8 +2428,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
    (equivalent to `sudo bash`).
    When called again, reverts to regular shell"
   (interactive)
-  (let ((command (if (setq-local rootp
-                                 (and (boundp 'rootp) rootp))
+  (let ((command (if (setq-local rootp (and (boundp 'rootp) rootp))
                      "exit"
                    "sudo $SHELL")))
     (comint-send-string
