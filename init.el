@@ -1842,10 +1842,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
       completion-auto-select t)
 
 
-(dolist (x '(ielm-tab python-shell-completion-complete-or-indent))
-  (advice-add x :override #'completion-at-point))
-
-
 ;; =============
 ;; Hippie-expand
 ;; =============
@@ -2318,6 +2314,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (defun comint-setup-completion ()
+  (use-local-map
+   (define-keymap :parent (current-local-map)
+     "TAB" 'completion-at-point))
   (setq-local comint-dynamic-complete-functions
               (seq-difference comint-dynamic-complete-functions
                               '(comint-c-a-p-replace-by-expanded-history
