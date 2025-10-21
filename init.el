@@ -1842,6 +1842,18 @@ with ability to \"cycle\" different variants with provided KEYBINDING
       completion-auto-select t)
 
 
+(defun completion-flex-restrict (f &rest args)
+  "Disable flex for long inputs"
+  (if (<= (length (cadar args)) 16)
+      (apply f args)
+    (car args)))
+
+
+(advice-add 'completion-flex--make-flex-pattern
+            :around
+            #'completion-flex-restrict)
+
+
 ;; =============
 ;; Hippie-expand
 ;; =============
