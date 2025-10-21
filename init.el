@@ -970,7 +970,7 @@
       (setq ido-current-directory (expand-file-name d ido-current-directory)))
     (setq ido-matches (list (file-name-nondirectory file)))
     (when (file-directory-p file)
-      (setq ido-current-directory (file-name-as-directory file)
+      (setq ido-current-directory (expand-file-name file ido-current-directory)
             ido-exit 'refresh))
     (exit-minibuffer)))
 
