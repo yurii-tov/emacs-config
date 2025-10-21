@@ -586,6 +586,19 @@
                         completion-category-defaults nil)))
 
 
+(defun minibuffer-flex-restrict (f &rest args)
+  "Don't use flex on long patterns in minibuffer"
+  (if (or (not (minibufferp))
+          (<= (length (cadar args)) 16))
+      (apply f args)
+    (car args)))
+
+
+(advice-add 'completion-flex--make-flex-pattern
+            :around
+            #'minibuffer-flex-restrict)
+
+
 (defun read-string-completing-history (f &rest args)
   (let* ((prompt (car args))
          (initial-input (cadr args))
@@ -1840,19 +1853,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (setq tab-always-indent 'complete
       completion-styles '(partial-completion flex)
       completion-auto-select t)
-
-
-(defun completion-flex-restrict (f &rest args)
-  "Don't use flex on long patterns in minibuffer"
-  (if (or (not (minibufferp))
-          (<= (length (cadar args)) 16))
-      (apply f args)
-    (car args)))
-
-
-(advice-add 'completion-flex--make-flex-pattern
-            :around
-            #'completion-flex-restrict)
 
 
 ;; =============
