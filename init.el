@@ -988,7 +988,9 @@
                   (cl-remove-if disconnected-p)
                   (mapcan (lambda (x)
                             (unless (ido-nonreadable-directory-p x)
-                              (file-expand-wildcards (concat x "*")))))
+                              (when-let ((xs (file-expand-wildcards
+                                              (concat x "*"))))
+                                (cons x xs)))))
                   (nconc (cl-remove-if-not disconnected-p file-name-history))))
          (file (completing-read "Find recent: "
                                 files nil nil ido-text 'file-name-history)))
