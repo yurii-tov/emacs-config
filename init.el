@@ -1843,8 +1843,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (defun completion-flex-restrict (f &rest args)
-  "Disable flex for long inputs"
-  (if (<= (length (cadar args)) 16)
+  "Don't use flex on long patterns in minibuffer"
+  (if (or (not (minibufferp))
+          (<= (length (cadar args)) 16))
       (apply f args)
     (car args)))
 
