@@ -2207,7 +2207,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (setq comint-pager "cat"
       comint-scroll-show-maximum-output nil
       comint-buffer-maximum-size (expt 2 13)
-      comint-input-ring-size 1500
       comint-input-ring-separator "
 
 ")
