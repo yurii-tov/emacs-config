@@ -962,16 +962,17 @@
                         (project--files-in-directory
                          ido-current-directory
                          exclusions)))
-         (file (completing-read
-                (format "Find file in %s: "
-                        (abbreviate-file-name ido-current-directory))
-                files nil nil ido-text)))
+         (file (expand-file-name
+                (completing-read
+                 (format "Find file in %s: "
+                         (abbreviate-file-name ido-current-directory))
+                 files nil nil ido-text)
+                ido-current-directory)))
+    (setq ido-matches (list (file-name-nondirectory file)))
     (when-let ((d (file-name-directory file)))
       (setq ido-current-directory (expand-file-name d ido-current-directory)))
-    (setq ido-matches (list (file-name-nondirectory file)))
     (when (file-directory-p file)
-      (setq ido-current-directory (expand-file-name file ido-current-directory)
-            ido-exit 'refresh))
+      (setq ido-exit 'refresh))
     (exit-minibuffer)))
 
 
