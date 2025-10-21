@@ -965,10 +965,13 @@
          (file (completing-read
                 (format "Find file in %s: "
                         (abbreviate-file-name ido-current-directory))
-                files nil t ido-text)))
+                files nil nil ido-text)))
     (when-let ((d (file-name-directory file)))
       (setq ido-current-directory (expand-file-name d ido-current-directory)))
     (setq ido-matches (list (file-name-nondirectory file)))
+    (when (file-directory-p file)
+      (setq ido-current-directory (file-name-as-directory file)
+            ido-exit 'refresh))
     (exit-minibuffer)))
 
 
@@ -984,12 +987,10 @@
                   (cl-remove-if disconnected-p)
                   (mapcan (lambda (x)
                             (unless (ido-nonreadable-directory-p x)
-                              (when-let ((xs (file-expand-wildcards
-                                              (concat x "*"))))
-                                (cons x xs)))))
+                              (file-expand-wildcards (concat x "*")))))
                   (nconc (cl-remove-if-not disconnected-p file-name-history))))
          (file (completing-read "Find recent: "
-                                files nil t ido-text 'file-name-history)))
+                                files nil nil ido-text 'file-name-history)))
     (setq ido-current-directory (file-name-directory file)
           ido-matches (list (file-name-nondirectory file)))
     (when (file-directory-p file)
