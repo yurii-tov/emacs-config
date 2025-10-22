@@ -194,17 +194,6 @@
   "v" 'company-diag)
 
 
-;; Keyboard macro
-
-
-(define-keymap :keymap global-map
-  "<f1>" 'kmacro-start-macro-or-insert-counter
-  "<f2>" 'kmacro-end-or-call-macro
-  "<f3>" 'kmacro-cycle-ring-previous
-  "<f4>" 'kmacro-set-counter
-  "C-x e" 'kmacro-edit-macro-repeat)
-
-
 ;; Misc
 
 
