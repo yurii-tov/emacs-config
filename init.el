@@ -198,6 +198,7 @@
 
 
 (define-keymap :keymap global-map
+  "<f2>" 'kmacro-keymap
   "M-c" 'text-edit-map
   "M-o" 'other-window
   "C-1" 'delete-other-windows
