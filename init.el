@@ -2244,15 +2244,14 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (comint-write-input-ring)))
 
 
-(defvar *comint-histfile-id* nil)
-
-
 (defun comint-setup-persistent-history ()
   (when-let* ((process (get-buffer-process (current-buffer)))
-              (histfile-id (or *comint-histfile-id*
-                               (downcase (replace-regexp-in-string
-                                          "<.*>\\| .+\\|[^a-zA-Z]" ""
-                                          (process-name process))))))
+              (histfile-id (thread-last
+                             process process-command car
+                             file-name-base downcase
+                             (replace-regexp-in-string "[0-9]" "")
+                             (replace-regexp-in-string
+                              "^.*sh$\\|cmdproxy" "sh"))))
     (setq comint-input-ring-file-name
           (expand-file-name (format ".%s-history" histfile-id)
                             user-emacs-directory))
@@ -3512,11 +3511,9 @@ Example input:
 
 
 (advice-add 'powershell
-            :around
-            (lambda (f &rest args)
-              (let ((*comint-histfile-id* "powershell"))
-                (prog1 (apply f args)
-                  (set-buffer-process-coding-system 'cp866-dos 'cp866-dos)))))
+            :after
+            (lambda (&rest _)
+              (set-buffer-process-coding-system 'cp866-dos 'cp866-dos)))
 
 
 ;; ==========
