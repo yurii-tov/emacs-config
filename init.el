@@ -63,8 +63,8 @@
              (setenv "LC_ALL" "en_GB.UTF-8")
              (add-to-list 'exec-path (format "%s/usr/bin" msys))
              (add-to-list 'exec-path (format "%s/mingw64/bin" msys))
-             (setq exec-path (cons gpg-path (cl-remove gpg-path exec-path :test #'equal)))
-             (setq shell-file-name "bash")))))
+             (setq exec-path (cons gpg-path (cl-remove gpg-path exec-path :test #'equal))
+                   shell-file-name "bash")))))
 
 
 ;; Termux
@@ -790,15 +790,13 @@
 ;; =====
 
 
-(setq auto-save-default nil
-      make-backup-files nil
-      auto-save-list-file-name nil)
-
-
 (global-auto-revert-mode t)
 
 
-(setq auto-revert-verbose nil
+(setq auto-save-default nil
+      make-backup-files nil
+      auto-save-list-file-name nil
+      auto-revert-verbose nil
       revert-without-query '(".*")
       auto-revert-use-notify (not (eq system-type 'windows-nt)))
 
@@ -1403,10 +1401,8 @@ The search string is queried first, followed by the directory."
 (setq-default indent-tabs-mode nil
               sgml-basic-offset 2
               js-indent-level 2
-              css-indent-offset 2)
-
-
-(setq-default fill-column 80)
+              css-indent-offset 2
+              fill-column 80)
 
 
 (defun fill-region-justify (start end)
@@ -1730,11 +1726,11 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (defun join-lines ()
   (interactive)
   (if (use-region-p)
-      (let ((separator (read-string "Join with: "))
-            (text (buffer-substring (region-beginning)
-                                    (region-end))))
-        (setq text (split-string text "\n" t " *"))
-        (setq text (string-join text separator))
+      (let* ((separator (read-string "Join with: "))
+             (text (thread-first (buffer-substring (region-beginning)
+                                                   (region-end))
+                                 (split-string "\n" t " *")
+                                 (string-join separator))))
         (delete-active-region)
         (insert text))
     (progn
@@ -1747,12 +1743,12 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 (defun break-line ()
   (interactive)
-  (let ((separator (read-string "Break with: "))
-        (text (buffer-substring
-               (line-beginning-position)
-               (line-end-position))))
-    (setq text (split-string text separator t))
-    (setq text (string-join text "\n"))
+  (let* ((separator (read-string "Break with: "))
+         (text (thread-first (buffer-substring
+                              (line-beginning-position)
+                              (line-end-position))
+                             (split-string separator t)
+                             (string-join "\n"))))
     (delete-region (line-beginning-position)
                    (line-end-position))
     (insert text)))
@@ -3428,8 +3424,7 @@ Example input:
 (setq-default c-basic-offset 4)
 
 
-(add-hook 'c-mode-hook
-          (lambda () (c-set-style "k&r")))
+(add-hook 'c-mode-hook (lambda () (c-set-style "k&r")))
 
 
 ;; ====
@@ -3480,8 +3475,7 @@ Example input:
 
 
 (defun use-eww-for-cl-hyperspec-lookup ()
-  (setq-local browse-url-browser-function
-              'eww-browse-url))
+  (setq-local browse-url-browser-function 'eww-browse-url))
 
 
 (defun common-lisp-setup-company ()
@@ -3513,13 +3507,12 @@ Example input:
 (require 'sql)
 
 
-(setq sql-connection-alist
-      '((sqlilte (sql-product 'sqlite))
-        (sqlilte-in-memory (sql-product 'sqlite)
-                           (sql-database ""))
-        (firebird (sql-product 'interbase)
-                  (sql-user "sysdba")
-                  (sql-password "masterkey"))))
+(setq sql-connection-alist '((sqlilte (sql-product 'sqlite))
+                             (sqlilte-in-memory (sql-product 'sqlite)
+                                                (sql-database ""))
+                             (firebird (sql-product 'interbase)
+                                       (sql-user "sysdba")
+                                       (sql-password "masterkey"))))
 
 
 ;; Fix rough corners
