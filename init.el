@@ -3504,9 +3504,6 @@ Example input:
 ;; ==========
 
 
-(require 'sql)
-
-
 (setq sql-connection-alist '((sqlilte (sql-product 'sqlite))
                              (sqlilte-in-memory (sql-product 'sqlite)
                                                 (sql-database ""))
@@ -3554,8 +3551,7 @@ Example input:
                       (process-command process)))))
 
 
-(add-hook 'sql-login-hook
-          'sql-setup-reconnect)
+(add-hook 'sql-login-hook 'sql-setup-reconnect)
 
 
 (defun sql-reconnect ()
@@ -3619,9 +3615,6 @@ Process .+
            (sql-progress-reporter-done rpt)
            (goto-char (point-max))) ;; tracking interpreter startup process. Stolen from `sql-product-interactive'
     ))
-
-
-(keymap-set sql-interactive-mode-map "C-c C-j" 'sql-reconnect)
 
 
 ;; Deal with remote dbs
@@ -3783,22 +3776,20 @@ Process .+
                               (cdr comint-preoutput-filter-functions)))))))
 
 
-(add-hook 'sql-login-hook
-          'sql-setup-output-preprocessing)
+(add-hook 'sql-login-hook 'sql-setup-output-preprocessing)
 
 
 ;; Keybindings
 
 
-(define-keymap :keymap sql-interactive-mode-map
-  "C-c C-p" 'org-table-to-list
-  "TAB" 'completion-at-point)
+(with-eval-after-load 'sql
+  (define-keymap :keymap sql-interactive-mode-map
+    "C-c C-j" 'sql-reconnect
+    "C-c C-p" 'org-table-to-list
+    "TAB" 'completion-at-point))
 
 
 ;; Interbase
-
-
-(sql-set-product-feature 'interbase :init-commands '("set list on;"))
 
 
 (defun parse-isql-table (text &optional body-p)
@@ -3820,19 +3811,15 @@ Process .+
       (list (if body-p rows (cons header rows)) tail))))
 
 
-(sql-set-product-feature 'interbase :table-parser 'parse-isql-table)
-
-
 (setq sql-interbase-login-params '(user password (database :file)))
 
 
+(with-eval-after-load 'sql
+  (sql-set-product-feature 'interbase :table-parser 'parse-isql-table)
+  (sql-set-product-feature 'interbase :init-commands '("set list on;")))
+
+
 ;; Sqlite
-
-
-(add-to-list 'sql-sqlite-options "-interactive")
-
-
-(sql-set-product-feature 'sqlite :init-commands '(".headers on"))
 
 
 (defun parse-sqlite-table (text &optional ignored)
@@ -3845,7 +3832,10 @@ Process .+
           "")))
 
 
-(sql-set-product-feature 'sqlite :table-parser 'parse-sqlite-table)
+(with-eval-after-load 'sql
+  (add-to-list 'sql-sqlite-options "-interactive")
+  (sql-set-product-feature 'sqlite :init-commands '(".headers on"))
+  (sql-set-product-feature 'sqlite :table-parser 'parse-sqlite-table))
 
 
 ;; ===========
