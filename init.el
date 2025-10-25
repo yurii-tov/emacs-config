@@ -2577,12 +2577,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; ===============
 
 
-(require 'gptel)
-
-
-(setf (gptel-get-backend "ChatGPT") nil)
-
-
 (setq openrouter (gptel-make-openai "OpenRouter"
                    :host "openrouter.ai"
                    :endpoint "/api/v1/chat/completions"
