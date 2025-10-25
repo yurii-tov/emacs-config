@@ -16,24 +16,13 @@
 
 (when-let ((packages (cl-remove-if #'package-installed-p
                                    '(ido-grid-mode
-                                     spacious-padding
-                                     ligature
-                                     ef-themes
-                                     doric-themes
-                                     company
-                                     yasnippet
-                                     ripgrep
-                                     wgrep
-                                     markdown-mode
-                                     htmlize
-                                     gptel
-                                     cider
-                                     powershell
-                                     groovy-mode
-                                     rust-mode
-                                     slime
-                                     slime-company
-                                     nov))))
+                                     company yasnippet ligature
+                                     spacious-padding ef-themes
+                                     doric-themes markdown-mode
+                                     htmlize ripgrep wgrep
+                                     cider slime slime-company
+                                     groovy-mode rust-mode
+                                     powershell gptel nov))))
   (package-refresh-contents)
   (mapc #'package-install packages))
 
