@@ -10,12 +10,6 @@ One must be able to say at all times--instead of points, straight lines, and pla
 Fools ignore complexity. Pragmatists suffer it. Some can avoid it. Geniuses remove it.
 -- Alan Perlis
 %
-A language that doesn't affect the way you think about programming is not worth knowing.
--- Alan Perlis
-%
-A LISP programmer knows the value of everything, but the cost of nothing.
--- Alan Perlis
-%
 Adapting old programs to fit new machines usually means adapting new machines to behave like old ones.
 -- Alan Perlis
 %
@@ -28,31 +22,13 @@ In man-machine symbiosis, it is man who must adjust: The machines can't.
 One can't proceed from the informal to the formal by formal means.
 -- Alan Perlis
 %
-The best book on programming for the layman is Alice in Wonderland, but that's because it's the best book on anything for the layman.
--- Alan Perlis
-%
 Simplicity does not precede complexity, but follows it.
--- Alan Perlis
-%
-To understand a program, you must become both the machine and the program.
 -- Alan Perlis
 %
 It is easier to change the specification to fit the program than vice versa.
 -- Alan Perlis
 %
-A year spent in artificial intelligence is enough to make one believe in God.
--- Alan Perlis
-%
-If you have a procedure with 10 parameters, you probably missed some.
--- Alan Perlis
-%
-Once you understand how to write a program get someone else to write it.
--- Alan Perlis
-%
 One man's constant is another man's variable.
--- Alan Perlis
-%
-Optimization hinders evolution.
 -- Alan Perlis
 %
 It is better to have 100 functions operate on one data structure than to have 10 functions operate on 10 data structures.
@@ -90,9 +66,6 @@ Much of the excitement we get out of our work is that we don't really know what 
 Experience does by no means automatically leads to wisdom and understanding.
 -- Edsger Dijkstra
 %
-The lurking suspicion that something could be simplified is the world's richest source of rewarding challenges.
--- Edsger Dijkstra
-%
 The prisoner falls in love with his chains.
 -- Edsger Dijkstra
 %
@@ -111,13 +84,7 @@ Beware of "the real world". A speaker's apeal to it is always an invitation not 
 Thank goodness we don't have only serious problems, but ridiculous ones as well.
 -- Edsger Dijkstra
 %
-It used to be the program's purpose to instruct our computers; it became the computer's purpose to execute our programs.
--- Edsger Dijkstra
-%
 The key to understanding complicated things is knowing what not to look at.
--- Gerald Jay Sussman
-%
-Nothing brings fear to my heart more than a floating point number.
 -- Gerald Jay Sussman
 %
 A recursive definition does not necessarily lead to a recursive process.
@@ -126,14 +93,8 @@ A recursive definition does not necessarily lead to a recursive process.
 Simplicity, carried to the extreme, becomes elegance.
 -- Jon Franklin
 %
-If the code and the comments do not match, possibly both are incorrect.
--- Norm Schryer
-%
 From a programmer’s point of view, the user is a peripheral that types when you issue a read request.
 -- P. Williams
-%
-If you automate a mess, you get an automated mess.
--- Rod Michael
 %
 The more you know, the more you realize you know nothing.
 -- Socrates
@@ -147,14 +108,9 @@ Not all those who wander are lost
 Ты все время повторяешь себе: «Я бы и мог это сделать, да не хочу», и это лишь иной способ сказать, что ничего-то ты не можешь.
 --- Ричард Фейнман
 %
-Make love, not Emacs configuration
-%
 Плохо что ли? Хорошо!
 %
 There's never enough time to do all the nothing you want
-%
-Добрый человек в своем стремленьи темном
-Найти сумеет настоящий путь
 %
 Работа должна быть поднята если не до пафоса, то хотя бы до профессии, иначе она раздавит бездушностью.
 Можно халтурить попутно, но жить халтурой нестерпимо
