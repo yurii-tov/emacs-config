@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: try-with-resources
+# key: tryres
+# --
+try ($1) {
+    $2
+}
