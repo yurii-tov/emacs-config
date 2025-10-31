@@ -212,13 +212,13 @@
   "M-`" 'shell
   "M-g" 'goto-line
   "M-/" project-prefix-map
-  "M-'" 'recompile
-  "C-'" 'compile
   "M-l" 'move-line-up
   "C-M-l" 'move-line-down
   "C-=" 'text-scale-increase
   "C-M-=" 'text-scale-decrease
   "C-+" 'text-scale-reset
+  "C-x ," 'compile
+  "C-x ." 'recompile
   "C-x =" 'hl-line-mode
   "C-x i" 'what-cursor-position
   "C-x d" 'diff-map
@@ -2788,7 +2788,6 @@ Also grabs a selected region, if any."
 
 (with-eval-after-load 'org
   (define-keymap :keymap org-mode-map
-    "C-'" nil
     "C-c C-/" 'org-insert-checklist-status
     "M-p" 'org-insert-structure-template))
 
