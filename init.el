@@ -17,12 +17,13 @@
 (when-let ((packages (cl-remove-if #'package-installed-p
                                    '(ido-grid-mode
                                      company yasnippet ligature
-                                     spacious-padding ef-themes
-                                     doric-themes markdown-mode
-                                     htmlize ripgrep wgrep
-                                     cider slime slime-company
+                                     doric-themes ef-themes
+                                     spacious-padding diredfl
+                                     htmlize markdown-mode
+                                     ripgrep wgrep gptel nov
+                                     slime slime-company
                                      groovy-mode rust-mode
-                                     powershell gptel nov))))
+                                     powershell))))
   (package-refresh-contents)
   (mapc #'package-install packages))
 
@@ -1160,14 +1161,7 @@
 ;; Colourful listing
 
 
-(defun dired-colorize ()
-  (highlight-regexp " [0-9]+\\-[0-9][0-9]\\-[0-9][0-9] [0-9][0-9]:[0-9][0-9] "
-                    'font-lock-doc-face)
-  (highlight-regexp " [0-9]+\\(\\.[0-9]+\\)?\\(k\\|M\\|G\\)? "
-                    'font-lock-comment-face))
-
-
-(add-hook 'dired-after-readin-hook 'dired-colorize)
+(diredfl-global-mode)
 
 
 ;; Suppress ffap
