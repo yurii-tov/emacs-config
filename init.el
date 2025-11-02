@@ -1070,6 +1070,7 @@
     "2" 'dired-do-chown
     "3" 'dired-do-touch
     "y" 'dired-do-symlink
+    "M" 'dired-mark-files-regexp
     "M-s" nil))
 
 
