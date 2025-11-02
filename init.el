@@ -1055,7 +1055,7 @@
   (define-keymap :keymap dired-mode-map
     "w" 'copy-file-name-to-clipboard
     "o" 'dired-display-file
-    "h" 'dired-mark-files-regexp
+    "h" 'dired-hide-details-mode
     "l" 'dired-up-directory
     "a" 'dired-archive
     "A" 'dired-extract-archive
@@ -1149,6 +1149,17 @@
 (defun dired-calculate-size-tree ()
   (interactive)
   (dired-calculate-size t))
+
+
+;; Details auto-hiding
+
+
+(defun dired-hide-details ()
+  (when (< (window-width) 80)
+    (dired-hide-details-mode)))
+
+
+(add-hook 'dired-mode-hook 'dired-hide-details)
 
 
 ;; Auto-reverting
