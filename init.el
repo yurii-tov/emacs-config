@@ -1055,14 +1055,13 @@
   (define-keymap :keymap dired-mode-map
     "w" 'copy-file-name-to-clipboard
     "o" 'dired-display-file
-    "h" 'dired-hide-details-mode
+    "h" 'dired-mark-files-regexp
     "l" 'dired-up-directory
     "a" 'dired-archive
     "A" 'dired-extract-archive
     "f" 'dired-flatten-directory
     "s" 'dired-calculate-size
     "S" 'dired-calculate-size-tree
-    "M" 'dired-mark-files-regexp
     "c" 'dired-do-copy
     "r" 'dired-do-rename
     "k" 'dired-do-delete
@@ -1172,29 +1171,6 @@
 
 
 (add-hook 'dired-mode-hook 'dired-disable-ffap)
-
-
-;; Details hiding
-
-
-(defvar *dired-hide-details-p* t)
-
-
-(defun dired-setup-hide-details ()
-  (dired-hide-details-mode
-   (or *dired-hide-details-p* -1)))
-
-
-(add-hook 'dired-mode-hook 'dired-setup-hide-details)
-
-
-(defun dired-propogate-hide-details (f &rest args)
-  (let ((*dired-hide-details-p* dired-hide-details-mode))
-    (apply f args)))
-
-
-(dolist (x '(dired-find-file dired-up-directory))
-  (advice-add x :around #'dired-propogate-hide-details))
 
 
 ;; IDO work directory recording
