@@ -2503,11 +2503,11 @@ with ability to \"cycle\" different variants with provided KEYBINDING
         (let ((gptel-backend mistral)
               (gptel-model 'mistral-medium-latest))
           (gptel-request
-              (format "Translate %s: %s"
-                      (cdr (assoc 'description preset))
-                      query)
-            :callback `(lambda (response _)
-                         (message "%s =>\n%s" ,query-message response))))
+           (format "Translate %s: %s"
+                   (cdr (assoc 'description preset))
+                   query)
+           :callback `(lambda (response _)
+                        (message "%s =>\n%s" ,query-message response))))
       (message "%s =>\n%s" query-message translation))))
 
 
