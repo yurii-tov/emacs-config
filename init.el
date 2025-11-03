@@ -1054,7 +1054,7 @@
 (with-eval-after-load 'dired
   (define-keymap :keymap dired-mode-map
     "w" 'copy-file-name-to-clipboard
-    "j" 'find-file
+    "j" 'ido-dired
     "o" 'dired-display-file
     "h" 'dired-hide-details-mode
     "l" 'dired-up-directory
