@@ -2185,7 +2185,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   (let* ((ir (cl-coerce (cl-coerce (cddr comint-input-ring) 'list) 'vector))
          (ir-items-count (cadr comint-input-ring))
          (ir-insertion-place (car comint-input-ring))
-         (ir-full-p (= ir-items-count comint-input-ring-size))
+         (ir-full-p (= ir-items-count (ring-size comint-input-ring)))
          (history-new-local-bound (cond ((not ir-full-p) (cl-position nil ir))
                                         ((zerop ir-insertion-place) 0)
                                         (t ir-insertion-place)))
