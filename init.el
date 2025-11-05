@@ -2213,7 +2213,8 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (defun comint-setup-persistent-history ()
-  (when-let* ((process (get-buffer-process (current-buffer)))
+  (when-let* (((not (eq major-mode 'shell-command-mode)))
+              (process (get-buffer-process (current-buffer)))
               (histfile-id (thread-last
                              process process-command car
                              file-name-base downcase
