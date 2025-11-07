@@ -2181,35 +2181,29 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (defun comint-save-history ()
-  "Read `comint-input-ring-file-name', merge with `comint-input-ring', save all to the file"
-  (let* ((ir (cl-coerce (cl-coerce (cddr comint-input-ring) 'list) 'vector))
-         (ir-items-count (cadr comint-input-ring))
-         (ir-insertion-place (car comint-input-ring))
-         (ir-full-p (= ir-items-count (ring-size comint-input-ring)))
-         (history-new-local-bound (cond ((not ir-full-p) (cl-position nil ir))
-                                        ((zerop ir-insertion-place) 0)
-                                        (t ir-insertion-place)))
-         (history-new-local (cl-subseq ir 0 history-new-local-bound))
-         (history-old-local (cl-subseq ir (if ir-full-p
-                                              history-new-local-bound
-                                            (1+ (cl-position nil ir :from-end t)))))
-         (history-current-global (progn (comint-read-input-ring)
-                                        (remove nil
-                                                (cl-coerce (cl-coerce (cddr comint-input-ring)
-                                                                      'list)
-                                                           'vector))))
-         (history-merged (cl-remove-duplicates
-                          (cl-concatenate 'vector
-                                          history-old-local
-                                          history-current-global
-                                          history-new-local)
-                          :test #'equal))
-         (history-final (cl-subseq history-merged
-                                   (max 0 (- (length history-merged)
-                                             comint-input-ring-size)))))
-    (setq comint-input-ring (cons 0 (cons (length history-final)
-                                          history-final)))
-    (comint-write-input-ring)))
+  (unless (ring-empty-p comint-input-ring)
+    (let* ((index (1+ (ring-index 0
+                                  (car comint-input-ring)
+                                  (ring-length comint-input-ring)
+                                  (ring-size comint-input-ring))))
+           (input-ring (cddr comint-input-ring))
+           (head (thread-first (seq-subseq input-ring 0 index)
+                               (seq-into 'list)
+                               nreverse))
+           (tail (thread-first (seq-subseq input-ring index)
+                               (seq-into 'list)
+                               nreverse))
+           (history (progn (setq comint-input-ring nil)
+                           (comint-read-input-ring t)
+                           (when comint-input-ring
+                             (ring-elements comint-input-ring))))
+           (merged (cl-delete nil (nconc head history tail))))
+      (setq comint-input-ring (thread-first merged
+                                            (cl-remove-duplicates
+                                             :test #'equal :from-end t)
+                                            ring-convert-sequence-to-ring))
+      (ring-resize comint-input-ring comint-input-ring-size)
+      (comint-write-input-ring))))
 
 
 (defun comint-setup-persistent-history ()
