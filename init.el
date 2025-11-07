@@ -2196,9 +2196,8 @@ with ability to \"cycle\" different variants with provided KEYBINDING
            (history (progn (setq comint-input-ring nil)
                            (comint-read-input-ring t)
                            (when comint-input-ring
-                             (ring-elements comint-input-ring))))
-           (merged (cl-delete nil (nconc head history tail))))
-      (setq comint-input-ring (thread-first merged
+                             (ring-elements comint-input-ring)))))
+      (setq comint-input-ring (thread-first (delete nil (nconc head history tail))
                                             (cl-remove-duplicates
                                              :test #'equal :from-end t)
                                             ring-convert-sequence-to-ring))
