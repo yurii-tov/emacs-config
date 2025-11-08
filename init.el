@@ -2182,23 +2182,17 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (defun comint-save-history ()
-  (unless (ring-empty-p comint-input-ring)
-    (let* ((index (1+ (ring-index 0
-                                  (car comint-input-ring)
-                                  (ring-length comint-input-ring)
-                                  (ring-size comint-input-ring))))
-           (input-ring (cddr comint-input-ring))
-           (head (thread-first (seq-subseq input-ring 0 index)
-                               (seq-into 'list)
-                               nreverse))
-           (tail (thread-first (seq-subseq input-ring index)
-                               (seq-into 'list)
-                               nreverse))
+  (unless (zerop comint-command-count)
+    (let* ((index (min comint-command-count
+                       (ring-size comint-input-ring)))
+           (commands (thread-first comint-input-ring
+                                   ring-elements
+                                   (seq-subseq 0 index)))
            (history (progn (setq comint-input-ring nil)
                            (comint-read-input-ring t)
                            (when comint-input-ring
                              (ring-elements comint-input-ring)))))
-      (setq comint-input-ring (thread-first (delete nil (nconc head history tail))
+      (setq comint-input-ring (thread-first (nconc commands history)
                                             (cl-remove-duplicates
                                              :test #'equal :from-end t)
                                             ring-convert-sequence-to-ring))
@@ -2218,13 +2212,20 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (setq comint-input-ring-file-name
           (expand-file-name (format ".%s-history" histfile-id)
                             user-emacs-directory))
-    (add-hook 'kill-buffer-hook 'comint-save-history nil t)
     (if (ring-empty-p comint-input-ring)
         (comint-read-input-ring t)
-      (comint-save-history))))
+      (comint-save-history))
+    (put 'comint-command-count 'permanent-local t)
+    (setq-local comint-command-count 0)
+    (add-hook 'kill-buffer-hook 'comint-save-history nil t)))
 
 
 (add-hook 'comint-mode-hook 'comint-setup-persistent-history)
+
+
+(advice-add 'comint-add-to-input-history
+            :after
+            (lambda (&rest _) (cl-incf comint-command-count)))
 
 
 (defun comint-save-history-all ()
