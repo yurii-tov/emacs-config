@@ -2498,6 +2498,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (if (zerop (length translation))
         (let ((gptel-backend mistral)
               (gptel-model 'mistral-medium-latest))
+          (require 'gptel)
           (gptel-request
               (format "Translate %s: %s"
                       (cdr (assoc 'description preset))
