@@ -2200,6 +2200,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
       (comint-write-input-ring))))
 
 
+(put 'comint-command-count 'permanent-local t)
+
+
 (defun comint-setup-persistent-history ()
   (when-let* (((not (eq major-mode 'shell-command-mode)))
               (process (get-buffer-process (current-buffer)))
@@ -2215,9 +2218,8 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (if (ring-empty-p comint-input-ring)
         (comint-read-input-ring t)
       (comint-save-history))
-    (put 'comint-command-count 'permanent-local t)
-    (setq-local comint-command-count 0)
-    (add-hook 'kill-buffer-hook 'comint-save-history nil t)))
+    (add-hook 'kill-buffer-hook 'comint-save-history nil t))
+  (setq-local comint-command-count 0))
 
 
 (add-hook 'comint-mode-hook 'comint-setup-persistent-history)
@@ -2500,11 +2502,11 @@ with ability to \"cycle\" different variants with provided KEYBINDING
               (gptel-model 'mistral-medium-latest))
           (require 'gptel)
           (gptel-request
-              (format "Translate %s: %s"
-                      (cdr (assoc 'description preset))
-                      query)
-            :callback `(lambda (response _)
-                         (message "%s =>\n%s" ,query-message response))))
+           (format "Translate %s: %s"
+                   (cdr (assoc 'description preset))
+                   query)
+           :callback `(lambda (response _)
+                        (message "%s =>\n%s" ,query-message response))))
       (message "%s =>\n%s" query-message translation))))
 
 
