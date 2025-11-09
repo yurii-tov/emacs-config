@@ -2233,7 +2233,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (defun comint-save-history-all ()
   (dolist (b (buffer-list))
     (with-current-buffer b
-      (when (boundp 'comint-command-count)
+      (when comint-input-ring-file-name
         (comint-save-history)))))
 
 
