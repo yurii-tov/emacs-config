@@ -2005,6 +2005,10 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (async-shell-command command)))
 
 
+(defun asc-buffer (r)
+  (if (windowp r) (window-buffer r) (process-buffer r)))
+
+
 ;; Buffer
 
 
@@ -2038,14 +2042,12 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (advice-add 'async-shell-command :around #'asc-setup-buffer)
 
 
-;; Display the command and working directory
+;; Diagnostic output
 
 
 (defun asc-echo-startup-info (f &rest args)
   (let* ((r (apply f args))
-         (b (if (windowp r)
-                (window-buffer r)
-              (process-buffer r)))
+         (b (asc-buffer r))
          (p (get-buffer-process b)))
     (prog1 r
       (with-current-buffer b
@@ -2062,7 +2064,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (advice-add 'async-shell-command :around #'asc-echo-startup-info)
 
 
-;; Signals handling
+;; Process state
 
 
 (defun asc-handle-background-termination (buffer)
@@ -2073,20 +2075,17 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                       (max (progn (goto-char (point-min))
                                   (end-of-line)
                                   (1+ (point)))
-                           (- (point-max)
-                              1024))
+                           (- (point-max) 1024))
                       (point-max)))))))
     (kill-buffer buffer)
     (if (and output (not (string-empty-p output)))
         (concat output "\n") "")))
 
 
-(defun asc-handle-signal (f &rest args)
+(defun asc-handle-process (f &rest args)
   (let (r b)
     (prog1 (setq r (apply f args))
-      (setq b (if (windowp r)
-                  (window-buffer r)
-                (process-buffer r)))
+      (setq b (asc-buffer r))
       (with-current-buffer b
         (when (get-buffer-process (current-buffer))
           (set-process-sentinel
@@ -2108,24 +2107,22 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                            info))))))))))
 
 
-(advice-add 'async-shell-command :around #'asc-handle-signal)
+(advice-add 'async-shell-command :around #'asc-handle-process)
 
 
-;; Popup suppressing
+;; Window
 
 
 (defvar *asc-popup* nil)
 
 
-(defun asc-handle-popup (f &rest args)
+(defun asc-setup-window (f &rest args)
   (if *asc-popup*
       (apply f args)
     (let (r b)
       (save-window-excursion
         (prog1 (setq r (apply f args))
-          (setq b (if (windowp r)
-                      (window-buffer r)
-                    (process-buffer r)))
+          (setq b (asc-buffer r))
           (switch-to-buffer b)
           (message
            "Running `%s` at %s"
@@ -2134,10 +2131,10 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                        'face 'completions-annotations)))))))
 
 
-(advice-add 'async-shell-command :around #'asc-handle-popup)
+(advice-add 'async-shell-command :around #'asc-setup-window)
 
 
-;; Restarting
+;; Restart
 
 
 (defun asc-restart ()
