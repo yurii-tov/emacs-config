@@ -825,7 +825,7 @@
 (defun watch-file (file)
   (interactive "fWatch file: ")
   (let ((default-directory (file-name-directory file))
-        (*asc-popup* t))
+        (current-prefix-arg t))
     (async-shell-command (concat "tail -f " (file-relative-name file)))))
 
 
@@ -2113,11 +2113,8 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; Window
 
 
-(defvar *asc-popup* nil)
-
-
 (defun asc-setup-window (f &rest args)
-  (if *asc-popup*
+  (if current-prefix-arg
       (apply f args)
     (let (r b)
       (save-window-excursion
