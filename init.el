@@ -2496,11 +2496,11 @@ with ability to \"cycle\" different variants with provided KEYBINDING
               (gptel-model 'mistral-medium-latest))
           (require 'gptel)
           (gptel-request
-           (format "Translate %s: %s"
-                   (cdr (assoc 'description preset))
-                   query)
-           :callback `(lambda (response _)
-                        (message "%s =>\n%s" ,query-message response))))
+              (format "Translate %s: %s"
+                      (cdr (assoc 'description preset))
+                      query)
+            :callback `(lambda (response _)
+                         (message "%s =>\n%s" ,query-message response))))
       (message "%s =>\n%s" query-message translation))))
 
 
@@ -2532,7 +2532,8 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (with-eval-after-load 'man
-  (setq Man-support-remote-systems t))
+  (setq Man-support-remote-systems t
+        Man-notify-method 'pushy))
 
 
 ;; ===========
