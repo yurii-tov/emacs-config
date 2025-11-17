@@ -3754,8 +3754,7 @@ Process .+
 (with-eval-after-load 'sql
   (define-keymap :keymap sql-interactive-mode-map
     "C-c C-j" 'sql-reconnect
-    "C-c C-p" 'org-table-to-list
-    "TAB" 'completion-at-point))
+    "C-c C-p" 'org-table-to-list))
 
 
 ;; Interbase
