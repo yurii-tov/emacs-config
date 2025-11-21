@@ -1048,7 +1048,7 @@
     "w" 'copy-file-name-to-clipboard
     "j" 'dired
     "o" 'dired-display-file
-    "h" 'dired-hide-details-mode
+    "h" 'dired-mark-files-regexp
     "l" 'dired-up-directory
     "a" 'dired-archive
     "A" 'dired-extract-archive
@@ -1063,7 +1063,7 @@
     "2" 'dired-do-chown
     "3" 'dired-do-touch
     "y" 'dired-do-symlink
-    "M" 'dired-mark-files-regexp
+    "/" 'dired-hide-details-mode
     "M-s" nil))
 
 
