@@ -611,14 +611,6 @@
 (add-hook 'emacs-startup-hook 'savehist-mode)
 
 
-;; =========
-;; Kill Ring
-;; =========
-
-
-(add-to-list 'savehist-additional-variables 'kill-ring)
-
-
 ;; =====
 ;; TRAMP
 ;; =====
