@@ -1073,25 +1073,24 @@
 (with-eval-after-load 'dired-aux
   (add-to-list 'dired-compress-files-alist
                '(".*" . "zip %o -r --filesync %i") t)
-  (add-to-list 'dired-compress-file-suffixes '(".*" "" "unzip -o -d %o %i") t)
-  (add-to-list 'dired-compress-file-suffixes
-               `("\\.tar\\.gz\\'" ""
-                 ,(format "tar -xz -C %s < %%i"
-                          (if (eq system-type 'windows-nt)
-                              "$(cygpath -u '%o')" "%o")))))
+  (add-to-list 'dired-compress-file-suffixes '(".*" "" "unzip -o -d %o %i") t))
 
 
 (defun dired-extract (dir)
   (interactive "DExtract to: ")
   (let* ((dir (or (file-remote-p dir 'localname) dir))
          (dired-no-confirm t)
+         (tar-command (format "tar -xz -C %s < %%i"
+                              (if (eq system-type 'windows-nt)
+                                  "$(cygpath -u '%o')" "%o")))
          (dired-compress-file-suffixes
           (mapcar (lambda (x)
                     (if-let ((c (nth 2 x)))
                         (append (seq-take x 2)
                                 (list (string-replace "%o" dir c)))
                       x))
-                  dired-compress-file-suffixes)))
+                  (cons (list "\\.tar\\.gz\\'" "" tar-command)
+                        dired-compress-file-suffixes))))
     (dired-do-compress)))
 
 
