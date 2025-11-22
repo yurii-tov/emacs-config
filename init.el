@@ -1074,8 +1074,7 @@
 (with-eval-after-load 'dired-aux
   (dolist (x '((".*\\.[^.]+$" . "zip %o -r --filesync %i")
                (".*" . "tar -cf - %i | gzip -c9 > %o.tar.gz")))
-    (add-to-list 'dired-compress-files-alist x t))
-  (add-to-list 'dired-compress-file-suffixes '(".*" "" "unzip -o -d %o %i") t))
+    (add-to-list 'dired-compress-files-alist x t)))
 
 
 (defun dired-extract (dir)
@@ -1091,8 +1090,9 @@
                         (append (seq-take x 2)
                                 (list (string-replace "%o" dir c)))
                       x))
-                  (cons (list "\\.tar\\.gz\\'" "" tar-command)
-                        dired-compress-file-suffixes))))
+                  (append (cons (list "\\.tar\\.gz\\'" "" tar-command)
+                                dired-compress-file-suffixes)
+                          '((".*" "" "unzip -o -d %o %i"))))))
     (dired-do-compress)))
 
 
