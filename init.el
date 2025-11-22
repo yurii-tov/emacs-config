@@ -1052,6 +1052,7 @@
     "l" 'dired-up-directory
     "a" 'dired-do-compress-to
     "A" 'dired-extract
+    "z" 'dired-do-compress
     "f" 'dired-flatten-directory
     "s" 'dired-calculate-size
     "S" 'dired-calculate-size-tree
