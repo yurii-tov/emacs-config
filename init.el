@@ -1050,8 +1050,8 @@
     "o" 'dired-display-file
     "h" 'dired-mark-files-regexp
     "l" 'dired-up-directory
-    "a" 'dired-archive
-    "A" 'dired-extract-archive
+    "a" 'dired-do-compress-to
+    "A" 'dired-extract
     "f" 'dired-flatten-directory
     "s" 'dired-calculate-size
     "S" 'dired-calculate-size-tree
@@ -1067,48 +1067,35 @@
     "M-s" nil))
 
 
+;; Archiver
+
+
+(with-eval-after-load 'dired-aux
+  (add-to-list 'dired-compress-files-alist
+               '(".*" . "zip %o -r --filesync %i") t)
+  (add-to-list 'dired-compress-file-suffixes '(".*" "" "unzip -o -d %o %i") t)
+  (add-to-list 'dired-compress-file-suffixes
+               `("\\.tar\\.gz\\'" ""
+                 ,(format "tar -xz -C %s < %%i"
+                          (if (eq system-type 'windows-nt)
+                              "$(cygpath -u '%o')" "%o")))))
+
+
+(defun dired-extract (dir)
+  (interactive "DExtract to: ")
+  (let* ((dir (or (file-remote-p dir 'localname) dir))
+         (dired-no-confirm t)
+         (dired-compress-file-suffixes
+          (mapcar (lambda (x)
+                    (if-let ((c (nth 2 x)))
+                        (append (seq-take x 2)
+                                (list (string-replace "%o" dir c)))
+                      x))
+                  dired-compress-file-suffixes)))
+    (dired-do-compress)))
+
+
 ;; Extra commands
-
-
-(defun dired-archive ()
-  (interactive)
-  (let* ((output (file-truename (read-file-name "Add file(s) to archive: ")))
-         (files (string-join (mapcar (lambda (x) (format "'%s'" (file-relative-name x)))
-                                     (dired-get-marked-files))
-                             " "))
-         (tar-command (format "tar -vcz %s -f '%s'" files (replace-regexp-in-string
-                                                           "^\\([a-zA-Z]\\):/"
-                                                           "/\\1/"
-                                                           output)))
-         (zip-command (format "zip -r '%s' %s" output files))
-         (command (if (string-match-p ".tar.gz$" output)
-                      tar-command
-                    zip-command)))
-    (async-shell-command command)))
-
-
-(defun dired-extract-command (archive output-dir)
-  (let* ((tar-command (format "tar -xvzC '%s' < '%s'"
-                              (replace-regexp-in-string "^\\([a-zA-Z]\\):/"
-                                                        "/\\1/"
-                                                        output-dir)
-                              archive))
-         (zip-command (format "unzip -o '%s' -d '%s'" archive output-dir))
-         (7z-command (format "7z x -y '%s' -o'%s'" archive output-dir)))
-    (cond ((string-match-p ".tar.gz$" archive) tar-command)
-          ((string-match-p ".\\(rar\\|7z\\)$" archive) 7z-command)
-          (t zip-command))))
-
-
-(defun dired-extract-archive ()
-  (interactive)
-  (let* ((output-dir (read-directory-name "Extract to: "))
-         (commands (mapcar (lambda (x)
-                             (dired-extract-command (file-relative-name x)
-                                                    output-dir))
-                           (dired-get-marked-files)))
-         (command (string-join commands "; ")))
-    (async-shell-command command)))
 
 
 (defun dired-flatten-directory ()
