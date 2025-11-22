@@ -45,9 +45,6 @@ As a rule, software systems do not work well until they have been used, and have
 %
 Time spent in sharpening the axe may well be spared from swinging it.
 %
-The art of programming is the art of organizing complexity.
--- Edsger Dijkstra
-%
 The effort of using machines to mimic the human mind has always struck me as rather silly. I would rather use them to mimic something better.
 -- Edsger Dijkstra
 %
