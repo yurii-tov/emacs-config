@@ -2231,7 +2231,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (setq-local comint-input-ring-index i)
     (comint-delete-input)
     (insert command)
-    (comint-send-input)))
+    (funcall (key-binding (kbd "RET")))))
 
 
 ;; Completion
