@@ -1071,8 +1071,9 @@
 
 
 (with-eval-after-load 'dired-aux
-  (add-to-list 'dired-compress-files-alist
-               '(".*" . "zip %o -r --filesync %i") t)
+  (dolist (x '((".*\\.[^.]+$" . "zip %o -r --filesync %i")
+               (".*" . "tar -cf - %i | gzip -c9 > %o.tar.gz")))
+    (add-to-list 'dired-compress-files-alist x t))
   (add-to-list 'dired-compress-file-suffixes '(".*" "" "unzip -o -d %o %i") t))
 
 
