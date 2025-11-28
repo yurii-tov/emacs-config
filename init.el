@@ -2090,6 +2090,27 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (advice-add 'async-shell-command :around #'asc-handle-process)
 
 
+;; Restart
+
+
+(defun asc-setup-restart (f &rest args)
+  (let ((r (apply f args)))
+    (prog1 r
+      (with-current-buffer (asc-buffer r)
+        (setq-local command (car args))))))
+
+
+(advice-add 'async-shell-command :around #'asc-setup-restart)
+
+
+(defun asc-restart ()
+  (interactive)
+  (when-let ((p (get-buffer-process (current-buffer))))
+    (kill-process p)
+    (sit-for 0.5))
+  (async-shell-command command (current-buffer)))
+
+
 ;; Window
 
 
@@ -2109,21 +2130,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (advice-add 'async-shell-command :around #'asc-setup-window)
-
-
-;; Restart
-
-
-(defun asc-restart ()
-  (interactive)
-  (if-let* ((p (get-buffer-process (current-buffer)))
-            (c (if (file-remote-p default-directory)
-                   (thread-first p process-plist last car last car)
-                 (thread-first p process-command last car))))
-      (progn (kill-process p)
-             (sit-for 0.5)
-             (async-shell-command c (current-buffer)))
-    (message "The buffer doesn't have any process")))
 
 
 ;; Keybindings
