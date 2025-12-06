@@ -198,8 +198,6 @@
   "M-k" 'kill-line-to-indentation
   "M-=" 'count-words
   "M-q" 'hippie-expand
-  "C-v" 'scroll-up-5-lines
-  "M-v" 'scroll-down-5-lines
   "M-1" 'shell-command
   "M-!" 'asc-at-directory
   "M-2" 'enclose-text-cycle-m2
@@ -497,16 +495,6 @@
   (define-keymap :keymap global-map
     "<wheel-down>" 'scroll-up-line
     "<wheel-up>" 'scroll-down-line))
-
-
-(defun scroll-down-5-lines ()
-  (interactive)
-  (scroll-down-command 5))
-
-
-(defun scroll-up-5-lines ()
-  (interactive)
-  (scroll-up-command 5))
 
 
 ;; Scaling
