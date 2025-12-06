@@ -491,6 +491,9 @@
 ;; Scrolling
 
 
+(setq scroll-preserve-screen-position t)
+
+
 (when (eq system-type 'android)
   (define-keymap :keymap global-map
     "<wheel-down>" 'scroll-up-line
