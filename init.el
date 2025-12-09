@@ -493,7 +493,8 @@
 ;; Scrolling
 
 
-(setq scroll-conservatively 100)
+(setq scroll-preserve-screen-position t
+      scroll-conservatively 100)
 
 
 (defun scroll-up-3 ()
@@ -1328,6 +1329,12 @@ The search string is queried first, followed by the directory."
 
 
 (setq default-input-method 'russian-computer)
+
+
+;; Read-only mode
+
+
+(setq view-read-only t)
 
 
 ;; Search
