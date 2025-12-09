@@ -491,7 +491,9 @@
 ;; Scrolling
 
 
-(setq scroll-preserve-screen-position t)
+(setq scroll-preserve-screen-position t
+      scroll-conservatively 100
+      scroll-margin 20)
 
 
 (when (eq system-type 'android)
