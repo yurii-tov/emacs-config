@@ -189,8 +189,8 @@
 
 (define-keymap :keymap global-map
   "<f2>" 'kmacro-keymap
-  "C-v" 'scroll-up-line
-  "M-v" 'scroll-down-line
+  "C-v" 'scroll-up-3
+  "M-v" 'scroll-down-3
   "M-c" 'text-edit-map
   "M-o" 'other-window
   "C-1" 'delete-other-windows
@@ -494,6 +494,16 @@
 
 
 (setq scroll-conservatively 100)
+
+
+(defun scroll-up-3 ()
+  (interactive)
+  (scroll-up-line 3))
+
+
+(defun scroll-down-3 ()
+  (interactive)
+  (scroll-down-line 3))
 
 
 (when (eq system-type 'android)
