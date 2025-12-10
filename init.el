@@ -493,8 +493,7 @@
 ;; Scrolling
 
 
-(setq scroll-preserve-screen-position t
-      scroll-conservatively 100)
+(setq scroll-conservatively 100)
 
 
 (defun scroll-up-3 ()
