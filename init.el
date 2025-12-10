@@ -1333,7 +1333,8 @@ The search string is queried first, followed by the directory."
 ;; Read-only mode
 
 
-(setq view-read-only t)
+(setq view-read-only t
+      view-no-disable-on-exit t)
 
 
 (advice-add 'View-exit :override #'View-exit-and-edit)
