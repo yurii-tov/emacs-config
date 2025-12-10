@@ -1336,6 +1336,9 @@ The search string is queried first, followed by the directory."
 (setq view-read-only t)
 
 
+(advice-add 'View-exit :override #'View-exit-and-edit)
+
+
 ;; Search
 
 
