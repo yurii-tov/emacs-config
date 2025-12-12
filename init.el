@@ -2165,6 +2165,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
       comint-scroll-show-maximum-output nil
       comint-buffer-maximum-size (expt 2 13)
       comint-input-ring-size (expt 2 10)
+      comint-input-ignoredups t
       comint-input-ring-separator "
 
 ")
@@ -2221,7 +2222,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (advice-add 'comint-add-to-input-history
-            :after
+            :after-while
             (lambda (&rest _) (cl-incf comint-command-count)))
 
 
