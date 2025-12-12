@@ -2258,41 +2258,13 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; Completion
 
 
-(defun company-comint-hist-completion (command &optional arg &rest _ignored)
-  (interactive (list 'interactive))
-  (cl-case command
-    (interactive (company-begin-backend 'company-comint-history))
-    (prefix (and (eobp)
-                 (when-let ((line (company-grab-line
-                                   (concat comint-prompt-regexp ".*"))))
-                   (replace-regexp-in-string comint-prompt-regexp "" line))))
-    (candidates (cl-remove-if-not
-                 (lambda (x) (string-prefix-p arg x t))
-                 (ring-elements comint-input-ring)))
-    (post-completion (let ((i (cl-position arg
-                                           (ring-elements comint-input-ring)
-                                           :test #'equal)))
-                       (setq-local comint-input-ring-index i)))
-    (sorted t)
-    (duplicates t)
-    (kind 'history)))
-
-
 (defun comint-setup-completion ()
-  (use-local-map
-   (define-keymap :parent (current-local-map)
-     "TAB" 'completion-at-point))
   (setq-local comint-dynamic-complete-functions
               (seq-difference comint-dynamic-complete-functions
                               '(comint-c-a-p-replace-by-expanded-history
                                 shell-c-a-p-replace-by-expanded-directory
                                 shell-command-completion
-                                pcomplete-completions-at-point))
-              company-backends '((company-capf
-                                  company-comint-hist-completion
-                                  company-dabbrev
-                                  :separate))
-              company-transformers '(delete-consecutive-dups)))
+                                pcomplete-completions-at-point))))
 
 
 (add-hook 'comint-mode-hook 'comint-setup-completion)
