@@ -2320,7 +2320,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
                                       (read-ssh-hosts))))
   (let ((default-directory (format "/sshx:%s:" host))
         (explicit-shell-file-name "/bin/bash"))
-    (shell (format "*ssh-%s*" host))))
+    (shell (shell-buffer-name))))
 
 
 ;; Elevation of privilege
