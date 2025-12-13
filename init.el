@@ -1033,7 +1033,6 @@
       dired-recursive-copies 'always
       dired-recursive-deletes 'always
       dired-dwim-target t
-      dired-hide-details-hide-symlink-targets nil
       dired-kill-when-opening-new-dired-buffer t)
 
 
@@ -1068,7 +1067,6 @@
     "2" 'dired-do-chown
     "3" 'dired-do-touch
     "y" 'dired-do-symlink
-    "/" 'dired-hide-details-mode
     "M-s" nil))
 
 
@@ -1135,17 +1133,6 @@
 (defun dired-calculate-size-tree ()
   (interactive)
   (dired-calculate-size t))
-
-
-;; Details auto-hiding
-
-
-(defun dired-hide-details ()
-  (when (< (window-width) 80)
-    (dired-hide-details-mode)))
-
-
-(add-hook 'dired-mode-hook 'dired-hide-details)
 
 
 ;; Auto-reverting
