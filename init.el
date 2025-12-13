@@ -2289,34 +2289,29 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ]*#?[#$%>] *")
 
 
-(defun shell-buffers (working-directory)
-  (cl-remove-if-not
-   (lambda (x)
-     (with-current-buffer x
-       (and (eq major-mode 'shell-mode)
-            (not (string-match-p "PowerShell" (buffer-name)))
-            (thread-last
-              (list working-directory default-directory)
-              (mapcar #'file-name-as-directory)
-              (mapcar #'expand-file-name)
-              (apply #'equal)))))
-   (buffer-list)))
+(defun shell-buffer-name ()
+  (format "*shell%s*"
+          (if-let ((host (file-remote-p default-directory 'host)))
+              (concat "-" host) "")))
+
+
+(defun shell-setup-buffer ()
+  (or (and current-prefix-arg
+           (let ((default-directory (read-directory-name "Shell at: ")))
+             (generate-new-buffer (shell-buffer-name))))
+      (when-let* ((project (project-current))
+                  (d (project-root project)))
+        (cl-find-if
+         (lambda (x) (with-current-buffer x
+                       (and (eq major-mode 'shell-mode)
+                            (file-equal-p default-directory d))))
+         (project-buffers project)))
+      (get-buffer-create (shell-buffer-name))))
 
 
 (advice-add 'shell :around
             (lambda (f &rest args)
-              "Pick existing shell in same working directory, if available"
-              (interactive
-               (list (let* ((dir (abbreviate-file-name default-directory))
-                            (buffers (shell-buffers dir)))
-                       (cond ((cdr buffers)
-                              (completing-read
-                               (format "Switch to existing session at %s: "
-                                       (propertize
-                                        dir 'face 'completions-annotations))
-                               (mapcar #'buffer-name buffers)))
-                             ((car buffers))
-                             (t (generate-new-buffer-name "*shell*"))))))
+              (interactive (list (shell-setup-buffer)))
               (apply f args)))
 
 
