@@ -1328,7 +1328,7 @@ The search string is queried first, followed by the directory."
       view-inhibit-help-message t)
 
 
-(advice-add 'View-exit :override #'View-exit-and-edit)
+(advice-add 'View-exit :override #'read-only-mode)
 
 
 ;; Search
