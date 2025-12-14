@@ -961,12 +961,13 @@
          (history (cl-remove-if-not disconnected-p file-name-history))
          (files (thread-last
                   ido-work-directory-list
-                  (cl-remove-if disconnected-p)
+                  (cl-remove-if (lambda (x)
+                                  (or (funcall disconnected-p x)
+                                      (not (file-exists-p x))
+                                      (ido-nonreadable-directory-p x))))
                   (mapcan (lambda (x)
-                            (unless (ido-nonreadable-directory-p x)
-                              (when-let ((xs (file-expand-wildcards
-                                              (concat x pattern))))
-                                (cons x xs)))))
+                            (cons x (file-expand-wildcards
+                                     (concat x pattern)))))
                   (nconc (if (eq ido-cur-item 'dir)
                              (cl-delete-if-not
                               (lambda (x) (string-suffix-p "/" x)) history)
