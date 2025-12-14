@@ -991,7 +991,8 @@
   (prog1 file-name
     (ido-record-work-directory
      (file-name-directory file-name))
-    (add-to-history 'file-name-history file-name)))
+    (unless (file-directory-p file-name)
+      (add-to-history 'file-name-history file-name))))
 
 
 (advice-add 'ido-read-file-name :filter-return #'ido-record-history)
