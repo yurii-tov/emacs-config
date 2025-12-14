@@ -957,7 +957,6 @@
          (disconnected-p (lambda (x)
                            (and (file-remote-p x)
                                 (not (file-remote-p x nil t)))))
-         (pattern (if (eq ido-cur-item 'dir) "*/" "*"))
          (history (cl-remove-if-not disconnected-p file-name-history))
          (files (thread-last
                   ido-work-directory-list
@@ -966,8 +965,10 @@
                                       (not (file-exists-p x))
                                       (ido-nonreadable-directory-p x))))
                   (mapcan (lambda (x)
-                            (cons x (file-expand-wildcards
-                                     (concat x pattern)))))
+                            (thread-last (if (eq ido-cur-item 'dir) "*/" "*")
+                                         (concat x)
+                                         file-expand-wildcards
+                                         (cons x))))
                   (nconc (if (eq ido-cur-item 'dir)
                              (cl-delete-if-not
                               (lambda (x) (string-suffix-p "/" x)) history)
