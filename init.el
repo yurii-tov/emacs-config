@@ -1078,6 +1078,7 @@
     "2" 'dired-do-chown
     "3" 'dired-do-touch
     "y" 'dired-do-symlink
+    "TAB" 'dired-sort-toggle-or-edit
     "SPC" 'scroll-up-command
     "S-SPC" 'scroll-down-command
     "M-s" nil))
