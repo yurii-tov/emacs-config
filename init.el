@@ -972,7 +972,10 @@
                               (lambda (x) (string-suffix-p "/" x)) history)
                            history))))
          (file (completing-read "Find recent: "
-                                files nil nil ido-text 'file-name-history)))
+                                files nil nil ido-text
+                                (if (eq ido-cur-item 'dir)
+                                    'ido-work-directory-list
+                                  'file-name-history))))
     (setq ido-current-directory (file-name-directory file)
           ido-matches (list (file-name-nondirectory file)))
     (when (file-directory-p file)
