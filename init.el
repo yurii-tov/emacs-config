@@ -146,6 +146,7 @@
   "e" 'enumerate-lines
   "r" 'reverse-lines
   "w" 'enclose-text
+  "m" 'mc/mark-all-dwim
   "i" (define-keymap
         "j" 'emoji-insert
         "e" 'emoji-list
