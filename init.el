@@ -422,9 +422,9 @@
                              "")))
                 ,(propertize "%b" 'face 'mode-line-buffer-id)
                 ,(propertize " %l:%C" 'face 'shadow)
+                mode-line-format-right-align
                 (mark-active (:eval (mode-line-selection-stats)))
                 " "
-                mode-line-format-right-align
                 (flymake-mode flymake-mode-line-counters)
                 (vc-mode vc-mode)
                 " "))
