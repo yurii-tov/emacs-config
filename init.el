@@ -20,9 +20,10 @@
                                      doric-themes ef-themes
                                      spacious-padding diredfl
                                      htmlize markdown-mode
-                                     ripgrep wgrep gptel nov
+                                     ripgrep wgrep gptel
                                      slime slime-company
                                      groovy-mode rust-mode
+                                     multiple-cursors nov
                                      powershell))))
   (package-refresh-contents)
   (mapc #'package-install packages))
@@ -233,6 +234,10 @@
   "C-x C-k" 'kill-buffer-and-window
   "C-x C-=" 'display-line-numbers-mode
   "C-x C-l" 'gptel-menu
+  "C-M-n" 'mc/mark-next-like-this
+  "C-M-p" 'mc/mark-previous-like-this
+  "C-<down-mouse-1>" nil
+  "C-<mouse-1>" 'mc/add-cursor-on-click
   "C-c j" 'cider-start-map
   "C-c k" 'sql-connect
   "C-c i" 'ielm
@@ -423,6 +428,7 @@
                  (:eval (format " %s" (propertize
                                        current-input-method-title
                                        'face 'mode-line-emphasis))))
+                (multiple-cursors-mode mc/mode-line)
                 (flymake-mode (" " (:eval (flymake--mode-line-counters))))
                 (vc-mode vc-mode)
                 " "))
@@ -1609,7 +1615,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   (enclose-text "{" "}" t))
 
 
-;; Multiline editing
+;; Rectangle editing
 
 
 (dolist (x (number-sequence ?\  ?~))
@@ -1619,6 +1625,12 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (define-keymap :keymap rectangle-mark-mode-map
   "w" 'enclose-text
   "SPC" 'string-rectangle)
+
+
+;; Multiple cursors
+
+
+(setq mc/always-run-for-all t)
 
 
 ;; Auxiliary edit commands
