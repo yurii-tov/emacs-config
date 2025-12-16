@@ -388,7 +388,7 @@
          (chars (- end start)))
     (when (> chars 0)
       (propertize (format " Sel: %d|%d" chars (count-lines start end))
-                  'face 'mode-line-emphasis))))
+                  'face 'shadow))))
 
 
 (setq-default mode-line-format
@@ -403,11 +403,6 @@
                          (format "%s " (propertize
                                         (symbol-name buffer-file-coding-system)
                                         'face '(:slant italic)))))
-                (:eval (if current-input-method-title
-                           (format "%s " (propertize
-                                          (downcase current-input-method-title)
-                                          'face 'mode-line-emphasis))
-                         ""))
                 ,(if (and (not window-system) (eq system-type 'windows-nt))
                      'mode-line-modified
                    '(:eval (let ((ro buffer-read-only)
@@ -424,8 +419,11 @@
                 ,(propertize " %l:%C" 'face 'shadow)
                 mode-line-format-right-align
                 (mark-active (:eval (mode-line-selection-stats)))
-                " "
-                (flymake-mode flymake-mode-line-counters)
+                (current-input-method-title
+                 (:eval (format " %s" (propertize
+                                       current-input-method-title
+                                       'face 'mode-line-emphasis))))
+                (flymake-mode (" " (:eval (flymake--mode-line-counters))))
                 (vc-mode vc-mode)
                 " "))
 
