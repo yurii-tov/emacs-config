@@ -185,7 +185,7 @@
   "v" 'company-diag)
 
 
-;; Misc
+;; Global
 
 
 (define-keymap :keymap global-map
