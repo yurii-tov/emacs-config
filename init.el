@@ -2523,13 +2523,7 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 ;; ===============
 
 
-(setq openrouter (gptel-make-openai "OpenRouter"
-                   :host "openrouter.ai"
-                   :endpoint "/api/v1/chat/completions"
-                   :stream t
-                   :key 'openrouter-api-key
-                   :models '(deepseek/deepseek-r1-0528:free))
-      mistral (gptel-make-openai "MistralLeChat"
+(setq mistral (gptel-make-openai "MistralLeChat"
                 :host "api.mistral.ai"
                 :endpoint "/v1/chat/completions"
                 :protocol "https"
@@ -2574,8 +2568,8 @@ Also grabs a selected region, if any."
 (defun gptel-chat-setup ()
   (when (string-prefix-p gptel-chat-buffer-name
                          (buffer-name))
-    (setq-local gptel-backend openrouter
-                gptel-model 'deepseek/deepseek-r1-0528:free)))
+    (setq-local gptel-backend mistral
+                gptel-model 'mistral-medium-latest)))
 
 
 (add-hook 'gptel-mode-hook 'gptel-chat-setup)
