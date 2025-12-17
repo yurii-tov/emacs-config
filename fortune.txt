@@ -99,9 +99,6 @@ The greatest enemy of knowledge is not ignorance, it is the illusion of knowledg
 Not all those who wander are lost
 -- J.R.R. Tolkien
 %
-Ты все время повторяешь себе: «Я бы и мог это сделать, да не хочу», и это лишь иной способ сказать, что ничего-то ты не можешь.
---- Ричард Фейнман
-%
 Плохо что ли? Хорошо!
 %
 There's never enough time to do all the nothing you want
