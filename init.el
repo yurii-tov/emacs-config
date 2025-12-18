@@ -2274,7 +2274,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 (defun comint-setup-completion ()
   (setq-local company-backends '((company-capf
-                                  company-comint-hist-completion
                                   company-dabbrev
                                   :separate))
               comint-dynamic-complete-functions
