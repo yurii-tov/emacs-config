@@ -22,9 +22,9 @@
                                      htmlize markdown-mode
                                      ripgrep wgrep gptel
                                      slime slime-company
-                                     groovy-mode rust-mode
-                                     multiple-cursors nov
-                                     powershell))))
+                                     groovy-mode powershell
+                                     rust-mode multiple-cursors
+                                     expand-region nov))))
   (package-refresh-contents)
   (mapc #'package-install packages))
 
@@ -198,6 +198,7 @@
   "C-2" 'split-window-below
   "C-3" 'split-window-right
   "C-0" 'delete-window
+  "M-h" 'er/expand-region
   "M-k" 'kill-line-to-indentation
   "M-=" 'count-words
   "M-q" 'hippie-expand
