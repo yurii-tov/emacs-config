@@ -2273,7 +2273,11 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (defun comint-setup-completion ()
-  (setq-local comint-dynamic-complete-functions
+  (setq-local company-backends '((company-capf
+                                  company-comint-hist-completion
+                                  company-dabbrev
+                                  :separate))
+              comint-dynamic-complete-functions
               (seq-difference comint-dynamic-complete-functions
                               '(comint-c-a-p-replace-by-expanded-history
                                 shell-c-a-p-replace-by-expanded-directory
