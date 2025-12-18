@@ -198,7 +198,6 @@
   "C-2" 'split-window-below
   "C-3" 'split-window-right
   "C-0" 'delete-window
-  "M-h" 'er/expand-region
   "M-k" 'kill-line-to-indentation
   "M-=" 'count-words
   "M-q" 'hippie-expand
@@ -216,9 +215,10 @@
   "M-g" 'goto-line
   "M-/" project-prefix-map
   "M-l" 'move-line-up
-  "M-N" 'mc/mark-next-like-this
-  "M-P" 'mc/mark-previous-like-this
-  "M-M" 'mc/mark-all-dwim
+  "M-h" 'er/expand-region
+  "M-H" 'mc/mark-all-dwim
+  "M-J" 'mc/mark-next-like-this
+  "M-K" 'mc/mark-previous-like-this
   "C-<down-mouse-1>" nil
   "C-<mouse-1>" 'mc/add-cursor-on-click
   "C-M-l" 'move-line-down
