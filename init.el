@@ -217,8 +217,8 @@
   "M-l" 'move-line-up
   "M-h" 'er/expand-region
   "M-H" 'mc/mark-all-dwim
-  "M-J" 'mc/mark-next-like-this
-  "M-K" 'mc/mark-previous-like-this
+  "M-N" 'mc/mark-next-like-this
+  "M-P" 'mc/mark-previous-like-this
   "C-<down-mouse-1>" nil
   "C-<mouse-1>" 'mc/add-cursor-on-click
   "C-M-l" 'move-line-down
