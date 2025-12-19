@@ -22,9 +22,9 @@
                                      htmlize markdown-mode
                                      ripgrep wgrep gptel
                                      slime slime-company
-                                     groovy-mode powershell
-                                     rust-mode multiple-cursors
-                                     expand-region nov))))
+                                     groovy-mode rust-mode
+                                     multiple-cursors nov
+                                     powershell))))
   (package-refresh-contents)
   (mapc #'package-install packages))
 
@@ -215,7 +215,6 @@
   "M-g" 'goto-line
   "M-/" project-prefix-map
   "M-l" 'move-line-up
-  "M-H" 'er/expand-region
   "M-M" 'mc/mark-all-dwim
   "M-N" 'mc/mark-next-like-this
   "M-P" 'mc/mark-previous-like-this
