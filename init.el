@@ -146,6 +146,7 @@
   "e" 'enumerate-lines
   "r" 'reverse-lines
   "w" 'enclose-text
+  "m" 'er/expand-region
   "i" (define-keymap
         "j" 'emoji-insert
         "e" 'emoji-list
