@@ -22,9 +22,9 @@
                                      htmlize markdown-mode
                                      ripgrep wgrep gptel
                                      slime slime-company
-                                     groovy-mode powershell
-                                     rust-mode multiple-cursors
-                                     expand-region nov))))
+                                     groovy-mode rust-mode
+                                     multiple-cursors nov
+                                     powershell))))
   (package-refresh-contents)
   (mapc #'package-install packages))
 
@@ -145,7 +145,6 @@
   "/" 'invert-chars
   "e" 'enumerate-lines
   "r" 'reverse-lines
-  "m" 'er/expand-region
   "i" (define-keymap
         "j" 'emoji-insert
         "e" 'emoji-list
