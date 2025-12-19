@@ -215,7 +215,7 @@
   "M-g" 'goto-line
   "M-/" project-prefix-map
   "M-l" 'move-line-up
-  "M-h" 'er/expand-region
+  "M-H" 'er/expand-region
   "M-M" 'mc/mark-all-dwim
   "M-N" 'mc/mark-next-like-this
   "M-P" 'mc/mark-previous-like-this
