@@ -1500,23 +1500,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
          b2-pos
          (insert-b1 (lambda () (setq b1-pos (point)) (insert b1)))
          (insert-b2 (lambda () (setq b2-pos (point)) (insert b2))))
-    (cond (rectangle-mark-mode
-           (let* ((bounds (list (region-beginning) (region-end)))
-                  (lines (mapcar #'string-trim-right
-                                 (split-string (apply #'buffer-substring bounds) "\n")))
-                  (col (save-excursion (goto-char (car bounds)) (current-column))))
-             (apply #'delete-region bounds)
-             (insert (string-join
-                      (cons (format "%s%s%s" b1 (car lines) b2)
-                            (mapcar (lambda (x)
-                                      (let ((offset (min col (length x))))
-                                        (format "%s%s" (concat (substring x 0 offset)
-                                                               b1
-                                                               (substring x offset))
-                                                b2)))
-                                    (cdr lines)))
-                      "\n"))))
-          ((use-region-p)
+    (cond ((use-region-p)
            (let ((s (region-beginning))
                  (e (region-end)))
              (goto-char s)
