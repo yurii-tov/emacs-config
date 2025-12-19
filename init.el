@@ -145,6 +145,7 @@
   "/" 'invert-chars
   "e" 'enumerate-lines
   "r" 'reverse-lines
+  "m" 'er/expand-region
   "i" (define-keymap
         "j" 'emoji-insert
         "e" 'emoji-list
@@ -197,7 +198,6 @@
   "C-2" 'split-window-below
   "C-3" 'split-window-right
   "C-0" 'delete-window
-  "M-h" 'er/expand-region
   "M-k" 'kill-line-to-indentation
   "M-=" 'count-words
   "M-q" 'hippie-expand
