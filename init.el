@@ -22,9 +22,9 @@
                                      htmlize markdown-mode
                                      ripgrep wgrep gptel
                                      slime slime-company
-                                     groovy-mode rust-mode
-                                     multiple-cursors nov
-                                     powershell))))
+                                     groovy-mode powershell
+                                     rust-mode multiple-cursors
+                                     expand-region nov))))
   (package-refresh-contents)
   (mapc #'package-install packages))
 
