@@ -1496,23 +1496,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (defun enclose-text (b1 b2 &optional lisp-style-p)
   "Encloses current word (or region) into provided \"bracket-like\" strings
    Also operates on rectangular selections, applying the enclosing for each line"
-  (interactive (let* ((default-item (car minibuffer-history))
-                      (s (read-string
-                          (format "Wrap with arbitrary brackets (use %s char if needed)%s: "
-                                  (propertize "?" 'face 'font-lock-builtin-face)
-                                  (if default-item
-                                      (format " (default %s)"
-                                              (propertize default-item
-                                                          'face
-                                                          'font-lock-builtin-face))
-                                    ""))
-                          nil nil (car minibuffer-history)))
-                      (bs (split-string s "\\?")))
-                 (if (> (length bs) 1) bs
-                   (list (substring s 0 (/ (length s) 2))
-                         (substring s (/ (length s) 2) (length s))))))
-  (let* (b1-pos
-         b2-pos
+  (let* (b1-pos b2-pos
          (insert-b1 (lambda () (setq b1-pos (point)) (insert b1)))
          (insert-b2 (lambda () (setq b2-pos (point)) (insert b2))))
     (cond (rectangle-mark-mode
