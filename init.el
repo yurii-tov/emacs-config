@@ -145,7 +145,6 @@
   "/" 'invert-chars
   "e" 'enumerate-lines
   "r" 'reverse-lines
-  "w" 'enclose-text
   "m" 'er/expand-region
   "i" (define-keymap
         "j" 'emoji-insert
@@ -1615,18 +1614,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (defun enclose-text-curly-brackets ()
   (interactive)
   (enclose-text "{" "}" t))
-
-
-;; Rectangle editing
-
-
-(dolist (x (number-sequence ?\  ?~))
-  (push (cons x 'ignore) (cdr rectangle-mark-mode-map)))
-
-
-(define-keymap :keymap rectangle-mark-mode-map
-  "w" 'enclose-text
-  "SPC" 'string-rectangle)
 
 
 ;; Multiple cursors
