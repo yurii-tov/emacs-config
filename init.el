@@ -1494,8 +1494,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 
 (defun enclose-text (b1 b2 &optional lisp-style-p)
-  "Encloses current word (or region) into provided \"bracket-like\" strings
-   Also operates on rectangular selections, applying the enclosing for each line"
   (let* (b1-pos
          b2-pos
          (insert-b1 (lambda () (setq b1-pos (point)) (insert b1)))
