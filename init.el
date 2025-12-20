@@ -1475,9 +1475,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; Enclosing into parenthesis (or similar)
 
 
-(require 'rect)
-
-
 (defun enclose-text (b1 b2 &optional lisp-style-p)
   (let* (b1-pos
          b2-pos
@@ -1517,27 +1514,26 @@ Optionally, formats the buffer with COMMAND (if provided)"
   "Encloses current word/region into brackets from provided BRACKETS set,
 with ability to \"cycle\" different variants with provided KEYBINDING
 (as numeric value, can be obtained e.g. from (`read-key') invocation)"
-  (when (not rectangle-mark-mode)
-    (let* ((positions (enclose-text (substring (car brackets) 0 1)
-                                    (substring (car brackets) 1 2)
-                                    t))
-           (p1 (car positions))
-           (p2 (cadr positions))
-           (i 0)
-           key)
-      (while (= (setq key (read-key)) keybinding)
-        (let* ((bs (nth (mod (cl-incf i) (length brackets)) brackets))
-               (b1 (aref bs 0))
-               (b2 (aref bs 1)))
-          (save-excursion
-            (goto-char p1)
-            (delete-char 1)
-            (insert b1)
-            (goto-char p2)
-            (delete-char 1)
-            (insert b2))
-          (forward-char)))
-      (push key unread-command-events))))
+  (let* ((positions (enclose-text (substring (car brackets) 0 1)
+                                  (substring (car brackets) 1 2)
+                                  t))
+         (p1 (car positions))
+         (p2 (cadr positions))
+         (i 0)
+         key)
+    (while (= (setq key (read-key)) keybinding)
+      (let* ((bs (nth (mod (cl-incf i) (length brackets)) brackets))
+             (b1 (aref bs 0))
+             (b2 (aref bs 1)))
+        (save-excursion
+          (goto-char p1)
+          (delete-char 1)
+          (insert b1)
+          (goto-char p2)
+          (delete-char 1)
+          (insert b2))
+        (forward-char)))
+    (push key unread-command-events)))
 
 
 (defun enclose-text-cycle-m2 ()
@@ -1637,6 +1633,9 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (defun reverse-lines ()
   (interactive)
   (apply #'reverse-region (buffer-or-region)))
+
+
+(require 'rect)
 
 
 (defun enumerate-lines ()
