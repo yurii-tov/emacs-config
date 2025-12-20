@@ -1357,7 +1357,7 @@ The search string is queried first, followed by the directory."
 
 (define-keymap :keymap isearch-mode-map
   "M-w" 'isearch-toggle-word
-  "M-q" 'isearch-query-replace)
+  "M-SPC" 'isearch-query-replace)
 
 
 (dolist (x '(regexp-search-ring search-ring))
