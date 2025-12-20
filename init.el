@@ -1590,12 +1590,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (setq mc/always-run-for-all t)
 
 
-;; Expand region
-
-
-(setq expand-region-fast-keys-enabled nil)
-
-
 ;; Auxiliary edit commands
 
 
