@@ -22,9 +22,9 @@
                                      htmlize markdown-mode
                                      ripgrep wgrep gptel
                                      slime slime-company
-                                     groovy-mode rust-mode
-                                     multiple-cursors nov
-                                     powershell))))
+                                     groovy-mode powershell
+                                     rust-mode multiple-cursors
+                                     expand-region nov))))
   (package-refresh-contents)
   (mapc #'package-install packages))
 
@@ -214,6 +214,8 @@
   "M-g" 'goto-line
   "M-/" project-prefix-map
   "M-l" 'move-line-up
+  "M-SPC" 'er/expand-region
+  "S-SPC" 'cycle-spacing
   "M-M" 'mc/mark-all-dwim
   "M-N" 'mc/mark-next-like-this
   "M-P" 'mc/mark-previous-like-this
@@ -1586,6 +1588,12 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 
 (setq mc/always-run-for-all t)
+
+
+;; Expand region
+
+
+(setq expand-region-fast-keys-enabled nil)
 
 
 ;; Auxiliary edit commands
