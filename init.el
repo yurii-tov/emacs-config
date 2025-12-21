@@ -1475,7 +1475,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; Enclosing into parenthesis (or similar)
 
 
-(defun enclose-text (b1 b2 &optional lisp-style-p)
+(defun enclose-text (b1 b2)
   (let* (b1-pos
          b2-pos
          (insert-b1 (lambda () (setq b1-pos (point)) (insert b1)))
@@ -1488,8 +1488,8 @@ Optionally, formats the buffer with COMMAND (if provided)"
              (goto-char e)
              (forward-char (length b2))
              (funcall insert-b2)
-             (when lisp-style-p (goto-char (1+ s)))))
-          ((and lisp-style-p (looking-at "[\[({]"))
+             (goto-char (1+ s))))
+          ((looking-at "[\[({]")
            (funcall insert-b1)
            (forward-sexp)
            (funcall insert-b2)
@@ -1504,9 +1504,8 @@ Optionally, formats the buffer with COMMAND (if provided)"
              (funcall insert-b1)
              (forward-word)
              (funcall insert-b2)
-             (when lisp-style-p
-               (backward-char)
-               (backward-word))))
+             (backward-char)
+             (backward-word)))
     (list b1-pos b2-pos)))
 
 
@@ -1515,8 +1514,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 with ability to \"cycle\" different variants with provided KEYBINDING
 (as numeric value, can be obtained e.g. from (`read-key') invocation)"
   (let* ((positions (enclose-text (substring (car brackets) 0 1)
-                                  (substring (car brackets) 1 2)
-                                  t))
+                                  (substring (car brackets) 1 2)))
          (p1 (car positions))
          (p2 (cadr positions))
          (i 0)
@@ -1551,17 +1549,17 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 
 (defun enclose-text-parenthesis ()
   (interactive)
-  (enclose-text "(" ")" t))
+  (enclose-text "(" ")"))
 
 
 (defun enclose-text-square-brackets ()
   (interactive)
-  (enclose-text "[" "]" t))
+  (enclose-text "[" "]"))
 
 
 (defun enclose-text-curly-brackets ()
   (interactive)
-  (enclose-text "{" "}" t))
+  (enclose-text "{" "}"))
 
 
 ;; Multiple cursors
