@@ -783,8 +783,7 @@
 
 (with-eval-after-load 'ibuffer
   (define-keymap :keymap ibuffer-mode-map
-    "M-j" nil
-    "M-o" nil
+    "M-j" nil "M-o" nil
     "j" 'ibuffer-jump-to-filter-group))
 
 
