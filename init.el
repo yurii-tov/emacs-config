@@ -1481,7 +1481,8 @@ Optionally, formats the buffer with COMMAND (if provided)"
          (insert-b2 (lambda () (setq b2-pos (point)) (insert b2)))
          (region (if (use-region-p)
                      (car (region-bounds))
-                   (bounds-of-thing-at-point 'word))))
+                   (unless (looking-at "[[:blank:]\n]\\|$")
+                     (bounds-of-thing-at-point 'word)))))
     (cond (region
            (let ((s (car region))
                  (e (cdr region)))
