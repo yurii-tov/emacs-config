@@ -1483,7 +1483,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
                         (car (region-bounds)))
                        ((looking-at "[\[({\"]")
                         (bounds-of-thing-at-point 'sexp))
-                       ((not (looking-at "[[:blank:]\n]\\|$"))
+                       ((not (looking-at "[[:blank:]]\\|$"))
                         (bounds-of-thing-at-point 'word)))))
     (if-let* ((s (car region))
               (e (cdr region)))
