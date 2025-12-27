@@ -142,8 +142,6 @@
   "M-k" 'keep-lines
   "M-p" 'fill-region-justify
   "u" 'uniq-lines
-  "/" 'invert-chars
-  "e" 'enumerate-lines
   "r" 'reverse-lines
   "i" (define-keymap
         "j" 'emoji-insert
@@ -1569,35 +1567,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
           (point-max))))
 
 
-(defun invert-chars ()
-  (interactive)
-  (let* ((bounds (buffer-or-region))
-         (region (apply #'buffer-substring bounds))
-         (inversions (mapcan (lambda (x)
-                               (when (string-match (nth 2 x) region)
-                                 (list x)))
-                             '(("i) /↔\\" ?i "[/\\]" ("\\" "/") ("/" "\\\\"))
-                               ("j) []↔{}" ?j "[][}{]" ("[" "{") ("{" "[") ("}" "]") ("]" "}"))
-                               ("k) \"↔'" ?k "['\"]" ("\"" "'") ("'" "\""))
-                               ("l) []↔()" ?l "[][)(]" ("[" "(") ("(" "[") (")" "]") ("]" ")"))
-                               ("h) {}↔()" ?h "[}{)(]" ("{" "(") ("(" "{") (")" "}") ("}" ")")))))
-         (inversion (cdr (when inversions
-                           (if (cdr inversions)
-                               (let* ((c (read-char (string-join (cons "What to invert:"
-                                                                       (mapcar #'car inversions))
-                                                                 "\n")))
-                                      (inversion (assoc c (mapcar #'cdr inversions))))
-                                 inversion)
-                             (cdar inversions))))))
-    (when inversion
-      (save-excursion
-        (goto-char (car bounds))
-        (while (re-search-forward (car inversion) (cadr bounds) t)
-          (replace-match (cadr (assoc (buffer-substring (1- (point)) (point))
-                                      (cdr inversion)
-                                      #'string-equal))))))))
-
-
 (defun shuffle-lines ()
   (interactive)
   (message "Shuffling lines...")
@@ -1621,23 +1590,6 @@ with ability to \"cycle\" different variants with provided KEYBINDING
 (defun reverse-lines ()
   (interactive)
   (apply #'reverse-region (buffer-or-region)))
-
-
-(require 'rect)
-
-
-(defun enumerate-lines ()
-  (interactive)
-  (if rectangle-mark-mode
-      (call-interactively 'rectangle-number-lines)
-    (let* ((bounds (buffer-or-region))
-           (lines (split-string (apply #'buffer-substring bounds)
-                                "\n" t " *")))
-      (apply #'delete-region bounds)
-      (insert (string-join (cl-loop for i from 1 upto (length lines)
-                                    for x in lines
-                                    collect (format "%s %s" i x))
-                           "\n")))))
 
 
 (defun join-lines ()
