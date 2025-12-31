@@ -187,6 +187,8 @@
 
 (define-keymap :keymap global-map
   "<f2>" 'kmacro-keymap
+  "C-s" 'isearch-forward-regexp
+  "C-r" 'isearch-backward-regexp
   "C-v" 'scroll-up-3
   "M-v" 'scroll-down-3
   "M-c" 'text-edit-map
