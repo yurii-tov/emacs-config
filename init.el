@@ -1381,8 +1381,15 @@ The search string is queried first, followed by the directory."
         (rust-mode . rust-format-buffer)))
 
 
+(advice-add 'indent-region
+            :before
+            (lambda (&rest _)
+              "Fix whitespace problems"
+              (whitespace-cleanup)))
+
+
 (defun format-buffer (&optional command)
-  "Formats current buffer with suitable function from `format-buffer-functions', using reindent/cleanup as fallback.
+  "Formats current buffer with suitable function from `format-buffer-functions', using reindent as fallback.
 Optionally, formats the buffer with COMMAND (if provided)"
   (interactive)
   (if command
@@ -1409,7 +1416,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
                     "Formatting buffer...Done"
                   "Already well-formatted")))
       (deactivate-mark)
-      (whitespace-cleanup)
       (indent-region (point-min) (point-max)))))
 
 
