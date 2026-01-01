@@ -2365,14 +2365,14 @@ with ability to \"cycle\" different variants with provided KEYBINDING
     (setq translation (string-trim (shell-command-to-string command)))
     (if (zerop (length translation))
         (let ((gptel-backend mistral)
-              (gptel-model 'mistral-medium-latest))
+              (gptel-model 'mistral-medium-latest)
+              (prompt (format "Translate %s: %s"
+                              (cdr (assoc 'description preset))
+                              query))
+              (callback `(lambda (response _)
+                           (message "%s =>\n%s" ,query-message response))))
           (require 'gptel)
-          (gptel-request
-           (format "Translate %s: %s"
-                   (cdr (assoc 'description preset))
-                   query)
-           :callback `(lambda (response _)
-                        (message "%s =>\n%s" ,query-message response))))
+          (gptel-request prompt :callback callback))
       (message "%s =>\n%s" query-message translation))))
 
 
