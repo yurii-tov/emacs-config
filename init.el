@@ -177,6 +177,7 @@
   "C-h" 'describe-symbol
   "h" 'describe-symbol
   "r" 'man
+  "k" 'describe-keymap
   "s" 'yas-describe-tables
   "f" 'list-faces-display
   "v" 'company-diag)
