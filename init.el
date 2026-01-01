@@ -1383,10 +1383,14 @@ The search string is queried first, followed by the directory."
 
 
 (advice-add 'indent-region
-            :before
-            (lambda (&rest _)
+            :around
+            (lambda (f &rest args)
               "Fix whitespace problems"
-              (whitespace-cleanup)))
+              (let ((s (car args))
+                    (e (cadr args))
+                    (p (point-max)))
+                (whitespace-cleanup)
+                (apply f s (- e (- p (point-max))) (cddr args)))))
 
 
 (defun format-buffer (&optional command)
