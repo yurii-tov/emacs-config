@@ -1247,19 +1247,16 @@
   "More consistent querying of user inputs:
 The search string is queried first, followed by the directory."
   (interactive)
-  (let* ((prompt (format "Search for files: "))
-         (query (cadr xs))
-         (dir (car xs))
-         (query (if (called-interactively-p)
-                    (read-string prompt nil 'find-args-history)
-                  query))
+  (let* ((query (if (called-interactively-p)
+                    (read-string "Search for files: ")
+                  (cadr xs)))
          (dir (if (called-interactively-p)
                   (read-directory-name
                    (format "Search for %s at: "
                            (propertize (if (string-empty-p query)
                                            "*" query)
                                        'face 'success)))
-                dir)))
+                (car xs))))
     (funcall f dir query)))
 
 
