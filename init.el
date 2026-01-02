@@ -201,11 +201,17 @@
   "M-q" 'hippie-expand
   "M-1" 'shell-command
   "M-!" 'asc-at-directory
-  "M-2" 'enclose-text-cycle-m2
-  "M-3" 'enclose-text-cycle-m3
+  "M-2" 'enclose-text-quotes
+  "M-@" 'enclose-text-apostrophes
+  "M-3" 'enclose-text-angle
+  "M-#" 'enclose-text-grave
+  "M-4" 'enclose-text-asterisks
+  "M-$" 'enclose-text-equals
+  "M-5" 'enclose-text-soliduses
+  "M-%" 'enclose-text-tildes
   "M-9" 'enclose-text-parenthesis
-  "M-0" 'enclose-text-square-brackets
-  "M-)" 'enclose-text-curly-brackets
+  "M-0" 'enclose-text-square
+  "M-)" 'enclose-text-curly
   "M-i" 'format-buffer
   "M-u" 'force-revert-buffer
   "M-j" 'switch-to-buffer
@@ -1479,66 +1485,23 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 
 (defun enclose-text (b1 b2)
-  (let* (b1-pos
-         b2-pos
-         (insert-b1 (lambda () (setq b1-pos (point)) (insert b1)))
-         (insert-b2 (lambda () (setq b2-pos (point)) (insert b2)))
-         (region (cond ((use-region-p)
-                        (car (region-bounds)))
-                       ((looking-at "[\[({\"]")
-                        (bounds-of-thing-at-point 'sexp))
-                       ((not (looking-at "[[:blank:]]\\|$"))
-                        (bounds-of-thing-at-point 'word)))))
-    (if-let* ((s (car region))
-              (e (cdr region)))
-        (progn (goto-char s)
-               (funcall insert-b1)
-               (goto-char e)
-               (forward-char (length b2))
-               (funcall insert-b2)
-               (goto-char (1+ s)))
-      (funcall insert-b1)
-      (funcall insert-b2)
-      (backward-char))
-    (list b1-pos b2-pos)))
-
-
-(defun enclose-text-cycle (brackets keybinding)
-  "Encloses current word/region into brackets from provided BRACKETS set,
-with ability to \"cycle\" different variants with provided KEYBINDING
-(as numeric value, can be obtained e.g. from (`read-key') invocation)"
-  (let* ((positions (enclose-text (substring (car brackets) 0 1)
-                                  (substring (car brackets) 1 2)))
-         (p1 (car positions))
-         (p2 (cadr positions))
-         (i 0)
-         key)
-    (while (= (setq key (read-key)) keybinding)
-      (let* ((bs (nth (mod (cl-incf i) (length brackets)) brackets))
-             (b1 (aref bs 0))
-             (b2 (aref bs 1)))
-        (save-excursion
-          (goto-char p1)
-          (delete-char 1)
-          (insert b1)
-          (goto-char p2)
-          (delete-char 1)
-          (insert b2))
-        (forward-char)))
-    (push key unread-command-events)))
-
-
-(defun enclose-text-cycle-m2 ()
-  "Cycle through quotes using M-2 keybinding"
-  (interactive)
-  (enclose-text-cycle '("\"\"" "''" "``" "<>") 134217778))
-
-
-(defun enclose-text-cycle-m3 ()
-  "Cycle through more brackets using M-3 keybinding"
-  (interactive)
-  (enclose-text-cycle '("**" "==" "//" "~~")
-                      134217779))
+  (if-let* ((region (cond ((use-region-p)
+                           (car (region-bounds)))
+                          ((looking-at "[\[({\"]")
+                           (bounds-of-thing-at-point 'sexp))
+                          ((not (looking-at "[[:blank:]]\\|$"))
+                           (bounds-of-thing-at-point 'word))))
+            (s (car region))
+            (e (cdr region)))
+      (progn (goto-char s)
+             (insert b1)
+             (goto-char e)
+             (forward-char (length b2))
+             (insert b2)
+             (goto-char (1+ s)))
+    (insert b1)
+    (insert b2)
+    (backward-char)))
 
 
 (defun enclose-text-parenthesis ()
@@ -1546,14 +1509,54 @@ with ability to \"cycle\" different variants with provided KEYBINDING
   (enclose-text "(" ")"))
 
 
-(defun enclose-text-square-brackets ()
+(defun enclose-text-square ()
   (interactive)
   (enclose-text "[" "]"))
 
 
-(defun enclose-text-curly-brackets ()
+(defun enclose-text-curly ()
   (interactive)
   (enclose-text "{" "}"))
+
+
+(defun enclose-text-quotes ()
+  (interactive)
+  (enclose-text "\"" "\""))
+
+
+(defun enclose-text-apostrophes ()
+  (interactive)
+  (enclose-text "'" "'"))
+
+
+(defun enclose-text-angle ()
+  (interactive)
+  (enclose-text "<" ">"))
+
+
+(defun enclose-text-grave ()
+  (interactive)
+  (enclose-text "`" "`"))
+
+
+(defun enclose-text-asterisks ()
+  (interactive)
+  (enclose-text "*" "*"))
+
+
+(defun enclose-text-equals ()
+  (interactive)
+  (enclose-text "=" "="))
+
+
+(defun enclose-text-tildes ()
+  (interactive)
+  (enclose-text "~" "~"))
+
+
+(defun enclose-text-soliduses ()
+  (interactive)
+  (enclose-text "/" "/"))
 
 
 ;; Multiple cursors
