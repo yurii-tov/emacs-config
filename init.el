@@ -1352,6 +1352,8 @@ The search string is queried first, followed by the directory."
 
 (define-keymap :keymap isearch-mode-map
   "M-w" 'isearch-toggle-word
+  "M-," 'isearch-beginning-of-buffer
+  "M-." 'isearch-end-of-buffer
   "M-SPC" 'isearch-query-replace)
 
 
