@@ -1361,6 +1361,12 @@ The search string is queried first, followed by the directory."
   (add-to-list 'savehist-additional-variables x))
 
 
+;; Replace
+
+
+(keymap-set query-replace-map "RET" 'automatic)
+
+
 ;; Formatting
 
 
