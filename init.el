@@ -202,14 +202,10 @@
   "M-1" 'shell-command
   "M-!" 'asc-at-directory
   "M-2" 'enclose-text-quotes
-  "M-@" 'enclose-text-apostrophes
-  "M-3" 'enclose-text-angle
-  "M-#" 'enclose-text-grave
-  "M-4" 'enclose-text-asterisks
-  "M-$" 'enclose-text-equals
-  "M-5" 'enclose-text-soliduses
-  "M-%" 'enclose-text-tildes
+  "M-3" 'enclose-text-apostrophes
+  "M-4" 'enclose-text-grave
   "M-9" 'enclose-text-parenthesis
+  "M-(" 'enclose-text-angle
   "M-0" 'enclose-text-square
   "M-)" 'enclose-text-curly
   "M-i" 'format-buffer
@@ -1519,6 +1515,11 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (enclose-text "{" "}"))
 
 
+(defun enclose-text-angle ()
+  (interactive)
+  (enclose-text "<" ">"))
+
+
 (defun enclose-text-quotes ()
   (interactive)
   (enclose-text "\"" "\""))
@@ -1529,34 +1530,9 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (enclose-text "'" "'"))
 
 
-(defun enclose-text-angle ()
-  (interactive)
-  (enclose-text "<" ">"))
-
-
 (defun enclose-text-grave ()
   (interactive)
   (enclose-text "`" "`"))
-
-
-(defun enclose-text-asterisks ()
-  (interactive)
-  (enclose-text "*" "*"))
-
-
-(defun enclose-text-equals ()
-  (interactive)
-  (enclose-text "=" "="))
-
-
-(defun enclose-text-tildes ()
-  (interactive)
-  (enclose-text "~" "~"))
-
-
-(defun enclose-text-soliduses ()
-  (interactive)
-  (enclose-text "/" "/"))
 
 
 ;; Multiple cursors
