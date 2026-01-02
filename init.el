@@ -1364,7 +1364,8 @@ The search string is queried first, followed by the directory."
 ;; Replace
 
 
-(keymap-set query-replace-map "RET" 'automatic)
+(define-keymap :keymap query-replace-map
+  "RET" 'automatic "<return>" 'automatic)
 
 
 ;; Formatting
