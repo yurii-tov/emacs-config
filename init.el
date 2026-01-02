@@ -1234,13 +1234,11 @@
 (advice-add 'find-dired :around #'find-dired-dwim)
 
 
-(defun find-dired-prevent-prompt-clutter (f &rest args)
-  "Set find-args to empty string, therefore prevent input prompt cluttering"
-  (apply f args)
-  (setq find-args ""))
-
-
-(advice-add 'find-dired :around #'find-dired-prevent-prompt-clutter)
+(advice-add 'find-dired
+            :after
+            (lambda (&rest _)
+              "Blank prompt"
+              (setq find-args "")))
 
 
 (defun find-dired-fix-prompt (f &rest xs)
