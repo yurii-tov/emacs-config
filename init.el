@@ -1202,22 +1202,23 @@
 
 
 (defun find-dired-setup-buffer (f &rest args)
-  (let* ((working-directory (directory-file-name (car args)))
-         (name (file-name-base working-directory))
-         (existing (get-buffer name)))
-    (when (and existing
-               (equal (with-current-buffer existing
-                        (directory-file-name default-directory))
-                      working-directory)
-               (eq (with-current-buffer existing major-mode)
+  (let* ((buffer-name (thread-first (car args)
+                                    directory-file-name
+                                    file-name-base))
+         (buffer (get-buffer buffer-name)))
+    (when (and buffer
+               (file-equal-p (with-current-buffer buffer
+                               default-directory)
+                             (car args))
+               (eq (with-current-buffer buffer major-mode)
                    'dired-mode))
-      (kill-buffer existing))
+      (kill-buffer buffer))
     (apply f args)
     (set (make-local-variable 'revert-buffer-function)
          `(lambda (ignore-auto noconfirm)
             (kill-buffer (current-buffer))
             (apply #'find-dired ',args)))
-    (rename-buffer name t)))
+    (rename-buffer buffer-name t)))
 
 
 (advice-add 'find-dired :around #'find-dired-setup-buffer)
