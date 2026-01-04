@@ -1037,6 +1037,13 @@
 ;; =====
 
 
+(add-hook 'dired-mode-hook
+          (lambda ()
+            (diredfl-mode)
+            (auto-revert-mode)
+            (setq-local ido-use-filename-at-point nil)))
+
+
 (require 'ls-lisp)
 
 
@@ -1054,11 +1061,11 @@
       wdired-allow-to-change-permissions t)
 
 
-(defun ls-lisp-force-options (r)
-  (prog1 r (setq ls-lisp-dirs-first t)))
-
-
-(advice-add 'ls-lisp-set-options :filter-return #'ls-lisp-force-options)
+(advice-add 'ls-lisp-set-options
+            :after
+            (lambda ()
+              "Force ls-lisp-dirs-first = t"
+              (setq ls-lisp-dirs-first t)))
 
 
 ;; Keybindings
@@ -1154,28 +1161,6 @@
 (defun dired-calculate-size-tree ()
   (interactive)
   (dired-calculate-size t))
-
-
-;; Auto-reverting
-
-
-(add-hook 'dired-mode-hook 'auto-revert-mode)
-
-
-;; Colourful listing
-
-
-(diredfl-global-mode)
-
-
-;; Suppress ffap
-
-
-(defun dired-disable-ffap ()
-  (setq-local ido-use-filename-at-point nil))
-
-
-(add-hook 'dired-mode-hook 'dired-disable-ffap)
 
 
 ;; IDO work directory recording
