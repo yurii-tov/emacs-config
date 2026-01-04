@@ -882,6 +882,8 @@
       ido-use-url-at-point t
       ido-grid-mode-prefix ""
       ido-grid-mode-exact-match-prefix ""
+      ido-grid-mode-first-line '(" " ido-grid-mode-count)
+      ido-grid-mode-keys '(up down left right)
       ido-auto-merge-work-directories-length -1
       ido-grid-mode-max-rows 10
       ido-grid-mode-min-rows 5
@@ -898,6 +900,14 @@
  '(ido-subdir ((t (:inherit default)))))
 
 
+(advice-add 'ido-grid-mode-count
+            :around
+            (lambda (f &rest args)
+              "Setup counter style"
+              (propertize (format "[%s]" (apply f args))
+                          'face 'font-lock-comment-face)))
+
+
 ;; Keybindings
 
 
@@ -908,24 +918,6 @@
   "C-p" 'ido-grid-mode-previous
   "SPC" 'ido-recent
   "M-SPC" 'ido-search-subdirs)
-
-
-(setq ido-grid-mode-keys '(up down left right))
-
-
-;; Counter
-
-
-(defun ido-colorize-counter (f &rest args)
-  (propertize (format "[%s]" (apply f args)) 'face 'font-lock-comment-face))
-
-
-(advice-add 'ido-grid-mode-count
-            :around
-            #'ido-colorize-counter)
-
-
-(setq ido-grid-mode-first-line '(" " ido-grid-mode-count))
 
 
 ;; Advanced commands
@@ -995,15 +987,15 @@
 ;; History
 
 
-(defun ido-record-history (file-name)
-  (prog1 file-name
-    (ido-record-work-directory
-     (file-name-directory file-name))
-    (unless (file-directory-p file-name)
-      (add-to-history 'file-name-history file-name))))
-
-
-(advice-add 'ido-read-file-name :filter-return #'ido-record-history)
+(advice-add 'ido-read-file-name
+            :filter-return
+            (lambda (file-name)
+              "Update file-name-history"
+              (prog1 file-name
+                (ido-record-work-directory
+                 (file-name-directory file-name))
+                (unless (file-directory-p file-name)
+                  (add-to-history 'file-name-history file-name)))))
 
 
 ;; Completions buffer
@@ -1017,19 +1009,18 @@
                 (ido-switch-to-completions))))
 
 
-;; Grid mode
+;; Fixes
 
 
-(defun ido-fix-grid-mode (f &rest args)
-  "Prevent global settings tampering"
-  (let ((h max-mini-window-height)
-        (r resize-mini-windows))
-    (apply f args)
-    (setq max-mini-window-height h
-          resize-mini-windows r)))
-
-
-(advice-add 'ido-grid-mode-ido-setup :around #'ido-fix-grid-mode)
+(advice-add 'ido-grid-mode-ido-setup
+            :around
+            (lambda (f &rest args)
+              "Prevent global settings tampering"
+              (let ((h max-mini-window-height)
+                    (r resize-mini-windows))
+                (apply f args)
+                (setq max-mini-window-height h
+                      resize-mini-windows r))))
 
 
 ;; =====
