@@ -1050,7 +1050,8 @@
       dired-recursive-copies 'always
       dired-recursive-deletes 'always
       dired-dwim-target t
-      dired-kill-when-opening-new-dired-buffer t)
+      dired-kill-when-opening-new-dired-buffer t
+      wdired-allow-to-change-permissions t)
 
 
 (defun ls-lisp-force-options (r)
