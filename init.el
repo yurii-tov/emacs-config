@@ -17,14 +17,13 @@
 (when-let ((packages (cl-remove-if #'package-installed-p
                                    '(ido-grid-mode
                                      company yasnippet ligature
-                                     doric-themes ef-themes
+                                     multiple-cursors rust-mode
                                      spacious-padding diredfl
-                                     htmlize markdown-mode
-                                     ripgrep wgrep gptel
-                                     slime slime-company
+                                     gptel ripgrep wgrep nov
+                                     doric-themes ef-themes
                                      groovy-mode powershell
-                                     rust-mode multiple-cursors
-                                     expand-region nov))))
+                                     htmlize markdown-mode
+                                     slime slime-company))))
   (package-refresh-contents)
   (mapc #'package-install packages))
 
@@ -126,7 +125,6 @@
 
 
 (define-keymap :prefix 'text-edit-map
-  "SPC" 'er/expand-region
   "c" 'toggle-char-case
   "M-c" 'duplicate-dwim
   "o" 'sort-lines-bor
