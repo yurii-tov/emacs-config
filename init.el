@@ -126,6 +126,7 @@
 
 
 (define-keymap :prefix 'text-edit-map
+  "m" 'er/expand-region
   "c" 'toggle-char-case
   "M-c" 'duplicate-dwim
   "o" 'sort-lines-bor
@@ -214,9 +215,7 @@
   "M-g" 'goto-line
   "M-/" project-prefix-map
   "M-l" 'move-line-up
-  "M-SPC" 'er/expand-region
-  "S-SPC" 'cycle-spacing
-  "M-S-SPC" 'mc/mark-all-dwim
+  "M-RET" 'mc/mark-all-dwim
   "M-N" 'mc/mark-next-like-this
   "M-P" 'mc/mark-previous-like-this
   "C-<down-mouse-1>" nil
