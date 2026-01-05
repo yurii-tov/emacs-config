@@ -96,14 +96,13 @@
 (prefer-coding-system 'utf-8-unix)
 
 
-(defun windows-fix-args-encoding (f &rest args)
-  (let ((coding-system-for-write 'cp1251-unix))
-    (apply f args)))
-
-
 (when (eq system-type 'windows-nt)
   (dolist (x '(compilation-start shell-command))
-    (advice-add x :around #'windows-fix-args-encoding)))
+    (advice-add x :around
+                (lambda (f &rest args)
+                  "Fix args encoding"
+                  (let ((coding-system-for-write 'cp1251-unix))
+                    (apply f args))))))
 
 
 ;; ===========
@@ -577,37 +576,36 @@
                         completion-category-defaults nil)))
 
 
-(defun minibuffer-flex-restrict (f &rest args)
-  "Don't use flex on long patterns in minibuffer"
-  (if (or (not (minibufferp))
-          (<= (length (cadar args)) 16))
-      (apply f args)
-    (car args)))
-
-
 (advice-add 'completion-flex--make-flex-pattern
             :around
-            #'minibuffer-flex-restrict)
+            (lambda (f &rest args)
+              "Don't use flex on long patterns in minibuffer"
+              (if (or (not (minibufferp))
+                      (<= (length (cadar args)) 16))
+                  (apply f args)
+                (car args))))
 
 
-(defun read-string-completing-history (f &rest args)
-  (let* ((prompt (car args))
-         (initial-input (cadr args))
-         (history-symbol (or (car-safe (caddr args)) (caddr args)))
-         (history (and (not (eq history-symbol t))
-                       (boundp history-symbol)
-                       (symbol-value history-symbol))))
-    (if (and history
-             (not (memq history-symbol
-                        '(string-rectangle-history
-                          junk-hist
-                          org-read-date-history
-                          transient--history))))
-        (completing-read prompt history nil nil initial-input history-symbol)
-      (apply f args))))
-
-
-(advice-add 'read-string :around #'read-string-completing-history)
+(advice-add 'read-string
+            :around
+            (lambda (f &rest args)
+              "Use completing-read"
+              (let* ((prompt (car args))
+                     (initial-input (cadr args))
+                     (history-symbol (or (car-safe (caddr args))
+                                         (caddr args)))
+                     (history (and (not (eq history-symbol t))
+                                   (boundp history-symbol)
+                                   (symbol-value history-symbol))))
+                (if (and history
+                         (not (memq history-symbol
+                                    '(string-rectangle-history
+                                      junk-hist
+                                      org-read-date-history
+                                      transient--history))))
+                    (completing-read prompt history
+                                     nil nil initial-input history-symbol)
+                  (apply f args)))))
 
 
 ;; History
@@ -708,13 +706,13 @@
 ;; Fixes
 
 
-(defun kill-buffer-and-window-fix (f &rest args)
-  (if (> (length (window-list)) 1)
-      (apply f args)
-    (kill-buffer)))
-
-
-(advice-add 'kill-buffer-and-window :around #'kill-buffer-and-window-fix)
+(advice-add 'kill-buffer-and-window
+            :around
+            (lambda (f &rest args)
+              "Fix 'single window' broken scenario"
+              (if (> (length (window-list)) 1)
+                  (apply f args)
+                (kill-buffer))))
 
 
 ;; =======
@@ -1154,20 +1152,17 @@
   (dired-calculate-size t))
 
 
-;; IDO work directory recording
-
-
-(defun dired-record-ido-wd (f &rest args)
-  (let ((file (car args)))
-    (unless (file-directory-p file)
-      (ido-record-work-directory
-       (file-name-directory file)))
-    (apply f args)))
+;; History
 
 
 (advice-add 'dired--find-possibly-alternative-file
-            :around
-            #'dired-record-ido-wd)
+            :after
+            (lambda (&rest args)
+              "When open file, update ido-work-directory-list"
+              (let ((file (car args)))
+                (unless (file-directory-p file)
+                  (ido-record-work-directory
+                   (file-name-directory file))))))
 
 
 ;; ====
@@ -1201,17 +1196,15 @@
 (advice-add 'find-dired :around #'find-dired-setup-buffer)
 
 
-(defun find-dired-dwim (f &rest args)
-  "Simplify most frequent scenario
-   (case-insensitive search using part of a file name)"
-  (let ((query (cadr args)))
-    (unless (string-prefix-p "-" query)
-      (setf (cadr args)
-            (format "-iname '*%s*'" query)))
-    (apply f args)))
-
-
-(advice-add 'find-dired :around #'find-dired-dwim)
+(advice-add 'find-dired
+            :around
+            (lambda (f &rest args)
+              "Search by partial file name, unless explicit switches provided"
+              (let ((query (cadr args)))
+                (unless (string-prefix-p "-" query)
+                  (setf (cadr args)
+                        (format "-iname '*%s*'" query)))
+                (apply f args))))
 
 
 (advice-add 'find-dired
@@ -1221,24 +1214,22 @@
               (setq find-args "")))
 
 
-(defun find-dired-fix-prompt (f &rest xs)
-  "More consistent querying of user inputs:
-The search string is queried first, followed by the directory."
-  (interactive)
-  (let* ((query (if (called-interactively-p)
-                    (read-string "Search for files: ")
-                  (cadr xs)))
-         (dir (if (called-interactively-p)
-                  (read-directory-name
-                   (format "Search for %s at: "
-                           (propertize (if (string-empty-p query)
-                                           "*" query)
-                                       'face 'success)))
-                (car xs))))
-    (funcall f dir query)))
-
-
-(advice-add 'find-dired :around #'find-dired-fix-prompt)
+(advice-add 'find-dired
+            :around
+            (lambda (f &rest xs)
+              "More consistent querying of user inputs"
+              (interactive)
+              (let* ((query (if (called-interactively-p)
+                                (read-string "Search for files: ")
+                              (cadr xs)))
+                     (dir (if (called-interactively-p)
+                              (read-directory-name
+                               (format "Search for %s at: "
+                                       (propertize (if (string-empty-p query)
+                                                       "*" query)
+                                                   'face 'success)))
+                            (car xs))))
+                (funcall f dir query))))
 
 
 ;; =======
@@ -1419,16 +1410,16 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (setq what-cursor-show-names t)
 
 
-(defun region-hexdump (f &rest args)
-  (if (use-region-p)
-      (shell-command-on-region
-       (region-beginning)
-       (region-end)
-       "hexdump -C")
-    (apply f args)))
-
-
-(advice-add 'hexl-mode :around #'region-hexdump)
+(advice-add 'hexl-mode
+            :around
+            (lambda (f &rest args)
+              "When region is selected, run hexdump program on it"
+              (if (use-region-p)
+                  (shell-command-on-region
+                   (region-beginning)
+                   (region-end)
+                   "hexdump -C")
+                (apply f args))))
 
 
 ;; Duplicating
@@ -1646,24 +1637,24 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; Fixes
 
 
-(defun fix-flush-lines (f &rest args)
-  "Fixes flush-lines in various ways. Now it:
+(dolist (x '(flush-lines keep-lines))
+  (advice-add x :around
+              (lambda (f &rest args)
+                "Fix flush-lines in various ways. Now it:
    - Operates on whole buffer instead of \"from current point\".
    - Restores current position after flushing.
    - When empty line provided, flushes empty lines"
-  (let* ((s (car args))
-         (args (if (string-empty-p s)
-                   (cons "^$" (cdr args))
-                 args)))
-    (if (use-region-p)
-        (apply f args)
-      (save-excursion
-        (apply f (append (list (car args) (point-min) (point-max))
-                         (cdddr args)))))))
-
-
-(dolist (x '(flush-lines keep-lines))
-  (advice-add x :around #'fix-flush-lines))
+                (let* ((s (car args))
+                       (args (if (string-empty-p s)
+                                 (cons "^$" (cdr args))
+                               args)))
+                  (if (use-region-p)
+                      (apply f args)
+                    (save-excursion
+                      (apply f (car args)
+                             (point-min)
+                             (point-max)
+                             (cdddr args))))))))
 
 
 ;; ===================
@@ -1752,17 +1743,17 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; Complete instantly in some cases
 
 
-(defun company-instant-complete (f &rest args)
-  "If a complete Yasnippet has been typed, or if sole candidate present, confirms the selection right away"
-  (cond (company-selection (apply f args))
-        ((yas-expand) (company-abort))
-        ((null (cdr company-candidates))
-         (company-select-first)
-         (company-complete))
-        (t (apply f args))))
-
-
-(advice-add 'company-select-next :around #'company-instant-complete)
+(advice-add 'company-select-next
+            :around
+            (lambda (f &rest args)
+              "If a complete Yasnippet has been typed,
+ or if sole candidate present, confirms the selection right away"
+              (cond (company-selection (apply f args))
+                    ((yas-expand) (company-abort))
+                    ((null (cdr company-candidates))
+                     (company-select-first)
+                     (company-complete))
+                    (t (apply f args)))))
 
 
 ;; Explicit completion
@@ -1818,34 +1809,34 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; History completion
 
 
-(defun read-string-shell-command (f &rest args)
-  (let* ((history-arg (or (caddr args) 'shell-command-history))
-         (history-symbol (or (car-safe history-arg) history-arg))
-         (history (and (boundp history-symbol)
-                       (symbol-value history-symbol))))
-    (if history
-        (completing-read
-         (car args) history nil nil (cadr args) history-symbol)
-      (apply f args))))
-
-
-(advice-add 'read-shell-command :around #'read-string-shell-command)
+(advice-add 'read-shell-command
+            :around
+            (lambda (f &rest args)
+              "Use completing-read"
+              (let* ((history-arg (or (caddr args) 'shell-command-history))
+                     (history-symbol (or (car-safe history-arg) history-arg))
+                     (history (and (boundp history-symbol)
+                                   (symbol-value history-symbol))))
+                (if history
+                    (completing-read
+                     (car args) history nil nil (cadr args) history-symbol)
+                  (apply f args)))))
 
 
 ;; Pipe region into the command
 
 
-(defun shell-command-dwim (f &rest args)
-  (if (use-region-p)
-      (shell-command-on-region (region-beginning)
-                               (region-end)
-                               (car args)
-                               nil
-                               current-prefix-arg)
-    (apply f args)))
-
-
-(advice-add 'shell-command :around #'shell-command-dwim)
+(advice-add 'shell-command
+            :around
+            (lambda (f &rest args)
+              "When region is selected, pipe it into the command"
+              (if (use-region-p)
+                  (shell-command-on-region (region-beginning)
+                                           (region-end)
+                                           (car args)
+                                           nil
+                                           current-prefix-arg)
+                (apply f args))))
 
 
 ;; ====================
@@ -2174,8 +2165,10 @@ Optionally, formats the buffer with COMMAND (if provided)"
       (get-buffer-create (shell-buffer-name))))
 
 
-(advice-add 'shell :around
+(advice-add 'shell
+            :around
             (lambda (f &rest args)
+              "Use `shell-setup-buffer'"
               (interactive (list (shell-setup-buffer)))
               (apply f args)))
 
@@ -2759,14 +2752,14 @@ Example input:
 (setq vc-display-status 'no-backend)
 
 
-(defun vc-prettify-mode-line-state (s)
-  (prog1 s
-    (cl-case (cadr s)
-      (vc-up-to-date-state (setf (caddr s) "✓ "))
-      (vc-edited-state (setf (caddr s) "● ")))))
-
-
-(advice-add 'vc-mode-line-state :filter-return #'vc-prettify-mode-line-state)
+(advice-add 'vc-mode-line-state
+            :filter-return
+            (lambda (s)
+              "Prettify mode line indicator"
+              (prog1 s
+                (cl-case (cadr s)
+                  (vc-up-to-date-state (setf (caddr s) "✓ "))
+                  (vc-edited-state (setf (caddr s) "● "))))))
 
 
 ;; Informative branch indicator in Git's vc-dir
@@ -2829,18 +2822,20 @@ Example input:
 
 
 (dolist (vc-command '(vc-pull vc-push))
-  (advice-add
-   vc-command :around
-   `(lambda (f &rest args)
-      (if-let ((command (cdr (assoc (car (vc-deduce-fileset t))
-                                    (assoc ',vc-command vc-command-overrides)))))
-          (progn (message "Running %s..." (propertize command 'face 'success))
-                 (shell-command command)
-                 (cond ((eq major-mode 'vc-dir-mode)
-                        (vc-refresh-headers))
-                       ((derived-mode-p 'log-view-mode)
-                        (revert-buffer))))
-        (apply f args)))))
+  (advice-add vc-command
+              :around
+              `(lambda (f &rest args)
+                 (if-let* ((backend (car (vc-deduce-fileset t)))
+                           (o (assoc ',vc-command vc-command-overrides))
+                           (command (cdr (assoc backend o))))
+                     (progn (message "Running %s..."
+                                     (propertize command 'face 'success))
+                            (shell-command command)
+                            (cond ((eq major-mode 'vc-dir-mode)
+                                   (vc-refresh-headers))
+                                  ((derived-mode-p 'log-view-mode)
+                                   (revert-buffer))))
+                   (apply f args)))))
 
 
 ;; Reset
@@ -2977,12 +2972,11 @@ Example input:
 (setq compilation-scroll-output t)
 
 
-(defun compile-suppress-initial (f &rest args)
-  "Don't suggest initial input when reading the command"
-  (apply f (cons nil (cdr args))))
-
-
-(advice-add 'compilation-read-command :around #'compile-suppress-initial)
+(advice-add 'compilation-read-command
+            :around
+            (lambda (f &rest args)
+              "Don't suggest initial input when reading the command"
+              (apply f (cons nil (cdr args)))))
 
 
 ;; ===
@@ -3031,17 +3025,15 @@ Example input:
     "C-c C-p" 'flymake-show-project-diagnostics))
 
 
-(defun flymake-display-diagnostics-fix (f &rest args)
-  "Fixes undesired layout of diagnostic buffers introduced in Emacs 30.1"
-  (let (b)
-    (save-window-excursion
-      (setq b (window-buffer (apply f args))))
-    (display-buffer b)))
-
-
 (dolist (x '(flymake-show-buffer-diagnostics
              flymake-show-project-diagnostics))
-  (advice-add x :around #'flymake-display-diagnostics-fix))
+  (advice-add x :around
+              (lambda (f &rest args)
+                "Fix undesired layout of diagnostic buffers"
+                (let (b)
+                  (save-window-excursion
+                    (setq b (window-buffer (apply f args))))
+                  (display-buffer b)))))
 
 
 ;; =====
@@ -3052,21 +3044,21 @@ Example input:
 (setq eldoc-echo-area-use-multiline-p nil)
 
 
-;; Fix CR+LF issue
+;; Fix garbled appearance
 
 
-(defun fix-eldoc (f &rest args)
-  (let ((b (apply f args)))
-    (prog1 b
-      (with-current-buffer b
-        (let ((inhibit-read-only t))
-          (save-excursion
-            (goto-char 1)
-            (while (re-search-forward "" nil t)
-              (replace-match ""))))))))
-
-
-(advice-add 'eldoc--format-doc-buffer :around #'fix-eldoc)
+(advice-add 'eldoc--format-doc-buffer
+            :around
+            (lambda (f &rest args)
+              "Fix garbled appearance"
+              (let ((b (apply f args)))
+                (prog1 b
+                  (with-current-buffer b
+                    (let ((inhibit-read-only t))
+                      (save-excursion
+                        (goto-char 1)
+                        (while (re-search-forward "" nil t)
+                          (replace-match "")))))))))
 
 
 ;; Fix link navigation
@@ -3098,8 +3090,9 @@ Example input:
                        (not (setq found
                                   (if (listp prop)
                                       (memq 'markdown-link-face prop)
-                                    (memq prop '(markdown-link-face
-                                                 markdown-plain-url-face)))))))))
+                                    (memq prop
+                                          '(markdown-link-face
+                                            markdown-plain-url-face)))))))))
        (when found
          (goto-char p)
          (message (eldoc-url-at-point))))))
@@ -3307,6 +3300,7 @@ Example input:
 (advice-add 'powershell
             :after
             (lambda (&rest _)
+              "Set encoding to cp866"
               (set-buffer-process-coding-system 'cp866-dos 'cp866-dos)))
 
 
