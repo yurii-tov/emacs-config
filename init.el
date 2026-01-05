@@ -214,10 +214,10 @@
   "M-g" 'goto-line
   "M-/" project-prefix-map
   "M-l" 'move-line-up
-  "M-SPC" 'er/expand-region
   "M-RET" 'mc/mark-all-dwim
   "M-N" 'mc/mark-next-like-this
   "M-P" 'mc/mark-previous-like-this
+  "M-SPC" 'er/expand-region
   "S-SPC" 'cycle-spacing
   "C-<down-mouse-1>" nil
   "C-<mouse-1>" 'mc/add-cursor-on-click
