@@ -2975,11 +2975,6 @@ Example input:
 ;; ===
 
 
-(defun eglot-cleanup-flymake ()
-  (unless (eglot-managed-p)
-    (flymake-mode -1)))
-
-
 (with-eval-after-load 'eglot
   ;; Keybindings
   (define-keymap :keymap eglot-mode-map
@@ -3000,7 +2995,10 @@ Example input:
   (setq eglot-autoshutdown t)
 
   ;; Turn off flymake mode on exit
-  (add-hook 'eglot-managed-mode-hook 'eglot-cleanup-flymake))
+  (add-hook 'eglot-managed-mode-hook
+            (lambda ()
+              (unless (eglot-managed-p)
+                (flymake-mode -1)))))
 
 
 ;; =======
