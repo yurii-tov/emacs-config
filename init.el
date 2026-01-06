@@ -761,8 +761,7 @@
 (advice-add 'ibuffer-filter-disable
             :around
             (lambda (f &rest args)
-              "When there is no active filters, switches to last filter we used;
-   Otherwise, removes filtering"
+              "Switch to recent filter unless filtering is active"
               (if ibuffer-filtering-qualifiers
                   (progn (setq-local last-filter ibuffer-filtering-qualifiers)
                          (apply f args))
