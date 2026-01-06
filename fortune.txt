@@ -109,3 +109,5 @@ There's never enough time to do all the nothing you want
 Maybe it's not the config that is broken
 %
 Свобода – это груз, который может оказаться не по силам. Свобода – не подарок, свобода – выбор, иногда нелегкий.
+%
+Don't repair things that isn't broken
