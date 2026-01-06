@@ -1708,8 +1708,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (advice-remove #'eglot--snippet-expansion-fn #'ignore)
 
 
-(setq company-search-regexp-function 'company-search-flex-regexp
-      company-tooltip-offset-display 'lines
+(setq company-tooltip-offset-display 'lines
       company-selection-wrap-around t
       company-dabbrev-code-modes '(prog-mode)
       company-dabbrev-code-completion-styles t
