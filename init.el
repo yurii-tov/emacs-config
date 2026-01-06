@@ -1847,7 +1847,8 @@ Optionally, formats the buffer with COMMAND (if provided)"
                                         'face 'success))
          (default-directory (or working-directory
                                 (read-directory-name
-                                 (format "Run `%s` at: " command-colorized)))))
+                                 (format "Run `%s` at: "
+                                         command-colorized)))))
     (async-shell-command command)))
 
 
