@@ -17,13 +17,12 @@
 (when-let ((packages (cl-remove-if #'package-installed-p
                                    '(ido-grid-mode
                                      company yasnippet ligature
+                                     multiple-cursors rust-mode
                                      spacious-padding diredfl
-                                     rust-mode expand-region
+                                     ripgrep wgrep gptel nov
                                      groovy-mode powershell
                                      doric-themes ef-themes
                                      htmlize markdown-mode
-                                     multiple-cursors nov
-                                     ripgrep wgrep gptel
                                      slime slime-company))))
   (package-refresh-contents)
   (mapc #'package-install packages))
@@ -217,8 +216,6 @@
   "M-RET" 'mc/mark-all-dwim
   "M-N" 'mc/mark-next-like-this
   "M-P" 'mc/mark-previous-like-this
-  "M-SPC" 'er/expand-region
-  "S-SPC" 'cycle-spacing
   "C-<down-mouse-1>" nil
   "C-<mouse-1>" 'mc/add-cursor-on-click
   "C-M-l" 'move-line-down
