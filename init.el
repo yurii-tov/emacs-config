@@ -89,19 +89,16 @@
 
 
 (when (eq system-type 'windows-nt)
-  (set-coding-system-priority 'cp1251-dos))
-
-
-(prefer-coding-system 'utf-8-unix)
-
-
-(when (eq system-type 'windows-nt)
+  (set-coding-system-priority 'cp1251-dos)
   (dolist (x '(compilation-start shell-command))
     (advice-add x :around
                 (lambda (f &rest args)
                   "Fix args encoding"
                   (let ((coding-system-for-write 'cp1251-unix))
                     (apply f args))))))
+
+
+(prefer-coding-system 'utf-8-unix)
 
 
 ;; ===========
@@ -755,26 +752,23 @@
          ("📦 Misc" (predicate . t)))))
 
 
-(defun ibuffer-setup ()
-  (ibuffer-auto-mode 1)
-  (ibuffer-switch-to-saved-filter-groups "default"))
+(add-hook 'ibuffer-mode-hook
+          (lambda ()
+            (ibuffer-auto-mode 1)
+            (ibuffer-switch-to-saved-filter-groups "default")))
 
 
-(add-hook 'ibuffer-mode-hook 'ibuffer-setup)
-
-
-(defun ibuffer-toggle-last-filter (f &rest args)
-  "When there is no active filters, switches to last filter we used;
+(advice-add 'ibuffer-filter-disable
+            :around
+            (lambda (f &rest args)
+              "When there is no active filters, switches to last filter we used;
    Otherwise, removes filtering"
-  (if ibuffer-filtering-qualifiers
-      (progn (setq-local last-filter ibuffer-filtering-qualifiers)
-             (apply f args))
-    (when (boundp 'last-filter)
-      (setq ibuffer-filtering-qualifiers last-filter)
-      (ibuffer-update nil))))
-
-
-(advice-add 'ibuffer-filter-disable :around #'ibuffer-toggle-last-filter)
+              (if ibuffer-filtering-qualifiers
+                  (progn (setq-local last-filter ibuffer-filtering-qualifiers)
+                         (apply f args))
+                (when (boundp 'last-filter)
+                  (setq ibuffer-filtering-qualifiers last-filter)
+                  (ibuffer-update nil)))))
 
 
 (with-eval-after-load 'ibuffer
