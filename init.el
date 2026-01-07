@@ -1327,6 +1327,20 @@
 (keymap-set query-replace-map "M-SPC" 'automatic)
 
 
+;; Selecting regions
+
+
+(advice-add 'kill-ring-save
+            :around
+            (lambda (f &rest args)
+              "Unless region is active, try to mark sexp at point"
+              (if-let* (((not (use-region-p)))
+                        (p (car (bounds-of-thing-at-point 'sexp))))
+                  (progn (goto-char p)
+                         (mark-sexp))
+                (apply f args))))
+
+
 ;; Formatting
 
 
