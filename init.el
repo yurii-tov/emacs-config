@@ -388,7 +388,7 @@
          (chars (- end start)))
     (when (> chars 0)
       (propertize (format " Sel: %d|%d" chars (count-lines start end))
-                  'face 'shadow))))
+                  'face 'fixed-pitch))))
 
 
 (setq-default mode-line-format
@@ -416,7 +416,7 @@
                                (propertize "• " 'face 'success)
                              "")))
                 ,(propertize "%b" 'face 'mode-line-buffer-id)
-                ,(propertize " %l:%C" 'face 'shadow)
+                ,(propertize " %l:%C" 'face 'fixed-pitch)
                 mode-line-format-right-align
                 (mark-active (:eval (mode-line-selection-stats)))
                 (current-input-method-title
