@@ -16,14 +16,12 @@
 
 (when-let ((packages (cl-remove-if #'package-installed-p
                                    '(ido-grid-mode
-                                     company yasnippet ligature
-                                     multiple-cursors rust-mode
-                                     spacious-padding diredfl
-                                     ripgrep wgrep gptel nov
-                                     groovy-mode powershell
-                                     doric-themes ef-themes
-                                     htmlize markdown-mode
-                                     slime slime-company))))
+                                     groovy-mode powershell doric-themes
+                                     company yasnippet ligature diredfl
+                                     multiple-cursors spacious-padding
+                                     rust-mode ripgrep wgrep gptel nov
+                                     slime slime-company expand-region
+                                     ef-themes htmlize markdown-mode))))
   (package-refresh-contents)
   (mapc #'package-install packages))
 
@@ -1333,12 +1331,10 @@
 (advice-add 'kill-ring-save
             :around
             (lambda (f &rest args)
-              "Unless region is active, try to mark sexp at point"
-              (if-let* (((not (use-region-p)))
-                        (p (car (bounds-of-thing-at-point 'sexp))))
-                  (progn (goto-char p)
-                         (mark-sexp))
-                (apply f args))))
+              "Unless region is active, invoke expand-region"
+              (if (use-region-p)
+                  (apply f args)
+                (call-interactively 'er/expand-region))))
 
 
 ;; Formatting
