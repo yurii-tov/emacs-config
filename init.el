@@ -365,11 +365,12 @@
 (advice-add 'load-theme
             :around
             (lambda (f &rest args)
-              (interactive (list
-                            (intern (completing-read "Load custom theme: "
-                                                     (mapcar #'symbol-name
-                                                             (custom-available-themes))))
-                            nil nil))
+              (interactive (list (thread-last
+                                   (custom-available-themes)
+                                   (mapcar #'symbol-name)
+                                   (completing-read "Load custom theme: ")
+                                   intern)
+                                 nil nil))
               (dolist (theme custom-enabled-themes)
                 (disable-theme theme))
               (apply f args)))
