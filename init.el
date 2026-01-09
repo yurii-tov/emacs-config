@@ -2582,19 +2582,6 @@ Also grabs a selected region, if any."
     (org-ctrl-c-ctrl-c)))
 
 
-;; Emphasizing
-
-
-(advice-add 'org-emphasize
-            :before
-            (lambda ()
-              "Mark word at point"
-              (when-let* (((not (use-region-p)))
-                          (bounds (bounds-of-thing-at-point 'word)))
-                (goto-char (car bounds))
-                (mark-word))))
-
-
 ;; Keybindings
 
 
@@ -2602,7 +2589,12 @@ Also grabs a selected region, if any."
   (define-keymap :keymap org-mode-map
     "C-c C-/" 'org-insert-checklist-status
     "M-p" 'org-insert-structure-template
-    "M-n" 'org-emphasize))
+    "M-3" (lambda () (interactive) (enclose-text "*" "*"))
+    "M-4" (lambda () (interactive) (enclose-text "=" "="))
+    "M-(" (lambda () (interactive) (enclose-text "/" "/"))
+    "M-)" (lambda () (interactive) (enclose-text "~" "~"))
+    "M-_" (lambda () (interactive) (enclose-text "_" "_"))
+    "M-+" (lambda () (interactive) (enclose-text "+" "+"))))
 
 
 ;; Agenda
