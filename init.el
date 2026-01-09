@@ -196,7 +196,6 @@
   "M-!" 'asc-at-directory
   "M-2" 'enclose-text-quotes
   "M-3" 'enclose-text-apostrophes
-  "M-4" 'enclose-text-grave
   "M-9" 'enclose-text-parenthesis
   "M-(" 'enclose-text-angle
   "M-0" 'enclose-text-square
@@ -1511,11 +1510,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (enclose-text "'" "'"))
 
 
-(defun enclose-text-grave ()
-  (interactive)
-  (enclose-text "`" "`"))
-
-
 ;; Multiple cursors
 
 
@@ -2583,13 +2577,7 @@ Also grabs a selected region, if any."
 
 (with-eval-after-load 'org
   (define-keymap :keymap org-mode-map
-    "C-c C-/" 'org-insert-checklist-status
-    "M-3" (lambda () (interactive) (enclose-text "*" "*"))
-    "M-4" (lambda () (interactive) (enclose-text "=" "="))
-    "M-(" (lambda () (interactive) (enclose-text "/" "/"))
-    "M-)" (lambda () (interactive) (enclose-text "~" "~"))
-    "M-_" (lambda () (interactive) (enclose-text "_" "_"))
-    "M-+" (lambda () (interactive) (enclose-text "+" "+"))))
+    "C-c C-/" 'org-insert-checklist-status))
 
 
 ;; Agenda
