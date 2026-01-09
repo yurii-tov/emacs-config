@@ -2572,13 +2572,9 @@ Also grabs a selected region, if any."
 (defun org-insert-checklist-status ()
   (interactive)
   (save-excursion
-    (delete-trailing-whitespace
-     (line-beginning-position)
-     (line-end-position))
-    (goto-char (line-end-position))
-    (insert (if current-prefix-arg
-                " [%]"
-              " [/]"))
+    (end-of-line)
+    (delete-horizontal-space)
+    (insert (if current-prefix-arg " [%]" " [/]"))
     (org-ctrl-c-ctrl-c)))
 
 
