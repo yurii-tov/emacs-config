@@ -2588,7 +2588,6 @@ Also grabs a selected region, if any."
 (with-eval-after-load 'org
   (define-keymap :keymap org-mode-map
     "C-c C-/" 'org-insert-checklist-status
-    "M-p" 'org-insert-structure-template
     "M-3" (lambda () (interactive) (enclose-text "*" "*"))
     "M-4" (lambda () (interactive) (enclose-text "=" "="))
     "M-(" (lambda () (interactive) (enclose-text "/" "/"))
