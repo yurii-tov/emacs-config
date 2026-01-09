@@ -2560,7 +2560,7 @@ Also grabs a selected region, if any."
       org-export-with-sub-superscripts nil)
 
 
-;; Checklist enhancements
+;; Checklist
 
 
 (defun org-insert-checklist-status ()
