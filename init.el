@@ -877,7 +877,17 @@
       ido-report-no-match nil)
 
 
-;; Styles
+(advice-add 'ido-grid-mode-count
+            :override
+            (lambda ()
+              "Count items currently matching the pattern"
+              (when-let* ((count (length ido-matches))
+                          ((> count 1)))
+                (propertize (format "(%s)" count)
+                            'face 'font-lock-comment-face))))
+
+
+;; Colors
 
 
 (custom-set-faces
@@ -885,16 +895,6 @@
  '(ido-only-match ((t (:inherit icomplete-selected-match))))
  '(ido-grid-mode-match ((t (:inherit completions-common-part))))
  '(ido-subdir ((t (:inherit default)))))
-
-
-(advice-add 'ido-grid-mode-count
-            :override
-            (lambda ()
-              "Setup counter style"
-              (when-let* ((count (length ido-matches))
-                          ((> count 1)))
-                (propertize (format "(%s)" count)
-                            'face 'font-lock-comment-face))))
 
 
 ;; Keybindings
