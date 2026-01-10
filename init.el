@@ -888,11 +888,13 @@
 
 
 (advice-add 'ido-grid-mode-count
-            :around
-            (lambda (f &rest args)
+            :override
+            (lambda ()
               "Setup counter style"
-              (propertize (format "[%s]" (apply f args))
-                          'face 'font-lock-comment-face)))
+              (when-let* ((count (length ido-matches))
+                          ((> count 1)))
+                (propertize (format "(%s)" count)
+                            'face 'font-lock-comment-face))))
 
 
 ;; Keybindings
