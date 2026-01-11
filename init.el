@@ -881,10 +881,8 @@
             :override
             (lambda ()
               "Count items currently matching the pattern"
-              (when-let* ((count (length ido-matches))
-                          ((> count 1)))
-                (propertize (format "(%s)" count)
-                            'face 'font-lock-comment-face))))
+              (propertize (format "(%s)" (length ido-matches))
+                          'face 'font-lock-comment-face)))
 
 
 ;; Colors
