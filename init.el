@@ -3219,9 +3219,6 @@ Example input:
 (setq-default c-basic-offset 4)
 
 
-(add-hook 'c-mode-hook (lambda () (c-set-style "k&r")))
-
-
 (advice-add 'c-indent-line-or-region :override #'indent-for-tab-command)
 
 
