@@ -1342,10 +1342,15 @@
 
 
 (setq-default indent-tabs-mode nil
-              sgml-basic-offset 2
-              js-indent-level 2
-              css-indent-offset 2
               fill-column 80)
+
+
+(setq js-indent-level 2
+      css-indent-offset 2
+      c-basic-offset 4)
+
+
+(advice-add 'c-indent-line-or-region :override #'indent-for-tab-command)
 
 
 (defun fill-region-justify (start end)
@@ -3209,17 +3214,6 @@ Example input:
 
 (when xmllint
   (add-to-list 'format-buffer-functions '(sgml-mode . xml-format-buffer)))
-
-
-;; ==========
-;; C language
-;; ==========
-
-
-(setq-default c-basic-offset 4)
-
-
-(advice-add 'c-indent-line-or-region :override #'indent-for-tab-command)
 
 
 ;; ====
