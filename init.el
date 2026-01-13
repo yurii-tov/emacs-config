@@ -3191,6 +3191,10 @@ Example input:
 ;; ===
 
 
+(with-eval-after-load 'html-mode-expansions
+  (er/enable-mode-expansions 'sgml-mode #'er/add-html-mode-expansions))
+
+
 (add-to-list 'auto-mode-alist
              (cons (concat "\\." (regexp-opt '("xml" "xsd" "xslt" "xsl" "wsdl" "xml.template" "pom" "jmx") t) "\\'") 'sgml-mode))
 
