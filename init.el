@@ -195,7 +195,8 @@
   "M-1" 'shell-command
   "M-!" 'asc-at-directory
   "M-2" 'enclose-text-quotes
-  "M-3" 'enclose-text-apostrophes
+  "M-3" 'enclose-text-asterisks
+  "M-4" 'enclose-text-apostrophes
   "M-9" 'enclose-text-parenthesis
   "M-(" 'enclose-text-angle
   "M-0" 'enclose-text-square
@@ -1505,6 +1506,11 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (enclose-text "\"" "\""))
 
 
+(defun enclose-text-asterisks ()
+  (interactive)
+  (enclose-text "*" "*"))
+
+
 (defun enclose-text-apostrophes ()
   (interactive)
   (enclose-text "'" "'"))
@@ -2579,7 +2585,7 @@ Also grabs a selected region, if any."
   (define-keymap :keymap org-mode-map
     "C-c C-/" 'org-insert-checklist-status
     "M-c" (define-keymap :parent text-edit-map
-            "," (lambda () (interactive) (enclose-text "*" "*"))
+            "," 'enclose-text-asterisks
             "." (lambda () (interactive) (enclose-text "/" "/"))
             "/" (lambda () (interactive) (enclose-text "=" "="))
             "M-," (lambda () (interactive) (enclose-text "~" "~"))
