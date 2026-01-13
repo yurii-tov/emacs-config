@@ -1466,7 +1466,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
                                                 'sexp))
                                        ((= (point) (car bounds))))
                              bounds))
-                          ((not (looking-at "[[:blank:]]\\|$\\|[\])}>\"'`;]"))
+                          ((not (looking-at "[[:blank:]]\\|$\\|[\])}>\"'`;*]"))
                            (bounds-of-thing-at-point 'symbol))))
             (s (car region))
             (e (cdr region)))
