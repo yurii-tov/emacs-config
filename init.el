@@ -136,6 +136,7 @@
   "M-p" 'fill-region-justify
   "u" 'uniq-lines
   "r" 'reverse-lines
+  "SPC" 'whitespace-mode
   "i" (define-keymap
         "j" 'emoji-insert
         "e" 'emoji-list
