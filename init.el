@@ -879,6 +879,36 @@
       ido-report-no-match nil)
 
 
+(advice-add 'ido-read-file-name
+            :filter-return
+            (lambda (file-name)
+              "Update file-name-history"
+              (prog1 file-name
+                (ido-record-work-directory
+                 (file-name-directory file-name))
+                (unless (file-directory-p file-name)
+                  (add-to-history 'file-name-history file-name)))))
+
+
+(advice-add 'ido-complete
+            :after
+            (lambda ()
+              "Auto-switch to completions buffer"
+              (when (cdr ido-matches)
+                (ido-switch-to-completions))))
+
+
+(advice-add 'ido-grid-mode-ido-setup
+            :around
+            (lambda (f &rest args)
+              "Prevent global settings tampering"
+              (let ((h max-mini-window-height)
+                    (r resize-mini-windows))
+                (apply f args)
+                (setq max-mini-window-height h
+                      resize-mini-windows r))))
+
+
 (advice-add 'ido-grid-mode-count
             :override
             (lambda ()
@@ -971,45 +1001,6 @@
       (setq ido-current-directory (file-name-as-directory file)
             ido-exit 'refresh))
     (exit-minibuffer)))
-
-
-;; History
-
-
-(advice-add 'ido-read-file-name
-            :filter-return
-            (lambda (file-name)
-              "Update file-name-history"
-              (prog1 file-name
-                (ido-record-work-directory
-                 (file-name-directory file-name))
-                (unless (file-directory-p file-name)
-                  (add-to-history 'file-name-history file-name)))))
-
-
-;; Completions buffer
-
-
-(advice-add 'ido-complete
-            :after
-            (lambda ()
-              "Auto-switch to completions buffer"
-              (when (cdr ido-matches)
-                (ido-switch-to-completions))))
-
-
-;; Fixes
-
-
-(advice-add 'ido-grid-mode-ido-setup
-            :around
-            (lambda (f &rest args)
-              "Prevent global settings tampering"
-              (let ((h max-mini-window-height)
-                    (r resize-mini-windows))
-                (apply f args)
-                (setq max-mini-window-height h
-                      resize-mini-windows r))))
 
 
 ;; =====
@@ -1529,7 +1520,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (setq mc/always-run-for-all t)
 
 
-;; Auxiliary edit commands
+;; Auxiliary commands
 
 
 (defun buffer-or-region ()
@@ -1649,10 +1640,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (dolist (x '(flush-lines keep-lines))
   (advice-add x :around
               (lambda (f &rest args)
-                "Fix flush-lines in various ways. Now it:
-   - Operates on whole buffer instead of \"from current point\".
-   - Restores current position after flushing.
-   - When empty line provided, flushes empty lines"
+                "Fix flush-lines in various ways"
                 (let* ((s (car args))
                        (args (if (string-empty-p s)
                                  (cons "^$" (cdr args))
