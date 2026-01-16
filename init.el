@@ -1102,7 +1102,8 @@
                       x))
                   (append (cons (list "\\.tar\\.gz\\'" "" tar-command)
                                 dired-compress-file-suffixes)
-                          '((".*" "" "unzip -o -d %o %i"))))))
+                          '(("\\.rar\\'" "" "7z x -aoa -o%o %i")
+                            (".*" "" "unzip -o -d %o %i"))))))
     (dired-do-compress)))
 
 
