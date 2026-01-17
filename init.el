@@ -1840,134 +1840,118 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; ====================
 
 
-(defun asc-at-directory (command working-directory)
-  (interactive (list (read-shell-command "Async shell command: ") nil))
-  (let* ((command-colorized (propertize (reverse (string-truncate-left
-                                                  (reverse command) 20))
-                                        'face 'success))
-         (default-directory (or working-directory
-                                (read-directory-name
-                                 (format "Run `%s` at: "
-                                         command-colorized)))))
+(defun asc-at-directory (command directory)
+  (interactive (let ((command (read-shell-command "Async shell command: ")))
+                 (list command
+                       (read-directory-name
+                        (format "Run `%s` at: "
+                                (thread-first
+                                  command
+                                  (truncate-string-to-width
+                                   20 nil nil t)
+                                  (propertize 'face 'success)))))))
+  (let* ((default-directory directory))
     (async-shell-command command)))
-
-
-(defun asc-buffer (r)
-  (if (windowp r) (window-buffer r) (process-buffer r)))
-
-
-;; Buffer
 
 
 (add-hook 'shell-command-mode-hook 'read-only-mode)
 
 
-(defun asc-make-buffer-name (command)
-  (let ((max-chars 40))
-    (format "*%s*"
-            (if (> (length command) max-chars)
-                (format "%s…" (substring command 0 max-chars))
-              command))))
+;; Buffer
 
 
-(defun asc-setup-buffer (f &rest args)
-  (let* ((command (car args))
-         (buffer-name (or (cadr args)
-                          (asc-make-buffer-name command))))
-    (when (and (get-buffer buffer-name)
-               (get-buffer-process buffer-name))
-      (let* ((dir (with-current-buffer buffer-name
-                    (abbreviate-file-name default-directory))))
-        (if (y-or-n-p (format "The process is already running at %s. Kill it?"
-                              (propertize dir 'face 'completions-annotations)))
-            (progn (kill-buffer buffer-name)
-                   (sit-for 0.5))
-          (setq buffer-name (generate-new-buffer-name buffer-name)))))
-    (apply f command buffer-name (cddr args))))
+(defun asc-handle-existing (buffer-name)
+  (if-let* (((get-buffer buffer-name))
+            ((get-buffer-process buffer-name))
+            (dir (with-current-buffer buffer-name
+                   (abbreviate-file-name default-directory))))
+      (if (y-or-n-p (format
+                     "The process is already running at %s. Kill it?"
+                     (propertize dir 'face 'completions-annotations)))
+          (prog1 buffer-name
+            (kill-buffer buffer-name)
+            (sit-for 0.5))
+        (generate-new-buffer-name buffer-name))
+    buffer-name))
 
 
-(advice-add 'async-shell-command :around #'asc-setup-buffer)
+(advice-add 'async-shell-command
+            :around
+            (lambda (f &rest args)
+              "Setup the buffer"
+              (let* ((command (car args))
+                     (buffer-name (or (cadr args)
+                                      (format "*%s*"
+                                              (truncate-string-to-width
+                                               command 32 nil nil t)))))
+                (apply f command
+                       (asc-handle-existing buffer-name)
+                       (cddr args)))))
 
 
-;; Diagnostic output
+;; Startup details
 
 
-(defun asc-echo-startup-info (f &rest args)
-  (let* ((r (apply f args))
-         (b (asc-buffer r))
-         (p (get-buffer-process b)))
-    (prog1 r
-      (with-current-buffer b
-        (let ((info (format "*** `%s` at %s ***\n"
-                            (car args)
-                            (abbreviate-file-name default-directory))))
-          (goto-char 1)
-          (comint-output-filter p info)
-          (set-marker comint-last-input-end (point))
-          (highlight-regexp (regexp-quote info) 'shadow)
-          (font-lock-update))))))
+(advice-add 'async-shell-command
+            :around
+            (lambda (f &rest args)
+              "Place startup details into the buffer"
+              (let* ((r (apply f args))
+                     (b (asc-buffer r))
+                     (p (get-buffer-process b)))
+                (prog1 r
+                  (with-current-buffer b
+                    (let ((info (format "*** `%s` at %s ***\n"
+                                        (car args)
+                                        (abbreviate-file-name default-directory))))
+                      (goto-char 1)
+                      (comint-output-filter p info)
+                      (set-marker comint-last-input-end (point))
+                      (highlight-regexp (regexp-quote info) 'shadow)
+                      (font-lock-update)))))))
 
 
-(advice-add 'async-shell-command :around #'asc-echo-startup-info)
+;; Process state transitions
 
 
-;; Process state
-
-
-(defun asc-handle-background-termination (buffer)
-  (let ((output (ignore-errors
-                  (with-current-buffer buffer
-                    (string-trim
-                     (buffer-substring-no-properties
-                      (max (progn (goto-char (point-min))
-                                  (end-of-line)
-                                  (1+ (point)))
-                           (- (point-max) 1024))
-                      (point-max)))))))
-    (kill-buffer buffer)
-    (if (and output (not (string-empty-p output)))
-        (concat output "\n") "")))
-
-
-(defun asc-handle-process (f &rest args)
-  (let (r b)
-    (prog1 (setq r (apply f args))
-      (setq b (asc-buffer r))
-      (with-current-buffer b
-        (when (get-buffer-process (current-buffer))
-          (set-process-sentinel
-           (get-process (get-buffer-process (current-buffer)))
-           `(lambda (p e)
-              (let ((info (format "%s `%s` at %s"
-                                  (propertize (format "[%s]" (string-trim-right e))
-                                              'face 'shadow)
-                                  (propertize ,(car args)
-                                              'face 'success)
-                                  (propertize ,(abbreviate-file-name default-directory)
-                                              'face 'completions-annotations))))
-                (if (member (car (string-split e)) '("stopped" "run"))
-                    (message info)
-                  (read-only-mode -1)
-                  (message "%s%s"
-                           (if (member ,b (mapcar #'window-buffer (window-list)))
-                               "" (asc-handle-background-termination ,b))
-                           info))))))))))
-
-
-(advice-add 'async-shell-command :around #'asc-handle-process)
+(advice-add 'async-shell-command
+            :around
+            (lambda (f &rest args)
+              "Report process state transitions, kill unneeded buffer"
+              (let (r b)
+                (prog1 (setq r (apply f args))
+                  (setq b (asc-buffer r))
+                  (when-let ((p (get-buffer-process b)))
+                    (set-process-sentinel
+                     (get-process p)
+                     `(lambda (p e)
+                        (message "%s `%s` at %s"
+                                 (propertize
+                                  (format "[%s]" (string-trim-right e))
+                                  'face 'shadow)
+                                 (propertize ,(car args) 'face 'success)
+                                 (propertize
+                                  ,(abbreviate-file-name default-directory)
+                                  'face 'completions-annotations))
+                        (unless (member (car (string-split e))
+                                        '("stopped" "run"))
+                          (read-only-mode -1)
+                          (unless (member ,b (mapcar #'window-buffer
+                                                     (window-list)))
+                            (kill-buffer ,b))))))))))
 
 
 ;; Restart
 
 
-(defun asc-setup-restart (f &rest args)
-  (let ((r (apply f args)))
-    (prog1 r
-      (with-current-buffer (asc-buffer r)
-        (setq-local command (car args))))))
-
-
-(advice-add 'async-shell-command :around #'asc-setup-restart)
+(advice-add 'async-shell-command
+            :around
+            (lambda (f &rest args)
+              "Store the command"
+              (let ((r (apply f args)))
+                (prog1 r
+                  (with-current-buffer (asc-buffer r)
+                    (setq-local command (car args)))))))
 
 
 (defun asc-restart ()
@@ -1978,25 +1962,32 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (async-shell-command command (current-buffer)))
 
 
-;; Window
+;; Display
 
 
-(defun asc-setup-window (f &rest args)
-  (if current-prefix-arg
-      (apply f args)
-    (let (r b)
-      (save-window-excursion
-        (prog1 (setq r (apply f args))
-          (setq b (asc-buffer r))
-          (switch-to-buffer b)
-          (message
-           "Running `%s` at %s"
-           (propertize (car args) 'face 'success)
-           (propertize (abbreviate-file-name default-directory)
-                       'face 'completions-annotations)))))))
+(advice-add 'async-shell-command
+            :around
+            (lambda (f &rest args)
+              "Don't display the buffer unless prefix arg is provided"
+              (if current-prefix-arg
+                  (apply f args)
+                (let (r b)
+                  (save-window-excursion
+                    (prog1 (setq r (apply f args))
+                      (setq b (asc-buffer r))
+                      (switch-to-buffer b)
+                      (message
+                       "Running `%s` at %s"
+                       (propertize (car args) 'face 'success)
+                       (propertize (abbreviate-file-name default-directory)
+                                   'face 'completions-annotations))))))))
 
 
-(advice-add 'async-shell-command :around #'asc-setup-window)
+;; Auxiliary commands
+
+
+(defun asc-buffer (x)
+  (if (windowp x) (window-buffer x) (process-buffer x)))
 
 
 ;; Keybindings
@@ -2005,6 +1996,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (with-eval-after-load 'shell
   (define-keymap :keymap shell-command-mode-map
     "g" 'asc-restart
+    "k" 'comint-kill-subjob
     "q" 'quit-window))
 
 
