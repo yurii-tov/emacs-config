@@ -3116,25 +3116,26 @@ Example input:
 
 
 (defun prettier-create-config ()
-  "Write config into ~/.prettierrc file unless it already exists."
+  "Write config into ~/.prettierrc file unless it already exists"
   (interactive)
-  (let ((config-file (expand-file-name ".prettierrc"
-                                       (if (eq system-type 'windows-nt)
-                                           (getenv "USERPROFILE")
-                                         "~"))))
-    (unless (file-exists-p config-file)
-      (let* ((java-plugin (expand-file-name
-                           "prettier-plugin-java/dist/index.js"
-                           (string-trim
-                            (shell-command-to-string "npm root -g"))))
-             (config `((printWidth . 100)
-                       (overrides . (((files . "*.java")
-                                      (options . ((tabWidth . 4)
-                                                  (plugins . (,java-plugin))))))))))
-        (with-temp-buffer
-          (insert (json-encode config))
-          (json-pretty-print-buffer)
-          (write-file config-file))))))
+  (when-let* ((config-file (expand-file-name ".prettierrc"
+                                             (if (eq system-type 'windows-nt)
+                                                 (getenv "USERPROFILE")
+                                               "~")))
+              ((not (file-exists-p config-file)))
+              (java-plugin (expand-file-name
+                            "prettier-plugin-java/dist/index.js"
+                            (string-trim
+                             (shell-command-to-string "npm root -g"))))
+              (config `((printWidth . 100)
+                        (overrides
+                         . (((files . "*.java")
+                             (options . ((tabWidth . 4)
+                                         (plugins . (,java-plugin))))))))))
+    (with-temp-buffer
+      (insert (json-encode config))
+      (json-pretty-print-buffer)
+      (write-file config-file))))
 
 
 (defun prettier ()
