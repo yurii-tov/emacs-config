@@ -1708,6 +1708,9 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (advice-remove #'eglot--snippet-expansion-fn #'ignore)
 
 
+(eldoc-add-command 'company-smart-complete)
+
+
 (setq company-tooltip-offset-display 'lines
       company-selection-wrap-around t
       company-dabbrev-code-modes '(prog-mode)
@@ -1734,13 +1737,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
                             (cl-case (car args)
                               (prefix (unless (string-empty-p (car r)) r))
                               (t r))))))
-
-
-(add-hook 'company-completion-finished-hook
-          (lambda (x)
-            "Force ElDoc invocation"
-            (let ((eldoc-display-functions '(eldoc-display-in-echo-area)))
-              (eldoc--invoke-strategy x))))
 
 
 (advice-add 'company-select-next
