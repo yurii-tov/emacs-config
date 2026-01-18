@@ -1743,9 +1743,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
               (eldoc--invoke-strategy x))))
 
 
-;; Complete instantly in some cases
-
-
 (advice-add 'company-select-next
             :around
             (lambda (f &rest args)
@@ -1757,9 +1754,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
                      (company-select-first)
                      (company-complete))
                     (t (apply f args)))))
-
-
-;; Explicit completion
 
 
 (defun company-smart-complete ()
@@ -1785,9 +1779,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
         (t (when company-selection
              (company-complete))
            (call-interactively 'self-insert-command))))
-
-
-;; Keybindings
 
 
 (dotimes (n 10)
