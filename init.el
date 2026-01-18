@@ -1736,6 +1736,13 @@ Optionally, formats the buffer with COMMAND (if provided)"
                               (t r))))))
 
 
+(add-hook 'company-completion-finished-hook
+          (lambda (x)
+            "Force ElDoc invocation"
+            (let ((eldoc-display-functions '(eldoc-display-in-echo-area)))
+              (eldoc--invoke-strategy x))))
+
+
 ;; Complete instantly in some cases
 
 
