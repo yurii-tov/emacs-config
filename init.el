@@ -2087,8 +2087,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
                       (with-current-buffer ,b
                         (comint-delete-input)
                         (insert command)
-                        (set-window-point (get-buffer-window)
-                                          (line-end-position))))
+                        (set-window-point (get-buffer-window) (point-max))))
                     (abort-recursive-edit)))
          (complete (lambda (string pred action)
                      (if (eq action 'metadata)
