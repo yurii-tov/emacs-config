@@ -221,6 +221,7 @@
   "C-x ," 'compile
   "C-x ." 'recompile
   "C-x =" 'hl-line-mode
+  "C-x o" 'open-in-external-app
   "C-x i" 'what-cursor-position
   "C-x d" 'diff-map
   "C-x p" 'copy-file-name-to-clipboard
@@ -801,6 +802,7 @@
 
 
 (defun open-in-external-app (file-name)
+  (interactive "fOpen in external app: ")
   (let ((open-file
          (cond ((eq system-type 'windows-nt)
                 (lambda (f) (w32-shell-execute "open" (replace-regexp-in-string "/" "\\" f t t))))
@@ -809,7 +811,6 @@
                ((eq system-type 'gnu/linux)
                 (lambda (f) (let ((process-connection-type nil))
                               (start-process "" nil "xdg-open" f)))))))
-    (ido-record-work-directory (file-name-directory file-name))
     (funcall open-file file-name)))
 
 
