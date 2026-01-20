@@ -630,76 +630,46 @@
 ;; =======
 
 
-;; Creating
+(require 'uniquify)
 
 
-(setq confirm-nonexistent-file-or-buffer nil)
-
-
-(defun switch-to-buffer-make-scratch-buffer ()
-  (interactive)
-  (let ((b (generate-new-buffer "*scratch*")))
-    (with-current-buffer b
-      (org-mode))
-    (insert (buffer-name b)))
-  (exit-minibuffer))
+(setq uniquify-buffer-name-style 'forward
+      confirm-nonexistent-file-or-buffer nil)
 
 
 (advice-add 'read-buffer-to-switch
             :around
             (lambda (f &rest args)
-              (minibuffer-with-setup-hook
-                  (:append (lambda ()
-                             (use-local-map
-                              (define-keymap :parent (current-local-map)
-                                "M-j" 'switch-to-buffer-make-scratch-buffer))))
+              "Add 'Create new buffer' shortcut"
+              (let ((command (lambda ()
+                               (interactive)
+                               (let ((b (generate-new-buffer "*scratch*")))
+                                 (with-current-buffer b
+                                   (org-mode))
+                                 (insert (buffer-name b)))
+                               (exit-minibuffer))))
+                (minibuffer-with-setup-hook
+                    (:append (lambda ()
+                               (use-local-map
+                                (define-keymap :parent (current-local-map)
+                                  "M-j" command))))
+                  (apply f args)))))
+
+
+(advice-add 'read-buffer-to-switch
+            :around
+            (lambda (f &rest args)
+              "Display working directories"
+              (let* ((total-width (floor (* (window-width) 0.75)))
+                     (completion-extra-properties
+                      `(:annotation-function
+                        (lambda (x)
+                          (with-current-buffer x
+                            (concat " " (string-truncate-left
+                                         (abbreviate-file-name
+                                          default-directory)
+                                         (- ,total-width (length x)))))))))
                 (apply f args))))
-
-
-;; Switching
-
-
-(defun shrink-path (path bound)
-  (if (<= (length path) bound)
-      path
-    (let* ((split (file-name-split path))
-           (lengths (mapcar #'length split))
-           (i (1- (length split))))
-      (while (and (> (length split) 2)
-                  (> (+ i (apply #'+ lengths)) bound))
-        (setq split (cons (car split) (cddr split))
-              lengths (cons (car lengths) (cddr lengths))
-              i (1- i)))
-      (string-join (cons (car split) (cons "…" (cdr split)))
-                   "/"))))
-
-
-(defun switch-to-buffer-annotate-wd (f &rest args)
-  (let* ((total-width (* (window-width) 0.75))
-         (completion-extra-properties
-          `(:annotation-function
-            (lambda (x)
-              (with-current-buffer x
-                (concat " " (shrink-path
-                             (abbreviate-file-name
-                              (directory-file-name default-directory))
-                             (- ,total-width (length x)))))))))
-    (apply f args)))
-
-
-(advice-add 'read-buffer-to-switch :around #'switch-to-buffer-annotate-wd)
-
-
-;; Unique names
-
-
-(require 'uniquify)
-
-
-(setq uniquify-buffer-name-style 'forward)
-
-
-;; Fixes
 
 
 (advice-add 'kill-buffer-and-window
