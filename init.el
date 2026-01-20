@@ -660,15 +660,15 @@
             :around
             (lambda (f &rest args)
               "Display working directories"
-              (let* ((total-width (floor (* (window-width) 0.75)))
-                     (completion-extra-properties
+              (let* ((completion-extra-properties
                       `(:annotation-function
                         (lambda (x)
                           (with-current-buffer x
                             (concat " " (string-truncate-left
                                          (abbreviate-file-name
                                           default-directory)
-                                         (- ,total-width (length x)))))))))
+                                         (- (- (window-width) 3)
+                                            (length x)))))))))
                 (apply f args))))
 
 
