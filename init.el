@@ -221,7 +221,7 @@
   "C-x ," 'compile
   "C-x ." 'recompile
   "C-x =" 'hl-line-mode
-  "C-x o" 'open-in-external-app
+  "C-x o" 'open-in-external-program
   "C-x i" 'what-cursor-position
   "C-x d" 'diff-map
   "C-x p" 'copy-file-name-to-clipboard
@@ -771,8 +771,8 @@
   (revert-buffer nil t t))
 
 
-(defun open-in-external-app (file-name)
-  (interactive "fOpen in external app: ")
+(defun open-in-external-program (file-name)
+  (interactive "fOpen in external program: ")
   (let ((open-file
          (cond ((eq system-type 'windows-nt)
                 (lambda (f) (w32-shell-execute "open" (replace-regexp-in-string "/" "\\" f t t))))
