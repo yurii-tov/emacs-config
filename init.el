@@ -809,13 +809,18 @@
 
 (defun copy-file-name-to-clipboard ()
   (interactive)
-  (let ((names (or (when-let* (((eq major-mode 'dired-mode))
-                               (xs (dired-get-marked-files)))
-                     (string-join xs "\n"))
-                   (buffer-file-name)
-                   default-directory)))
-    (kill-new names)
-    (message "Copied to clipboard: %s" names)))
+  (let* ((n 1)
+         (s (or (when-let* (((eq major-mode 'dired-mode))
+                            (xs (dired-get-marked-files)))
+                  (setq n (length xs))
+                  (string-join xs "\n"))
+                (buffer-file-name)
+                default-directory)))
+    (kill-new s)
+    (message "Copied to clipboard%s"
+             (if (= n 1)
+                 (format ": %s" s)
+               (format " (%d filenames)" n)))))
 
 
 (defun diff-current-buffer ()
