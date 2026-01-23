@@ -224,7 +224,6 @@
   "C-x o" 'open-in-external-program
   "C-x i" 'what-cursor-position
   "C-x d" 'diff-map
-  "C-x p" 'copy-file-name-to-clipboard
   "C-x b" 'bookmark-set
   "C-x B" 'bookmark-delete
   "C-x j" 'bookmark-jump
@@ -807,22 +806,6 @@
     (find-file (sudoify file))))
 
 
-(defun copy-file-name-to-clipboard ()
-  (interactive)
-  (let* ((n 1)
-         (s (or (when-let* (((eq major-mode 'dired-mode))
-                            (xs (dired-get-marked-files)))
-                  (setq n (length xs))
-                  (string-join xs "\n"))
-                (buffer-file-name)
-                default-directory)))
-    (kill-new s)
-    (message "Copied to clipboard%s"
-             (if (= n 1)
-                 (format ": %s" s)
-               (format " (%d filenames)" n)))))
-
-
 (defun diff-current-buffer ()
   "Invoke `diff-buffer-with-file' for current buffer"
   (interactive)
@@ -1014,12 +997,22 @@
               (setq ls-lisp-dirs-first t)))
 
 
+(advice-add 'dired-copy-filename-as-kill
+            :override
+            (lambda (&rest _)
+              (when-let* ((xs (dired-get-marked-files))
+                          (n (length xs)))
+                (kill-new (string-join xs "\n"))
+                (message (if (= n 1)
+                             (format "Copied to clipboard: %s" (car xs))
+                           (format "Copied %d filenames to clipboard" n))))))
+
+
 ;; Keybindings
 
 
 (with-eval-after-load 'dired
   (define-keymap :keymap dired-mode-map
-    "w" 'copy-file-name-to-clipboard
     "j" 'dired
     "o" 'dired-display-file
     "h" 'dired-mark-files-regexp
