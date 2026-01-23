@@ -808,15 +808,14 @@
 
 
 (defun copy-file-name-to-clipboard ()
-  "Copy the current file name(s) to the clipboard"
   (interactive)
-  (let ((names (or (and (equal major-mode 'dired-mode)
-                        (string-join (dired-get-marked-files) "\n"))
+  (let ((names (or (when-let* (((eq major-mode 'dired-mode))
+                               (xs (dired-get-marked-files)))
+                     (string-join xs "\n"))
                    (buffer-file-name)
                    default-directory)))
-    (when names
-      (kill-new names)
-      (message "Copied to clipboard: %s" names))))
+    (kill-new names)
+    (message "Copied to clipboard: %s" names)))
 
 
 (defun diff-current-buffer ()
