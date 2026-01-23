@@ -790,20 +790,17 @@
     (async-shell-command (concat "tail -f " (file-relative-name file)))))
 
 
-(defun sudoify (filename)
-  (if (file-remote-p filename)
-      (let* ((host (file-remote-p filename 'host))
-             (prefix (replace-regexp-in-string
-                      host (concat host "|sudo:") (file-remote-p filename))))
-        (concat prefix (file-remote-p filename 'localname)))
-    (concat "/sudo::" filename)))
-
-
 (defun reopen-with-sudo ()
   (interactive)
   (let ((file (or (buffer-file-name) default-directory)))
     (kill-buffer)
-    (find-file (sudoify file))))
+    (find-file
+     (if-let* ((host (file-remote-p file 'host)))
+         (concat (replace-regexp-in-string host
+                                           (concat host "|sudo:")
+                                           (file-remote-p file))
+                 (file-remote-p file 'localname))
+       (concat "/sudo::" file)))))
 
 
 (defun diff-current-buffer ()
