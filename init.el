@@ -121,29 +121,25 @@
 
 (define-keymap :prefix 'text-edit-map
   "c" 'toggle-char-case
-  "M-c" 'duplicate-dwim
-  "o" 'sort-lines-bor
-  "s" 'replace-string
-  "l" 'upcase-dwim
+  "i" 'insert-char
+  "p" 'insert-path
+  "o" 'emoji-insert
+  "s" 'sort-lines-bor
+  "M-s" 'shuffle-lines
+  "k" 'replace-string
+  "M-k" 'replace-regexp
+  "l" 'downcase-dwim
+  "M-l" 'upcase-dwim
   "j" 'join-lines
-  "k" 'flush-lines
-  "p" 'fill-paragraph
-  "M-o" 'shuffle-lines
-  "M-s" 'replace-regexp
-  "M-l" 'downcase-dwim
   "M-j" 'break-line
-  "M-k" 'keep-lines
-  "M-p" 'fill-region-justify
+  "m" 'keep-lines
+  "n" 'flush-lines
+  "q" 'fill-paragraph
+  "w" 'fill-region-justify
   "u" 'uniq-lines
-  "r" 'reverse-lines
-  "SPC" 'whitespace-mode
-  "i" (define-keymap
-        "j" 'emoji-insert
-        "e" 'emoji-list
-        "f" 'insert-path
-        "c" 'insert-file
-        "a" 'insert-fortune
-        "i" 'insert-char))
+  "a" 'insert-fortune
+  "M-c" 'duplicate-dwim
+  "SPC" 'whitespace-mode)
 
 
 ;; Diff
@@ -1514,11 +1510,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (defun uniq-lines ()
   (interactive)
   (apply #'delete-duplicate-lines (buffer-or-region)))
-
-
-(defun reverse-lines ()
-  (interactive)
-  (apply #'reverse-region (buffer-or-region)))
 
 
 (defun join-lines ()
