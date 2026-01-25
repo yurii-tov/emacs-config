@@ -124,7 +124,7 @@
   "i" 'insert-char
   "p" 'insert-path
   "o" 'emoji-insert
-  "s" 'sort-lines-bor
+  "s" 'sort-lines
   "d" 'shuffle-lines
   "k" 'replace-string
   "M-k" 'replace-regexp
@@ -1499,10 +1499,12 @@ Optionally, formats the buffer with COMMAND (if provided)"
     (shell-command-on-region start end "shuf" nil t)))
 
 
-(defun sort-lines-bor ()
-  "Sorts lines in Buffer Or Region (if selected)"
-  (interactive)
-  (apply #'sort-lines (cons nil (buffer-or-region))))
+(advice-add 'sort-lines
+            :around
+            (lambda (f &rest args)
+              "Use `buffer-or-region' when called interactively"
+              (interactive (cons current-prefix-arg (buffer-or-region)))
+              (apply f args)))
 
 
 (defun uniq-lines ()
