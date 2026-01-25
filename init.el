@@ -124,7 +124,7 @@
   "i" 'insert-char
   "p" 'insert-path
   "o" 'emoji-insert
-  "a" 'reverse-region
+  "x" 'reverse-region
   "s" 'sort-lines
   "d" 'shuffle-lines
   "k" 'replace-string
@@ -138,7 +138,7 @@
   "q" 'fill-paragraph
   "w" 'fill-region-justify
   "u" 'delete-duplicate-lines
-  "x" 'insert-fortune
+  "a" 'insert-fortune
   "M-c" 'duplicate-dwim
   "SPC" 'whitespace-mode)
 
