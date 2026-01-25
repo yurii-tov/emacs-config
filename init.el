@@ -124,6 +124,7 @@
   "i" 'insert-char
   "p" 'insert-path
   "o" 'emoji-insert
+  "a" 'reverse-region
   "s" 'sort-lines
   "d" 'shuffle-lines
   "k" 'replace-string
@@ -136,8 +137,8 @@
   "n" 'flush-lines
   "q" 'fill-paragraph
   "w" 'fill-region-justify
-  "u" 'uniq-lines
-  "a" 'insert-fortune
+  "u" 'delete-duplicate-lines
+  "x" 'insert-fortune
   "M-c" 'duplicate-dwim
   "SPC" 'whitespace-mode)
 
@@ -1507,9 +1508,12 @@ Optionally, formats the buffer with COMMAND (if provided)"
               (apply f args)))
 
 
-(defun uniq-lines ()
-  (interactive)
-  (apply #'delete-duplicate-lines (buffer-or-region)))
+(dolist (x '(delete-duplicate-lines reverse-region))
+  (advice-add x :around
+              (lambda (f &rest args)
+                "Use `buffer-or-region' when called interactively"
+                (interactive (buffer-or-region))
+                (apply f args))))
 
 
 (defun join-lines ()
