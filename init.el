@@ -1589,7 +1589,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (dolist (x '(flush-lines keep-lines))
   (advice-add x :around
               (lambda (f &rest args)
-                "Fix flush-lines in various ways"
+                "Fix in various ways"
                 (let* ((s (car args))
                        (args (if (string-empty-p s)
                                  (cons "^$" (cdr args))
