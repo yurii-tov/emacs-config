@@ -1280,7 +1280,13 @@
 (keymap-set query-replace-map "M-SPC" 'automatic)
 
 
-;; Selecting regions
+;; Overwriting
+
+
+(delete-selection-mode t)
+
+
+;; Selecting
 
 
 (advice-add 'kill-ring-save
@@ -1359,13 +1365,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
       (indent-region (point-min) (point-max)))))
 
 
-;; Overwriting
-
-
-(delete-selection-mode t)
-
-
-;; Inspecting
+;; Inspection
 
 
 (setq what-cursor-show-names t)
@@ -1389,7 +1389,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (setq duplicate-line-final-position -1)
 
 
-;; Inserting
+;; Insert
 
 
 (defun fortune ()
@@ -1481,7 +1481,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (setq mc/always-run-for-all t)
 
 
-;; Auxiliary commands
+;; Line-based modifications
 
 
 (defun buffer-or-region ()
@@ -1543,27 +1543,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
     (insert text)))
 
 
-(defun kill-line-to-indentation ()
-  "Kills line, leaving cursor at indentation.
-   In case of empty line, kills whole line"
-  (interactive)
-  (back-to-indentation)
-  (when (string-match-p "^[     ]*$"
-                        (buffer-substring
-                         (line-beginning-position)
-                         (line-end-position)))
-    (beginning-of-line))
-  (kill-line))
-
-
-(defun toggle-char-case ()
-  (interactive)
-  (save-excursion
-    (if (char-uppercase-p (following-char))
-        (downcase-region (point) (1+ (point)))
-      (upcase-region (point) (1+ (point))))))
-
-
 (defun move-line (direction)
   (cond ((eq direction 'up)
          (beginning-of-line)
@@ -1590,7 +1569,17 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (move-line 'down))
 
 
-;; Fixes
+(defun kill-line-to-indentation ()
+  "Kills line, leaving cursor at indentation.
+   In case of empty line, kills whole line"
+  (interactive)
+  (back-to-indentation)
+  (when (string-match-p "^[     ]*$"
+                        (buffer-substring
+                         (line-beginning-position)
+                         (line-end-position)))
+    (beginning-of-line))
+  (kill-line))
 
 
 (dolist (x '(flush-lines keep-lines))
@@ -1608,6 +1597,17 @@ Optionally, formats the buffer with COMMAND (if provided)"
                              (point-min)
                              (point-max)
                              (cdddr args))))))))
+
+
+;; Case altering
+
+
+(defun toggle-char-case ()
+  (interactive)
+  (save-excursion
+    (if (char-uppercase-p (following-char))
+        (downcase-region (point) (1+ (point)))
+      (upcase-region (point) (1+ (point))))))
 
 
 ;; ===================
