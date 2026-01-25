@@ -1492,13 +1492,11 @@ Optionally, formats the buffer with COMMAND (if provided)"
           (point-max))))
 
 
-(defun shuffle-lines ()
-  (interactive)
+(defun shuffle-lines (start end)
+  (interactive (buffer-or-region))
   (message "Shuffling lines...")
-  (let* ((bounds (buffer-or-region))
-         (s (car bounds))
-         (e (min (point-max) (1+ (cadr bounds)))))
-    (shell-command-on-region s e "shuf" nil t)))
+  (let* ((end (min (point-max) (1+ end))))
+    (shell-command-on-region start end "shuf" nil t)))
 
 
 (defun sort-lines-bor ()
