@@ -125,13 +125,13 @@
   "p" 'insert-path
   "o" 'emoji-insert
   "s" 'sort-lines-bor
-  "M-s" 'shuffle-lines
+  "d" 'shuffle-lines
   "k" 'replace-string
   "M-k" 'replace-regexp
   "l" 'downcase-dwim
-  "M-l" 'upcase-dwim
+  "h" 'upcase-dwim
   "j" 'join-lines
-  "M-j" 'break-line
+  "b" 'break-line
   "m" 'keep-lines
   "n" 'flush-lines
   "q" 'fill-paragraph
