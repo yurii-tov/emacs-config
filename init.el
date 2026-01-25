@@ -1516,6 +1516,23 @@ Optionally, formats the buffer with COMMAND (if provided)"
                 (apply f args))))
 
 
+(dolist (x '(flush-lines keep-lines))
+  (advice-add x :around
+              (lambda (f &rest args)
+                "Fix in various ways"
+                (let* ((s (car args))
+                       (args (if (string-empty-p s)
+                                 (cons "^$" (cdr args))
+                               args)))
+                  (if (use-region-p)
+                      (apply f args)
+                    (save-excursion
+                      (apply f (car args)
+                             (point-min)
+                             (point-max)
+                             (cdddr args))))))))
+
+
 (defun join-lines ()
   (interactive)
   (if (use-region-p)
@@ -1584,23 +1601,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
                          (line-end-position)))
     (beginning-of-line))
   (kill-line))
-
-
-(dolist (x '(flush-lines keep-lines))
-  (advice-add x :around
-              (lambda (f &rest args)
-                "Fix in various ways"
-                (let* ((s (car args))
-                       (args (if (string-empty-p s)
-                                 (cons "^$" (cdr args))
-                               args)))
-                  (if (use-region-p)
-                      (apply f args)
-                    (save-excursion
-                      (apply f (car args)
-                             (point-min)
-                             (point-max)
-                             (cdddr args))))))))
 
 
 ;; Case altering
