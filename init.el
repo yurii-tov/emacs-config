@@ -123,11 +123,11 @@
   "c" 'toggle-char-case
   "i" 'insert-char
   "p" 'insert-path
-  "o" 'emoji-insert
+  "e" 'emoji-insert
   "x" 'reverse-region
   "s" 'sort-lines
   "d" 'shuffle-lines
-  "f" 'insert-file
+  "o" 'insert-file
   "k" 'replace-string
   "M-k" 'replace-regexp
   "l" 'downcase-dwim
