@@ -637,19 +637,19 @@
             :around
             (lambda (f &rest args)
               "Add 'Create new buffer' shortcut"
-              (let ((command (lambda ()
-                               (interactive)
-                               (let ((b (generate-new-buffer "*scratch*")))
-                                 (with-current-buffer b
-                                   (org-mode))
-                                 (insert (buffer-name b)))
-                               (exit-minibuffer))))
-                (minibuffer-with-setup-hook
-                    (:append (lambda ()
-                               (use-local-map
-                                (define-keymap :parent (current-local-map)
-                                  "M-j" command))))
-                  (apply f args)))))
+              (minibuffer-with-setup-hook
+                  (:append (lambda ()
+                             (use-local-map
+                              (define-keymap :parent (current-local-map)
+                                "M-j"
+                                (lambda ()
+                                  (interactive)
+                                  (let ((b (generate-new-buffer "*scratch*")))
+                                    (with-current-buffer b
+                                      (org-mode))
+                                    (insert (buffer-name b)))
+                                  (exit-minibuffer))))))
+                (apply f args))))
 
 
 (advice-add 'read-buffer-to-switch
