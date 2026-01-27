@@ -834,11 +834,11 @@
 (advice-add 'ido-read-file-name
             :filter-return
             (lambda (file-name)
-              "Update file-name-history"
+              "Update history"
               (prog1 file-name
-                (ido-record-work-directory
-                 (file-name-directory file-name))
                 (unless (file-directory-p file-name)
+                  (ido-record-work-directory
+                   (file-name-directory file-name))
                   (add-to-history 'file-name-history file-name)))))
 
 
