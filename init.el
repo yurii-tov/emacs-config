@@ -127,6 +127,7 @@
   "x" 'reverse-region
   "s" 'sort-lines
   "d" 'shuffle-lines
+  "f" 'insert-file-contents
   "k" 'replace-string
   "M-k" 'replace-regexp
   "l" 'downcase-dwim
