@@ -1951,6 +1951,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (with-eval-after-load 'shell
   (define-keymap :keymap shell-command-mode-map
     "g" 'asc-restart
+    "k" 'comint-kill-subjob
     "q" 'quit-window))
 
 
