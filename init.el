@@ -1477,6 +1477,13 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (enclose-text "'" "'"))
 
 
+;; Rectangle mark mode
+
+
+(with-eval-after-load 'rect
+  (keymap-set rectangle-mark-mode-map "SPC" 'string-rectangle))
+
+
 ;; Multiple cursors
 
 
