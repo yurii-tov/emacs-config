@@ -210,8 +210,6 @@
   "M-M" 'mc/mark-all-dwim
   "M-N" 'mc/mark-next-like-this
   "M-P" 'mc/mark-previous-like-this
-  "C-<down-mouse-1>" nil
-  "C-<mouse-1>" 'mc/add-cursor-on-click
   "C-M-l" 'move-line-down
   "C-=" 'text-scale-increase
   "C-M-=" 'text-scale-decrease
