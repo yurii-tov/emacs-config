@@ -868,6 +868,19 @@
                           'face 'font-lock-comment-face)))
 
 
+(advice-add 'ido-get-work-directory
+            :around
+            (lambda (f &rest args)
+              "Filter out disconnected remote directories"
+              (let ((ido-work-directory-list
+                     (cl-remove-if
+                      (lambda (x)
+                        (and (file-remote-p x)
+                             (not (file-remote-p x nil t))))
+                      ido-work-directory-list)))
+                (apply f args))))
+
+
 ;; Colors
 
 
@@ -882,8 +895,7 @@
 
 
 (define-keymap :keymap ido-file-dir-completion-map
-  "C-b" nil "M-f" nil "M-n" nil "M-<up>" nil
-  "C-f" nil "M-k" nil "M-p" nil "M-<down>" nil
+  "C-b" nil "M-f" nil "C-f" nil "M-k" nil
   "C-n" 'ido-grid-mode-next
   "C-p" 'ido-grid-mode-previous
   "SPC" 'ido-recent
