@@ -1026,6 +1026,7 @@
 (advice-add 'dired-copy-filename-as-kill
             :override
             (lambda (&rest _)
+              "Various improvements"
               (when-let* ((xs (dired-get-marked-files))
                           (n (length xs)))
                 (kill-new (string-join xs "\n"))
