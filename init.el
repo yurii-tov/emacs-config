@@ -1035,6 +1035,16 @@
                            (format "Copied %d filenames to clipboard" n))))))
 
 
+(advice-add 'dired--find-possibly-alternative-file
+            :after
+            (lambda (&rest args)
+              "When open file, update ido-work-directory-list"
+              (let ((file (car args)))
+                (unless (file-directory-p file)
+                  (ido-record-work-directory
+                   (file-name-directory file))))))
+
+
 ;; Keybindings
 
 
@@ -1128,19 +1138,6 @@
 (defun dired-calculate-size-tree ()
   (interactive)
   (dired-calculate-size t))
-
-
-;; History
-
-
-(advice-add 'dired--find-possibly-alternative-file
-            :after
-            (lambda (&rest args)
-              "When open file, update ido-work-directory-list"
-              (let ((file (car args)))
-                (unless (file-directory-p file)
-                  (ido-record-work-directory
-                   (file-name-directory file))))))
 
 
 ;; ====
