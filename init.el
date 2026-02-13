@@ -1089,7 +1089,7 @@
          (dired-no-confirm t)
          (tar-command (format "tar -xz -C %s < %%i"
                               (if (eq system-type 'windows-nt)
-                                  "$(cygpath -u '%o')" "%o")))
+                                  "\"$(cygpath -u '%o')\"" "%o")))
          (dired-compress-file-suffixes
           (mapcar (lambda (x)
                     (if-let ((c (nth 2 x)))
