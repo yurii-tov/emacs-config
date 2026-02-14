@@ -422,6 +422,7 @@
                                        current-input-method-title
                                        'face 'mode-line-emphasis))))
                 (multiple-cursors-mode mc/mode-line)
+                (cider-mode cider-mode-line)
                 (flymake-mode (" " (:eval (flymake--mode-line-counters))))
                 (vc-mode vc-mode)
                 " "))
