@@ -26,6 +26,12 @@
   (mapc #'package-install packages))
 
 
+;; Optimizations
+
+
+(setq gc-cons-threshold (* 50 (expt 2 20)))
+
+
 ;; Site-specific config
 
 
