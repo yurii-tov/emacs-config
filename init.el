@@ -3639,8 +3639,8 @@ Process .+
 ;; ===============
 
 
-(defun capture-video (arg)
-  (interactive "P")
+(defun capture-video ()
+  (interactive)
   (let ((ffmpeg (or (executable-find "ffmpeg")
                     (error "ffmpeg executable not found")))
         (buffer-name "*video-capture*")
@@ -3654,13 +3654,10 @@ Process .+
           (comint-interrupt-subjob)
           (sit-for 1)
           (kill-buffer))
-      (let* ((capture-file-name (if arg
-                                    (read-file-name "Capture video to file: ")
-                                  capture-file-name))
-             (default-directory (file-name-directory capture-file-name))
-             (command (if (eq system-type 'windows-nt)
-                          "%s -y -f gdigrab -i desktop -framerate 30 -pix_fmt yuv420p %s"
-                        "%s -y -f x11grab -i :0.0 -framerate 30 -pix_fmt yuv420p %s")))
+      (let ((default-directory (file-name-directory capture-file-name))
+            (command (if (eq system-type 'windows-nt)
+                         "%s -y -f gdigrab -i desktop -framerate 30 -pix_fmt yuv420p %s"
+                       "%s -y -f x11grab -i :0.0 -framerate 30 -pix_fmt yuv420p %s")))
         (async-shell-command
          (format command
                  ffmpeg
