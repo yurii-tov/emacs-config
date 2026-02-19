@@ -3196,16 +3196,9 @@ Example input:
 (advice-add 'nxml-mode :override #'sgml-mode)
 
 
-(setq xmllint (executable-find "xmllint"))
-
-
-(defun xml-format-buffer ()
-  (interactive)
-  (format-buffer (format "%s --format -" xmllint)))
-
-
-(when xmllint
-  (add-to-list 'format-buffer-functions '(sgml-mode . xml-format-buffer)))
+(when-let* ((xmllint (executable-find "xmllint"))
+            (f `(lambda () (format-buffer (concat ,xmllint " --format -")))))
+  (add-to-list 'format-buffer-functions (cons 'sgml-mode f)))
 
 
 ;; ====
