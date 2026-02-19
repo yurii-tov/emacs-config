@@ -3193,8 +3193,7 @@ Example input:
 ;; ===
 
 
-(add-to-list 'auto-mode-alist
-             (cons (concat "\\." (regexp-opt '("xml" "xsd" "xslt" "xsl" "wsdl" "xml.template" "pom" "jmx") t) "\\'") 'sgml-mode))
+(advice-add 'nxml-mode :override #'sgml-mode)
 
 
 (setq xmllint (executable-find "xmllint"))
