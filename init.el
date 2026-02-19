@@ -1317,7 +1317,7 @@
 (delete-selection-mode t)
 
 
-;; Selecting
+;; Expand-region
 
 
 (advice-add 'kill-ring-save
@@ -1327,6 +1327,14 @@
               (if (use-region-p)
                   (apply f args)
                 (call-interactively 'er/expand-region))))
+
+
+(with-eval-after-load 'expand-region
+  (advice-add 'er/mark-defun :override #'mark-paragraph))
+
+
+(with-eval-after-load 'html-mode-expansions
+  (er/enable-mode-expansions 'sgml-mode #'er/add-html-mode-expansions))
 
 
 ;; Formatting
@@ -3183,10 +3191,6 @@ Example input:
 ;; ===
 ;; XML
 ;; ===
-
-
-(with-eval-after-load 'html-mode-expansions
-  (er/enable-mode-expansions 'sgml-mode #'er/add-html-mode-expansions))
 
 
 (add-to-list 'auto-mode-alist
