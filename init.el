@@ -1329,15 +1329,6 @@
                 (call-interactively 'er/expand-region))))
 
 
-(advice-add 'er--expand-region-1
-            :around
-            (lambda (f &rest args)
-              "Don't alter mark-ring"
-              (let ((mr mark-ring))
-                (prog1 (apply f args)
-                  (setq mark-ring mr)))))
-
-
 (with-eval-after-load 'expand-region
   (advice-add 'er/mark-defun :override #'mark-paragraph)
   (pop er/try-expand-list))
