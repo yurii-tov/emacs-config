@@ -2157,8 +2157,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 (defun shell-setup-buffer ()
   (or (and current-prefix-arg
-           (let ((default-directory (read-directory-name "Shell at: ")))
-             (generate-new-buffer (shell-buffer-name))))
+           (generate-new-buffer (shell-buffer-name)))
       (when-let* ((project (project-current))
                   (d (project-root project)))
         (cl-find-if
