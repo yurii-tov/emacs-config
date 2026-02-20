@@ -1330,7 +1330,7 @@
 
 
 (with-eval-after-load 'expand-region
-  (advice-add 'er/mark-defun :override #'mark-paragraph)
+  (advice-add 'er/mark-defun :override #'er/mark-paragraph)
   (pop er/try-expand-list))
 
 
