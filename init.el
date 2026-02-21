@@ -414,6 +414,7 @@
                 (:eval (propertize " %l:%C" 'face 'fixed-pitch))
                 mode-line-format-right-align
                 (mark-active (:eval (mode-line-selection-stats)))
+                (rectangle-mark-mode " 🆁")
                 (current-input-method-title
                  (:eval (format " %s" (propertize
                                        current-input-method-title
