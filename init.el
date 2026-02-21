@@ -390,7 +390,7 @@
 
 
 (setq-default mode-line-format
-              `(" "
+              '(" "
                 (:eval (if (memq buffer-file-coding-system
                                  '(utf-8-unix
                                    prefer-utf-8-unix
@@ -401,20 +401,17 @@
                          (format "%s " (propertize
                                         (symbol-name buffer-file-coding-system)
                                         'face '(:slant italic)))))
-                ,(if (and (not window-system) (eq system-type 'windows-nt))
-                     'mode-line-modified
-                   '(:eval (let ((ro buffer-read-only)
-                                 (m (and (buffer-file-name) (buffer-modified-p))))
-                             (cond ((and m ro) "🔏 ")
-                                   (ro "🔒 ")
-                                   (m "✒ ")
-                                   (t "")))))
-                ,(unless (and (not window-system) (eq system-type 'windows-nt))
-                   '(:eval (if (get-buffer-process (current-buffer))
-                               (propertize "• " 'face 'success)
-                             "")))
-                ,(propertize "%b" 'face 'mode-line-buffer-id)
-                ,(propertize " %l:%C" 'face 'fixed-pitch)
+                (:eval (let ((ro buffer-read-only)
+                             (m (and (buffer-file-name) (buffer-modified-p))))
+                         (cond ((and m ro) "🔏 ")
+                               (ro "🔒 ")
+                               (m "✒ ")
+                               (t ""))))
+                (:eval (if (get-buffer-process (current-buffer))
+                           (propertize "• " 'face 'success)
+                         ""))
+                (:eval (propertize "%b" 'face 'mode-line-buffer-id))
+                (:eval (propertize " %l:%C" 'face 'fixed-pitch))
                 mode-line-format-right-align
                 (mark-active (:eval (mode-line-selection-stats)))
                 (current-input-method-title
