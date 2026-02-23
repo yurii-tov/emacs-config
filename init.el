@@ -343,7 +343,7 @@
               (font (cl-find-if (lambda (x)
                                   (member x (font-family-list)))
                                 fonts)))
-    (set-face-attribute face nil :font (format "%s-13" font))))
+    (set-face-font face (format "%s-13" font))))
 
 
 (dolist (x '("Segoe UI Emoji" "Adwaita Mono"))
