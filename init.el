@@ -336,24 +336,17 @@
 ;; Fonts
 
 
-(when window-system
+(let* ((fonts-available (font-family-list))
+       (available-p (lambda (x) (member x fonts-available))))
   (dolist (x '((default . ("Cascadia Code" "Consolas" "Ubuntu Mono"))
                (fixed-pitch . ("Consolas" "Ubuntu Mono"))))
-    (if-let* ((face (car x))
-              (fonts (cdr x))
-              (font (cl-find-if (lambda (x)
-                                  (member x (font-family-list)))
-                                fonts)))
-        (set-face-attribute face nil :font (format "%s-13" font))
-      (message "Can't find any of %s fonts for '%s' face"
-               (prin1-to-string fonts) face))))
-
-
-(when (and (eq system-type 'windows-nt)
-           (member "Segoe UI Emoji" (font-family-list)))
-  (set-fontset-font t 'unicode
-                    (font-spec :family "Segoe UI Emoji")
-                    nil 'append))
+    (when-let* ((face (car x))
+                (fonts (cdr x))
+                (font (cl-find-if available-p fonts)))
+      (set-face-attribute face nil :font (format "%s-13" font))))
+  (when-let* ((font (cl-find-if available-p '("Segoe UI Emoji"
+                                              "Adwaita Mono"))))
+    (set-fontset-font t 'unicode (font-spec :family font) nil 'append)))
 
 
 ;; Colors
