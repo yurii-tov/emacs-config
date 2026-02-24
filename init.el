@@ -346,8 +346,9 @@
     (set-face-font face (format "%s-13" font))))
 
 
-(dolist (x '("Segoe UI Emoji" "Adwaita Mono"))
-  (set-fontset-font t 'unicode x nil 'append))
+(when window-system
+  (dolist (x '("Segoe UI Emoji" "Adwaita Mono"))
+    (set-fontset-font t 'unicode x nil 'append)))
 
 
 ;; Colors
