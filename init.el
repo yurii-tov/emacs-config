@@ -344,8 +344,10 @@
                                     (member x fonts))
                                   (cdr x))))
       (set-face-font (car x) (format "%s-13" font))))
-  (dolist (x '("Segoe UI Emoji" "Adwaita Mono"))
-    (set-fontset-font t 'unicode x nil 'append)))
+  (set-fontset-font t 'emoji "Segoe UI Emoji" nil 'prepend)
+  (set-fontset-font t 'symbol "Segoe UI Symbol" nil 'prepend)
+  (set-fontset-font t 'symbol "Segoe UI Emoji" nil 'prepend)
+  (set-fontset-font t 'symbol "Adwaita Mono" nil 'append))
 
 
 ;; Colors
