@@ -336,17 +336,14 @@
 ;; Fonts
 
 
-(dolist (x '((default . ("Cascadia Code" "Consolas" "Ubuntu Mono"))
-             (fixed-pitch . ("Consolas" "Ubuntu Mono"))))
-  (when-let* ((face (car x))
-              (fonts (cdr x))
-              (font (cl-find-if (lambda (x)
-                                  (member x (font-family-list)))
-                                fonts)))
-    (set-face-font face (format "%s-13" font))))
-
-
-(when window-system
+(when-let* ((window-system)
+            (fonts (font-family-list)))
+  (dolist (x '((default "Cascadia Code" "Consolas" "Ubuntu Mono")
+               (fixed-pitch "Consolas" "Ubuntu Mono")))
+    (when-let* ((font (cl-find-if (lambda (x)
+                                    (member x fonts))
+                                  (cdr x))))
+      (set-face-font (car x) (format "%s-13" font))))
   (dolist (x '("Segoe UI Emoji" "Adwaita Mono"))
     (set-fontset-font t 'unicode x nil 'append)))
 
