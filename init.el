@@ -965,17 +965,23 @@
                              (cl-delete-if-not
                               (lambda (x) (string-suffix-p "/" x)) history)
                            history))))
-         (file (completing-read "Find recent: "
-                                files nil nil ido-text
-                                (if (eq ido-cur-item 'dir)
-                                    'ido-work-directory-list
-                                  'file-name-history))))
+         (file (minibuffer-with-setup-hook
+                   (:append (lambda ()
+                              (use-local-map
+                               (define-keymap :parent (current-local-map)
+                                 "M-j" (lambda ()
+                                         (interactive)
+                                         (setq ido-exit 'refresh)
+                                         (icomplete-fido-ret))))))
+                 (completing-read "Find recent: "
+                                  files nil nil ido-text
+                                  (if (eq ido-cur-item 'dir)
+                                      'ido-work-directory-list
+                                    'file-name-history)))))
     (setq ido-current-directory (file-name-directory file)
           ido-matches (list (file-name-nondirectory file)))
     (when (file-directory-p file)
-      (setq ido-current-directory (file-name-as-directory file))
-      (unless (eq ido-cur-item 'dir)
-        (setq ido-exit 'refresh)))
+      (setq ido-current-directory (file-name-as-directory file)))
     (exit-minibuffer)))
 
 
