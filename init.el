@@ -344,10 +344,7 @@
                                     (member x fonts))
                                   (cdr x))))
       (set-face-font (car x) (format "%s-13" font))))
-  (set-fontset-font t 'emoji "Segoe UI Emoji" nil 'prepend)
-  (set-fontset-font t 'symbol "Segoe UI Symbol" nil 'prepend)
-  (set-fontset-font t 'symbol "Segoe UI Emoji" nil 'prepend)
-  (set-fontset-font t 'symbol "Adwaita Mono" nil 'append))
+  (set-fontset-font t 'emoji "Segoe UI Emoji" nil 'prepend))
 
 
 ;; Colors
@@ -399,7 +396,7 @@
                              (m (and (buffer-file-name) (buffer-modified-p))))
                          (cond ((and m ro) "🔏 ")
                                (ro "🔒 ")
-                               (m "✒ ")
+                               (m "✒️ ")
                                (t ""))))
                 (:eval (if (get-buffer-process (current-buffer))
                            (propertize "• " 'face 'success)
@@ -408,7 +405,7 @@
                 (:eval (propertize " %l:%C" 'face 'fixed-pitch))
                 mode-line-format-right-align
                 (mark-active (:eval (mode-line-selection-stats)))
-                (rectangle-mark-mode " 🆁")
+                (rectangle-mark-mode " 🔲")
                 (current-input-method-title
                  (:eval (format " %s" (propertize
                                        current-input-method-title
