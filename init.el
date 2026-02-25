@@ -758,7 +758,11 @@
 
 
 (defun open-in-external-program (file-name)
-  (interactive "fOpen in external program: ")
+  (interactive (list (if-let* ((p "Open in external program: ")
+                               (f (ffap-guess-file-name-at-point))
+                               (d (file-name-directory f)))
+                         (read-file-name p d nil nil (file-relative-name f d))
+                       (read-file-name p))))
   (let ((open-file
          (cond ((eq system-type 'windows-nt)
                 (lambda (f) (w32-shell-execute "open" (replace-regexp-in-string "/" "\\" f t t))))
