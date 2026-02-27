@@ -983,8 +983,6 @@
                                     'file-name-history)))))
     (setq ido-current-directory (file-name-directory file)
           ido-matches (list (file-name-nondirectory file)))
-    (when (file-directory-p file)
-      (setq ido-current-directory (file-name-as-directory file)))
     (exit-minibuffer)))
 
 
