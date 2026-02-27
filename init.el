@@ -936,7 +936,7 @@
                 (completing-read
                  (format "Find file in %s: "
                          (abbreviate-file-name ido-current-directory))
-                 files nil nil ido-text)
+                 files nil t ido-text)
                 ido-current-directory)))
     (setq ido-matches (list (file-name-nondirectory file)))
     (when-let ((d (file-name-directory file)))
