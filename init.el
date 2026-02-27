@@ -977,7 +977,7 @@
                                          (setq ido-exit 'refresh)
                                          (icomplete-fido-ret))))))
                  (completing-read "Find recent: "
-                                  files nil nil ido-text
+                                  files nil t ido-text
                                   (if (eq ido-cur-item 'dir)
                                       'ido-work-directory-list
                                     'file-name-history)))))
