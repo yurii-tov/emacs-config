@@ -963,8 +963,7 @@
                   (mapcan (lambda (x)
                             (thread-last (if (eq ido-cur-item 'dir) "*/" "*")
                                          (concat x)
-                                         file-expand-wildcards
-                                         (cons x))))
+                                         file-expand-wildcards)))
                   (nconc (if (eq ido-cur-item 'dir)
                              (cl-delete-if-not
                               (lambda (x) (string-suffix-p "/" x)) history)
