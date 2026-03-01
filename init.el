@@ -860,7 +860,7 @@
             (lambda ()
               "Count items currently matching the pattern"
               (propertize (format "(%s)" (length ido-matches))
-                          'face 'font-lock-comment-face)))
+                          'face 'completions-annotations)))
 
 
 (advice-add 'ido-get-work-directory
@@ -1122,7 +1122,7 @@
          (args (mapcar (lambda (x) (format "'%s'" x)) files)))
     (message "Calculating size of %s..."
              (string-join (mapcar (lambda (x)
-                                    (propertize x 'face 'success))
+                                    (propertize x 'face 'bold))
                                   files)
                           ", "))
     (shell-command
@@ -1198,10 +1198,10 @@
                               (cadr xs)))
                      (dir (if (called-interactively-p)
                               (read-directory-name
-                               (format "Search for %s at: "
+                               (format "Search for `%s` at: "
                                        (propertize (if (string-empty-p query)
                                                        "*" query)
-                                                   'face 'success)))
+                                                   'face 'bold)))
                             (car xs))))
                 (funcall f dir query))))
 
@@ -1857,7 +1857,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
                                   command
                                   (truncate-string-to-width
                                    20 nil nil t)
-                                  (propertize 'face 'success)))))))
+                                  (propertize 'face 'bold)))))))
   (let* ((default-directory directory))
     (async-shell-command command)))
 
@@ -1875,7 +1875,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
                    (abbreviate-file-name default-directory))))
       (if (y-or-n-p (format
                      "The process is already running at %s. Kill it?"
-                     (propertize dir 'face 'completions-annotations)))
+                     (propertize dir 'face 'bold)))
           (prog1 buffer-name
             (kill-buffer buffer-name)
             (sit-for 0.5))
@@ -1937,10 +1937,8 @@ Optionally, formats the buffer with COMMAND (if provided)"
                                  (propertize
                                   (format "[%s]" (string-trim-right e))
                                   'face 'shadow)
-                                 (propertize ,(car args) 'face 'success)
-                                 (propertize
-                                  ,(abbreviate-file-name default-directory)
-                                  'face 'completions-annotations))
+                                 (propertize ,(car args) 'face 'bold)
+                                 ,(abbreviate-file-name default-directory))
                         (unless (member (car (string-split e))
                                         '("stopped" "run"))
                           (read-only-mode -1)
@@ -1986,9 +1984,8 @@ Optionally, formats the buffer with COMMAND (if provided)"
                       (switch-to-buffer b)
                       (message
                        "Running `%s` at %s"
-                       (propertize (car args) 'face 'success)
-                       (propertize (abbreviate-file-name default-directory)
-                                   'face 'completions-annotations))))))))
+                       (propertize (car args) 'face 'bold)
+                       (abbreviate-file-name default-directory))))))))
 
 
 ;; Auxiliary commands
@@ -2315,7 +2312,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
                          (read-string "Translate: " (word-at-point)))))
   (let* ((default-directory "~")
          (query-encoded (url-encode-url (replace-regexp-in-string "'" "" query)))
-         (query-message (propertize query 'face 'font-lock-constant-face))
+         (query-message (propertize query 'face 'bold))
          (en-ru `((description . "from English to Russian")
                   (command . ,(concat "bash -c \"curl -sL -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0' '%s"
                                       "' | sed -rn '/span class=.trans/ {s:.*<span.*>(.*[^ ]) *<.span>.*:\\1:g ; p}'"
@@ -2358,7 +2355,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
   "Retrieves word definitions from the Cambridge Dictionary"
   (interactive (list (read-string "Find in Cambridge dictionary: "
                                   (word-at-point))))
-  (let* ((query (propertize word 'face 'font-lock-constant-face))
+  (let* ((query (propertize word 'face 'bold))
          (answer (progn
                    (message "%s =>\n%s" query
                             (propertize "searching dictionary..."
@@ -2782,7 +2779,7 @@ Example input:
       (set-text-properties
        0 (1- p1) '(face vc-dir-header-value) status)
       (set-text-properties
-       p1 (1+ p2) '(face success) status)
+       p1 (1+ p2) '(face vc-dir-status-warning) status)
       (set-text-properties
        (1+ p2) (length status) '(face vc-dir-header-value) status))
     (replace-regexp-in-string
@@ -2834,7 +2831,7 @@ Example input:
                            (o (assoc ',vc-command vc-command-overrides))
                            (command (cdr (assoc backend o))))
                      (progn (message "Running %s..."
-                                     (propertize command 'face 'success))
+                                     (propertize command 'face 'bold))
                             (shell-command command)
                             (cond ((eq major-mode 'vc-dir-mode)
                                    (vc-refresh-headers))
@@ -3640,9 +3637,8 @@ Process .+
          (buffer (format "*python-server:%s*" socket)))
     (async-shell-command command buffer)
     (message "Serving %s at %s"
-             (propertize (abbreviate-file-name default-directory)
-                         'face 'completions-annotations)
-             (propertize socket 'face 'bold))))
+             (propertize (abbreviate-file-name default-directory) 'face 'bold)
+             socket)))
 
 
 ;; ===============
@@ -3660,7 +3656,7 @@ Process .+
                              "~/v.mp4")))
     (if (get-buffer-process buffer-name)
         (with-current-buffer buffer-name
-          (message "Captured: %s" (propertize capture-file-name 'face 'font-lock-constant-face))
+          (message "Captured: %s" (propertize capture-file-name 'face 'success))
           (kill-new capture-file-name)
           (comint-interrupt-subjob)
           (sit-for 1)
@@ -3676,5 +3672,4 @@ Process .+
          buffer-name)
         (with-current-buffer buffer-name
           (setq-local capture-file-name capture-file-name))
-        (message "Capturing video to file: %s"
-                 (propertize capture-file-name 'face 'font-lock-constant-face))))))
+        (message "Capturing video to file: %s" capture-file-name)))))
