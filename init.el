@@ -918,6 +918,15 @@
 ;; Advanced commands
 
 
+(defun ido-icomplete-hook ()
+  (use-local-map
+   (define-keymap :parent (current-local-map)
+     "M-j" (lambda ()
+             (interactive)
+             (setq ido-exit 'refresh)
+             (icomplete-fido-ret)))))
+
+
 (defun ido-search-subdirs ()
   (interactive)
   (let* ((enable-recursive-minibuffers t)
@@ -930,16 +939,15 @@
                          ido-current-directory
                          exclusions)))
          (file (expand-file-name
-                (completing-read
-                 (format "Find file in %s: "
-                         (abbreviate-file-name ido-current-directory))
-                 files nil t ido-text)
+                (minibuffer-with-setup-hook (:append 'ido-icomplete-hook)
+                  (completing-read
+                   (format "Find file in %s: "
+                           (abbreviate-file-name ido-current-directory))
+                   files nil t ido-text))
                 ido-current-directory)))
     (setq ido-matches (list (file-name-nondirectory file)))
     (when-let ((d (file-name-directory file)))
       (setq ido-current-directory (expand-file-name d ido-current-directory)))
-    (when (file-directory-p file)
-      (setq ido-exit 'refresh))
     (exit-minibuffer)))
 
 
@@ -965,14 +973,7 @@
                              (cl-delete-if-not
                               (lambda (x) (string-suffix-p "/" x)) history)
                            history))))
-         (file (minibuffer-with-setup-hook
-                   (:append (lambda ()
-                              (use-local-map
-                               (define-keymap :parent (current-local-map)
-                                 "M-j" (lambda ()
-                                         (interactive)
-                                         (setq ido-exit 'refresh)
-                                         (icomplete-fido-ret))))))
+         (file (minibuffer-with-setup-hook (:append 'ido-icomplete-hook)
                  (completing-read "Find recent: "
                                   files nil t ido-text
                                   (if (eq ido-cur-item 'dir)
