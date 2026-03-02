@@ -1209,19 +1209,20 @@
 ;; =======
 
 
-(setq ripgrep (executable-find "rg")
-      ripgrep-arguments '("-uu"))
+(setq ripgrep-arguments '("-uu"))
 
 
-(defun project-ripgrep (regexp)
-  (interactive (list (project--read-regexp)))
-  (let ((ripgrep-arguments nil))
-    (ripgrep-regexp regexp (project-root (project-current t)))))
-
-
-(when ripgrep
+(when (executable-find "rg")
   (keymap-set search-map "g" 'ripgrep-regexp)
-  (advice-add 'project-find-regexp :override #'project-ripgrep))
+  (advice-add 'project-find-regexp
+              :override
+              (lambda (regexp)
+                "Search with Ripgrep"
+                (interactive (list (project--read-regexp)))
+                (let ((ripgrep-arguments nil))
+                  (thread-last (project-current t)
+                               project-root
+                               (ripgrep-regexp regexp))))))
 
 
 (defun ripgrep-dired ()
@@ -1245,10 +1246,6 @@
       (message "File list is empty"))))
 
 
-(defun ripgrep-setup ()
-  (setq-local compilation-scroll-output nil))
-
-
 (with-eval-after-load 'ripgrep
   (define-keymap :keymap ripgrep-search-mode-map
     "TAB" 'compilation-next-error
@@ -1259,7 +1256,8 @@
     "o" 'compilation-display-error
     "e" 'wgrep-change-to-wgrep-mode)
   (add-hook 'ripgrep-search-mode-hook
-            'ripgrep-setup)
+            (lambda ()
+              (setq-local compilation-scroll-output nil)))
   (setq wgrep-auto-save-buffer t))
 
 
