@@ -1979,7 +1979,8 @@ Optionally, formats the buffer with COMMAND (if provided)"
                       (setq b (asc-buffer r))
                       (switch-to-buffer b)
                       (message
-                       "Running `%s` at %s"
+                       "%s `%s` at %s"
+                       (propertize "[started]" 'face 'shadow)
                        (propertize (car args) 'face 'bold)
                        (abbreviate-file-name default-directory))))))))
 
