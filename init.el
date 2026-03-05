@@ -189,7 +189,7 @@
   "M-=" 'count-words
   "M-q" 'hippie-expand
   "M-1" 'shell-command
-  "M-!" 'asc-at-directory
+  "M-!" 'async-shell-command
   "M-2" 'enclose-text-quotes
   "M-3" 'enclose-text-asterisks
   "M-4" 'enclose-text-apostrophes
@@ -1842,20 +1842,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; ====================
 ;; Async shell commands
 ;; ====================
-
-
-(defun asc-at-directory (command directory)
-  (interactive (let ((command (read-shell-command "Async shell command: ")))
-                 (list command
-                       (read-directory-name
-                        (format "Run `%s` at: "
-                                (thread-first
-                                  command
-                                  (truncate-string-to-width
-                                   20 nil nil t)
-                                  (propertize 'face 'bold)))))))
-  (let* ((default-directory directory))
-    (async-shell-command command)))
 
 
 (add-hook 'shell-command-mode-hook 'read-only-mode)
