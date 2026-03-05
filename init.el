@@ -2947,11 +2947,9 @@ Example input:
 (require 'ansi-color)
 
 
-(defun compilation-enable-ascii-codes ()
-  (ansi-color-apply-on-region (point-min) (point-max)))
-
-
-(add-hook 'compilation-filter-hook 'compilation-enable-ascii-codes)
+(add-hook 'compilation-filter-hook
+          (lambda ()
+            (ansi-color-apply-on-region (point-min) (point-max))))
 
 
 (setq compilation-scroll-output t)
