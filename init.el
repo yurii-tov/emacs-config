@@ -1196,7 +1196,7 @@
                               (cadr xs)))
                      (dir (if (called-interactively-p)
                               (read-directory-name
-                               (format "Search for `%s` at: "
+                               (format "Search for `%s` in: "
                                        (propertize (if (string-empty-p query)
                                                        "*" query)
                                                    'face 'bold)))
@@ -1856,7 +1856,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
             (dir (with-current-buffer buffer-name
                    (abbreviate-file-name default-directory))))
       (if (y-or-n-p (format
-                     "The process is already running at %s. Kill it?"
+                     "The process is already running in %s. Kill it?"
                      (propertize dir 'face 'bold)))
           (prog1 buffer-name
             (kill-buffer buffer-name)
@@ -1891,7 +1891,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
                      (p (get-buffer-process b)))
                 (prog1 r
                   (with-current-buffer b
-                    (let ((info (format "*** `%s` at %s ***\n"
+                    (let ((info (format "*** `%s` in %s ***\n"
                                         (car args)
                                         (abbreviate-file-name default-directory))))
                       (goto-char 1)
@@ -1915,7 +1915,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
                     (set-process-sentinel
                      (get-process p)
                      `(lambda (p e)
-                        (message "%s `%s` at %s"
+                        (message "%s `%s` in %s"
                                  (propertize
                                   (format "[%s]" (string-trim-right e))
                                   'face 'shadow)
@@ -1965,7 +1965,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
                       (setq b (asc-buffer r))
                       (switch-to-buffer b)
                       (message
-                       "%s `%s` at %s"
+                       "%s `%s` in %s"
                        (propertize "[started]" 'face 'shadow)
                        (propertize (car args) 'face 'bold)
                        (abbreviate-file-name default-directory))))))))
@@ -2145,7 +2145,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 (defun shell-setup-buffer ()
   (or (and current-prefix-arg
-           (let ((default-directory (read-directory-name "Shell at: ")))
+           (let ((default-directory (read-directory-name "Shell in: ")))
              (generate-new-buffer (shell-buffer-name))))
       (let ((d default-directory))
         (cl-find-if
