@@ -1806,9 +1806,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (setq shell-command-prompt-show-cwd t)
 
 
-;; History completion
-
-
 (advice-add 'read-shell-command
             :around
             (lambda (f &rest args)
@@ -1821,9 +1818,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
                     (completing-read
                      (car args) history nil nil (cadr args) history-symbol)
                   (apply f args)))))
-
-
-;; Pipe region into the command
 
 
 (advice-add 'shell-command
