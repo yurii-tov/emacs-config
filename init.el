@@ -1841,6 +1841,87 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (add-hook 'shell-command-mode-hook 'read-only-mode)
 
 
+;; Startup details
+
+
+(advice-add 'async-shell-command
+            :around
+            (lambda (f &rest args)
+              "Place startup details into the buffer"
+              (prog1 (apply f args)
+                (with-current-buffer (cadr args)
+                  (let ((info (format "*** `%s` in %s ***\n"
+                                      (car args)
+                                      (abbreviate-file-name default-directory))))
+                    (goto-char 1)
+                    (comint-output-filter (get-buffer-process (cadr args)) info)
+                    (set-marker comint-last-input-end (point))
+                    (highlight-regexp (regexp-quote info) 'shadow)
+                    (font-lock-update))))))
+
+
+;; Process state transitions
+
+
+(advice-add 'async-shell-command
+            :around
+            (lambda (f &rest args)
+              "Report process state transitions"
+              (prog1 (apply f args)
+                (when-let ((p (get-buffer-process (cadr args))))
+                  (set-process-sentinel
+                   (get-process p)
+                   `(lambda (p e)
+                      (message "%s `%s` in %s"
+                               (propertize
+                                (format "[%s]" (string-trim-right e))
+                                'face 'shadow)
+                               (propertize ,(car args) 'face 'bold)
+                               ,(abbreviate-file-name default-directory))
+                      (unless (member (car (string-split e))
+                                      '("stopped" "run"))
+                        (read-only-mode -1))))))))
+
+
+;; Restart
+
+
+(advice-add 'async-shell-command
+            :around
+            (lambda (f &rest args)
+              "Store the command"
+              (prog1 (apply f args)
+                (with-current-buffer (cadr args)
+                  (setq-local command (car args))))))
+
+
+(defun asc-restart ()
+  (interactive)
+  (when-let ((p (get-buffer-process (current-buffer))))
+    (kill-process p)
+    (sit-for 0.5))
+  (async-shell-command command (current-buffer)))
+
+
+;; Display
+
+
+(advice-add 'async-shell-command
+            :around
+            (lambda (f &rest args)
+              "Don't display the buffer unless prefix arg is provided"
+              (if current-prefix-arg
+                  (apply f args)
+                (save-window-excursion
+                  (prog1 (apply f args)
+                    (switch-to-buffer (cadr args))
+                    (message
+                     "%s `%s` in %s"
+                     (propertize "[started]" 'face 'shadow)
+                     (propertize (car args) 'face 'bold)
+                     (abbreviate-file-name default-directory)))))))
+
+
 ;; Buffer
 
 
@@ -1869,102 +1950,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
                                          car
                                          (format "*asc:%s*"))))
                        (cddr args)))))
-
-
-;; Startup details
-
-
-(advice-add 'async-shell-command
-            :around
-            (lambda (f &rest args)
-              "Place startup details into the buffer"
-              (let* ((r (apply f args))
-                     (b (asc-buffer r))
-                     (p (get-buffer-process b)))
-                (prog1 r
-                  (with-current-buffer b
-                    (let ((info (format "*** `%s` in %s ***\n"
-                                        (car args)
-                                        (abbreviate-file-name default-directory))))
-                      (goto-char 1)
-                      (comint-output-filter p info)
-                      (set-marker comint-last-input-end (point))
-                      (highlight-regexp (regexp-quote info) 'shadow)
-                      (font-lock-update)))))))
-
-
-;; Process state transitions
-
-
-(advice-add 'async-shell-command
-            :around
-            (lambda (f &rest args)
-              "Report process state transitions"
-              (let (r b)
-                (prog1 (setq r (apply f args))
-                  (setq b (asc-buffer r))
-                  (when-let ((p (get-buffer-process b)))
-                    (set-process-sentinel
-                     (get-process p)
-                     `(lambda (p e)
-                        (message "%s `%s` in %s"
-                                 (propertize
-                                  (format "[%s]" (string-trim-right e))
-                                  'face 'shadow)
-                                 (propertize ,(car args) 'face 'bold)
-                                 ,(abbreviate-file-name default-directory))
-                        (unless (member (car (string-split e))
-                                        '("stopped" "run"))
-                          (read-only-mode -1)))))))))
-
-
-;; Restart
-
-
-(advice-add 'async-shell-command
-            :around
-            (lambda (f &rest args)
-              "Store the command"
-              (let ((r (apply f args)))
-                (prog1 r
-                  (with-current-buffer (asc-buffer r)
-                    (setq-local command (car args)))))))
-
-
-(defun asc-restart ()
-  (interactive)
-  (when-let ((p (get-buffer-process (current-buffer))))
-    (kill-process p)
-    (sit-for 0.5))
-  (async-shell-command command (current-buffer)))
-
-
-;; Display
-
-
-(advice-add 'async-shell-command
-            :around
-            (lambda (f &rest args)
-              "Don't display the buffer unless prefix arg is provided"
-              (if current-prefix-arg
-                  (apply f args)
-                (let (r b)
-                  (save-window-excursion
-                    (prog1 (setq r (apply f args))
-                      (setq b (asc-buffer r))
-                      (switch-to-buffer b)
-                      (message
-                       "%s `%s` in %s"
-                       (propertize "[started]" 'face 'shadow)
-                       (propertize (car args) 'face 'bold)
-                       (abbreviate-file-name default-directory))))))))
-
-
-;; Auxiliary commands
-
-
-(defun asc-buffer (x)
-  (if (windowp x) (window-buffer x) (process-buffer x)))
 
 
 ;; Keybindings
