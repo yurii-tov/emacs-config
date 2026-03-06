@@ -1846,12 +1846,9 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 (defun asc-handle-existing (buffer-name)
   (if-let* (((get-buffer buffer-name))
-            ((get-buffer-process buffer-name))
-            (dir (with-current-buffer buffer-name
-                   (abbreviate-file-name default-directory))))
-      (if (y-or-n-p (format
-                     "The process is already running in %s. Kill it?"
-                     (propertize dir 'face 'bold)))
+            ((get-buffer-process buffer-name)))
+      (if (y-or-n-p (format "Kill existing process in buffer %s?"
+                            (propertize buffer-name 'face 'bold)))
           (prog1 buffer-name
             (kill-buffer buffer-name)
             (sit-for 0.5))
