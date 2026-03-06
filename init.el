@@ -1860,13 +1860,14 @@ Optionally, formats the buffer with COMMAND (if provided)"
             :around
             (lambda (f &rest args)
               "Setup the buffer"
-              (let* ((command (car args))
-                     (buffer-name (or (cadr args)
-                                      (format "*%s*"
-                                              (truncate-string-to-width
-                                               command 32 nil nil t)))))
+              (let* ((command (car args)))
                 (apply f command
-                       (asc-handle-existing buffer-name)
+                       (asc-handle-existing
+                        (or (cadr args)
+                            (thread-last command
+                                         split-string
+                                         car
+                                         (format "*asc:%s*"))))
                        (cddr args)))))
 
 
