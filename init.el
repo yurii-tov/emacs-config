@@ -1898,7 +1898,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (advice-add 'async-shell-command
             :around
             (lambda (f &rest args)
-              "Report process state transitions, kill unneeded buffer"
+              "Report process state transitions"
               (let (r b)
                 (prog1 (setq r (apply f args))
                   (setq b (asc-buffer r))
@@ -1914,10 +1914,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
                                  ,(abbreviate-file-name default-directory))
                         (unless (member (car (string-split e))
                                         '("stopped" "run"))
-                          (read-only-mode -1)
-                          (unless (member ,b (mapcar #'window-buffer
-                                                     (window-list)))
-                            (kill-buffer ,b))))))))))
+                          (read-only-mode -1)))))))))
 
 
 ;; Restart
