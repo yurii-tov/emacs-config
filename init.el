@@ -167,9 +167,7 @@
   "h" 'describe-symbol
   "r" 'man
   "k" 'describe-keymap
-  "s" 'yas-describe-tables
-  "f" 'list-faces-display
-  "v" 'company-diag)
+  "s" 'yas-describe-tables)
 
 
 ;; Global
