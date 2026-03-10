@@ -1729,15 +1729,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
                          company-dabbrev))
 
 
-(advice-add 'completion-at-point
-            :around
-            (lambda (f)
-              "Use Company for explicit completion"
-              (if (minibufferp)
-                  (funcall f)
-                (company-complete-common))))
-
-
 (dolist (x '(company-dabbrev-code company-dabbrev))
   (advice-add x :around (lambda (f &rest args)
                           "Prevent completion on empty prefix"
