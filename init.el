@@ -1331,7 +1331,7 @@
                   (setq mark-ring mr)))))
 
 
-(with-eval-after-load 'expand-region
+(with-eval-after-load 'er-basic-expansions
   (advice-add 'er/mark-defun :override #'er/mark-paragraph)
   (pop er/try-expand-list))
 
