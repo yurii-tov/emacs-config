@@ -1662,9 +1662,9 @@ Optionally, formats the buffer with COMMAND (if provided)"
       (upcase-region (point) (1+ (point))))))
 
 
-;; ===================
-;; Completion at point
-;; ===================
+;; ==========
+;; Completion
+;; ==========
 
 
 (setq tab-always-indent 'complete
