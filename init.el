@@ -1662,12 +1662,13 @@ Optionally, formats the buffer with COMMAND (if provided)"
       (upcase-region (point) (1+ (point))))))
 
 
-;; ==========
-;; Completion
-;; ==========
+;; ===================
+;; Completion at point
+;; ===================
 
 
-(setq completion-styles '(partial-completion flex)
+(setq tab-always-indent 'complete
+      completion-styles '(partial-completion flex)
       completion-auto-select t)
 
 
@@ -1726,6 +1727,15 @@ Optionally, formats the buffer with COMMAND (if provided)"
                          company-dabbrev-code
                          company-files
                          company-dabbrev))
+
+
+(advice-add 'completion-at-point
+            :around
+            (lambda (f)
+              "Use Company for explicit completion"
+              (if (minibufferp)
+                  (funcall f)
+                (company-complete-common))))
 
 
 (dolist (x '(company-dabbrev-code company-dabbrev))
