@@ -2809,11 +2809,6 @@ Example input:
   (vc-dir-refresh))
 
 
-(defun vc-reset-hard ()
-  (interactive)
-  (vc-reset "--hard" "Hard reset"))
-
-
 ;; Convenient revision copying
 
 
@@ -2841,7 +2836,8 @@ Example input:
     "s" 'vc-switch-branch
     "c" 'vc-create-branch
     "r" 'vc-reset
-    "R" 'vc-reset-hard))
+    "R" (lambda () (interactive) (vc-reset "--soft" "Soft reset"))
+    "h" (lambda () (interactive) (vc-reset "--hard" "Hard reset"))))
 
 
 (with-eval-after-load 'log-view
