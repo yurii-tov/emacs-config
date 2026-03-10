@@ -1662,13 +1662,12 @@ Optionally, formats the buffer with COMMAND (if provided)"
       (upcase-region (point) (1+ (point))))))
 
 
-;; ===================
-;; Completion at point
-;; ===================
+;; ==========
+;; Completion
+;; ==========
 
 
-(setq tab-always-indent 'complete
-      completion-styles '(partial-completion flex)
+(setq completion-styles '(partial-completion flex)
       completion-auto-select t)
 
 
