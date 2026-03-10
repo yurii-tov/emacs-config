@@ -29,12 +29,10 @@
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 
 
-(defun load-site-settings ()
-  (load custom-file t)
-  (load (expand-file-name "site.el" user-emacs-directory) t))
-
-
-(add-hook 'emacs-startup-hook 'load-site-settings)
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (load custom-file t)
+            (load (expand-file-name "site.el" user-emacs-directory) t)))
 
 
 ;; MSYS2
@@ -532,9 +530,6 @@
 
 
 (setq max-mini-window-height 12)
-
-
-;; Completion
 
 
 (fido-vertical-mode)
