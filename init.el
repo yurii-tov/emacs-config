@@ -1331,7 +1331,7 @@
   (er/enable-mode-expansions 'sgml-mode #'er/add-html-mode-expansions))
 
 
-;; Format
+;; Formatting
 
 
 (setq-default indent-tabs-mode nil
