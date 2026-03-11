@@ -2757,29 +2757,19 @@ Example input:
 (add-hook 'log-edit-done-hook 'vc-dir-log-edit-update)
 
 
-;; Explicitly define some commands
+;; Pull/push
 
 
-(setq vc-command-overrides
-      '((vc-pull . ((Git . "git pull")))
-        (vc-push . ((Git . "git push")))))
-
-
-(dolist (vc-command '(vc-pull vc-push))
-  (advice-add vc-command
-              :around
-              `(lambda (f &rest args)
-                 (if-let* ((backend (car (vc-deduce-fileset t)))
-                           (o (assoc ',vc-command vc-command-overrides))
-                           (command (cdr (assoc backend o))))
-                     (progn (message "Running %s..."
-                                     (propertize command 'face 'bold))
-                            (shell-command command)
-                            (cond ((eq major-mode 'vc-dir-mode)
-                                   (vc-refresh-headers))
-                                  ((derived-mode-p 'log-view-mode)
-                                   (revert-buffer))))
-                   (apply f args)))))
+(advice-add 'vc-git--pushpull
+            :override
+            (lambda (command _ extra-args)
+              "Run the command synchronously"
+              (let* ((git-args (cons command extra-args))
+                     (command (format "git %s" (string-join git-args " "))))
+                (message "Running %s..." (propertize command 'face 'bold))
+                (shell-command command)
+                (when (eq major-mode 'vc-dir-mode)
+                  (vc-refresh-headers)))))
 
 
 ;; Reset
