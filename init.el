@@ -1566,7 +1566,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
                              (cdddr args))))))))
 
 
-;; Line modifications
+;; Line actions
 
 
 (setq duplicate-line-final-position -1)
