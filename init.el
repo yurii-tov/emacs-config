@@ -1025,10 +1025,9 @@
             :after
             (lambda (&rest args)
               "When open file, update ido-work-directory-list"
-              (let ((file (car args)))
-                (unless (file-directory-p file)
-                  (ido-record-work-directory
-                   (file-name-directory file))))))
+              (when-let* ((file (car args))
+                          ((not (file-directory-p file))))
+                (ido-record-work-directory (file-name-directory file)))))
 
 
 ;; Keybindings
