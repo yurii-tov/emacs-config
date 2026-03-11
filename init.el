@@ -115,7 +115,7 @@
 
 
 (define-keymap :prefix 'text-edit-map
-  "c" 'toggle-char-case
+  "c" 'swap-char-case
   "i" 'insert-char
   "p" 'insert-path
   "e" 'emoji-insert
@@ -1644,7 +1644,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; Case swap
 
 
-(defun toggle-char-case ()
+(defun swap-char-case ()
   (interactive)
   (save-excursion
     (if (char-uppercase-p (following-char))
