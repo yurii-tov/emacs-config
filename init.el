@@ -2676,7 +2676,7 @@ Example input:
       (goto-char (1- (org-table-end))))))
 
 
-;; Fix in-table typing
+;; Fix table glitch
 
 
 (defconst org-table--separator-space-pre " ")
