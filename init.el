@@ -305,15 +305,11 @@
 (global-hl-line-mode)
 
 
-(defun disable-hl-line-mode ()
-  (hl-line-mode 'toggle))
-
-
 (dolist (x '(comint-mode-hook
              vc-git-log-edit-mode-hook
              cider-repl-mode-hook
              slime-repl-mode-hook))
-  (add-hook x 'disable-hl-line-mode))
+  (add-hook x (lambda () (hl-line-mode 'toggle))))
 
 
 ;; Line numbers
