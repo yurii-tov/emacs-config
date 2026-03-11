@@ -1294,7 +1294,7 @@
 (keymap-set query-replace-map "M-SPC" 'automatic)
 
 
-;; Overwriting
+;; Overwrite
 
 
 (delete-selection-mode t)
@@ -1641,7 +1641,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (kill-line))
 
 
-;; Case altering
+;; Case swap
 
 
 (defun toggle-char-case ()
