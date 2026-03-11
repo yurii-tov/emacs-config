@@ -1808,7 +1808,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (advice-add 'shell-command
             :around
             (lambda (f &rest args)
-              "When region is selected, pipe it into the command"
+              "Pipe selected region into the command"
               (if (use-region-p)
                   (shell-command-on-region (region-beginning)
                                            (region-end)
