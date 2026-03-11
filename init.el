@@ -1438,7 +1438,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (insert path))
 
 
-;; Enclosing into parenthesis (or similar)
+;; Enclosing
 
 
 (defun enclose-text (b1 b2)
