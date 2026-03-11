@@ -1331,7 +1331,7 @@
   (er/enable-mode-expansions 'sgml-mode #'er/add-html-mode-expansions))
 
 
-;; Formatting
+;; Format
 
 
 (setq-default indent-tabs-mode nil
@@ -1414,12 +1414,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
                    (region-end)
                    "hexdump -C")
                 (apply f args))))
-
-
-;; Duplicating
-
-
-(setq duplicate-line-final-position -1)
 
 
 ;; Insert
@@ -1521,7 +1515,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (setq mc/always-run-for-all t)
 
 
-;; Line-based modifications
+;; Sort/filter
 
 
 (defun buffer-or-region ()
@@ -1572,6 +1566,25 @@ Optionally, formats the buffer with COMMAND (if provided)"
                              (cdddr args))))))))
 
 
+;; Line modifications
+
+
+(setq duplicate-line-final-position -1)
+
+
+(defun break-line ()
+  (interactive)
+  (let* ((separator (read-string "Break with: "))
+         (text (thread-first (buffer-substring
+                              (line-beginning-position)
+                              (line-end-position))
+                             (split-string separator t)
+                             (string-join "\n"))))
+    (delete-region (line-beginning-position)
+                   (line-end-position))
+    (insert text)))
+
+
 (defun join-lines ()
   (interactive)
   (if (use-region-p)
@@ -1588,19 +1601,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
       (dotimes (i 2) (delete-blank-lines))
       (next-line)
       (delete-indentation))))
-
-
-(defun break-line ()
-  (interactive)
-  (let* ((separator (read-string "Break with: "))
-         (text (thread-first (buffer-substring
-                              (line-beginning-position)
-                              (line-end-position))
-                             (split-string separator t)
-                             (string-join "\n"))))
-    (delete-region (line-beginning-position)
-                   (line-end-position))
-    (insert text)))
 
 
 (defun move-line (direction)
