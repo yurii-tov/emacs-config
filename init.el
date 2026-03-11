@@ -1419,22 +1419,18 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; Insert
 
 
-(defun fortune ()
-  (with-temp-buffer
-    (insert-file-contents (expand-file-name "fortune.txt"
-                                            user-emacs-directory))
-    (goto-char (1+ (cl-random (point-max))))
-    (let* ((e (search-forward-regexp "^%$" nil t))
-           (e (if e (- e 2) (point-max))))
-      (goto-char e)
-      (let* ((s (search-backward-regexp "^%$" nil t))
-             (s (if s (+ 2 s) 1)))
-        (buffer-substring s e)))))
-
-
 (defun insert-fortune ()
   (interactive)
-  (insert (fortune)))
+  (insert (with-temp-buffer
+            (insert-file-contents (expand-file-name "fortune.txt"
+                                                    user-emacs-directory))
+            (goto-char (1+ (cl-random (point-max))))
+            (let* ((e (search-forward-regexp "^%$" nil t))
+                   (e (if e (- e 2) (point-max))))
+              (goto-char e)
+              (let* ((s (search-backward-regexp "^%$" nil t))
+                     (s (if s (+ 2 s) 1)))
+                (buffer-substring s e))))))
 
 
 (defun insert-path (path)
