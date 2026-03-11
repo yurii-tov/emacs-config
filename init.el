@@ -403,6 +403,7 @@
                                        'face 'mode-line-emphasis))))
                 (multiple-cursors-mode mc/mode-line)
                 (flymake-mode (" " (:eval (flymake--mode-line-counters))))
+                (cider-mode cider-mode-line)
                 (vc-mode vc-mode)
                 " "))
 
