@@ -501,17 +501,15 @@
 ;; Scratch buffer
 
 
-(defun scratch-buffer-setup ()
-  (with-current-buffer "*scratch*"
-    (erase-buffer)
-    (insert (replace-regexp-in-string "\n" "" (emacs-version)))
-    (newline 3)
-    (insert-fortune)
-    (comment-region (point-min) (point-max))
-    (newline 3)))
-
-
-(add-hook 'emacs-startup-hook 'scratch-buffer-setup)
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (with-current-buffer "*scratch*"
+              (erase-buffer)
+              (insert (replace-regexp-in-string "\n" "" (emacs-version)))
+              (newline 3)
+              (insert-fortune)
+              (comment-region (point-min) (point-max))
+              (newline 3))))
 
 
 ;; ==========
