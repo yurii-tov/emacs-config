@@ -338,21 +338,14 @@
   (set-fontset-font t 'symbol "Adwaita Mono" nil 'append))
 
 
-;; Colors
+;; Color themes
 
 
 (advice-add 'load-theme
-            :around
-            (lambda (f &rest args)
-              (interactive (thread-last
-                             (custom-available-themes)
-                             (mapcar #'symbol-name)
-                             (completing-read "Load custom theme: ")
-                             intern
-                             list))
-              (dolist (theme custom-enabled-themes)
-                (disable-theme theme))
-              (apply f args)))
+            :before
+            (lambda (&rest _)
+              "Disable other themes"
+              (mapc #'disable-theme custom-enabled-themes)))
 
 
 (when window-system
