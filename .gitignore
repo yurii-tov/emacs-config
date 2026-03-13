@@ -2,10 +2,12 @@
 !.gitignore
 !init.el
 !fortune.txt
+
 !/elpa
 !/elpa/**
 /elpa/archives
 /elpa/compiled.txt
 /elpa/**/*.elc
+
 !/snippets
 !/snippets/**
