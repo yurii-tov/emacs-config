@@ -2755,7 +2755,7 @@ Example input:
 ;; Reset
 
 
-(defun vc-reset (&optional args action commit-p)
+(defun vc-reset (&optional param action commit-p)
   (interactive)
   (let* ((default "HEAD^")
          (dir (expand-file-name (vc-root-dir)))
@@ -2765,15 +2765,27 @@ Example input:
                                      (list dir)
                                      (vc-responsible-backend dir)
                                      default))
-         (commit-command (if commit-p
-                             (format "&& git commit -m '%s'"
-                                     (read-string "Commit message: "))
-                           "")))
-    (shell-command (format "git reset %s %s%s"
-                           (or args "")
-                           revision
-                           commit-command))
-    (vc-dir-refresh)))
+         (reset `(lambda ()
+                   (interactive)
+                   (apply #'call-process "git" nil nil nil
+                          (remove nil (list "reset" ,param ,revision)))
+                   (when ,commit-p
+                     (let ((f (make-nearby-temp-file "git-msg"))
+                           (m (string-trim (buffer-substring 10 (point-max)))))
+                       (with-temp-file f
+                         (insert m)
+                         (goto-char (point-min))
+                         (and (search-forward "\n" nil t)
+                              (open-line 1))
+                         (goto-char (point-max))
+                         (open-line 1))
+                       (call-process "git" nil nil nil "commit" "-F" f)
+                       (delete-file f))
+                     (kill-buffer)))))
+    (if commit-p
+        (log-edit reset t nil "*commit*" 'vc-git-log-edit-mode)
+      (funcall reset)
+      (vc-dir-log-edit-update))))
 
 
 ;; Convenient revision copying
