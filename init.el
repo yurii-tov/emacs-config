@@ -3,24 +3,13 @@
 ;; ======
 
 
-;; Packages
+;; Third-party packages
 
 
-(setq package-archives
-      '(("gnu" . "https://elpa.gnu.org/packages/")
-        ("melpa" . "https://melpa.org/packages/")))
-
-
-(when-let ((packages (cl-remove-if #'package-installed-p
-                                   '(ido-grid-mode
-                                     groovy-mode powershell doric-themes
-                                     company yasnippet ligature diredfl
-                                     multiple-cursors spacious-padding
-                                     rust-mode ripgrep wgrep gptel nov
-                                     slime slime-company expand-region
-                                     ef-themes htmlize markdown-mode))))
-  (package-refresh-contents)
-  (mapc #'package-install packages))
+(when-let* ((f (expand-file-name "elpa/compiled.txt" user-emacs-directory))
+            ((not (file-exists-p f))))
+  (package-recompile-all)
+  (with-temp-buffer (write-file f)))
 
 
 ;; Site-specific
