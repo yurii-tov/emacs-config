@@ -2755,7 +2755,7 @@ Example input:
 ;; Reset
 
 
-(defun vc-reset (&optional args action)
+(defun vc-reset (&optional args action commit-p)
   (interactive)
   (let* ((default "HEAD^")
          (dir (expand-file-name (vc-root-dir)))
@@ -2764,11 +2764,16 @@ Example input:
                                              default)
                                      (list dir)
                                      (vc-responsible-backend dir)
-                                     default)))
-    (shell-command (format "git reset %s %s"
+                                     default))
+         (commit-command (if commit-p
+                             (format "&& git commit -m '%s'"
+                                     (read-string "Commit message: "))
+                           "")))
+    (shell-command (format "git reset %s %s%s"
                            (or args "")
-                           revision)))
-  (vc-dir-refresh))
+                           revision
+                           commit-command))
+    (vc-dir-refresh)))
 
 
 ;; Convenient revision copying
@@ -2798,7 +2803,7 @@ Example input:
     "s" 'vc-switch-branch
     "c" 'vc-create-branch
     "r" 'vc-reset
-    "R" (lambda () (interactive) (vc-reset "--soft" "Soft reset"))
+    "R" (lambda () (interactive) (vc-reset "--soft" "Squash" t))
     "h" (lambda () (interactive) (vc-reset "--hard" "Hard reset"))))
 
 
