@@ -2769,17 +2769,9 @@ Example input:
                    (interactive)
                    (apply #'call-process "git" nil nil nil
                           (remove nil (list "reset" ,param ,revision)))
-                   (when-let* ((,commit-p)
-                               (m (string-trim (buffer-substring
-                                                10 (point-max)))))
-                     (with-temp-buffer
-                       (insert m)
-                       (goto-char (point-min))
-                       (and (search-forward "\n" nil t)
-                            (open-line 1))
-                       (goto-char (point-max))
-                       (open-line 1)
-                       (vc-git-checkin nil (buffer-string)))
+                   (when ,commit-p
+                     (vc-git-checkin
+                      nil (string-trim (buffer-substring 10 (point-max))))
                      (kill-buffer)))))
     (if commit-p
         (log-edit reset t nil "*commit*" 'vc-git-log-edit-mode)
