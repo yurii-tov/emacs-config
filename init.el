@@ -2770,17 +2770,15 @@ Example input:
                    (apply #'call-process "git" nil nil nil
                           (remove nil (list "reset" ,param ,revision)))
                    (when ,commit-p
-                     (let ((f (make-nearby-temp-file "git-msg"))
-                           (m (string-trim (buffer-substring 10 (point-max)))))
-                       (with-temp-file f
+                     (let ((m (string-trim (buffer-substring 10 (point-max)))))
+                       (with-temp-buffer
                          (insert m)
                          (goto-char (point-min))
                          (and (search-forward "\n" nil t)
                               (open-line 1))
                          (goto-char (point-max))
-                         (open-line 1))
-                       (call-process "git" nil nil nil "commit" "-F" f)
-                       (delete-file f))
+                         (open-line 1)
+                         (vc-git-checkin nil (buffer-string))))
                      (kill-buffer)))))
     (if commit-p
         (log-edit reset t nil "*commit*" 'vc-git-log-edit-mode)
