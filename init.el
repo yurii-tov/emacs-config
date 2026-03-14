@@ -2770,14 +2770,16 @@ Example input:
                    (apply #'call-process "git" nil nil nil
                           (remove nil (list "reset" ,param ,revision)))
                    (when-let* ((,commit-p)
-                               (s (thread-first
-                                    (buffer-substring 10 (point-max))
-                                    string-trim
-                                    (string-split "\n" t))))
-                     (vc-git-checkin
-                      nil (concat (car s) "\n"
-                                  (when-let* ((d (cdr s)))
-                                    (format "\n%s\n" (string-join d "\n")))))
+                               (m (string-trim (buffer-substring
+                                                10 (point-max)))))
+                     (with-temp-buffer
+                       (insert m)
+                       (goto-char (point-min))
+                       (and (search-forward "\n" nil t)
+                            (open-line 1))
+                       (goto-char (point-max))
+                       (open-line 1)
+                       (vc-git-checkin nil (buffer-string)))
                      (kill-buffer)))))
     (if commit-p
         (log-edit reset t nil "*commit*" 'vc-git-log-edit-mode)
