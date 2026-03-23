@@ -1906,14 +1906,12 @@ Optionally, formats the buffer with COMMAND (if provided)"
             :around
             (lambda (f &rest args)
               "Setup the buffer"
-              (let* ((command (car args)))
-                (apply f command
+              (let ((id (car (seq-drop-while
+                              (lambda (x) (member x '("sudo" "time")))
+                              (split-string (car args))))))
+                (apply f (car args)
                        (asc-handle-existing
-                        (or (cadr args)
-                            (thread-last command
-                                         split-string
-                                         car
-                                         (format "*asc:%s*"))))
+                        (or (cadr args) (format "*asc:%s*" id)))
                        (cddr args)))))
 
 
