@@ -1874,7 +1874,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (advice-add 'async-shell-command
             :around
             (lambda (f &rest args)
-              "Don't display the buffer unless prefix arg is provided"
+              "By default, don't popup"
               (if-let* ((buffer (cadr args))
                         ((or current-prefix-arg
                              (get-buffer-window buffer))))
