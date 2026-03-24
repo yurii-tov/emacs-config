@@ -1891,11 +1891,11 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 
 (defun asc-handle-existing (buffer-name)
-  (if (get-buffer-process buffer-name)
+  (if-let* ((p (get-buffer-process buffer-name)))
       (if (y-or-n-p (format "Kill existing process in buffer %s?"
                             (propertize buffer-name 'face 'bold)))
           (prog1 buffer-name
-            (kill-buffer buffer-name)
+            (kill-process p)
             (sit-for 0.5))
         (generate-new-buffer-name buffer-name))
     buffer-name))
