@@ -1875,11 +1875,13 @@ Optionally, formats the buffer with COMMAND (if provided)"
             :around
             (lambda (f &rest args)
               "Don't display the buffer unless prefix arg is provided"
-              (if current-prefix-arg
+              (if-let* ((buffer (cadr args))
+                        ((or current-prefix-arg
+                             (get-buffer-window buffer))))
                   (apply f args)
                 (save-window-excursion
                   (prog1 (apply f args)
-                    (switch-to-buffer (cadr args))
+                    (switch-to-buffer buffer)
                     (message
                      "%s `%s` in %s"
                      (propertize "[started]" 'face 'shadow)
