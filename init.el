@@ -3400,7 +3400,7 @@ Process .+
          (when (or (not (boundp 'sql-output-accumulator))
                    (not sql-output-accumulator))
            (setq-local sql-output-accumulator
-                       `((select-p ,(string-match "select .*from " last-command))
+                       `((select-p ,(string-match "^select .*" last-command))
                          (pprint-p ,(string-match "--.*:pprint" last-command))
                          (out-file ,(when (string-match "--.*:out \\(.*.csv\\)" last-command)
                                       (match-string-no-properties 1 last-command)))
