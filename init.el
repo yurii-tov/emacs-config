@@ -1834,6 +1834,10 @@ Optionally, formats the buffer with COMMAND (if provided)"
               "Report process state transitions"
               (prog1 (apply f args)
                 (when-let ((p (get-buffer-process (cadr args))))
+                  (message "%s `%s` in %s"
+                           (propertize "[started]" 'face 'shadow)
+                           (propertize (car args) 'face 'bold)
+                           (abbreviate-file-name default-directory))
                   (set-process-sentinel
                    (get-process p)
                    `(lambda (p e)
@@ -1881,12 +1885,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
                   (apply f args)
                 (save-window-excursion
                   (prog1 (apply f args)
-                    (switch-to-buffer buffer)
-                    (message
-                     "%s `%s` in %s"
-                     (propertize "[started]" 'face 'shadow)
-                     (propertize (car args) 'face 'bold)
-                     (abbreviate-file-name default-directory)))))))
+                    (switch-to-buffer buffer))))))
 
 
 ;; Buffer
