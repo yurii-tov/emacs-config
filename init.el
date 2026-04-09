@@ -864,6 +864,25 @@
                 dir)))
 
 
+(advice-add 'dired--find-possibly-alternative-file
+            :after
+            (lambda (&rest args)
+              "When open file, update ido-work-directory-list"
+              (when-let* ((file (car args))
+                          ((not (file-directory-p file))))
+                (ido-record-work-directory (file-name-directory file)))))
+
+
+(advice-add 'project-find-file
+            :after
+            (lambda (&rest _)
+              "Update ido-work-directory-list"
+              (ido-record-work-directory default-directory)))
+
+
+(add-hook 'dired-mode-hook (lambda () (setq-local ido-use-filename-at-point nil)))
+
+
 ;; Colors
 
 
@@ -962,8 +981,7 @@
 (add-hook 'dired-mode-hook
           (lambda ()
             (diredfl-mode)
-            (auto-revert-mode)
-            (setq-local ido-use-filename-at-point nil)))
+            (auto-revert-mode)))
 
 
 (require 'ls-lisp)
@@ -1000,15 +1018,6 @@
                 (message (if (= n 1)
                              (format "Copied to clipboard: %s" (car xs))
                            (format "Copied %d filenames to clipboard" n))))))
-
-
-(advice-add 'dired--find-possibly-alternative-file
-            :after
-            (lambda (&rest args)
-              "When open file, update ido-work-directory-list"
-              (when-let* ((file (car args))
-                          ((not (file-directory-p file))))
-                (ido-record-work-directory (file-name-directory file)))))
 
 
 ;; Keybindings
