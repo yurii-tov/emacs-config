@@ -2008,10 +2008,9 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 
 (defun comint-save-history-all ()
-  (dolist (b (buffer-list))
+  (dolist (b (match-buffers '(derived-mode . comint-mode)))
     (with-current-buffer b
-      (when comint-input-ring-file-name
-        (comint-save-history)))))
+      (comint-save-history))))
 
 
 (add-hook 'kill-emacs-hook 'comint-save-history-all)
@@ -2097,11 +2096,13 @@ Optionally, formats the buffer with COMMAND (if provided)"
            (let ((default-directory (read-directory-name "Shell in: ")))
              (generate-new-buffer (shell-buffer-name))))
       (let ((d default-directory))
-        (cl-find-if
-         (lambda (x) (with-current-buffer x
-                       (and (eq major-mode 'shell-mode)
-                            (file-equal-p default-directory d))))
-         (buffer-list)))
+        (thread-last
+          `(and (derived-mode . shell-mode)
+                (lambda (b)
+                  (with-current-buffer b
+                    (file-equal-p default-directory ,d))))
+          match-buffers
+          car))
       (when-let* ((project (project-current))
                   (d (project-root project)))
         (cl-find-if
