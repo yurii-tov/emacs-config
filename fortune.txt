@@ -1,112 +1,44 @@
 It isn't what we don't know that gives us trouble, it's what we know that ain't so.
--- Will Rogers
 %
 Begin with the simplest examples.
--- David Hilbert
-%
-One must be able to say at all times--instead of points, straight lines, and planes--tables, chairs, and beer mugs 🍺
--- David Hilbert
-%
-Fools ignore complexity. Pragmatists suffer it. Some can avoid it. Geniuses remove it.
--- Alan Perlis
 %
 Adapting old programs to fit new machines usually means adapting new machines to behave like old ones.
--- Alan Perlis
 %
 Don't have good ideas if you aren't willing to be responsible for them.
--- Alan Perlis
 %
 In man-machine symbiosis, it is man who must adjust: The machines can't.
--- Alan Perlis
-%
-One can't proceed from the informal to the formal by formal means.
--- Alan Perlis
 %
 Simplicity does not precede complexity, but follows it.
--- Alan Perlis
-%
-It is easier to change the specification to fit the program than vice versa.
--- Alan Perlis
-%
-One man's constant is another man's variable.
--- Alan Perlis
-%
-Don’t document the problem, fix it.
--- Atli Björgvin Oddsson
-%
-Tell me and I forget. Teach me and I remember. Involve me and I learn.
--- Benjamin Franklin
 %
 Real knowledge is to know the extent of one’s ignorance.
--- Confucius
 %
 As a rule, software systems do not work well until they have been used, and have failed repeatedly, in real applications.
--- Dave Parnas
 %
 Time spent in sharpening the axe may well be spared from swinging it.
 %
-The effort of using machines to mimic the human mind has always struck me as rather silly. I would rather use them to mimic something better.
--- Edsger Dijkstra
-%
-Simplicity is a great virtue but it requires hard work to achieve it and education to appreciate it. And to make matters worse: complexity sells better.
--- Edsger Dijkstra
-%
 Perfecting oneself is as much unlearning as it is learning.
--- Edsger Dijkstra
 %
 Much of the excitement we get out of our work is that we don't really know what we are doing.
--- Edsger Dijkstra
 %
 Experience does by no means automatically leads to wisdom and understanding.
--- Edsger Dijkstra
 %
 The prisoner falls in love with his chains.
--- Edsger Dijkstra
-%
-I don't need to waste my time with a computer just because I am a computer scientist.
--- Edsger Dijkstra
 %
 Thanks to the greatly improved possibility of communication, we overrate its importance. Even stronger, we underrate the importance of isolation.
--- Edsger Dijkstra
 %
 Testing shows the presence, not the absence of bugs.
--- Edsger Dijkstra
-%
-Beware of "the real world". A speaker's apeal to it is always an invitation not to challenge his tacit assumptions.
--- Edsger Dijkstra
-%
-Thank goodness we don't have only serious problems, but ridiculous ones as well.
--- Edsger Dijkstra
 %
 The key to understanding complicated things is knowing what not to look at.
--- Gerald Jay Sussman
-%
-A recursive definition does not necessarily lead to a recursive process.
--- Gerald Jay Sussman
-%
-Simplicity, carried to the extreme, becomes elegance.
--- Jon Franklin
-%
-From a programmer’s point of view, the user is a peripheral that types when you issue a read request.
--- P. Williams
 %
 The more you know, the more you realize you know nothing.
--- Socrates
 %
 The greatest enemy of knowledge is not ignorance, it is the illusion of knowledge.
--- Stephen Hawking
 %
 Not all those who wander are lost
--- J.R.R. Tolkien
 %
 Плохо что ли? Хорошо!
 %
 There's never enough time to do all the nothing you want
-%
-Работа должна быть поднята если не до пафоса, то хотя бы до профессии, иначе она раздавит бездушностью.
-Можно халтурить попутно, но жить халтурой нестерпимо
-%
-Maybe it's not the config that is broken
 %
 Свобода – это груз, который может оказаться не по силам. Свобода – не подарок, свобода – выбор, иногда нелегкий.
 %
