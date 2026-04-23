@@ -1697,6 +1697,8 @@ Optionally, formats the buffer with COMMAND (if provided)"
       company-selection-wrap-around t
       company-dabbrev-code-modes '(prog-mode)
       company-dabbrev-code-completion-styles t
+      company-dabbrev-downcase nil
+      company-dabbrev-ignore-case nil
       company-backends '(company-capf
                          company-dabbrev-code
                          company-files
