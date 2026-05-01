@@ -45,7 +45,7 @@
                              (replace-regexp-in-string "/" "\\\\" msys)
                              (getenv "PATH")))
              (setq shell-file-name "bash")
-             (setenv "LC_ALL" "en_US.UTF-8")
+             (setenv "LC_ALL" "en_GB.UTF-8")
              (delete gpg-path exec-path)
              (add-to-list 'exec-path (format "%s/usr/bin" msys))
              (add-to-list 'exec-path (format "%s/mingw64/bin" msys))
