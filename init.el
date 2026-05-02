@@ -1614,9 +1614,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
       completion-auto-select t)
 
 
-;; =============
 ;; Hippie-expand
-;; =============
 
 
 (setq hippie-expand-try-functions-list
@@ -1633,9 +1631,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
         try-expand-list-all-buffers))
 
 
-;; =========
 ;; Yasnippet
-;; =========
 
 
 (setq yas-verbosity 1)
@@ -1644,9 +1640,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (yas-global-mode 1)
 
 
-;; =======
 ;; Company
-;; =======
 
 
 (global-company-mode)
