@@ -3506,7 +3506,8 @@ Process .+
 
 (with-eval-after-load 'sql
   (add-to-list 'sql-sqlite-options "-interactive")
-  (sql-set-product-feature 'sqlite :init-commands '(".headers on"))
+  (sql-set-product-feature 'sqlite :init-commands '(".headers on"
+                                                    ".mode list"))
   (sql-set-product-feature 'sqlite :table-parser 'parse-sqlite-table))
 
 
