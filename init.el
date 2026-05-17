@@ -2013,22 +2013,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
     (call-interactively (key-binding (kbd "RET")))))
 
 
-;; Completion
-
-
-(defun comint-setup-completion ()
-  (setq-local company-backends '((company-capf company-dabbrev :separate))
-              comint-dynamic-complete-functions
-              (seq-difference comint-dynamic-complete-functions
-                              '(comint-c-a-p-replace-by-expanded-history
-                                shell-c-a-p-replace-by-expanded-directory
-                                shell-command-completion
-                                pcomplete-completions-at-point))))
-
-
-(add-hook 'comint-mode-hook 'comint-setup-completion)
-
-
 ;; Keybindings
 
 
@@ -2036,6 +2020,18 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (define-keymap :keymap comint-mode-map
     "C-c C-k" 'comint-kill-subjob
     "M-r" 'comint-browse-command-history))
+
+
+;; Completion
+
+
+(defun comint-setup-company ()
+  (setq-local company-backends '((company-capf company-dabbrev-code))
+              company-dabbrev-code-modes t
+              company-transformers '(delete-consecutive-dups)))
+
+
+(add-hook 'comint-mode-hook 'comint-setup-company)
 
 
 ;; =====
@@ -2127,12 +2123,14 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; Completion
 
 
-(defun sh-setup-completion ()
-  (setq-local company-backends '((company-capf company-dabbrev-code :separate))
-              completion-at-point-functions '(comint-completion-at-point t)))
+(add-hook 'sh-mode-hook 'comint-setup-company)
 
 
-(add-hook 'sh-mode-hook 'sh-setup-completion)
+(dolist (x '(sh-mode-hook shell-mode-hook))
+  (add-hook x (lambda ()
+                (setq-local completion-at-point-functions
+                            '(shell-environment-variable-completion
+                              comint-filename-completion)))))
 
 
 ;; ===========
