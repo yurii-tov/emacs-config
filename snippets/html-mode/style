@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# key: style
+# name: style
+# --
+<style type="text/css">
+  $0
+</style>
