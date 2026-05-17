@@ -2,11 +2,9 @@
 # name: <html>...</html>
 # --
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-  </head>
-</html>
+<head>
+  <meta charset="UTF-8" />
+</head>
 <html>
   <body>
     $0
