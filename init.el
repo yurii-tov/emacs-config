@@ -1657,7 +1657,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 (setq company-tooltip-offset-display 'lines
       company-selection-wrap-around t
-      company-dabbrev-code-modes '(prog-mode)
+      company-dabbrev-code-modes '(prog-mode conf-mode sgml-mode)
       company-dabbrev-code-completion-styles t
       company-dabbrev-code-everywhere t
       company-dabbrev-downcase nil
