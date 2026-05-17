@@ -1660,6 +1660,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
       company-dabbrev-code-modes '(prog-mode conf-mode sgml-mode)
       company-dabbrev-code-completion-styles t
       company-dabbrev-code-everywhere t
+      company-dabbrev-minimum-length 5
       company-dabbrev-downcase nil
       company-dabbrev-ignore-case nil
       company-backends '(company-capf
