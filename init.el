@@ -2848,6 +2848,14 @@ Example input:
               (apply f (cons nil (cdr args)))))
 
 
+(advice-add 'recompile
+            :after
+            '(lambda (&rest args)
+               "Update `compile-command'"
+               (when (car args)
+                 (setq compile-command (car compile-history)))))
+
+
 ;; ===
 ;; LSP
 ;; ===
