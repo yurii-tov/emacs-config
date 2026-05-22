@@ -358,7 +358,7 @@
 (which-key-mode)
 
 
-;; Fewer distractions
+;; Fewer annoyances
 
 
 (setq inhibit-startup-message t
