@@ -2851,7 +2851,7 @@ Example input:
 (advice-add 'recompile
             :after
             '(lambda (&rest args)
-               "Update `compile-command'"
+               "Update `compile-command' if read the command explicitly"
                (when (car args)
                  (setq compile-command (car compile-history)))))
 
