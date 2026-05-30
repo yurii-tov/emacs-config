@@ -2031,25 +2031,23 @@ Optionally, formats the buffer with COMMAND (if provided)"
               (concat "-" host) "")))
 
 
+(defun shell-find-buffer (directory &optional buffers)
+  (thread-first
+    `(and (derived-mode . shell-mode)
+          (lambda (b)
+            (with-current-buffer b
+              (file-equal-p default-directory ,directory))))
+    (match-buffers buffers)
+    car))
+
+
 (defun shell-setup-buffer ()
   (or (and current-prefix-arg
            (let ((default-directory (read-directory-name "Shell in: ")))
              (generate-new-buffer (shell-buffer-name))))
-      (let ((d default-directory))
-        (thread-last
-          `(and (derived-mode . shell-mode)
-                (lambda (b)
-                  (with-current-buffer b
-                    (file-equal-p default-directory ,d))))
-          match-buffers
-          car))
-      (when-let* ((project (project-current))
-                  (d (project-root project)))
-        (cl-find-if
-         (lambda (x) (with-current-buffer x
-                       (and (eq major-mode 'shell-mode)
-                            (file-equal-p default-directory d))))
-         (project-buffers project)))
+      (shell-find-buffer default-directory)
+      (when-let* ((p (project-current)))
+        (shell-find-buffer (project-root p) (project-buffers p)))
       (get-buffer-create (shell-buffer-name))))
 
 
