@@ -2,8 +2,6 @@ It isn't what we don't know that gives us trouble, it's what we know that ain't 
 %
 Begin with the simplest examples.
 %
-Adapting old programs to fit new machines usually means adapting new machines to behave like old ones.
-%
 Don't have good ideas if you aren't willing to be responsible for them.
 %
 In man-machine symbiosis, it is man who must adjust: The machines can't.
