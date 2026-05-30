@@ -2639,7 +2639,7 @@ Example input:
                   (vc-edited-state (setf (caddr s) "● "))))))
 
 
-;; Informative branch indicator in Git's vc-dir
+;; vc-dir buffer
 
 
 (defun update-vc-git-dir-extra-headers (headers)
@@ -2667,27 +2667,20 @@ Example input:
             #'update-vc-git-dir-extra-headers)
 
 
-;; Update vc-dir buffer after commit
-
-
 (defun vc-refresh-headers ()
   (ewoc-set-hf vc-ewoc (vc-dir-headers vc-dir-backend default-directory) ""))
 
 
-(defun vc-dir-log-edit-update ()
-  (when-let ((buffer (cl-find-if
-                      (lambda (x) (with-current-buffer x
-                                    (eq major-mode 'vc-dir-mode)))
-                      (when-let ((project (project-current)))
-                        (project-buffers project)))))
-    (with-current-buffer buffer
-      (run-with-timer 0.01 nil
-                      `(lambda ()
-                         (with-current-buffer ,buffer
-                           (vc-refresh-headers)))))))
-
-
-(add-hook 'log-edit-done-hook 'vc-dir-log-edit-update)
+(add-hook 'log-edit-done-hook
+          (lambda ()
+            (when-let* ((buffer (car (match-buffers
+                                      '(derived-mode . vc-dir-mode)
+                                      (project-buffers (project-current))))))
+              (with-current-buffer buffer
+                (run-with-timer 0.01 nil
+                                `(lambda ()
+                                   (with-current-buffer ,buffer
+                                     (vc-refresh-headers))))))))
 
 
 ;; Pull/push
