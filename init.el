@@ -2729,7 +2729,7 @@ Example input:
     (if commit-p
         (log-edit reset t nil "*commit*" 'vc-git-log-edit-mode)
       (funcall reset)
-      (vc-dir-log-edit-update))))
+      (vc-dir-refresh))))
 
 
 ;; Convenient revision copying
