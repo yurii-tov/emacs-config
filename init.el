@@ -1788,19 +1788,17 @@ Optionally, formats the buffer with COMMAND (if provided)"
               "Report process state transitions"
               (prog1 (apply f args)
                 (when-let ((p (get-buffer-process (cadr args))))
-                  (message "%s `%s` in %s"
+                  (message "%s %s"
                            (propertize "[started]" 'face 'shadow)
-                           (propertize (car args) 'face 'bold)
-                           (abbreviate-file-name default-directory))
+                           (car args))
                   (set-process-sentinel
                    (get-process p)
                    `(lambda (p e)
-                      (message "%s `%s` in %s"
+                      (message "%s %s"
                                (propertize
                                 (format "[%s]" (string-trim-right e))
                                 'face 'shadow)
-                               (propertize ,(car args) 'face 'bold)
-                               ,(abbreviate-file-name default-directory))
+                               ,(car args))
                       (unless (member (car (string-split e))
                                       '("stopped" "run"))
                         (read-only-mode -1))))))))
