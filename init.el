@@ -2056,14 +2056,17 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; Ssh sessions
 
 
+(defun read-ssh-hosts ()
+  (let* ((default-directory "~"))
+    (cl-delete-duplicates
+     (split-string (shell-command-to-string "c=~/.ssh/config; [ -f $c ] && sed -n -e '/Host \\*/ d' -e 's:Host ::p' $c"))
+     :test #'equal)))
+
+
 (defun ssh (host)
   "Establishes interactive ssh session"
-  (interactive (progn
-                 (require 'tramp)
-                 (thread-last "~/.ssh/config"
-                              tramp-parse-sconfig
-                              (mapcar #'cadr) (remove nil)
-                              (completing-read "Run ssh session: ") list)))
+  (interactive (list (completing-read "Run ssh session: "
+                                      (read-ssh-hosts))))
   (let ((default-directory (format "/sshx:%s:" host))
         (explicit-shell-file-name "/bin/bash"))
     (shell (shell-buffer-name))))
