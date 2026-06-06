@@ -12,7 +12,7 @@
   (with-temp-buffer (write-file f)))
 
 
-;; Site-specific
+;; Site-specific config files
 
 
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
