@@ -69,20 +69,16 @@
 ;; =============
 
 
-(reset-language-environment)
-
-
 (when (eq system-type 'windows-nt)
+  (reset-language-environment)
   (set-coding-system-priority 'cp1251-dos)
+  (prefer-coding-system 'utf-8-unix)
   (dolist (x '(compilation-start shell-command))
     (advice-add x :around
                 (lambda (f &rest args)
                   "Fix args encoding"
                   (let ((coding-system-for-write 'cp1251-unix))
                     (apply f args))))))
-
-
-(prefer-coding-system 'utf-8-unix)
 
 
 ;; ===========
