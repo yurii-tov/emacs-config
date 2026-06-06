@@ -2115,8 +2115,8 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; EWW
 
 
-(with-eval-after-load 'eww
-  (when (eq system-type 'windows-nt)
+(when (eq system-type 'windows-nt)
+  (with-eval-after-load 'eww
     (setq eww-download-directory
           (expand-file-name "Downloads" (getenv "USERPROFILE")))))
 
