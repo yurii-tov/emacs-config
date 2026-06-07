@@ -57,11 +57,8 @@
 
 (when (and (eq system-type 'android)
            (getenv "TERMUX_VERSION"))
-  (unless small-temporary-file-directory
-    (customize-set-variable
-     'small-temporary-file-directory
-     "/data/data/com.termux/cache/emacs/")
-    (make-directory small-temporary-file-directory t)))
+  (setq small-temporary-file-directory "/data/data/com.termux/cache/emacs/")
+  (make-directory small-temporary-file-directory t))
 
 
 ;; =============
