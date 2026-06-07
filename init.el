@@ -52,15 +52,6 @@
              (add-to-list 'exec-path gpg-path)))))
 
 
-;; Termux
-
-
-(when (and (eq system-type 'android)
-           (getenv "TERMUX_VERSION"))
-  (setq small-temporary-file-directory "/data/data/com.termux/cache/emacs/")
-  (make-directory small-temporary-file-directory t))
-
-
 ;; =============
 ;; Text encoding
 ;; =============
@@ -520,6 +511,12 @@
 
 (setq tramp-remote-path '(tramp-default-remote-path
                           "/data/data/com.termux/files/usr/bin"))
+
+
+(when (and (eq system-type 'android)
+           (getenv "TERMUX_VERSION"))
+  (setq tramp-ssh-controlmaster-options
+        "-o ControlPath=%%C -o ControlMaster=auto -o ControlPersist=no"))
 
 
 ;; =======
