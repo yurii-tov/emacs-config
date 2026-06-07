@@ -513,8 +513,7 @@
                           "/data/data/com.termux/files/usr/bin"))
 
 
-(when (and (eq system-type 'android)
-           (getenv "TERMUX_VERSION"))
+(when (eq system-type 'android)
   (setq tramp-ssh-controlmaster-options
         "-o ControlPath=%%C -o ControlMaster=auto -o ControlPersist=no"))
 
