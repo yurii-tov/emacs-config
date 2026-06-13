@@ -6,6 +6,11 @@
 ;; Third-party packages
 
 
+(setq package-archives
+      '(("gnu" . "https://elpa.gnu.org/packages/")
+        ("melpa" . "https://melpa.org/packages/")))
+
+
 (when-let* ((f (expand-file-name "elpa/compiled.txt" user-emacs-directory))
             ((not (file-exists-p f))))
   (package-recompile-all)
