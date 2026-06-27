@@ -723,7 +723,6 @@
 (setq read-file-name-function #'ido-read-file-name
       ido-enable-flex-matching t
       ido-use-filename-at-point 'guess
-      ido-use-url-at-point t
       ido-grid-mode-prefix ""
       ido-grid-mode-exact-match-prefix ""
       ido-grid-mode-first-line '(" " ido-grid-mode-count)
