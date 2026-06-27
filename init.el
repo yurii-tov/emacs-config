@@ -86,7 +86,7 @@
   "f" 'find-dired
   "g" 'rgrep
   "l" 'gptel-chat
-  "s" 'browse-url-or-search
+  "s" 'browse-url
   "d" 'camd
   "t" 'translate-en-ru)
 
@@ -2127,40 +2127,25 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; External
 
 
-(setq search-engines
-      '(("wb". "https://www.wildberries.ru/catalog/0/search.aspx?search=%s")))
+(unless window-system
+  (setq browse-url-browser-function 'eww-browse-url))
 
 
-(defun browse-url-or-search (query)
-  (interactive (list (read-string "Browse (WWW search): "
-                                  (when (use-region-p)
-                                    (prog1 (buffer-substring (region-beginning)
-                                                             (region-end))
-                                      (deactivate-mark)))
-                                  'browser-query-history)))
-  (let ((browse-url-browser-function (if (display-graphic-p)
-                                         'browse-url-default-browser
-                                       'eww-browse-url))
-        (ddg (concat (if (display-graphic-p)
-                         "https://duckduckgo.com"
-                       "https://html.duckduckgo.com/html/")
-                     "?q=%s")))
-    (cond ((string-match-p "^[a-zA-Z0-9]+://" query)
-           (browse-url query))
-          ((string-prefix-p "!" query)
-           (let* ((engine (cdr (assoc query search-engines
-                                      (lambda (a b) (string-prefix-p (format "!%s " a) b)))))
-                  (query (if engine
-                             (replace-regexp-in-string "^!.+? " "" query)
-                           query)))
-             (browse-url (format (or engine ddg) query))))
-          (t (browse-url (format ddg query))))))
-
-
-(setq ffap-url-fetcher
-      (lambda (x)
-        (browse-url-or-search x)
-        (add-to-history 'browser-query-history x)))
+(advice-add 'browse-url-interactive-arg
+            :override
+            (lambda (prompt)
+              "Pass non-urls to DDG; Grab region if any; Maintain the history"
+              (let ((query (read-string
+                            (string-replace ":" " (or DuckDuckGo query):" prompt)
+                            (if (use-region-p)
+                                (buffer-substring-no-properties
+                                 (region-beginning) (region-end))
+                              (ffap-url-at-point))
+                            'browser-query-history)))
+                (list
+                 (if (string-match-p "^[a-zA-Z0-9]+://" query) query
+                   (format "https://html.duckduckgo.com/html/?q=%s" query))
+                 (xor browse-url-new-window-flag current-prefix-arg)))))
 
 
 ;; ===================
@@ -2933,7 +2918,7 @@ Example input:
   (interactive)
   (if-let (url (eldoc-url-at-point))
       (progn (message "Opening doc: %s..." url)
-             (browse-url-or-search url))
+             (browse-url url))
     (message "No references at point")))
 
 
