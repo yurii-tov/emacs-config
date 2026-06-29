@@ -503,7 +503,8 @@
 (require 'savehist)
 
 
-(setq history-delete-duplicates t)
+(setq history-length 500
+      history-delete-duplicates t)
 
 
 (add-hook 'emacs-startup-hook 'savehist-mode)
