@@ -2001,7 +2001,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 
 (defun comint-setup-company ()
-  (setq-local company-backends '((company-capf company-dabbrev-code))
+  (setq-local company-backends '((company-capf company-dabbrev-code :separate))
               company-transformers '(delete-consecutive-dups)))
 
 
