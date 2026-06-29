@@ -1366,7 +1366,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 (defun insert-path (path)
   (interactive "fInsert path: ")
-  (insert path))
+  (insert (or (file-remote-p path 'localname) path)))
 
 
 ;; Enclosing
