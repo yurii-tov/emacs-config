@@ -87,7 +87,7 @@
   "g" 'rgrep
   "l" 'gptel-chat
   "s" 'browse-url
-  "M-s" 'browse-thig-at-point
+  "M-s" 'browse-url-dwim
   "d" 'camd
   "t" 'translate-en-ru)
 
@@ -2146,7 +2146,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
                       (xor browse-url-new-window-flag current-prefix-arg)))))
 
 
-(defun browse-thig-at-point ()
+(defun browse-url-dwim ()
   (interactive)
   (when-let* ((x (or (when (use-region-p)
                        (buffer-substring-no-properties
