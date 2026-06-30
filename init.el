@@ -2111,9 +2111,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; ===========
 
 
-;; EWW
-
-
 (when (eq system-type 'windows-nt)
   (with-eval-after-load 'eww
     (setq eww-download-directory
@@ -2123,9 +2120,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (with-eval-after-load 'shr
   (setq shr-use-fonts nil
         shr-inhibit-images t))
-
-
-;; External
 
 
 (setq browse-url-history nil)
@@ -2156,9 +2150,10 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (interactive)
   (when-let* ((x (or (when (use-region-p)
                        (buffer-substring-no-properties
-                        (region-beginning) (region-end)))
+                        (region-beginning) (region-end))
+                       (deactivate-mark))
                      (thing-at-point 'url t)
-                     (word-at-point))))
+                     (thing-at-point 'symbol t))))
     (add-to-history 'browse-url-history x)
     (browse-url (query-to-url x))))
 
