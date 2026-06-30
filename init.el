@@ -2111,6 +2111,13 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; ===========
 
 
+(setq browse-url-history nil)
+
+
+(unless window-system
+  (setq browse-url-browser-function 'eww-browse-url))
+
+
 (when (eq system-type 'windows-nt)
   (with-eval-after-load 'eww
     (setq eww-download-directory
@@ -2120,13 +2127,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (with-eval-after-load 'shr
   (setq shr-use-fonts nil
         shr-inhibit-images t))
-
-
-(setq browse-url-history nil)
-
-
-(unless window-system
-  (setq browse-url-browser-function 'eww-browse-url))
 
 
 (defun query-to-url (query)
