@@ -87,6 +87,7 @@
   "g" 'rgrep
   "l" 'gptel-chat
   "s" 'browse-url
+  "M-s" 'browse-thig-at-point
   "d" 'camd
   "t" 'translate-en-ru)
 
@@ -2127,8 +2128,16 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; External
 
 
+(setq browse-url-history nil)
+
+
 (unless window-system
   (setq browse-url-browser-function 'eww-browse-url))
+
+
+(defun query-to-url (query)
+  (if (string-match-p "^[a-zA-Z0-9]+://" query) query
+    (format "https://html.duckduckgo.com/html/?q=%s" query)))
 
 
 (advice-add 'browse-url-interactive-arg
@@ -2137,15 +2146,21 @@ Optionally, formats the buffer with COMMAND (if provided)"
               "Pass non-urls to DDG; Grab region if any; Maintain the history"
               (let ((query (read-string
                             (string-replace ":" " (or DuckDuckGo query):" prompt)
-                            (if (use-region-p)
-                                (buffer-substring-no-properties
-                                 (region-beginning) (region-end))
-                              (ffap-url-at-point))
-                            'browser-query-history)))
-                (list
-                 (if (string-match-p "^[a-zA-Z0-9]+://" query) query
-                   (format "https://html.duckduckgo.com/html/?q=%s" query))
-                 (xor browse-url-new-window-flag current-prefix-arg)))))
+                            nil
+                            'browse-url-history)))
+                (list (query-to-url query)
+                      (xor browse-url-new-window-flag current-prefix-arg)))))
+
+
+(defun browse-thig-at-point ()
+  (interactive)
+  (when-let* ((x (or (when (use-region-p)
+                       (buffer-substring-no-properties
+                        (region-beginning) (region-end)))
+                     (thing-at-point 'url t)
+                     (word-at-point))))
+    (add-to-history 'browse-url-history x)
+    (browse-url (query-to-url x))))
 
 
 ;; ===================
