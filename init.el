@@ -2150,8 +2150,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (interactive)
   (when-let* ((x (or (when (use-region-p)
                        (buffer-substring-no-properties
-                        (region-beginning) (region-end))
-                       (deactivate-mark))
+                        (region-beginning) (region-end)))
                      (thing-at-point 'url t)
                      (thing-at-point 'symbol t))))
     (add-to-history 'browse-url-history x)
