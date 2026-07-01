@@ -3124,7 +3124,7 @@ Example input:
   (add-hook m 'common-lisp-setup-company))
 
 
-(with-eval-after-load 'slime
+(with-eval-after-load 'slime-repl
   (keymap-unset slime-repl-mode-map "M-s"))
 
 
