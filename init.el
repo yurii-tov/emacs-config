@@ -3115,18 +3115,17 @@ Example input:
              '("\\.cl\\'" . common-lisp-mode))
 
 
-(defun use-eww-for-cl-hyperspec-lookup ()
-  (setq-local browse-url-browser-function 'eww-browse-url))
-
-
 (defun common-lisp-setup-company ()
   (require 'slime-company)
   (setq-local company-backends (cons 'company-slime (cdr company-backends))))
 
 
 (dolist (m '(lisp-mode-hook slime-repl-mode-hook))
-  (add-hook m 'use-eww-for-cl-hyperspec-lookup)
   (add-hook m 'common-lisp-setup-company))
+
+
+(with-eval-after-load 'slime
+  (keymap-unset slime-repl-mode-map "M-s"))
 
 
 ;; ==========
