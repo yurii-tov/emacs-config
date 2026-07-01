@@ -2129,6 +2129,11 @@ Optionally, formats the buffer with COMMAND (if provided)"
         shr-inhibit-images t))
 
 
+(defun query-to-url (query)
+  (if (string-match-p "^[a-zA-Z0-9]+://" query) query
+    (format "https://html.duckduckgo.com/html/?q=%s" query)))
+
+
 (advice-add 'browse-url-interactive-arg
             :override
             (lambda (prompt)
@@ -2137,9 +2142,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
                                          ":" " (or DuckDuckGo query):" prompt)
                                         (thing-at-point 'url t)
                                         'browse-url-history)))
-                (list (if (string-match-p "^[a-zA-Z0-9]+://" query)
-                          query
-                        (concat "https://html.duckduckgo.com/html/?q=" query))
+                (list (query-to-url query)
                       (xor browse-url-new-window-flag current-prefix-arg)))))
 
 
