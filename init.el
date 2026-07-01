@@ -87,6 +87,7 @@
   "g" 'rgrep
   "l" 'gptel-chat
   "s" 'browse-url
+  "M-s" 'browse-url-at-point
   "d" 'camd
   "t" 'translate-en-ru)
 
@@ -2131,22 +2132,29 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (advice-add 'browse-url-interactive-arg
             :override
             (lambda (prompt)
-              "Pass non-urls to DuckDuckGo; Grab region if selected"
-              (let ((query (or (when-let* (((use-region-p))
-                                           (r (buffer-substring-no-properties
-                                               (region-beginning)
-                                               (region-end))))
-                                 (prog1 r
-                                   (add-to-history 'browse-url-history r)))
-                               (read-string
-                                (string-replace
-                                 ":" " (or DuckDuckGo query):" prompt)
-                                (thing-at-point 'url t)
-                                'browse-url-history))))
+              "Pass non-urls to DuckDuckGo"
+              (let ((query (read-string (string-replace
+                                         ":" " (or DuckDuckGo query):" prompt)
+                                        (thing-at-point 'url t)
+                                        'browse-url-history)))
                 (list (if (string-match-p "^[a-zA-Z0-9]+://" query)
                           query
                         (concat "https://html.duckduckgo.com/html/?q=" query))
                       (xor browse-url-new-window-flag current-prefix-arg)))))
+
+
+(advice-add 'browse-url-at-point
+            :override
+            (lambda ()
+              "Also try selected region / symbol at point"
+              (interactive)
+              (when-let* ((x (or (when (use-region-p)
+                                   (buffer-substring-no-properties
+                                    (region-beginning) (region-end)))
+                                 (thing-at-point 'url t)
+                                 (thing-at-point 'symbol t))))
+                (add-to-history 'browse-url-history x)
+                (browse-url (query-to-url x)))))
 
 
 ;; ===================
