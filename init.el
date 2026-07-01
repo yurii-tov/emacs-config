@@ -2137,7 +2137,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (advice-add 'browse-url-interactive-arg
             :override
             (lambda (prompt)
-              "Pass non-urls to DDG; Maintain the history"
+              "Pass non-urls to DuckDuckGo"
               (let ((query (read-string
                             (string-replace ":" " (or DuckDuckGo query):" prompt)
                             nil
