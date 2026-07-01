@@ -87,7 +87,7 @@
   "g" 'rgrep
   "l" 'gptel-chat
   "s" 'browse-url
-  "M-s" 'browse-url-dwim
+  "M-s" 'browse-url-at-point
   "d" 'camd
   "t" 'translate-en-ru)
 
@@ -2146,15 +2146,18 @@ Optionally, formats the buffer with COMMAND (if provided)"
                       (xor browse-url-new-window-flag current-prefix-arg)))))
 
 
-(defun browse-url-dwim ()
-  (interactive)
-  (when-let* ((x (or (when (use-region-p)
-                       (buffer-substring-no-properties
-                        (region-beginning) (region-end)))
-                     (thing-at-point 'url t)
-                     (thing-at-point 'symbol t))))
-    (add-to-history 'browse-url-history x)
-    (browse-url (query-to-url x))))
+(advice-add 'browse-url-at-point
+            :override
+            (lambda ()
+              "Also try selected region / symbol at point"
+              (interactive)
+              (when-let* ((x (or (when (use-region-p)
+                                   (buffer-substring-no-properties
+                                    (region-beginning) (region-end)))
+                                 (thing-at-point 'url t)
+                                 (thing-at-point 'symbol t))))
+                (add-to-history 'browse-url-history x)
+                (browse-url (query-to-url x)))))
 
 
 ;; ===================
