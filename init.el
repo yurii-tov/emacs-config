@@ -1440,7 +1440,9 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 
 (with-eval-after-load 'rect
-  (keymap-set rectangle-mark-mode-map "SPC" 'string-rectangle))
+  (define-keymap :keymap rectangle-mark-mode-map
+    "SPC" 'string-rectangle
+    "e" 'rectangle-number-lines))
 
 
 ;; Multiple cursors
