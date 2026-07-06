@@ -2510,19 +2510,13 @@ Example input:
   (interactive)
   (when (org-table-p)
     (let* ((table (remove 'hline (org-table-to-lisp)))
-           (header (cons "№" (car table)))
            (rows (cdr table))
            (factors (apply #'cl-mapcar
-                           (lambda (&rest xs)
-                             (cl-remove-if (lambda (x) (equal x "")) xs))
+                           (lambda (&rest xs) (remove "" xs))
                            rows))
-           (cp (cartesian-product factors))
            (table-cartesian-product
-            (append (cl-list* 'hline header 'hline
-                              (cl-mapcar #'cons
-                                         (cl-loop for i from 1 upto (length cp)
-                                                  collect i)
-                                         cp))
+            (append (cl-list* 'hline (car table) 'hline
+                              (cartesian-product factors))
                     '(hline))))
       (delete-region (org-table-begin) (org-table-end))
       (insert (format "%s\n" (orgtbl-to-orgtbl
