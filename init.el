@@ -264,8 +264,7 @@
 ;; Fonts
 
 
-(when-let* ((window-system)
-            (fonts (font-family-list)))
+(when-let* ((fonts (font-family-list)))
   (dolist (x '((default "Cascadia Code" "Consolas" "Ubuntu Mono")
                (fixed-pitch "Consolas" "Ubuntu Mono")))
     (when-let* ((font (cl-find-if (lambda (x)
