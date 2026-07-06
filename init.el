@@ -2510,7 +2510,7 @@ Example input:
   (interactive)
   (when (org-table-p)
     (let* ((table (remove 'hline (org-table-to-lisp)))
-           (header (cons "#" (car table)))
+           (header (cons "№" (car table)))
            (rows (cdr table))
            (factors (apply #'cl-mapcar
                            (lambda (&rest xs)
