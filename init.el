@@ -1719,10 +1719,11 @@ Optionally, formats the buffer with COMMAND (if provided)"
                                                      company-candidates))
                     '(snippet method)))
          (company-complete))
-        ((and company-selection
+        ((and company-candidates
               (get-char-property (1- (point)) 'yas--field))
-         (company-complete)
-         (yas-next-field-or-maybe-expand))
+         (or (company-complete-selection)
+             (company-cancel))
+         (run-with-timer 0.01 nil #'yas-next-field-or-maybe-expand))
         (t (when company-selection
              (company-complete))
            (call-interactively 'self-insert-command))))
