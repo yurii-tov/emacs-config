@@ -162,7 +162,7 @@
   "C-2" 'split-window-below         "C-x =" 'hl-line-mode
   "C-3" 'split-window-right         "C-x o" 'open-in-external-program
   "C-0" 'delete-window              "C-x i" 'what-cursor-position
-  "M-k" 'kill-line-to-indentation   "C-x d" 'diff-map
+  "M-k" 'kill-to-indentation        "C-x d" 'diff-map
   "M-=" 'count-words                "C-x b" 'bookmark-set
   "M-q" 'hippie-expand              "C-x B" 'bookmark-delete
   "M-1" 'shell-command              "C-x j" 'bookmark-jump
@@ -1580,17 +1580,15 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (move-line 'down))
 
 
-(defun kill-line-to-indentation ()
-  "Kills line, leaving cursor at indentation.
-   In case of empty line, kills whole line"
+(defun kill-to-indentation ()
+  "Kill the line until indentation, or delete if blank"
   (interactive)
-  (back-to-indentation)
-  (when (string-match-p "^[     ]*$"
-                        (buffer-substring
-                         (line-beginning-position)
-                         (line-end-position)))
-    (beginning-of-line))
-  (kill-line))
+  (if (string-blank-p (buffer-substring
+                       (line-beginning-position)
+                       (line-end-position)))
+      (delete-line)
+    (back-to-indentation)
+    (kill-line)))
 
 
 ;; Case swap
