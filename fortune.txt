@@ -1,41 +1,21 @@
 It isn't what we don't know that gives us trouble, it's what we know that ain't so.
-%
 Begin with the simplest examples.
-%
 Don't have good ideas if you aren't willing to be responsible for them.
-%
 In man-machine symbiosis, it is man who must adjust: The machines can't.
-%
 Simplicity does not precede complexity, but follows it.
-%
 Real knowledge is to know the extent of one’s ignorance.
-%
 As a rule, software systems do not work well until they have been used, and have failed repeatedly, in real applications.
-%
 Time spent in sharpening the axe may well be spared from swinging it.
-%
 Perfecting oneself is as much unlearning as it is learning.
-%
 Remember: patience, discipline.
-%
 Much of the excitement we get out of our work is that we don't really know what we are doing.
-%
 Experience does by no means automatically leads to wisdom and understanding.
-%
 The prisoner falls in love with his chains.
-%
 Thanks to the greatly improved possibility of communication, we overrate its importance. Even stronger, we underrate the importance of isolation.
-%
 Testing shows the presence, not the absence of bugs.
-%
 The key to understanding complicated things is knowing what not to look at.
-%
 The more you know, the more you realize you know nothing.
-%
 The greatest enemy of knowledge is not ignorance, it is the illusion of knowledge.
-%
 Not all those who wander are lost
-%
 There's never enough time to do all the nothing you want
-%
 Don't repair things that isn't broken
