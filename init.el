@@ -2176,8 +2176,9 @@ Optionally, formats the buffer with COMMAND (if provided)"
               "Also try selected region / symbol at point"
               (interactive)
               (when-let* ((x (or (when (use-region-p)
-                                   (buffer-substring-no-properties
-                                    (region-beginning) (region-end)))
+                                   (prog1 (buffer-substring-no-properties
+                                           (region-beginning) (region-end))
+                                     (deactivate-mark)))
                                  (thing-at-point 'url t)
                                  (thing-at-point 'symbol t))))
                 (add-to-history 'browse-url-history x)
