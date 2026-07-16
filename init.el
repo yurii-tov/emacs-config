@@ -1894,6 +1894,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (setq comint-pager "cat"
       comint-scroll-show-maximum-output nil
       comint-buffer-maximum-size (expt 2 13)
+      comint-completion-addsuffix nil
       comint-input-ring-size (expt 2 10)
       comint-input-ignoredups t
       comint-input-ring-separator "
