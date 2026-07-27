@@ -168,23 +168,23 @@
   "M-1" 'shell-command              "C-x j" 'bookmark-jump
   "M-!" 'async-shell-command        "C-x u" 'reopen-with-sudo
   "M-2" 'enclose-text-quotes        "C-x l" 'eglot
-  "M-3" 'enclose-text-asterisks     "C-x C-b" 'ibuffer
-  "M-4" 'enclose-text-apostrophes   "C-x C-k" 'kill-buffer-and-window
-  "M-9" 'enclose-text-parenthesis   "C-x C-=" 'display-line-numbers-mode
-  "M-(" 'enclose-text-angle         "C-x C-l" 'gptel-menu
-  "M-0" 'enclose-text-square        "C-c j" 'cider-start-map
-  "M-)" 'enclose-text-curly         "C-c k" 'sql-connect
-  "M-i" 'format-buffer              "C-c i" 'ielm
-  "M-u" 'force-revert-buffer        "C-c s" 'ssh
-  "M-j" 'switch-to-buffer           "C-c d" 'serve-directory
-  "M-`" 'shell                      "C-c v" 'capture-video
-  "M-g" 'goto-line                  "C-c h" 'hexl-mode
-  "M-/" project-prefix-map          "C-c c" 'org-capture
-  "M-l" 'move-line-up               "C-c a" 'org-agenda
-  "M-M" 'mc/mark-all-dwim           "C-c o" 'org-push
-  "M-N" 'mc/mark-next-like-this     "C-c O" 'org-pull
-  "M-P" 'mc/mark-previous-like-this "C-c w" 'watch-file)
-
+  "M-3" 'enclose-text-asterisks     "C-x p" 'pass
+  "M-4" 'enclose-text-apostrophes   "C-x C-b" 'ibuffer
+  "M-9" 'enclose-text-parenthesis   "C-x C-k" 'kill-buffer-and-window
+  "M-(" 'enclose-text-angle         "C-x C-=" 'display-line-numbers-mode
+  "M-0" 'enclose-text-square        "C-x C-l" 'gptel-menu
+  "M-)" 'enclose-text-curly         "C-c j" 'cider-start-map
+  "M-i" 'format-buffer              "C-c k" 'sql-connect
+  "M-u" 'force-revert-buffer        "C-c i" 'ielm
+  "M-j" 'switch-to-buffer           "C-c s" 'ssh
+  "M-`" 'shell                      "C-c d" 'serve-directory
+  "M-g" 'goto-line                  "C-c v" 'capture-video
+  "M-/" project-prefix-map          "C-c h" 'hexl-mode
+  "M-l" 'move-line-up               "C-c c" 'org-capture
+  "M-M" 'mc/mark-all-dwim           "C-c a" 'org-agenda
+  "M-N" 'mc/mark-next-like-this     "C-c o" 'org-push
+  "M-P" 'mc/mark-previous-like-this "C-c O" 'org-pull
+  "C-c w" 'watch-file)
 
 ;; Conflicts
 
@@ -3534,3 +3534,20 @@ Process .+
         (with-current-buffer buffer-name
           (setq-local capture-file-name capture-file-name))
         (message "Capturing video to file: %s" capture-file-name)))))
+
+
+;; ====
+;; Pass
+;; ====
+
+
+(defun pass ()
+  (interactive)
+  (let ((default-directory "~/.password-store/"))
+    (find-file-read-only
+     (completing-read "View password: "
+                      (split-string
+                       (shell-command-to-string
+                        "git ls-files | grep .gpg$")
+                       "\n" t)))
+    (fundamental-mode)))
