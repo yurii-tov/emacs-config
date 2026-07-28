@@ -2766,9 +2766,6 @@ Example input:
         (project-compile "Compile")))
 
 
-(add-hook 'emacs-startup-hook 'project-forget-zombie-projects)
-
-
 (defun project-try-file (dir)
   (cl-loop for pattern in '("pom.xml" ; Java
                             "*.iml"
