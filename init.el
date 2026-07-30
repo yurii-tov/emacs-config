@@ -3523,10 +3523,11 @@ Process .+
 (defun pass ()
   (interactive)
   (let ((default-directory "~/.password-store/"))
-    (find-file-read-only
+    (find-file
      (completing-read "View password: "
                       (split-string
                        (shell-command-to-string
                         "git ls-files | grep .gpg$")
                        "\n" t)))
-    (fundamental-mode)))
+    (fundamental-mode)
+    (read-only-mode)))
