@@ -2,4 +2,4 @@
 # name: the currently executing/sourced script's directory
 # key: swd
 # --
-$(readlink -f $(dirname $0))
+$(readlink -f $(dirname \$0))

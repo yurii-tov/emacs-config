@@ -1,6 +1,6 @@
 # -*- mode: snippet -*-
 # name: if
-# key: iff
+# key: if
 # --
 if ${1:[ -f file]}
    then ${2:do}
