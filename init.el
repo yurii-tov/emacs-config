@@ -1654,15 +1654,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
                 (company-complete-common))))
 
 
-(dolist (x '(company-dabbrev-code company-dabbrev))
-  (advice-add x :around (lambda (f &rest args)
-                          "Prevent completion on empty prefix"
-                          (let ((r (apply f args)))
-                            (cl-case (car args)
-                              (prefix (unless (string-empty-p (car r)) r))
-                              (t r))))))
-
-
 (advice-add 'company-select-next
             :around
             (lambda (f &rest args)
