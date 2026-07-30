@@ -1611,7 +1611,8 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; Yasnippet
 
 
-(setq yas-verbosity 1)
+(setq yas-verbosity 1
+      yas-triggers-in-field t)
 
 
 (yas-global-mode 1)
