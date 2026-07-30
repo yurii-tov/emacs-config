@@ -2,6 +2,10 @@
 # name: new Class
 # key: cl
 # --
-public class ${1:Class} {
-    $0
+package ${1:example};
+
+public class ${2:`(file-name-base
+                    (or (buffer-file-name)
+                        (buffer-name)))`} {
+  $0
 }

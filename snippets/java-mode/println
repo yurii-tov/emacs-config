@@ -3,4 +3,3 @@
 # key: sout
 # --
 System.out.println($1);
-$0

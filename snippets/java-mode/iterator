@@ -1,7 +1,0 @@
-# -*- mode: snippet -*-
-# name: iterator
-# key: iter
-# --
-public Iterator<${1:type}> iterator() {
-       $0
-}

@@ -1,6 +1,6 @@
 # -*- mode: snippet -*-
 # name: Create new object
-# key: nn
+# key: new
 # --
 ${1:Type} ${2:obj} = new $1(${4:args});
 $0
