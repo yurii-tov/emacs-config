@@ -2671,8 +2671,8 @@ Example input:
                            shell-command-to-string
                            string-trim-right))
                     (m (if (equal command "pull")
-                           "Pulling from" "Pushing to")))
-                (message "%s %s..." m url)
+                           "[pull ←]" "[push →]")))
+                (message "%s %s" (propertize m 'face 'shadow) url)
                 (shell-command
                  (concat "git " (string-join (cons command extra-args) " ")))
                 (when (eq major-mode 'vc-dir-mode)
