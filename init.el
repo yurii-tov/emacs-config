@@ -2666,11 +2666,15 @@ Example input:
             :override
             (lambda (command _ extra-args)
               "Run the command synchronously"
-              (let* ((git-args (cons command extra-args))
-                     (command (format "git %s" (string-join git-args " "))))
-                (message "Running %s..." (propertize command 'face 'bold))
-                
-                (shell-command command)
+              (let ((url (thread-first
+                           "git config get remote.$(git remote).url"
+                           shell-command-to-string
+                           string-trim-right))
+                    (m (if (equal command "pull")
+                           "Pulling from" "Pushing to")))
+                (message "%s %s..." m url)
+                (shell-command
+                 (format "git %s" (string-join (cons command extra-args) " ")))
                 (when (eq major-mode 'vc-dir-mode)
                   (vc-refresh-headers)))))
 
