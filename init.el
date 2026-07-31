@@ -2030,8 +2030,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 (defun shell-setup-buffer (&optional arg)
   (or (shell-find-buffer default-directory)
-      (and arg
-           (generate-new-buffer (shell-buffer-name)))
+      (and arg (generate-new-buffer (shell-buffer-name)))
       (when-let* ((p (project-current)))
         (shell-find-buffer (project-root p) (project-buffers p)))
       (get-buffer-create (shell-buffer-name))))
