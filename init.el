@@ -2669,6 +2669,7 @@ Example input:
               (let* ((git-args (cons command extra-args))
                      (command (format "git %s" (string-join git-args " "))))
                 (message "Running %s..." (propertize command 'face 'bold))
+                
                 (shell-command command)
                 (when (eq major-mode 'vc-dir-mode)
                   (vc-refresh-headers)))))
