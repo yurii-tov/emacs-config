@@ -2667,7 +2667,7 @@ Example input:
             (lambda (command _ extra-args)
               "Run the command synchronously"
               (let ((url (thread-first
-                           "git config get remote.$(git remote).url"
+                           "git config --get remote.$(git remote).url"
                            shell-command-to-string
                            string-trim-right))
                     (m (if (equal command "pull")
