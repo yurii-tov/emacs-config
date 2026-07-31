@@ -2028,11 +2028,10 @@ Optionally, formats the buffer with COMMAND (if provided)"
     car))
 
 
-(defun shell-setup-buffer ()
-  (or (and current-prefix-arg
-           (let ((default-directory (read-directory-name "Shell in: ")))
-             (generate-new-buffer (shell-buffer-name))))
-      (shell-find-buffer default-directory)
+(defun shell-setup-buffer (&optional arg)
+  (or (shell-find-buffer default-directory)
+      (and arg
+           (generate-new-buffer (shell-buffer-name)))
       (when-let* ((p (project-current)))
         (shell-find-buffer (project-root p) (project-buffers p)))
       (get-buffer-create (shell-buffer-name))))
@@ -2042,7 +2041,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
             :around
             (lambda (f &rest args)
               "Use `shell-setup-buffer'"
-              (interactive (list (shell-setup-buffer)))
+              (interactive (list (shell-setup-buffer current-prefix-arg)))
               (apply f args)))
 
 
