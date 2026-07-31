@@ -2674,7 +2674,7 @@ Example input:
                            "Pulling from" "Pushing to")))
                 (message "%s %s..." m url)
                 (shell-command
-                 (format "git %s" (string-join (cons command extra-args) " ")))
+                 (concat "git " (string-join (cons command extra-args) " ")))
                 (when (eq major-mode 'vc-dir-mode)
                   (vc-refresh-headers)))))
 
