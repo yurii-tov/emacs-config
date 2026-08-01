@@ -2028,9 +2028,10 @@ Optionally, formats the buffer with COMMAND (if provided)"
     car))
 
 
-(defun shell-setup-buffer (&optional arg)
+(defun shell-setup-buffer ()
   (or (shell-find-buffer default-directory)
-      (and arg (generate-new-buffer (shell-buffer-name)))
+      (when current-prefix-arg
+        (generate-new-buffer (shell-buffer-name)))
       (when-let* ((p (project-current)))
         (shell-find-buffer (project-root p) (project-buffers p)))
       (get-buffer-create (shell-buffer-name))))
@@ -2040,7 +2041,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
             :around
             (lambda (f &rest args)
               "Use `shell-setup-buffer'"
-              (interactive (list (shell-setup-buffer current-prefix-arg)))
+              (interactive (list (shell-setup-buffer)))
               (apply f args)))
 
 
