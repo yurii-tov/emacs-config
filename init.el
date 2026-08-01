@@ -2414,10 +2414,9 @@ Also grabs a selected region, if any."
 
 (defun org-push ()
   (interactive)
-  (let ((default-directory org-directory)
-        (c "git add * && git commit -m 'Updated' && touch *.org"))
-    (when (zerop (shell-command c))
-      (vc-push))))
+  (when-let* ((default-directory org-directory)
+              ((zerop (shell-command c))))
+    (vc-push)))
 
 
 (defun org-pull ()
