@@ -2415,15 +2415,14 @@ Also grabs a selected region, if any."
 (defun org-push ()
   (interactive)
   (let ((default-directory org-directory))
-    (message "Pushing org repository...")
-    (shell-command "git add * && git commit -m 'Updated' && git push && touch *.org")))
+    (when (= (shell-command "git add * && git commit -m 'Updated'") 1)
+      (vc-push))))
 
 
 (defun org-pull ()
   (interactive)
   (let ((default-directory org-directory))
-    (message "Pulling org repository...")
-    (shell-command "git pull")))
+    (vc-pull)))
 
 
 ;; Export
@@ -3536,3 +3535,9 @@ Process .+
                        "\n" t)))
     (fundamental-mode)
     (read-only-mode)))
+
+
+(defun pass-pull ()
+  (interactive)
+  (let ((default-directory "~/.password-store/"))
+    (vc-pull)))
