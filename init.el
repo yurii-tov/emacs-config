@@ -288,6 +288,9 @@
 ;; Color themes
 
 
+(setq custom-safe-themes t)
+
+
 (advice-add 'load-theme
             :before
             (lambda (&rest _)
