@@ -2251,6 +2251,15 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (setq nov-text-width 70))
 
 
+;; ===
+;; GPG
+;; ===
+
+
+(setq epg-pinentry-mode 'loopback
+      epa-keys-select-method 'minibuffer)
+
+
 ;; ===============
 ;; LLM integration
 ;; ===============
