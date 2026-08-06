@@ -17,16 +17,12 @@
   (with-temp-buffer (write-file f)))
 
 
-;; Site-specific config files
-
-
-(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+;; Site-specific config
 
 
 (add-hook 'emacs-startup-hook
           (lambda ()
-            (load custom-file t)
-            (load (expand-file-name "site.el" user-emacs-directory) t)))
+            (load "~/.emacs.d/site.el" t)))
 
 
 ;; MSYS2
