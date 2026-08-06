@@ -11,7 +11,7 @@
         ("melpa" . "https://melpa.org/packages/")))
 
 
-(when-let* ((f (expand-file-name "elpa/compiled.txt" user-emacs-directory))
+(when-let* ((f "~/.emacs.d/elpa/compiled.txt")
             ((not (file-exists-p f))))
   (package-recompile-all)
   (with-temp-buffer (write-file f)))
@@ -1370,8 +1370,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (defun insert-fortune ()
   (interactive)
   (insert (with-temp-buffer
-            (insert-file-contents (expand-file-name "fortune.txt"
-                                                    user-emacs-directory))
+            (insert-file-contents "~/.emacs.d/fortune.txt")
             (goto-char (1+ (cl-random (point-max))))
             (buffer-substring (line-beginning-position)
                               (line-end-position)))))
@@ -1923,8 +1922,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
                              (replace-regexp-in-string
                               "^.*sh$\\|cmdproxy" "sh"))))
     (setq comint-input-ring-file-name
-          (expand-file-name (format ".%s-history" histfile-id)
-                            user-emacs-directory))
+          (format "~/.emacs.d/.%s-history" histfile-id))
     (if (ring-empty-p comint-input-ring)
         (comint-read-input-ring t)
       (comint-save-history))
@@ -3098,8 +3096,7 @@ Example input:
 ;; =======
 
 
-(setq cider-repl-history-file (expand-file-name ".cider-history"
-                                                user-emacs-directory)
+(setq cider-repl-history-file "~/.emacs.d/.cider-history"
       cider-show-error-buffer nil)
 
 
