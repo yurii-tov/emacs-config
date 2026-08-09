@@ -1221,7 +1221,7 @@
 (advice-add 'View-exit :override #'read-only-mode)
 
 
-;; Search
+;; Search/Replace
 
 
 (setq isearch-lazy-count t)
@@ -1236,9 +1236,6 @@
 
 (dolist (x '(regexp-search-ring search-ring))
   (add-to-list 'savehist-additional-variables x))
-
-
-;; Replace
 
 
 (keymap-set query-replace-map "M-SPC" 'automatic)
@@ -1508,10 +1505,39 @@ Optionally, formats the buffer with COMMAND (if provided)"
                              (cdddr args))))))))
 
 
-;; Line actions
+(defun move-line (direction)
+  (cond ((eq direction 'up)
+         (beginning-of-line)
+         (transpose-lines 1)
+         (dotimes (i 2)
+           (previous-line 1)
+           (beginning-of-line)))
+        ((eq direction 'down)
+         (end-of-line)
+         (next-line)
+         (move-line 'up)
+         (end-of-line)
+         (next-line)
+         (beginning-of-line))))
+
+
+(defun move-line-up ()
+  (interactive)
+  (move-line 'up))
+
+
+(defun move-line-down ()
+  (interactive)
+  (move-line 'down))
+
+
+;; Duplication
 
 
 (setq duplicate-line-final-position -1)
+
+
+;; Break/Join
 
 
 (defun break-line ()
@@ -1543,32 +1569,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
       (dotimes (i 2) (delete-blank-lines))
       (next-line)
       (delete-indentation))))
-
-
-(defun move-line (direction)
-  (cond ((eq direction 'up)
-         (beginning-of-line)
-         (transpose-lines 1)
-         (dotimes (i 2)
-           (previous-line 1)
-           (beginning-of-line)))
-        ((eq direction 'down)
-         (end-of-line)
-         (next-line)
-         (move-line 'up)
-         (end-of-line)
-         (next-line)
-         (beginning-of-line))))
-
-
-(defun move-line-up ()
-  (interactive)
-  (move-line 'up))
-
-
-(defun move-line-down ()
-  (interactive)
-  (move-line 'down))
 
 
 ;; Case swap
