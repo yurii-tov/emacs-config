@@ -2086,6 +2086,9 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (keymap-set shell-mode-map "C-x u" 'shell-elevate))
 
 
+;; Regions execution
+
+
 (with-eval-after-load 'sh-script
   (keymap-set sh-mode-map "C-c C-c" 'sh-execute-region)
   (advice-add 'sh-execute-region
