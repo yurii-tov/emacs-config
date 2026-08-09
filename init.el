@@ -39,7 +39,8 @@
                 (p (replace-regexp-in-string "/" "\\\\" x)))
       (add-to-list 'exec-path x)
       (setenv "PATH" (concat p ";" (getenv "PATH")))))
-  (setq shell-file-name "bash")
+  (setq shell-file-name "bash"
+        sh-shell-file "bash")
   (setenv "LC_ALL" "en_GB.UTF-8"))
 
 
@@ -2083,6 +2084,17 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 (with-eval-after-load 'shell
   (keymap-set shell-mode-map "C-x u" 'shell-elevate))
+
+
+(with-eval-after-load 'sh-script
+  (keymap-set sh-mode-map "C-c C-c" 'sh-execute-region)
+  (advice-add 'sh-execute-region
+              :filter-args
+              (lambda (args)
+                "Execute whole buffer unless a region selected"
+                (if (use-region-p) args
+                  (append (list (point-min) (point-max))
+                          (cddr args))))))
 
 
 ;; Completion
