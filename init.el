@@ -25,25 +25,6 @@
             (load "~/.emacs.d/site.el" t)))
 
 
-;; MSYS2
-
-
-(when-let* (((eq system-type 'windows-nt))
-            (msys "c:/tools/msys64")
-            ((file-exists-p msys))
-            (paths (list (format "%s/usr/bin" msys)
-                         (format "%s/mingw64/bin" msys)
-                         "c:/Program Files (x86)/GnuPG/bin/")))
-  (dolist (x paths)
-    (when-let* (((file-exists-p x))
-                (p (replace-regexp-in-string "/" "\\\\" x)))
-      (add-to-list 'exec-path x)
-      (setenv "PATH" (concat p ";" (getenv "PATH")))))
-  (setq shell-file-name "bash"
-        sh-shell-file "bash")
-  (setenv "LC_ALL" "en_GB.UTF-8"))
-
-
 ;; =============
 ;; Text encoding
 ;; =============
@@ -2010,6 +1991,11 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 (setq shell-prompt-pattern "^[^#$%>
 ]*#?[#$%>] *")
+
+
+(when (eq system-type 'windows-nt)
+  (setq shell-file-name "c:/Program Files/Git/bin/bash.exe"
+        sh-shell-file "c:/Program Files/Git/bin/bash.exe"))
 
 
 (defun shell-buffer-name ()
