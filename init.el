@@ -2162,14 +2162,11 @@ Optionally, formats the buffer with COMMAND (if provided)"
          (query-encoded (url-encode-url (replace-regexp-in-string "'" "" query)))
          (query-message (propertize query 'face 'bold))
          (en-ru `((description . "from English to Russian")
-                  (command . ,(concat "bash -c \"curl -sL -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0' '%s"
-                                      "' | sed -rn '/span class=.trans/ {s:.*<span.*>(.*[^ ]) *<.span>.*:\\1:g ; p}'"
-                                      " | uniq | head -5\""))
+                  (command . "curl -sL -A 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0' '%s' | sed -rn '/span class=.trans/ {s:.*<span.*>(.*[^ ]) *<.span>.*:\\1:g ; p}' | uniq | head -5")
                   (link . ,(format "https://dictionary.cambridge.org/search/direct/?datasetsearch=english-russian&q=%s"
                                    query-encoded))))
          (ru-en `((description . "from Russian to English")
-                  (command . ,(concat "bash -c \"curl -sL '%s"
-                                      "' | grep -oP '(?<=class=.tl.>)[^<]+' | head -5 | tail -n +2\""))
+                  (command . "curl -sL '%s' | grep -oP '(?<=class=.tl.>)[^<]+' | head -5 | tail -n +2")
                   (link . ,(format "https://en.openrussian.org/ru/%s"
                                    query-encoded))))
          (preset (if (string-match "[a-zA-Z]" query)
