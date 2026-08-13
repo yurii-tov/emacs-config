@@ -1,9 +1,6 @@
-;; ======
-;; System
-;; ======
-
-
-;; Third-party packages
+;; ========
+;; Packages
+;; ========
 
 
 (setq package-archives
@@ -17,7 +14,9 @@
   (with-temp-buffer (write-file f)))
 
 
+;; ====================
 ;; Site-specific config
+;; ====================
 
 
 (add-hook 'emacs-startup-hook
