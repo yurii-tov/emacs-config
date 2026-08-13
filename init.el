@@ -2072,10 +2072,10 @@ Optionally, formats the buffer with COMMAND (if provided)"
               :around
               (lambda (f &rest args)
                 "Execute whole buffer unless a region selected"
-                (interactive)
-                (apply f (if (use-region-p)
-                             args
-                           (cl-list* (point-min) (point-max) (cddr args)))))))
+                (interactive (if (use-region-p)
+                                 (list (region-beginning) (region-end))
+                               (list (point-min) (point-max))))
+                (apply f args))))
 
 
 ;; Completion
