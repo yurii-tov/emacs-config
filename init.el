@@ -2069,12 +2069,13 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (with-eval-after-load 'sh-script
   (keymap-set sh-mode-map "C-c C-c" 'sh-execute-region)
   (advice-add 'sh-execute-region
-              :filter-args
-              (lambda (args)
+              :around
+              (lambda (f &rest args)
                 "Execute whole buffer unless a region selected"
-                (if (use-region-p) args
-                  (append (list (point-min) (point-max))
-                          (cddr args))))))
+                (interactive)
+                (apply f (if (use-region-p)
+                             args
+                           (cl-list* (point-min) (point-max) (cddr args)))))))
 
 
 ;; Completion
