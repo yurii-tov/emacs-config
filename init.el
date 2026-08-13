@@ -1993,7 +1993,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 
 (when (eq system-type 'windows-nt)
-  (add-to-list 'exec-path "c:/Program Files/Git/bin/")
   (setq shell-file-name "sh"
         sh-shell-file "sh"))
 
