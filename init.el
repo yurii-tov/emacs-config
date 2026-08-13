@@ -974,7 +974,6 @@
     "z" 'dired-do-compress
     "f" 'dired-flatten-directory
     "s" 'dired-calculate-size
-    "S" 'dired-calculate-size-tree
     "c" 'dired-do-copy
     "r" 'dired-do-rename
     "k" 'dired-do-delete
@@ -1031,7 +1030,7 @@
       (message "This command works only on directories"))))
 
 
-(defun dired-calculate-size (&optional tree-p)
+(defun dired-calculate-size ()
   (interactive)
   (let* ((files (mapcar #'file-relative-name
                         (dired-get-marked-files)))
@@ -1042,17 +1041,9 @@
                                   files)
                           ", "))
     (shell-command
-     (if tree-p
-         (format "tree --du -h %s"
-                 (string-join args  " "))
-       (format "du -hs%s %s"
-               (if (> (length args) 1) "c" "")
-               (string-join args  " "))))))
-
-
-(defun dired-calculate-size-tree ()
-  (interactive)
-  (dired-calculate-size t))
+     (format "du -hs%s %s"
+             (if (> (length args) 1) "c" "")
+             (string-join args  " ")))))
 
 
 ;; ====
