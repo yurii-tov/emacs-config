@@ -1993,8 +1993,9 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 
 (when (eq system-type 'windows-nt)
-  (setq shell-file-name "c:/Program Files/Git/bin/bash.exe"
-        sh-shell-file "c:/Program Files/Git/bin/bash.exe"))
+  (add-to-list 'exec-path "c:/Program Files/Git/bin/")
+  (setq shell-file-name "sh"
+        sh-shell-file "sh"))
 
 
 (defun shell-buffer-name ()
