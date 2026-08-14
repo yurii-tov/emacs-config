@@ -3509,9 +3509,9 @@ Process .+
         (message "Capturing video to file: %s" capture-file-name)))))
 
 
-;; ====
-;; Pass
-;; ====
+;; =========
+;; Passwords
+;; =========
 
 
 (defun pass ()
@@ -3531,3 +3531,10 @@ Process .+
   (interactive)
   (let ((default-directory "~/.password-store/"))
     (vc-pull)))
+
+
+(defun generate-password (arg)
+  (interactive "P")
+  (let ((p (shell-command-to-string
+            "tr -cd [:graph:] < /dev/urandom | head -c 42")))
+    (if arg (insert p) (message p))))
