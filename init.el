@@ -2679,6 +2679,7 @@ Example input:
                                      (list dir)
                                      (vc-responsible-backend dir)
                                      default))
+         (w (current-window-configuration))
          (reset `(lambda ()
                    (interactive)
                    (apply #'call-process "git" nil nil nil
@@ -2686,7 +2687,8 @@ Example input:
                    (when ,commit-p
                      (vc-git-checkin
                       nil (string-trim (buffer-substring 10 (point-max))))
-                     (kill-buffer)))))
+                     (kill-buffer)
+                     (set-window-configuration ,w)))))
     (if commit-p
         (log-edit reset t nil "*commit*" 'vc-git-log-edit-mode)
       (funcall reset)
