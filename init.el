@@ -3533,8 +3533,10 @@ Process .+
     (vc-pull)))
 
 
-(defun generate-password (arg)
-  (interactive "P")
+(defun generate-password ()
+  (interactive)
   (let ((p (shell-command-to-string
             "tr -cd [:graph:] < /dev/urandom | head -c 42")))
-    (if arg (insert p) (message p))))
+    (kill-new p)
+    (message "Password generated: %s"
+             (truncate-string-to-width p 10 nil nil t))))
