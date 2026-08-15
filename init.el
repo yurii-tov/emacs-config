@@ -545,10 +545,7 @@
                                 "M-j"
                                 (lambda ()
                                   (interactive)
-                                  (let ((b (generate-new-buffer "*scratch*")))
-                                    (with-current-buffer b
-                                      (org-mode))
-                                    (insert (buffer-name b)))
+                                  (insert (generate-new-buffer-name "*scratch*"))
                                   (exit-minibuffer))))))
                 (apply f args))))
 
