@@ -355,6 +355,8 @@
       kill-buffer-query-functions nil
       disabled-command-function nil
       confirm-kill-processes nil
+      confirm-kill-emacs 'y-or-n-p
+      calendar-week-start-day 1
       help-window-select t)
 
 
@@ -383,12 +385,6 @@
 
 
 (menu-bar-mode -1)
-
-
-;; Fail-safe shutdown
-
-
-(setq confirm-kill-emacs 'y-or-n-p)
 
 
 ;; Scrolling
@@ -422,13 +418,7 @@
   (text-scale-set 0))
 
 
-;; Monday-based calendar
-
-
-(setq calendar-week-start-day 1)
-
-
-;; Scratch buffer
+;; Good-looking *scratch* buffer
 
 
 (add-hook 'emacs-startup-hook
