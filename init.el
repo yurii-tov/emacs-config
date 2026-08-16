@@ -1587,6 +1587,11 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (yas-global-mode 1)
 
 
+(define-keymap :keymap yas-minor-mode-map
+  "M-n" 'yas-next-field
+  "M-p" 'yas-prev-field)
+
+
 ;; Company
 
 
@@ -1640,8 +1645,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (defun company-smart-complete ()
   "Does special action depending on context.
    - When navigating paths: proceeds to deeper level
-   - When expanding a snippet: prevents any extra edits
-   - When on active snippet field: skips to the next field"
+   - When expanding a snippet: prevents any extra edits"
   (interactive)
   (cond ((and company-selection
               (string-suffix-p "/" (nth company-selection
@@ -1653,11 +1657,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
                                                      company-candidates))
                     '(snippet method)))
          (company-complete))
-        ((and company-candidates
-              (get-char-property (1- (point)) 'yas--field))
-         (or (company-complete-selection)
-             (company-cancel))
-         (run-with-timer 0.01 nil #'yas-next-field-or-maybe-expand))
         (t (when company-selection
              (company-complete))
            (call-interactively 'self-insert-command))))
