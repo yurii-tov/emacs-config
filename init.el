@@ -355,6 +355,7 @@
       disabled-command-function nil
       confirm-kill-processes nil
       confirm-kill-emacs 'y-or-n-p
+      save-interprogram-paste-before-kill t
       calendar-week-start-day 1
       help-window-select t
       help-window-keep-selected t)
