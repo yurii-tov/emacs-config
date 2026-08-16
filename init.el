@@ -2223,6 +2223,57 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (setq nov-text-width 70))
 
 
+;; ===========
+;; File server
+;; ===========
+
+
+(defun serve-directory ()
+  (interactive)
+  (let* ((default-directory (read-directory-name "Serve directory: "))
+         (socket (read-string "Address: " "0.0.0.0:5555"))
+         (command (apply 'format "python -m http.server -b %s %s" (split-string socket ":")))
+         (buffer (format "*python-server:%s*" socket)))
+    (async-shell-command command buffer)
+    (message "Serving %s at %s"
+             (propertize (abbreviate-file-name default-directory) 'face 'bold)
+             socket)))
+
+
+;; ===============
+;; Video capturing
+;; ===============
+
+
+(defun capture-video ()
+  (interactive)
+  (let ((ffmpeg (or (executable-find "ffmpeg")
+                    (error "ffmpeg executable not found")))
+        (buffer-name "*video-capture*")
+        (capture-file-name (if (eq system-type 'windows-nt)
+                               (expand-file-name "Videos/v.mp4" (getenv "USERPROFILE"))
+                             "~/v.mp4")))
+    (if (get-buffer-process buffer-name)
+        (with-current-buffer buffer-name
+          (message "Captured: %s" (propertize capture-file-name 'face 'success))
+          (kill-new capture-file-name)
+          (comint-interrupt-subjob)
+          (sit-for 1)
+          (kill-buffer))
+      (let ((default-directory (file-name-directory capture-file-name))
+            (command (if (eq system-type 'windows-nt)
+                         "%s -y -f gdigrab -i desktop -framerate 30 -pix_fmt yuv420p %s"
+                       "%s -y -f x11grab -i :0.0 -framerate 30 -pix_fmt yuv420p %s")))
+        (async-shell-command
+         (format command
+                 ffmpeg
+                 (car (last (file-name-split capture-file-name))))
+         buffer-name)
+        (with-current-buffer buffer-name
+          (setq-local capture-file-name capture-file-name))
+        (message "Capturing video to file: %s" capture-file-name)))))
+
+
 ;; ===
 ;; GPG
 ;; ===
@@ -2230,6 +2281,39 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 (setq epg-pinentry-mode 'loopback
       epa-keys-select-method 'minibuffer)
+
+
+;; =========
+;; Passwords
+;; =========
+
+
+(defun pass ()
+  (interactive)
+  (let ((default-directory "~/.password-store/"))
+    (find-file
+     (completing-read "View password: "
+                      (split-string
+                       (shell-command-to-string
+                        "git ls-files | grep .gpg$")
+                       "\n" t)))
+    (fundamental-mode)
+    (read-only-mode)))
+
+
+(defun pass-pull ()
+  (interactive)
+  (let ((default-directory "~/.password-store/"))
+    (vc-pull)))
+
+
+(defun generate-password ()
+  (interactive)
+  (let ((p (shell-command-to-string
+            "tr -cd [:graph:] < /dev/urandom | head -c 42")))
+    (kill-new p)
+    (message "Password generated: %s"
+             (truncate-string-to-width p 10 nil nil t))))
 
 
 ;; ===============
@@ -3454,87 +3538,3 @@ Process .+
   (sql-set-product-feature 'sqlite :init-commands '(".headers on"
                                                     ".mode list"))
   (sql-set-product-feature 'sqlite :table-parser 'parse-sqlite-table))
-
-
-;; ===========
-;; File server
-;; ===========
-
-
-(defun serve-directory ()
-  (interactive)
-  (let* ((default-directory (read-directory-name "Serve directory: "))
-         (socket (read-string "Address: " "0.0.0.0:5555"))
-         (command (apply 'format "python -m http.server -b %s %s" (split-string socket ":")))
-         (buffer (format "*python-server:%s*" socket)))
-    (async-shell-command command buffer)
-    (message "Serving %s at %s"
-             (propertize (abbreviate-file-name default-directory) 'face 'bold)
-             socket)))
-
-
-;; ===============
-;; Video capturing
-;; ===============
-
-
-(defun capture-video ()
-  (interactive)
-  (let ((ffmpeg (or (executable-find "ffmpeg")
-                    (error "ffmpeg executable not found")))
-        (buffer-name "*video-capture*")
-        (capture-file-name (if (eq system-type 'windows-nt)
-                               (expand-file-name "Videos/v.mp4" (getenv "USERPROFILE"))
-                             "~/v.mp4")))
-    (if (get-buffer-process buffer-name)
-        (with-current-buffer buffer-name
-          (message "Captured: %s" (propertize capture-file-name 'face 'success))
-          (kill-new capture-file-name)
-          (comint-interrupt-subjob)
-          (sit-for 1)
-          (kill-buffer))
-      (let ((default-directory (file-name-directory capture-file-name))
-            (command (if (eq system-type 'windows-nt)
-                         "%s -y -f gdigrab -i desktop -framerate 30 -pix_fmt yuv420p %s"
-                       "%s -y -f x11grab -i :0.0 -framerate 30 -pix_fmt yuv420p %s")))
-        (async-shell-command
-         (format command
-                 ffmpeg
-                 (car (last (file-name-split capture-file-name))))
-         buffer-name)
-        (with-current-buffer buffer-name
-          (setq-local capture-file-name capture-file-name))
-        (message "Capturing video to file: %s" capture-file-name)))))
-
-
-;; =========
-;; Passwords
-;; =========
-
-
-(defun pass ()
-  (interactive)
-  (let ((default-directory "~/.password-store/"))
-    (find-file
-     (completing-read "View password: "
-                      (split-string
-                       (shell-command-to-string
-                        "git ls-files | grep .gpg$")
-                       "\n" t)))
-    (fundamental-mode)
-    (read-only-mode)))
-
-
-(defun pass-pull ()
-  (interactive)
-  (let ((default-directory "~/.password-store/"))
-    (vc-pull)))
-
-
-(defun generate-password ()
-  (interactive)
-  (let ((p (shell-command-to-string
-            "tr -cd [:graph:] < /dev/urandom | head -c 42")))
-    (kill-new p)
-    (message "Password generated: %s"
-             (truncate-string-to-width p 10 nil nil t))))
