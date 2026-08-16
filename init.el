@@ -1643,9 +1643,9 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 
 (defun company-smart-complete ()
-  "Does special action depending on context.
-   - When navigating paths: proceeds to deeper level
-   - When expanding a snippet: prevents any extra edits"
+  "Does special action in some contexts.
+- Proceeds to deeper level in FS-like hierarchies
+- Triggers snippet expansion without extra edits"
   (interactive)
   (cond ((and company-selection
               (string-suffix-p "/" (nth company-selection
