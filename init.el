@@ -30,7 +30,6 @@
 
 
 (when (eq system-type 'windows-nt)
-  (reset-language-environment)
   (set-coding-system-priority 'cp1251-dos)
   (prefer-coding-system 'utf-8-unix)
   (dolist (x '(compilation-start shell-command))
