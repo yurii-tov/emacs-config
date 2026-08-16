@@ -1587,7 +1587,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (yas-global-mode 1)
 
 
-(define-keymap :keymap yas-minor-mode-map
+(define-keymap :keymap yas-keymap
   "M-n" 'yas-next-field
   "M-p" 'yas-prev-field)
 
