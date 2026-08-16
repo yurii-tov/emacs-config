@@ -354,7 +354,8 @@
       use-short-answers t
       kill-buffer-query-functions nil
       disabled-command-function nil
-      confirm-kill-processes nil)
+      confirm-kill-processes nil
+      help-window-select t)
 
 
 ;; Clean UI
