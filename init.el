@@ -168,9 +168,9 @@
   (keymap-unset html-mode-map "M-o"))
 
 
-;; =============
-;; Look and feel
-;; =============
+;; ==========
+;; Appearance
+;; ==========
 
 
 ;; Ligatures
@@ -338,29 +338,6 @@
   (add-hook x 'visual-line-mode))
 
 
-;; Hints about complex shortcuts
-
-
-(which-key-mode)
-
-
-;; Less annoying behaviour
-
-
-(setq inhibit-startup-message t
-      inhibit-startup-echo-area-message t
-      ring-bell-function 'ignore
-      use-short-answers t
-      kill-buffer-query-functions nil
-      disabled-command-function nil
-      confirm-kill-processes nil
-      confirm-kill-emacs 'y-or-n-p
-      save-interprogram-paste-before-kill t
-      calendar-week-start-day 1
-      help-window-select t
-      help-window-keep-selected t)
-
-
 ;; Clean UI
 
 
@@ -388,38 +365,28 @@
 (menu-bar-mode -1)
 
 
-;; Scrolling
+;; ==========
+;; Annoyances
+;; ==========
 
 
-(setq scroll-conservatively 100
-      scroll-preserve-screen-position t)
+(setq ring-bell-function 'ignore
+      use-short-answers t
+      kill-buffer-query-functions nil
+      disabled-command-function nil
+      confirm-kill-processes nil
+      confirm-kill-emacs 'y-or-n-p
+      save-interprogram-paste-before-kill t
+      calendar-week-start-day 1)
 
 
-(defun scroll-up-3 ()
-  (interactive)
-  (scroll-up-line 3))
+;; =======
+;; Startup
+;; =======
 
 
-(defun scroll-down-3 ()
-  (interactive)
-  (scroll-down-line 3))
-
-
-(when (eq system-type 'android)
-  (define-keymap :keymap global-map
-    "<wheel-down>" 'scroll-up-line
-    "<wheel-up>" 'scroll-down-line))
-
-
-;; Scaling
-
-
-(defun text-scale-reset ()
-  (interactive)
-  (text-scale-set 0))
-
-
-;; Good-looking *scratch* buffer
+(setq inhibit-startup-message t
+      inhibit-startup-echo-area-message t)
 
 
 (add-hook 'emacs-startup-hook
@@ -500,18 +467,34 @@
 (add-hook 'emacs-startup-hook 'savehist-mode)
 
 
-;; =====
-;; TRAMP
-;; =====
+;; =======
+;; Windows
+;; =======
 
 
-(setq tramp-remote-path '(tramp-default-remote-path
-                          "/data/data/com.termux/files/usr/bin"))
+(setq scroll-conservatively 100
+      scroll-preserve-screen-position t)
+
+
+(defun scroll-up-3 ()
+  (interactive)
+  (scroll-up-line 3))
+
+
+(defun scroll-down-3 ()
+  (interactive)
+  (scroll-down-line 3))
 
 
 (when (eq system-type 'android)
-  (setq tramp-ssh-controlmaster-options
-        "-o ControlPath=%%C -o ControlMaster=auto -o ControlPersist=no"))
+  (define-keymap :keymap global-map
+    "<wheel-down>" 'scroll-up-line
+    "<wheel-up>" 'scroll-down-line))
+
+
+(defun text-scale-reset ()
+  (interactive)
+  (text-scale-set 0))
 
 
 ;; =======
@@ -833,7 +816,7 @@
   "M-SPC" 'ido-search-subdirs)
 
 
-;; Advanced commands
+;; Extra commands
 
 
 (defun ido-icomplete-hook ()
@@ -1157,6 +1140,20 @@
             (lambda ()
               (setq-local compilation-scroll-output nil)))
   (setq wgrep-auto-save-buffer t))
+
+
+;; =====
+;; TRAMP
+;; =====
+
+
+(setq tramp-remote-path '(tramp-default-remote-path
+                          "/data/data/com.termux/files/usr/bin"))
+
+
+(when (eq system-type 'android)
+  (setq tramp-ssh-controlmaster-options
+        "-o ControlPath=%%C -o ControlMaster=auto -o ControlPersist=no"))
 
 
 ;; ===========
@@ -2191,6 +2188,18 @@ Optionally, formats the buffer with COMMAND (if provided)"
     (if (string-empty-p answer)
         (message "Can't find definition of %s" query)
       (message "%s =>\n%s" query answer))))
+
+
+;; ====
+;; Help
+;; ====
+
+
+(which-key-mode)
+
+
+(setq help-window-select t
+      help-window-keep-selected t)
 
 
 ;; ===============
