@@ -1951,7 +1951,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; Completion
 
 
-(add-hook 'company-mode-hook
+(add-hook 'comint-mode-hook
           (lambda ()
             (setq-local
              company-backends '((company-capf company-dabbrev :separate))
