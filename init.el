@@ -1598,7 +1598,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 (setq company-tooltip-offset-display 'lines
       company-selection-wrap-around t
-      company-dabbrev-code-modes '(prog-mode comint-mode conf-mode sgml-mode)
+      company-dabbrev-code-modes '(prog-mode conf-mode sgml-mode)
       company-dabbrev-code-completion-styles t
       company-dabbrev-code-everywhere t
       company-dabbrev-downcase nil
@@ -1952,7 +1952,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 
 (defun comint-setup-company ()
-  (setq-local company-backends '((company-capf company-dabbrev-code :separate))
+  (setq-local company-backends '((company-capf company-dabbrev :separate))
               company-transformers '(delete-consecutive-dups)))
 
 
