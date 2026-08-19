@@ -1948,17 +1948,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
     "M-r" 'comint-browse-command-history))
 
 
-;; Completion
-
-
-(defun comint-setup-company ()
-  (setq-local company-backends '((company-capf company-dabbrev :separate))
-              company-transformers '(delete-consecutive-dups)))
-
-
-(add-hook 'comint-mode-hook 'comint-setup-company)
-
-
 ;; =====
 ;; Shell
 ;; =====
@@ -2058,7 +2047,12 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; Completion
 
 
-(add-hook 'sh-mode-hook 'comint-setup-company)
+(add-hook 'sh-mode-hook
+          (lambda ()
+            (setq-local company-backends '((company-capf
+                                            company-dabbrev-code
+                                            :separate))
+                        company-transformers '(delete-consecutive-dups))))
 
 
 (dolist (x '(sh-mode-hook shell-mode-hook))
