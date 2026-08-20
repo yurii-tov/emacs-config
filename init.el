@@ -1577,8 +1577,8 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 
 (define-keymap :keymap yas-keymap
-  "M-n" 'yas-next-field
-  "M-p" 'yas-prev-field)
+  "M-j" 'yas-next-field
+  "C-j" 'yas-prev-field)
 
 
 ;; Company
@@ -1651,15 +1651,11 @@ Optionally, formats the buffer with COMMAND (if provided)"
            (call-interactively 'self-insert-command))))
 
 
-(dotimes (n 10)
-  (keymap-unset company-active-map (format "M-%d" n)))
-
-
 (dolist (x (list company-active-map
                  company-search-map))
-  (define-keymap :keymap x
-    "M-p" nil "M-n" nil
-    "SPC" 'company-smart-complete))
+  (keymap-set x "SPC" 'company-smart-complete)
+  (dotimes (n 10)
+    (keymap-unset x (format "M-%d" n))))
 
 
 ;; ==============
