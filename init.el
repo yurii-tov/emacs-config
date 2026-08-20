@@ -1955,7 +1955,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
           (lambda ()
             (setq-local
              company-backends '((company-capf company-dabbrev :separate))
-             company-dabbrev-other-buffers nil
              company-transformers '(delete-consecutive-dups))))
 
 
