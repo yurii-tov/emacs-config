@@ -2325,7 +2325,10 @@ Optionally, formats the buffer with COMMAND (if provided)"
                 :host "api.mistral.ai"
                 :endpoint "/v1/chat/completions"
                 :protocol "https"
-                :key 'mistral-api-key
+                :key (lambda ()
+                       (with-temp-buffer (insert-file-contents
+                                          "~/.password-store/mistral.gpg")
+                                         (string-trim (buffer-string))))
                 :models '(codestral-latest
                           mistral-medium-latest))
       gptel-backend mistral
