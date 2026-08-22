@@ -318,11 +318,12 @@
                 mode-line-format-right-align
                 (mark-active (:eval (mode-line-selection-stats)))
                 (rectangle-mark-mode " 🆁")
+                (multiple-cursors-mode mc/mode-line)
                 (current-input-method-title
                  (:eval (format " %s" (propertize
                                        current-input-method-title
                                        'face 'mode-line-emphasis))))
-                (multiple-cursors-mode mc/mode-line)
+                "%n"
                 (flymake-mode (" " (:eval (flymake--mode-line-counters))))
                 (cider-mode cider-mode-line)
                 (vc-mode vc-mode)
