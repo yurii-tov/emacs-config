@@ -1,4 +1,3 @@
-;; ========
 ;; Packages
 ;; ========
 
@@ -14,7 +13,6 @@
   (with-temp-buffer (write-file f)))
 
 
-;; ====================
 ;; Site-specific config
 ;; ====================
 
@@ -24,7 +22,6 @@
             (load "~/.emacs.d/site.el" t)))
 
 
-;; =============
 ;; Text encoding
 ;; =============
 
@@ -40,7 +37,6 @@
                     (apply f args))))))
 
 
-;; ===========
 ;; Keybindings
 ;; ===========
 
@@ -168,7 +164,6 @@
   (keymap-unset html-mode-map "M-o"))
 
 
-;; ==========
 ;; Appearance
 ;; ==========
 
@@ -366,7 +361,6 @@
 (menu-bar-mode -1)
 
 
-;; ==========
 ;; Annoyances
 ;; ==========
 
@@ -381,7 +375,6 @@
       calendar-week-start-day 1)
 
 
-;; =======
 ;; Startup
 ;; =======
 
@@ -399,7 +392,6 @@
               (newline 2))))
 
 
-;; ==========
 ;; Minibuffer
 ;; ==========
 
@@ -468,7 +460,6 @@
 (add-hook 'emacs-startup-hook 'savehist-mode)
 
 
-;; =======
 ;; Windows
 ;; =======
 
@@ -498,7 +489,6 @@
   (text-scale-set 0))
 
 
-;; =======
 ;; Buffers
 ;; =======
 
@@ -551,7 +541,6 @@
                 (kill-buffer))))
 
 
-;; =======
 ;; Ibuffer
 ;; =======
 
@@ -618,7 +607,6 @@
     "j" 'ibuffer-jump-to-filter-group))
 
 
-;; =====
 ;; Files
 ;; =====
 
@@ -681,7 +669,6 @@
   (diff-buffer-with-file))
 
 
-;; ===
 ;; IDO
 ;; ===
 
@@ -886,7 +873,6 @@
     (exit-minibuffer)))
 
 
-;; =====
 ;; Dired
 ;; =====
 
@@ -1019,7 +1005,6 @@
              (string-join args  " ")))))
 
 
-;; ====
 ;; Find
 ;; ====
 
@@ -1086,7 +1071,6 @@
                 (funcall f dir query))))
 
 
-;; =======
 ;; Ripgrep
 ;; =======
 
@@ -1143,7 +1127,6 @@
   (setq wgrep-auto-save-buffer t))
 
 
-;; =====
 ;; TRAMP
 ;; =====
 
@@ -1157,7 +1140,6 @@
         "-o ControlPath=%%C -o ControlMaster=auto -o ControlPersist=no"))
 
 
-;; ===========
 ;; Text editor
 ;; ===========
 
@@ -1540,7 +1522,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
       (upcase-region (point) (1+ (point))))))
 
 
-;; ==========
 ;; Completion
 ;; ==========
 
@@ -1659,7 +1640,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
     (keymap-unset x (format "M-%d" n))))
 
 
-;; ==============
 ;; Shell commands
 ;; ==============
 
@@ -1694,7 +1674,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
                 (apply f args))))
 
 
-;; ====================
 ;; Async shell commands
 ;; ====================
 
@@ -1822,7 +1801,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
     "q" 'quit-window))
 
 
-;; ======
 ;; Comint
 ;; ======
 
@@ -1955,7 +1933,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
              company-transformers '(delete-consecutive-dups))))
 
 
-;; =====
 ;; Shell
 ;; =====
 
@@ -2068,7 +2045,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
                               comint-filename-completion)))))
 
 
-;; ===========
 ;; Web browser
 ;; ===========
 
@@ -2117,7 +2093,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
                 (browse-url (query-to-url x)))))
 
 
-;; ===================
 ;; EN ⇔ RU translator
 ;; ===================
 
@@ -2162,7 +2137,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
       (message "%s =>\n%s" query-message translation))))
 
 
-;; ====================
 ;; Cambridge dictionary
 ;; ====================
 
@@ -2184,7 +2158,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
       (message "%s =>\n%s" query answer))))
 
 
-;; ====
 ;; Help
 ;; ====
 
@@ -2196,7 +2169,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
       help-window-keep-selected t)
 
 
-;; ===============
 ;; Man page reader
 ;; ===============
 
@@ -2206,7 +2178,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
         Man-notify-method 'pushy))
 
 
-;; ===========
 ;; ePub reader
 ;; ===========
 
@@ -2218,7 +2189,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (setq nov-text-width 70))
 
 
-;; ===========
 ;; File server
 ;; ===========
 
@@ -2235,7 +2205,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
              socket)))
 
 
-;; ===============
 ;; Video capturing
 ;; ===============
 
@@ -2267,7 +2236,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
         (message "Capturing video to file: %s" capture-file-name)))))
 
 
-;; ===
 ;; GPG
 ;; ===
 
@@ -2276,7 +2244,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
       epa-keys-select-method 'minibuffer)
 
 
-;; =========
 ;; Passwords
 ;; =========
 
@@ -2309,7 +2276,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
              (truncate-string-to-width p 10 nil nil t))))
 
 
-;; ===============
 ;; LLM integration
 ;; ===============
 
@@ -2392,7 +2358,6 @@ Also grabs a selected region, if any."
     "k" 'gptel--rewrite-reject))
 
 
-;; ==========================
 ;; Statistics / combinatorics
 ;; ==========================
 
@@ -2439,7 +2404,6 @@ Also grabs a selected region, if any."
       (list xs))))
 
 
-;; ===========
 ;; Org Mode 🦄
 ;; ===========
 
@@ -2659,7 +2623,6 @@ Example input:
 (defconst org-table--separator-space-post " ")
 
 
-;; ===
 ;; VCS
 ;; ===
 
@@ -2815,7 +2778,6 @@ Example input:
   (keymap-unset log-edit-mode-map "M-s"))
 
 
-;; ========
 ;; Projects
 ;; ========
 
@@ -2864,7 +2826,6 @@ Example input:
 (setq project-find-functions '(project-try-vc project-try-file))
 
 
-;; ===========
 ;; Compilation
 ;; ===========
 
@@ -2895,7 +2856,6 @@ Example input:
                  (setq compile-command (car compile-history)))))
 
 
-;; ===
 ;; LSP
 ;; ===
 
@@ -2926,7 +2886,6 @@ Example input:
                 (flymake-mode -1)))))
 
 
-;; =======
 ;; Flymake
 ;; =======
 
@@ -2950,7 +2909,6 @@ Example input:
                   (display-buffer b)))))
 
 
-;; =====
 ;; ElDoc
 ;; =====
 
@@ -3028,7 +2986,6 @@ Example input:
 (advice-add 'eldoc--format-doc-buffer :around #'eldoc-fix-link-navigation)
 
 
-;; ===========
 ;; ClangFormat
 ;; ===========
 
@@ -3050,7 +3007,6 @@ Example input:
     (add-to-list 'format-buffer-functions (cons x 'clang-format-buffer))))
 
 
-;; ========
 ;; Prettier
 ;; ========
 
@@ -3111,7 +3067,6 @@ Example input:
     (add-to-list 'format-buffer-functions (cons m 'prettier))))
 
 
-;; ===
 ;; XML
 ;; ===
 
@@ -3124,7 +3079,6 @@ Example input:
   (add-to-list 'format-buffer-functions (cons 'sgml-mode f)))
 
 
-;; ====
 ;; Java
 ;; ====
 
@@ -3148,7 +3102,6 @@ Example input:
   (keymap-set java-mode-map "C-c C-c" 'copy-java-class-full-name))
 
 
-;; =======
 ;; Clojure
 ;; =======
 
@@ -3161,7 +3114,6 @@ Example input:
   (keymap-unset cider-repl-mode-map "M-s"))
 
 
-;; ===========
 ;; Common lisp
 ;; ===========
 
@@ -3183,7 +3135,6 @@ Example input:
   (keymap-unset slime-repl-mode-map "M-s"))
 
 
-;; ==========
 ;; Powershell
 ;; ==========
 
@@ -3195,7 +3146,6 @@ Example input:
               (set-buffer-process-coding-system 'cp866-dos 'cp866-dos)))
 
 
-;; ==========
 ;; SQL client
 ;; ==========
 
