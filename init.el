@@ -2079,12 +2079,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (setq browse-url-browser-function 'eww-browse-url))
 
 
-(when (eq system-type 'windows-nt)
-  (with-eval-after-load 'eww
-    (setq eww-download-directory
-          (expand-file-name "Downloads" (getenv "USERPROFILE")))))
-
-
 (with-eval-after-load 'shr
   (setq shr-use-fonts nil
         shr-inhibit-images t))
@@ -2250,9 +2244,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (let ((ffmpeg (or (executable-find "ffmpeg")
                     (error "ffmpeg executable not found")))
         (buffer-name "*video-capture*")
-        (capture-file-name (if (eq system-type 'windows-nt)
-                               (expand-file-name "Videos/v.mp4" (getenv "USERPROFILE"))
-                             "~/v.mp4")))
+        (capture-file-name "~/v.mp4"))
     (if (get-buffer-process buffer-name)
         (with-current-buffer buffer-name
           (message "Captured: %s" (propertize capture-file-name 'face 'success))
@@ -3065,10 +3057,7 @@ Example input:
 (defun prettier-create-config ()
   "Write config into ~/.prettierrc file unless it already exists"
   (interactive)
-  (when-let* ((config-file (expand-file-name ".prettierrc"
-                                             (if (eq system-type 'windows-nt)
-                                                 (getenv "USERPROFILE")
-                                               "~")))
+  (when-let* ((config-file "~/.prettierrc")
               ((not (file-exists-p config-file)))
               (java-plugin (expand-file-name
                             "prettier-plugin-java/dist/index.js"
