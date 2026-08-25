@@ -835,7 +835,7 @@
                    files nil t ido-text))
                 ido-current-directory)))
     (setq ido-matches (list (file-name-nondirectory file)))
-    (when-let ((d (file-name-directory file)))
+    (when-let* ((d (file-name-directory file)))
       (setq ido-current-directory (expand-file-name d ido-current-directory)))
     (exit-minibuffer)))
 
@@ -965,7 +965,7 @@
                                   "\"$(cygpath -u '%o')\"" "%o")))
          (dired-compress-file-suffixes
           (mapcar (lambda (x)
-                    (if-let ((c (nth 2 x)))
+                    (if-let* ((c (nth 2 x)))
                         (append (seq-take x 2)
                                 (list (string-replace "%o" dir c)))
                       x))
@@ -1273,7 +1273,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
                 (erase-buffer)
                 (insert pprinted)
                 (goto-char p))))))
-    (if-let ((f (cdr (assoc major-mode format-buffer-functions))))
+    (if-let* ((f (cdr (assoc major-mode format-buffer-functions))))
         (progn (message "Formatting buffer...")
                (funcall f)
                (message
@@ -1708,7 +1708,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
             (lambda (f &rest args)
               "Report process state transitions"
               (prog1 (apply f args)
-                (when-let ((p (get-buffer-process (cadr args))))
+                (when-let* ((p (get-buffer-process (cadr args))))
                   (message "%s %s"
                            (propertize "[started]" 'face 'shadow)
                            (car args))
@@ -1739,7 +1739,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 (defun asc-restart ()
   (interactive)
-  (when-let ((p (get-buffer-process (current-buffer))))
+  (when-let* ((p (get-buffer-process (current-buffer))))
     (kill-process p)
     (sit-for 0.5))
   (async-shell-command command (current-buffer)))
@@ -1949,7 +1949,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 (defun shell-buffer-name ()
   (format "*shell%s*"
-          (if-let ((host (file-remote-p default-directory 'host)))
+          (if-let* ((host (file-remote-p default-directory 'host)))
               (concat "-" host) "")))
 
 
@@ -2945,7 +2945,7 @@ Example input:
 
 (defun eldoc-open-url-at-point ()
   (interactive)
-  (if-let (url (eldoc-url-at-point))
+  (if-let* (url (eldoc-url-at-point))
       (progn (message "Opening doc: %s..." url)
              (browse-url url))
     (message "No references at point")))
