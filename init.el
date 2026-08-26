@@ -3303,7 +3303,6 @@ Process .+
                     `(lambda ()
                        (unwind-protect
                            (progn (when (get-buffer-process (current-buffer))
-                                    (ring-insert comint-input-ring ";")
                                     (process-send-eof))
                                   (when (and (file-exists-p ,sql-database-copy)
                                              (not (equal (file-attribute-modification-time (file-attributes ,sql-database-original))
@@ -3349,7 +3348,8 @@ Process .+
                                                    '(hline))
                                            nil))))))
     `(lambda (string)
-       (let ((last-command (ring-ref comint-input-ring 0)))
+       (let ((last-command (if (zerop comint-command-count)
+                               "" (ring-ref comint-input-ring 0))))
          (when (or (not (boundp 'sql-output-accumulator))
                    (not sql-output-accumulator))
            (setq-local sql-output-accumulator
@@ -3421,7 +3421,6 @@ Process .+
 (defun sql-setup-output-preprocessing ()
   (let ((table-parser (sql-get-product-feature sql-product :table-parser)))
     (when table-parser
-      (ring-insert comint-input-ring ";")
       (setq-local comint-preoutput-filter-functions
                   (cons (car comint-preoutput-filter-functions)
                         (cons (make-sql-output-preprocessor table-parser)
