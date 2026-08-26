@@ -3241,10 +3241,10 @@ Example input:
                                               (format "delete local copy: %s"
                                                       ,sql-database-copy))))))))))
     (setq-local comint-preoutput-filter-functions
-                (default-value 'comint-preoutput-filter-functions)) ;; force reset comint-preoutput-filter-functions
+                (default-value 'comint-preoutput-filter-functions))
     (when (get-buffer-process (current-buffer))
-      (process-send-eof) ;; shutdown sql interpreter
-      (sit-for 2)) ;; pause for a while (ugly hack)
+      (process-send-eof)
+      (sit-for 2))
     (when update-db-files
       (let ((m (funcall update-db-files))
             (pattern "
@@ -3253,9 +3253,9 @@ Process .+
 "))
         (replace-regexp pattern (format "-- %s\n" m) nil nil nil t)))
     (apply #'make-comint-in-buffer
-           pname (current-buffer) (car pcommand) nil (cdr pcommand)) ;; start fresh instance of sql interpreter
+           pname (current-buffer) (car pcommand) nil (cdr pcommand))
     (let ((sql-interactive-product sql-product))
-      (sql-interactive-mode)) ;; turn on sql-interactive-mode
+      (sql-interactive-mode))
     (progn (let ((proc (get-buffer-process (current-buffer)))
                  (secs sql-login-delay)
                  (step 0.3))
@@ -3269,7 +3269,7 @@ Process .+
            (goto-char (point-max))
            (run-hooks 'sql-login-hook)
            (sql-progress-reporter-done rpt)
-           (goto-char (point-max))) ;; tracking interpreter startup process. Stolen from `sql-product-interactive'
+           (goto-char (point-max)))
     ))
 
 
@@ -3350,7 +3350,6 @@ Process .+
                                            nil))))))
     `(lambda (string)
        (let ((last-command (ring-ref comint-input-ring 0)))
-         ;; Initialize output accumulator
          (when (or (not (boundp 'sql-output-accumulator))
                    (not sql-output-accumulator))
            (setq-local sql-output-accumulator
@@ -3365,7 +3364,6 @@ Process .+
                          (time-start ,(current-time))
                          (chunks-count 0)
                          (chunks-written 0)))
-           ;; Truncate output file, if needed
            (let ((out-file (cadr (assoc 'out-file sql-output-accumulator))))
              (when out-file (write-region "" nil out-file))))
          (cl-incf (cadr (assoc 'chunks-count sql-output-accumulator)))
@@ -3377,7 +3375,6 @@ Process .+
                     (out-separator (cadr (assoc 'out-separator sql-output-accumulator)))
                     (prompt-index (string-match comint-prompt-regexp string))
                     (prompt (when prompt-index (substring string prompt-index)))
-                    ;; cut prompt from current output chunk, if needed
                     (string (if prompt (string-trim (replace-regexp-in-string
                                                      comint-prompt-regexp
                                                      ""
@@ -3399,7 +3396,6 @@ Process .+
                          (cadr parsed))
                    (write-region (format "%s\n" csv) nil out-file body-p -1)
                    (cl-incf (cadr (assoc 'chunks-written sql-output-accumulator)))))
-               ;; we have prompt in last output chunk => time to finalize
                (when prompt
                  (prog1 (let* ((time-start (cadr (assoc 'time-start sql-output-accumulator)))
                                (time-elapsed (float-time (time-since time-start))))
@@ -3419,13 +3415,13 @@ Process .+
                    (setq-local sql-output-accumulator nil))))
            (progn
              (setq-local sql-output-accumulator nil)
-             string)))))) ;; else return input unchanged
+             string))))))
 
 
 (defun sql-setup-output-preprocessing ()
   (let ((table-parser (sql-get-product-feature sql-product :table-parser)))
     (when table-parser
-      (ring-insert comint-input-ring ";") ;; hack for preventing influence of previous history on startup
+      (ring-insert comint-input-ring ";")
       (setq-local comint-preoutput-filter-functions
                   (cons (car comint-preoutput-filter-functions)
                         (cons (make-sql-output-preprocessor table-parser)
