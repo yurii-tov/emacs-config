@@ -49,6 +49,7 @@
   "g" 'rgrep
   "l" 'gptel-chat
   "s" 'browse-url
+  "j" 'imenu
   "M-s" 'browse-url-at-point
   "d" 'camd
   "t" 'translate-en-ru)
