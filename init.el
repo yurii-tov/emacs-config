@@ -3181,23 +3181,6 @@ Example input:
 (advice-add 'sql-connect :around #'ignore-sql-database)
 
 
-;; Initial setup
-
-
-(defun sql-perform-initial-commands ()
-  (when-let* ((commands (sql-get-product-feature sql-product :init-commands))
-              (process (get-buffer-process (current-buffer))))
-    (dolist (command commands)
-      (comint-send-string process command)
-      (comint-send-input))
-    (sit-for 0.05)
-    (kill-whole-line -2)
-    (comint-send-input)))
-
-
-(add-hook 'sql-login-hook 'sql-perform-initial-commands)
-
-
 ;; Reconnect
 
 
@@ -3430,6 +3413,23 @@ Process .+
 
 
 (add-hook 'sql-login-hook 'sql-setup-output-preprocessing)
+
+
+;; Initial setup
+
+
+(defun sql-perform-initial-commands ()
+  (when-let* ((commands (sql-get-product-feature sql-product :init-commands))
+              (process (get-buffer-process (current-buffer))))
+    (dolist (command commands)
+      (comint-send-string process command)
+      (comint-send-input))
+    (sit-for 0.05)
+    (kill-whole-line -2)
+    (comint-send-input)))
+
+
+(add-hook 'sql-login-hook 'sql-perform-initial-commands)
 
 
 ;; Keybindings
