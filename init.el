@@ -49,6 +49,7 @@
   "g" 'rgrep
   "l" 'gptel-chat
   "s" 'browse-url
+  "j" 'imenu
   "M-s" 'browse-url-at-point
   "d" 'camd
   "t" 'translate-en-ru)
@@ -130,13 +131,13 @@
   "M-1" 'shell-command                  "C-x j" 'bookmark-jump
   "M-!" 'async-shell-command            "C-x u" 'reopen-with-sudo
   "M-2" 'enclose-text-quotes            "C-x l" 'eglot
-  "M-3" 'enclose-text-asterisks         "C-x p" 'format-buffer
+  "M-3" 'enclose-text-asterisks         "C-x p" 'pass
   "M-4" 'enclose-text-apostrophes       "C-x C-b" 'ibuffer
   "M-9" 'enclose-text-parenthesis       "C-x C-k" 'kill-buffer-and-window
   "M-(" 'enclose-text-angle             "C-x C-=" 'display-line-numbers-mode
   "M-0" 'enclose-text-square            "C-x C-l" 'gptel-menu
   "M-)" 'enclose-text-curly             "C-c j" 'cider-start-map
-  "M-i" 'imenu                          "C-c k" 'sql-connect
+  "M-i" 'format-buffer                  "C-c k" 'sql-connect
   "M-u" 'force-revert-buffer            "C-c i" 'ielm
   "M-j" 'switch-to-buffer               "C-c s" 'ssh
   "M-`" 'shell                          "C-c x" 'run-proxy
@@ -147,8 +148,7 @@
   "M-N" 'mc/mark-next-like-this         "C-c a" 'org-agenda
   "M-P" 'mc/mark-previous-like-this     "C-c o" 'org-push
   "S-<down-mouse-1>" nil                "C-c O" 'org-pull
-  "S-<mouse-1>" 'mc/add-cursor-on-click "C-c p" 'pass
-  "C-c w" 'watch-file)
+  "S-<mouse-1>" 'mc/add-cursor-on-click "C-c w" 'watch-file)
 
 
 ;; Conflicts
