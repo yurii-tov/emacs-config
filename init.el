@@ -362,6 +362,30 @@
 (menu-bar-mode -1)
 
 
+;; Scrolling
+;; =========
+
+
+(setq scroll-conservatively 100
+      scroll-preserve-screen-position t)
+
+
+(defun scroll-up-3 ()
+  (interactive)
+  (scroll-up-line 3))
+
+
+(defun scroll-down-3 ()
+  (interactive)
+  (scroll-down-line 3))
+
+
+(when (eq system-type 'android)
+  (define-keymap :keymap global-map
+    "<wheel-down>" 'scroll-up-line
+    "<wheel-up>" 'scroll-down-line))
+
+
 ;; Annoyances
 ;; ==========
 
@@ -459,30 +483,6 @@
 
 
 (add-hook 'emacs-startup-hook 'savehist-mode)
-
-
-;; Windows
-;; =======
-
-
-(setq scroll-conservatively 100
-      scroll-preserve-screen-position t)
-
-
-(defun scroll-up-3 ()
-  (interactive)
-  (scroll-up-line 3))
-
-
-(defun scroll-down-3 ()
-  (interactive)
-  (scroll-down-line 3))
-
-
-(when (eq system-type 'android)
-  (define-keymap :keymap global-map
-    "<wheel-down>" 'scroll-up-line
-    "<wheel-up>" 'scroll-down-line))
 
 
 ;; Buffers
