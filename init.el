@@ -1631,7 +1631,9 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 (dolist (x (list company-active-map
                  company-search-map))
-  (keymap-set x "SPC" 'company-smart-complete)
+  (define-keymap :keymap x
+    "SPC" 'company-smart-complete
+    "M-n" nil "M-p" nil)
   (dotimes (n 10)
     (keymap-unset x (format "M-%d" n))))
 
