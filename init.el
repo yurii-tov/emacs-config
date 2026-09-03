@@ -2426,22 +2426,22 @@ Also grabs a selected region, if any."
 
 (setq org-capture-templates
       `(("w" "Work" entry
-         (file+headline "work.org" "In")
+         (file+headline "work.org" "Inbox")
          "* TODO %?\n")
         ("f" "Fun" entry
-         (file+headline "fun.org" "In")
+         (file+headline "fun.org" "Inbox")
          "* TODO %?\n")
         ("a" "Art" entry
-         (file+headline "art.org" "In")
+         (file+headline "art.org" "Inbox")
          "* TODO %?\n")
         ("l" "Life" entry
-         (file+headline "life.org" "In")
+         (file+headline "life.org" "Inbox")
          "* TODO %?\n")
         ("m" "Math" entry
-         (file+headline "math.org" "In")
+         (file+headline "math.org" "Inbox")
          "* TODO %?\n")
         ("c" "Computer" entry
-         (file+headline "computer.org" "In")
+         (file+headline "computer.org" "Inbox")
          "* TODO %?\n")))
 
 
