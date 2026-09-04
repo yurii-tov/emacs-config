@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: RuntimeException
+# key: re
+# --
+throw new RuntimeException(${1:"oops"});
