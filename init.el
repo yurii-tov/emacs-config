@@ -370,6 +370,9 @@
       scroll-preserve-screen-position t)
 
 
+(pixel-scroll-mode)
+
+
 (defun scroll-up-3 ()
   (interactive)
   (scroll-up-line 3))
