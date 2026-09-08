@@ -1160,7 +1160,8 @@
 ;; Search/Replace
 
 
-(setq isearch-lazy-count t)
+(setq isearch-lazy-count t
+      imenu-auto-rescan t)
 
 
 (define-keymap :keymap isearch-mode-map
