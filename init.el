@@ -1978,6 +1978,20 @@ Optionally, formats the buffer with COMMAND (if provided)"
               (apply f args)))
 
 
+(add-hook 'shell-mode-hook
+          (lambda ()
+            (add-hook 'clone-buffer-hook
+                      (lambda ()
+                        (when (file-remote-p default-directory)
+                          (kill-process)
+                          (sit-for 0.5)
+                          (shell (current-buffer)))
+                        (sit-for 0.5)
+                        (comint-send-input)
+                        (comint-clear-buffer))
+                      nil t)))
+
+
 ;; Ssh sessions
 
 
