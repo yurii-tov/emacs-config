@@ -1984,20 +1984,19 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 (add-hook 'shell-mode-hook
           (lambda ()
-            (let ((b (current-buffer)))
-              (add-hook 'clone-buffer-hook
-                        `(lambda ()
-                           (run-with-timer
-                            0.2 nil
-                            (lambda ()
-                              (when (file-remote-p default-directory)
-                                (erase-buffer)
-                                (kill-process)
-                                (sit-for 0.5)
-                                (shell (current-buffer))
-                                (with-current-buffer ,b
-                                  (comint--indirect-cleanup))))))
-                        nil t))))
+            (when (file-remote-p default-directory)
+              (let ((b (current-buffer)))
+                (add-hook 'clone-buffer-hook
+                          `(lambda ()
+                             (run-with-timer
+                              0.2 nil (lambda ()
+                                        (erase-buffer)
+                                        (kill-process)
+                                        (sit-for 0.5)
+                                        (shell (current-buffer))
+                                        (with-current-buffer ,b
+                                          (comint--indirect-cleanup))))))
+                nil t))))
 
 
 ;; Ssh sessions
