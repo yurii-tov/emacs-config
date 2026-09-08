@@ -1987,16 +1987,16 @@ Optionally, formats the buffer with COMMAND (if provided)"
             (let ((b (current-buffer)))
               (add-hook 'clone-buffer-hook
                         `(lambda ()
-                           (sit-for 0.1)
-                           (erase-buffer)
                            (run-with-timer
-                            0.2 nil (lambda ()
-                                      (when (file-remote-p default-directory)
-                                        (kill-process)
-                                        (sit-for 0.2)
-                                        (shell (current-buffer))
-                                        (with-current-buffer ,b
-                                          (comint--indirect-cleanup))))))
+                            0.2 nil
+                            (lambda ()
+                              (when (file-remote-p default-directory)
+                                (erase-buffer)
+                                (kill-process)
+                                (sit-for 0.5)
+                                (shell (current-buffer))
+                                (with-current-buffer ,b
+                                  (comint--indirect-cleanup))))))
                         nil t))))
 
 
