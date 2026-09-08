@@ -1984,11 +1984,12 @@ Optionally, formats the buffer with COMMAND (if provided)"
                       (lambda ()
                         (when (file-remote-p default-directory)
                           (kill-process)
-                          (sit-for 0.5)
-                          (shell (current-buffer)))
-                        (sit-for 0.5)
-                        (comint-send-input)
-                        (comint-clear-buffer))
+                          (run-with-timer
+                           0.5 nil (lambda ()
+                                     (shell (current-buffer))
+                                     (sit-for 0.2)
+                                     (comint-send-input)
+                                     (comint-clear-buffer)))))
                       nil t)))
 
 
