@@ -1956,13 +1956,15 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 
 (defun shell-find-buffer (directory &optional buffers)
-  (thread-first
-    `(and (derived-mode . shell-mode)
-          (lambda (b)
-            (with-current-buffer b
-              (file-equal-p default-directory ,directory))))
-    (match-buffers buffers)
-    car))
+  (if (derived-mode-p 'shell-mode)
+      (current-buffer)
+    (thread-first
+      `(and (derived-mode . shell-mode)
+            (lambda (b)
+              (with-current-buffer b
+                (file-equal-p default-directory ,directory))))
+      (match-buffers buffers)
+      car)))
 
 
 (defun shell-setup-buffer ()
