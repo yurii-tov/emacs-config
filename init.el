@@ -143,7 +143,7 @@
   "M-`" 'shell                      "C-c x" 'run-proxy
   "M-g" 'goto-line                  "C-c d" 'serve-directory
   "M-/" project-prefix-map          "C-c v" 'capture-video
-  "M-l" 'move-line-up               "C-c h" 'dired-home
+  "M-l" 'move-line-up               "C-c h" 'scratch-buffer
   "M-M" 'mc/mark-all-dwim           "C-c c" 'org-capture
   "M-N" 'mc/mark-next-like-this     "C-c a" 'org-agenda
   "M-P" 'mc/mark-previous-like-this "C-c o" 'org-push
@@ -976,12 +976,6 @@
 
 
 ;; Extra commands
-
-
-(defun dired-home ()
-  "There's no place like ~ 😌"
-  (interactive)
-  (dired "~"))
 
 
 (defun dired-flatten-directory ()
