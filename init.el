@@ -979,6 +979,7 @@
 
 
 (defun dired-home ()
+  "There's no place like ~ 😌"
   (interactive)
   (dired "~"))
 
