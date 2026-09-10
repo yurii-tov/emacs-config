@@ -59,22 +59,21 @@
 
 (define-keymap :prefix 'text-edit-map
   "c" 'swap-char-case
+  "M-c" 'duplicate-dwim
+  "p" 'format-buffer
   "i" 'insert-char
   "o" 'emoji-insert
-  "p" 'format-buffer
+  "," 'insert-fortune
   "." 'insert-file
   "/" 'insert-path
   "k" 'replace-string
   "M-k" 'replace-regexp
   "l" 'downcase-dwim
   "u" 'upcase-dwim
-  "p" 'format-buffer
   "j" 'join-lines
   "b" 'break-line
   "m" 'keep-lines
   "n" 'flush-lines
-  "a" 'insert-fortune
-  "M-c" 'duplicate-dwim
   "SPC" 'whitespace-mode)
 
 
