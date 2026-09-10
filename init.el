@@ -49,7 +49,6 @@
   "g" 'rgrep
   "l" 'gptel-chat
   "s" 'browse-url
-  "j" 'imenu
   "M-s" 'browse-url-at-point
   "d" 'camd
   "t" 'translate-en-ru)
@@ -61,23 +60,19 @@
 (define-keymap :prefix 'text-edit-map
   "c" 'swap-char-case
   "i" 'insert-char
-  "p" 'insert-path
-  "e" 'emoji-insert
-  "x" 'reverse-region
-  "s" 'sort-lines
-  "d" 'shuffle-lines
-  "o" 'insert-file
+  "o" 'emoji-insert
+  "p" 'format-buffer
+  "." 'insert-file
+  "/" 'insert-path
   "k" 'replace-string
   "M-k" 'replace-regexp
   "l" 'downcase-dwim
-  "h" 'upcase-dwim
+  "u" 'upcase-dwim
+  "p" 'format-buffer
   "j" 'join-lines
   "b" 'break-line
   "m" 'keep-lines
   "n" 'flush-lines
-  "q" 'fill-paragraph
-  "w" 'fill-region-justify
-  "u" 'delete-duplicate-lines
   "a" 'insert-fortune
   "M-c" 'duplicate-dwim
   "SPC" 'whitespace-mode)
@@ -137,7 +132,7 @@
   "M-(" 'enclose-text-angle         "C-x C-=" 'display-line-numbers-mode
   "M-0" 'enclose-text-square        "C-x C-l" 'gptel-menu
   "M-)" 'enclose-text-curly         "C-c j" 'cider-start-map
-  "M-i" 'format-buffer              "C-c k" 'sql-connect
+  "M-i" 'imenu                      "C-c k" 'sql-connect
   "M-u" 'force-revert-buffer        "C-c i" 'ielm
   "M-j" 'switch-to-buffer           "C-c s" 'ssh
   "M-`" 'shell                      "C-c x" 'run-proxy
@@ -1231,11 +1226,6 @@
 
 
 (advice-add 'c-indent-line-or-region :override #'indent-for-tab-command)
-
-
-(defun fill-region-justify (start end)
-  (interactive (buffer-or-region))
-  (fill-region start end 'full))
 
 
 (setq format-buffer-functions
