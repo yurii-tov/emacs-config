@@ -1227,6 +1227,9 @@
 (advice-add 'c-indent-line-or-region :override #'indent-for-tab-command)
 
 
+(add-hook 'before-save-hook 'whitespace-cleanup)
+
+
 (setq format-buffer-functions
       '((js-json-mode . json-pretty-print-buffer)
         (rust-mode . rust-format-buffer)))
