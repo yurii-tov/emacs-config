@@ -2507,11 +2507,11 @@ Also grabs a selected region, if any."
   (define-keymap :keymap org-mode-map
     "C-c C-/" 'org-insert-checklist-status
     "M-c" (define-keymap :parent text-edit-map
-            "," (lambda () (interactive) (enclose-text "=" "="))
-            "." (lambda () (interactive) (enclose-text "~" "~"))
-            "/" (lambda () (interactive) (enclose-text "/" "/"))
-            "M-," (lambda () (interactive) (enclose-text "_" "_"))
-            "M-." (lambda () (interactive) (enclose-text "+" "+")))))
+            "9" (lambda () (interactive) (enclose-text "~" "~"))
+            "0" (lambda () (interactive) (enclose-text "=" "="))
+            "_" (lambda () (interactive) (enclose-text "_" "_"))
+            "-" (lambda () (interactive) (enclose-text "+" "+"))
+            "=" (lambda () (interactive) (enclose-text "/" "/")))))
 
 
 ;; Agenda
