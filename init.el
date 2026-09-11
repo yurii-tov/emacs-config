@@ -1159,7 +1159,7 @@
 
 (setq isearch-lazy-count t
       imenu-auto-rescan t
-      imenu-flatten t)
+      imenu-flatten 'annotation)
 
 
 (define-keymap :keymap isearch-mode-map
