@@ -3109,12 +3109,12 @@ Example input:
 ;; ====
 
 
-(defun copy-java-class-full-name ()
-  "Copy full name of current class/interface/enum etc. in a form, suitable for import"
+(defun java-copy-reference ()
   (interactive)
   (let (package
-        class-full-name
-        (member (if-let* ((s (symbol-at-point)))
+        reference
+        (member (if-let* (((looking-at-p "[^. ]+\("))
+                          (s (symbol-at-point)))
                     (concat "#" (symbol-name s)) "")))
     (save-excursion
       (goto-char 1)
@@ -3122,14 +3122,13 @@ Example input:
       (setq package (match-string 1))
       (search-forward "{")
       (re-search-backward "\\(class\\|enum\\|interface\\) *\\([^ \n]*\\)")
-      (setq class-full-name (format "%s.%s%s"
-                                    package (match-string 2) member)))
-    (message class-full-name)
-    (kill-new class-full-name)))
+      (setq reference (format "%s.%s%s" package (match-string 2) member)))
+    (message reference)
+    (kill-new reference)))
 
 
 (with-eval-after-load 'cc-mode
-  (keymap-set java-mode-map "C-c C-c" 'copy-java-class-full-name))
+  (keymap-set java-mode-map "C-c C-c" 'java-copy-reference))
 
 
 ;; Clojure
