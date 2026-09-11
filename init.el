@@ -1230,11 +1230,6 @@
 (add-hook 'before-save-hook 'whitespace-cleanup)
 
 
-(setq format-buffer-functions
-      '((js-json-mode . json-pretty-print-buffer)
-        (rust-mode . rust-format-buffer)))
-
-
 (advice-add 'indent-region
             :around
             (lambda (f &rest args)
@@ -1244,6 +1239,11 @@
                     (p (point-max)))
                 (whitespace-cleanup)
                 (apply f s (- e (- p (point-max))) (cddr args)))))
+
+
+(setq format-buffer-functions
+      '((js-json-mode . json-pretty-print-buffer)
+        (rust-mode . rust-format-buffer)))
 
 
 (defun format-buffer (&optional command)
