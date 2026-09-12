@@ -141,8 +141,7 @@
   "M-M" 'mc/mark-all-dwim           "C-c c" 'org-capture
   "M-N" 'mc/mark-next-like-this     "C-c a" 'org-agenda
   "M-P" 'mc/mark-previous-like-this "C-c o" 'org-push
-  "S-<down-mouse-1>" nil            "C-c O" 'org-pull
-  "C-c w" 'watch-file)
+  "S-<down-mouse-1>" nil            "C-c w" 'watch-file)
 
 
 ;; Conflicts
@@ -2474,12 +2473,6 @@ Also grabs a selected region, if any."
               (c "git add * && git commit -m 'Updated' && touch *.org")
               ((zerop (shell-command c))))
     (vc-push)))
-
-
-(defun org-pull ()
-  (interactive)
-  (let ((default-directory org-directory))
-    (vc-pull)))
 
 
 ;; Export
