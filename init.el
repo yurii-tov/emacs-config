@@ -2286,12 +2286,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
     (read-only-mode)))
 
 
-(defun pass-pull ()
-  (interactive)
-  (let ((default-directory "~/.password-store/"))
-    (vc-pull)))
-
-
 (defun generate-password ()
   (interactive)
   (let ((p (shell-command-to-string
