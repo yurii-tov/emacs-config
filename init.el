@@ -60,6 +60,7 @@
 (define-keymap :prefix 'text-edit-map
   "c" 'swap-char-case
   "M-c" 'duplicate-dwim
+  "q" 'fill-region
   "p" 'format-buffer
   "i" 'insert-char
   "o" 'emoji-insert
