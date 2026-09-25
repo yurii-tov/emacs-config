@@ -159,6 +159,11 @@
   (keymap-unset html-mode-map "M-o"))
 
 
+(with-eval-after-load 'ibuffer
+  (define-keymap :keymap ibuffer-mode-map
+    "M-j" nil "M-o" nil))
+
+
 ;; Appearance
 ;; ==========
 
@@ -592,12 +597,6 @@
                 (when (boundp 'last-filter)
                   (setq ibuffer-filtering-qualifiers last-filter)
                   (ibuffer-update nil)))))
-
-
-(with-eval-after-load 'ibuffer
-  (define-keymap :keymap ibuffer-mode-map
-    "M-j" nil "M-o" nil
-    "j" 'ibuffer-jump-to-filter-group))
 
 
 ;; Files
