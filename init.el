@@ -2428,7 +2428,8 @@ Also grabs a selected region, if any."
 
 
 (setq org-startup-truncated nil
-      org-adapt-indentation t)
+      org-adapt-indentation t
+      org-hide-emphasis-markers t)
 
 
 ;; Capturing
