@@ -2689,16 +2689,13 @@ Example input:
   (ewoc-set-hf vc-ewoc (vc-dir-headers vc-dir-backend default-directory) ""))
 
 
-(add-hook 'log-edit-done-hook
-          (lambda ()
-            (when-let* ((buffer (car (match-buffers
-                                      '(derived-mode . vc-dir-mode)
-                                      (project-buffers (project-current))))))
-              (with-current-buffer buffer
-                (run-with-timer 0.01 nil
-                                `(lambda ()
-                                   (with-current-buffer ,buffer
-                                     (vc-refresh-headers))))))))
+(advice-add 'log-edit-done
+            :after
+            (lambda ()
+              "Refresh VC headers"
+              (when (member vc-parent-buffer vc-dir-buffers)
+                (with-current-buffer vc-parent-buffer
+                  (vc-refresh-headers)))))
 
 
 ;; Pull/push
