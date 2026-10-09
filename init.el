@@ -916,6 +916,7 @@
 
 (with-eval-after-load 'dired
   (define-keymap :keymap dired-mode-map
+    "M-s" nil "M-!" nil
     "j" 'dired
     "o" 'dired-display-file
     "h" 'dired-mark-files-regexp
@@ -935,8 +936,7 @@
     "y" 'dired-do-symlink
     "TAB" 'dired-sort-toggle-or-edit
     "SPC" 'scroll-up-command
-    "S-SPC" 'scroll-down-command
-    "M-s" nil))
+    "S-SPC" 'scroll-down-command))
 
 
 ;; Archiver
