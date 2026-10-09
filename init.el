@@ -275,56 +275,6 @@
   (load-theme 'modus-vivendi))
 
 
-;; Mode line
-
-
-(defun mode-line-selection-stats ()
-  (let* ((start (region-beginning))
-         (end (region-end))
-         (chars (- end start)))
-    (when (> chars 0)
-      (propertize (format " Sel: %d|%d" chars (count-lines start end))
-                  'face 'fixed-pitch))))
-
-
-(setq-default mode-line-format
-              '(" "
-                (:eval (if (memq buffer-file-coding-system
-                                 '(utf-8-unix
-                                   prefer-utf-8-unix
-                                   undecided-unix
-                                   mule-utf-8-unix
-                                   no-conversion))
-                           ""
-                         (format "%s " (propertize
-                                        (symbol-name buffer-file-coding-system)
-                                        'face '(:slant italic)))))
-                (:eval (let ((ro buffer-read-only)
-                             (m (and (buffer-file-name) (buffer-modified-p))))
-                         (cond ((and m ro) "🔏 ")
-                               (ro "🔒 ")
-                               (m "✒ ")
-                               (t ""))))
-                (:eval (if (get-buffer-process (current-buffer))
-                           (propertize "• " 'face 'success)
-                         ""))
-                (:eval (propertize "%b" 'face 'mode-line-buffer-id))
-                (:eval (propertize " %l:%C" 'face 'fixed-pitch))
-                mode-line-format-right-align
-                (mark-active (:eval (mode-line-selection-stats)))
-                (rectangle-mark-mode " 🆁")
-                (multiple-cursors-mode mc/mode-line)
-                (current-input-method-title
-                 (:eval (format " %s" (propertize
-                                       current-input-method-title
-                                       'face 'mode-line-emphasis))))
-                "%n"
-                (flymake-mode (" " (:eval (flymake--mode-line-counters))))
-                (cider-mode cider-mode-line)
-                (vc-mode vc-mode)
-                " "))
-
-
 ;; Text wrapping
 
 
@@ -417,6 +367,57 @@
               (insert-fortune)
               (comment-region (point-min) (point-max))
               (newline 2))))
+
+
+;; Mode line
+;; =========
+
+
+(defun mode-line-selection-stats ()
+  (let* ((start (region-beginning))
+         (end (region-end))
+         (chars (- end start)))
+    (when (> chars 0)
+      (propertize (format " Sel: %d|%d" chars (count-lines start end))
+                  'face 'fixed-pitch))))
+
+
+(setq-default mode-line-format
+              '(" "
+                (:eval (if (memq buffer-file-coding-system
+                                 '(utf-8-unix
+                                   prefer-utf-8-unix
+                                   undecided-unix
+                                   mule-utf-8-unix
+                                   no-conversion))
+                           ""
+                         (format "%s " (propertize
+                                        (symbol-name buffer-file-coding-system)
+                                        'face '(:slant italic)))))
+                (:eval (let ((ro buffer-read-only)
+                             (m (and (buffer-file-name) (buffer-modified-p))))
+                         (cond ((and m ro) "🔏 ")
+                               (ro "🔒 ")
+                               (m "✒ ")
+                               (t ""))))
+                (:eval (if (get-buffer-process (current-buffer))
+                           (propertize "• " 'face 'success)
+                         ""))
+                (:eval (propertize "%b" 'face 'mode-line-buffer-id))
+                (:eval (propertize " %l:%C" 'face 'fixed-pitch))
+                mode-line-format-right-align
+                (mark-active (:eval (mode-line-selection-stats)))
+                (rectangle-mark-mode " 🆁")
+                (multiple-cursors-mode mc/mode-line)
+                (current-input-method-title
+                 (:eval (format " %s" (propertize
+                                       current-input-method-title
+                                       'face 'mode-line-emphasis))))
+                "%n"
+                (flymake-mode (" " (:eval (flymake--mode-line-counters))))
+                (cider-mode cider-mode-line)
+                (vc-mode vc-mode)
+                " "))
 
 
 ;; Minibuffer
