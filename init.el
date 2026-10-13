@@ -138,11 +138,11 @@
   "M-`" 'shell                      "C-c x" 'run-proxy
   "M-g" 'goto-line                  "C-c d" 'serve-directory
   "M-/" project-prefix-map          "C-c v" 'capture-video
-  "M-l" 'move-line-up               "C-c h" 'scratch-buffer
-  "M-M" 'mc/mark-all-dwim           "C-c c" 'org-capture
-  "M-N" 'mc/mark-next-like-this     "C-c a" 'org-agenda
-  "M-P" 'mc/mark-previous-like-this "C-c o" 'org-push
-  "S-<down-mouse-1>" nil            "C-c w" 'watch-file)
+  "M-l" 'move-line-up               "C-c c" 'org-capture
+  "M-M" 'mc/mark-all-dwim           "C-c a" 'org-agenda
+  "M-N" 'mc/mark-next-like-this     "C-c o" 'org-push
+  "M-P" 'mc/mark-previous-like-this "C-c w" 'watch-file
+  "S-<down-mouse-1>" nil)
 
 
 ;; Conflicts
