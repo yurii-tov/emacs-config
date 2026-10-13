@@ -2234,26 +2234,21 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (let ((ffmpeg (or (executable-find "ffmpeg")
                     (error "ffmpeg executable not found")))
         (buffer-name "*video-capture*")
-        (capture-file-name "~/v.mp4"))
+        (capture-file-name "~/v.mp4")
+        (default-directory "~")
+        (input (if (eq system-type 'windows-nt)
+                   "-f gdigrab -i desktop"
+                 "-f x11grab -i :0.0")))
     (if (get-buffer-process buffer-name)
-        (with-current-buffer buffer-name
-          (message "Captured: %s" (propertize capture-file-name 'face 'success))
-          (kill-new capture-file-name)
-          (comint-interrupt-subjob)
-          (sit-for 1)
-          (kill-buffer))
-      (let ((default-directory (file-name-directory capture-file-name))
-            (command (if (eq system-type 'windows-nt)
-                         "%s -y -f gdigrab -i desktop -framerate 30 -pix_fmt yuv420p %s"
-                       "%s -y -f x11grab -i :0.0 -framerate 30 -pix_fmt yuv420p %s")))
-        (async-shell-command
-         (format command
-                 ffmpeg
-                 (car (last (file-name-split capture-file-name))))
-         buffer-name)
-        (with-current-buffer buffer-name
-          (setq-local capture-file-name capture-file-name))
-        (message "Capturing video to file: %s" capture-file-name)))))
+        (progn
+          (message "Captured: %s" capture-file-name)
+          (kill-buffer buffer-name))
+      (start-process-shell-command
+       "ffmpeg"
+       buffer-name
+       (format "%s -y %s -framerate 30 -pix_fmt yuv420p %s"
+               ffmpeg input capture-file-name))
+      (message "Capturing video to file: %s" capture-file-name))))
 
 
 ;; GPG
