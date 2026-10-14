@@ -770,13 +770,9 @@
 
 
 (custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
  '(ido-first-match ((t (:inherit icomplete-selected-match))))
- '(ido-grid-mode-match ((t (:inherit completions-common-part))))
  '(ido-only-match ((t (:inherit icomplete-selected-match))))
+ '(ido-grid-mode-match ((t (:inherit completions-common-part))))
  '(ido-subdir ((t (:inherit default)))))
 
 
@@ -3448,13 +3444,3 @@ Process .+
   (sql-set-product-feature 'sqlite :init-commands '(".headers on"
                                                     ".mode list"))
   (sql-set-product-feature 'sqlite :table-parser 'parse-sqlite-table))
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(package-selected-packages
-   '(cider diredfl ef-themes eglot expand-region gptel groovy-mode hotfuzz htmlize
-           ido-grid-mode ligature markdown-mode multiple-cursors nov ox-textile
-           powershell ripgrep rust-mode slime-company spacious-padding wgrep
-           yasnippet)))
