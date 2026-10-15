@@ -220,29 +220,6 @@
 (global-ligature-mode t)
 
 
-;; Current line indicator
-
-
-(global-hl-line-mode)
-
-
-(dolist (x '(comint-mode-hook
-             vc-git-log-edit-mode-hook
-             cider-repl-mode-hook
-             slime-repl-mode-hook))
-  (add-hook x (lambda () (hl-line-mode 'toggle))))
-
-
-;; Line numbers
-
-
-(dolist (x '(prog-mode-hook
-             conf-mode-hook
-             sgml-mode-hook
-             tabulated-list-mode-hook))
-  (add-hook x 'display-line-numbers-mode))
-
-
 ;; Fonts
 
 
@@ -275,15 +252,6 @@
   (load-theme 'modus-vivendi))
 
 
-;; Text wrapping
-
-
-(dolist (x '(man-common-hook
-             flymake-diagnostics-buffer-mode-hook
-             flymake-project-diagnostics-mode-hook))
-  (add-hook x 'visual-line-mode))
-
-
 ;; Clean UI
 
 
@@ -309,6 +277,38 @@
 
 
 (menu-bar-mode -1)
+
+
+;; Current line indicator
+
+
+(global-hl-line-mode)
+
+
+(dolist (x '(comint-mode-hook
+             vc-git-log-edit-mode-hook
+             cider-repl-mode-hook
+             slime-repl-mode-hook))
+  (add-hook x (lambda () (hl-line-mode 'toggle))))
+
+
+;; Line numbers
+
+
+(dolist (x '(prog-mode-hook
+             conf-mode-hook
+             sgml-mode-hook
+             tabulated-list-mode-hook))
+  (add-hook x 'display-line-numbers-mode))
+
+
+;; Text wrapping
+
+
+(dolist (x '(man-common-hook
+             flymake-diagnostics-buffer-mode-hook
+             flymake-project-diagnostics-mode-hook))
+  (add-hook x 'visual-line-mode))
 
 
 ;; Scrolling
