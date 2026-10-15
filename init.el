@@ -465,9 +465,6 @@
                   (apply f args)))))
 
 
-;; History
-
-
 (require 'savehist)
 
 
