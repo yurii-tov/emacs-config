@@ -2621,13 +2621,18 @@ Example input:
       (goto-char (1- (org-table-end))))))
 
 
-;; Fix table glitch
+;; Fixes
 
 
 (defconst org-table--separator-space-pre " ")
 
 
 (defconst org-table--separator-space-post " ")
+
+
+(advice-add 'org-imenu-get-tree
+            :override
+            #'imenu-default-create-index-function)
 
 
 ;; VCS
