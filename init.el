@@ -2191,6 +2191,13 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (setq nov-text-width 70))
 
 
+;; Proced
+;; ======
+
+
+(setq proced-auto-update-flag 'visible)
+
+
 ;; File server
 ;; ===========
 
