@@ -2197,8 +2197,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; ======
 
 
-(unless (eq system-type 'windows-nt)
-  (setq-default proced-auto-update-flag 'visible))
+(setq-default proced-auto-update-flag 'visible)
 
 
 ;; File server
