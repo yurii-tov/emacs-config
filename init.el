@@ -141,8 +141,8 @@
   "M-l" 'move-line-up               "C-c c" 'org-capture
   "M-M" 'mc/mark-all-dwim           "C-c a" 'org-agenda
   "M-N" 'mc/mark-next-like-this     "C-c o" 'org-push
-  "M-P" 'mc/mark-previous-like-this "C-c p" 'proced
-  "S-<down-mouse-1>" nil            "C-c w" 'watch-file)
+  "M-P" 'mc/mark-previous-like-this "C-c w" 'watch-file
+  "S-<down-mouse-1>" nil)
 
 
 ;; Conflicts
@@ -298,7 +298,6 @@
 (dolist (x '(prog-mode-hook
              conf-mode-hook
              sgml-mode-hook
-             proced-mode-hook
              tabulated-list-mode-hook))
   (add-hook x 'display-line-numbers-mode))
 
@@ -307,7 +306,6 @@
 
 
 (dolist (x '(man-common-hook
-             proced-mode-hook
              flymake-diagnostics-buffer-mode-hook
              flymake-project-diagnostics-mode-hook))
   (add-hook x 'visual-line-mode))
@@ -2191,14 +2189,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 (with-eval-after-load 'nov
   (setq nov-text-width 70))
-
-
-;; Proced
-;; ======
-
-
-(unless (eq system-type 'windows-nt)
-  (setq-default proced-auto-update-flag 'visible))
 
 
 ;; File server
