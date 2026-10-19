@@ -298,6 +298,7 @@
 (dolist (x '(prog-mode-hook
              conf-mode-hook
              sgml-mode-hook
+             proced-mode-hook
              tabulated-list-mode-hook))
   (add-hook x 'display-line-numbers-mode))
 
@@ -306,6 +307,7 @@
 
 
 (dolist (x '(man-common-hook
+             proced-mode-hook
              flymake-diagnostics-buffer-mode-hook
              flymake-project-diagnostics-mode-hook))
   (add-hook x 'visual-line-mode))
@@ -2242,6 +2244,14 @@ Optionally, formats the buffer with COMMAND (if provided)"
        (format "%s -y %s -framerate 30 -pix_fmt yuv420p %s"
                ffmpeg input capture-file-name))
       (message "Capturing video to file: %s" capture-file-name))))
+
+
+;; Proced
+;; ======
+
+
+(unless (eq system-type 'windows-nt)
+  (setq-default proced-auto-update-flag t))
 
 
 ;; GPG
