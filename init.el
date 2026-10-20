@@ -634,15 +634,19 @@
 
 (defun reopen-with-sudo ()
   (interactive)
-  (let ((file (or (buffer-file-name) default-directory)))
-    (kill-buffer)
-    (find-file
-     (if-let* ((host (file-remote-p file 'host)))
-         (concat (replace-regexp-in-string host
-                                           (concat host "|sudo:")
-                                           (file-remote-p file))
-                 (file-remote-p file 'localname))
-       (concat "/sudo::" file)))))
+  (let* ((file (buffer-file-name))
+         (path (or file default-directory))
+         (path-sudo (if-let* ((host (file-remote-p path 'host)))
+                        (concat (replace-regexp-in-string host
+                                                          (concat host "|sudo:")
+                                                          (file-remote-p path))
+                                (file-remote-p path 'localname))
+                      (concat "/sudo::" path))))
+    (cond ((or file (eq major-mode 'dired-mode))
+           (kill-buffer)
+           (find-file path-sudo))
+          (t (cd path-sudo)
+             (revert-buffer)))))
 
 
 (defun diff-current-buffer ()
