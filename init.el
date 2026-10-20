@@ -142,7 +142,7 @@
   "M-M" 'mc/mark-all-dwim           "C-c a" 'org-agenda
   "M-N" 'mc/mark-next-like-this     "C-c o" 'org-push
   "M-P" 'mc/mark-previous-like-this "C-c w" 'watch-file
-  "S-<down-mouse-1>" nil)
+  "S-<down-mouse-1>" nil            "C-c p" 'proced)
 
 
 ;; Conflicts
