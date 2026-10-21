@@ -2254,8 +2254,17 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; ======
 
 
-(unless (eq system-type 'windows-nt)
-  (setq-default proced-auto-update-flag t))
+(setq proced-enable-color-flag t
+      proced-show-remote-processes t)
+
+
+(setq-default proced-auto-update-flag t)
+
+
+(add-hook 'proced-mode-hook
+          (lambda ()
+            (when (file-remote-p default-directory)
+              (reopen-with-sudo))))
 
 
 ;; GPG
