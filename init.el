@@ -2258,11 +2258,21 @@ Optionally, formats the buffer with COMMAND (if provided)"
       proced-show-remote-processes t)
 
 
+(setq-default proced-auto-update-flag 'visible
+              proced-format 'medium)
+
+
 (add-hook 'proced-mode-hook
           (lambda ()
-            (setq proced-auto-update-flag 'visible)
             (when (file-remote-p default-directory)
               (reopen-with-sudo))))
+
+
+(with-eval-after-load 'proced
+  (define-keymap :keymap proced-mode-map
+    "a" 'proced-toggle-auto-update
+    "SPC" 'scroll-up-command
+    "S-SPC" 'scroll-down-command))
 
 
 ;; GPG
