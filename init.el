@@ -2258,13 +2258,17 @@ Optionally, formats the buffer with COMMAND (if provided)"
       proced-show-remote-processes t)
 
 
-(setq-default proced-format 'medium)
+(setq-default proced-format 'medium
+              proced-filter 'all)
 
 
 (add-hook 'proced-mode-hook
           (lambda ()
             (when (file-remote-p default-directory)
               (reopen-with-sudo))))
+
+
+(add-hook 'proced-after-send-signal-hook 'proced-revert)
 
 
 (with-eval-after-load 'proced
