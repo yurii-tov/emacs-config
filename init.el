@@ -2317,19 +2317,13 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; ===============
 
 
-(setq mistral (gptel-make-openai "MistralLeChat"
-                :host "api.mistral.ai"
-                :endpoint "/v1/chat/completions"
-                :protocol "https"
-                :key (lambda ()
-                       (with-temp-buffer (insert-file-contents
-                                          "~/.password-store/mistral.gpg")
-                                         (string-trim (buffer-string))))
-                :models '(codestral-latest
-                          mistral-medium-latest))
-      gptel-backend mistral
-      gptel-model 'mistral-medium-latest
-      gptel--system-message "You are a large language model and a conversation partner. Respond concisely."
+(setq gptel-backend (gptel-make-deepseek "DeepSeek"
+                      :key (lambda ()
+                             (with-temp-buffer (insert-file-contents
+                                                "~/.password-store/deepseek-key.gpg")
+                                               (string-trim (buffer-string))))
+                      :models '(deepseek-flash))
+      gptel-model 'deepseek-flash
       gptel--set-buffer-locally t
       gptel-default-mode 'org-mode
       gptel-prompt-prefix-alist '((org-mode . "* "))
@@ -2341,14 +2335,11 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; The Chat
 
 
-(setq gptel-chat-buffer-name "*LLM-chat*")
-
-
 (defun gptel-chat ()
   "\"Just drop me into LLM chat, now!\"
 Also grabs a selected region, if any."
   (interactive)
-  (let* ((buffer-name gptel-chat-buffer-name)
+  (let* ((buffer-name "*LLM-chat*")
          (exists-p (get-buffer buffer-name))
          (region (when (use-region-p)
                    (prog1 (buffer-substring
@@ -2360,24 +2351,6 @@ Also grabs a selected region, if any."
       (with-current-buffer buffer-name
         (end-of-buffer)
         (insert " " region)))))
-
-
-(defun gptel-chat-setup ()
-  (when (string-prefix-p gptel-chat-buffer-name
-                         (buffer-name))
-    (setq-local gptel-backend mistral
-                gptel-model 'mistral-medium-latest)))
-
-
-(add-hook 'gptel-mode-hook 'gptel-chat-setup)
-
-
-;; Enable "coder" model in programming modes
-
-
-(add-hook 'prog-mode-hook
-          (lambda ()
-            (setq-local gptel-model 'codestral-latest)))
 
 
 ;; Rewrite facility
