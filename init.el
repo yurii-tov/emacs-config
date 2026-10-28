@@ -2133,9 +2133,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
              (propertize "translating..." 'face 'shadow))
     (setq translation (string-trim (shell-command-to-string command)))
     (if (zerop (length translation))
-        (let ((gptel-backend mistral)
-              (gptel-model 'mistral-medium-latest)
-              (prompt (format "Translate %s: %s"
+        (let ((prompt (format "Translate %s: %s"
                               (cdr (assoc 'description preset))
                               query))
               (callback `(lambda (response _)
