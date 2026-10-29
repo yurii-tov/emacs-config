@@ -2287,21 +2287,6 @@ Also grabs a selected region, if any."
         (insert " " region)))))
 
 
-;; Rewrite facility
-
-
-(with-eval-after-load 'gptel-rewrite
-  (require 'diff-mode)
-  (custom-set-faces
-   '(gptel-rewrite-highlight-face ((t (:inherit diff-added)))))
-  (define-keymap :keymap gptel-rewrite-actions-map
-    "=" 'gptel--rewrite-diff
-    "r" 'gptel--rewrite-iterate
-    "SPC" 'gptel--rewrite-accept
-    "m" 'gptel--rewrite-merge
-    "k" 'gptel--rewrite-reject))
-
-
 ;; Statistics / combinatorics
 ;; ==========================
 
