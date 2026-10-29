@@ -627,8 +627,7 @@
 
 (defun watch-file (file)
   (interactive "fWatch file: ")
-  (let ((default-directory (file-name-directory file))
-        (current-prefix-arg t))
+  (let ((default-directory (file-name-directory file)))
     (async-shell-command (concat "tail -f " (file-relative-name file)))))
 
 
@@ -1731,22 +1730,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
     (kill-process p)
     (sit-for 0.5))
   (async-shell-command command (current-buffer)))
-
-
-;; Display
-
-
-(advice-add 'async-shell-command
-            :around
-            (lambda (f &rest args)
-              "Don't show the buffer unless prefix arg is provided"
-              (if-let* ((buffer (cadr args))
-                        ((or current-prefix-arg
-                             (get-buffer-window buffer))))
-                  (apply f args)
-                (save-window-excursion
-                  (prog1 (apply f args)
-                    (switch-to-buffer buffer))))))
 
 
 ;; Buffer
