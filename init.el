@@ -1671,32 +1671,15 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (add-hook 'shell-command-mode-hook 'read-only-mode)
 
 
-(add-hook 'shell-command-mode-hook
-          (lambda ()
-            "Report process state transitions"
-            (when-let* ((p (get-buffer-process (current-buffer))))
-              (message "%s %s"
-                       (propertize "[started]" 'face 'shadow)
-                       (car args))
-              (set-process-sentinel
-               (get-process p)
-               `(lambda (p e)
-                  (message "%s %s"
-                           (propertize
-                            (format "[%s]" (string-trim-right e))
-                            'face 'shadow)
-                           ,(car args))
-                  (unless (member (car (string-split e))
-                                  '("stopped" "run"))
-                    (read-only-mode -1)))))))
-
-
 (advice-add 'async-shell-command
             :after
             (lambda (&rest args)
               "Store the command"
               (with-current-buffer (cadr args)
-                (setq-local command (car args)))))
+                (setq-local command (car args))
+                (message "%s %s"
+                         (propertize "[started]" 'face 'shadow)
+                         command))))
 
 
 (defun asc-restart ()
