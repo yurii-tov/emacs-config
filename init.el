@@ -1665,13 +1665,10 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; ====================
 
 
-(add-hook 'shell-command-mode-hook 'read-only-mode)
-
-
 (setq async-shell-command-display-buffer nil)
 
 
-;; Process state transitions
+(add-hook 'shell-command-mode-hook 'read-only-mode)
 
 
 (add-hook 'shell-command-mode-hook
@@ -1694,9 +1691,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
                     (read-only-mode -1)))))))
 
 
-;; Restart
-
-
 (advice-add 'async-shell-command
             :after
             (lambda (&rest args)
@@ -1711,9 +1705,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
     (kill-process p)
     (sit-for 0.5))
   (async-shell-command command (current-buffer)))
-
-
-;; Buffer
 
 
 (defun asc-handle-existing (buffer-name)
@@ -1741,9 +1732,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
                 (cl-list* (car args)
                           (asc-handle-existing buffer)
                           (cddr args)))))
-
-
-;; Keybindings
 
 
 (with-eval-after-load 'shell
