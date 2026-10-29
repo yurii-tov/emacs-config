@@ -1668,6 +1668,9 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (add-hook 'shell-command-mode-hook 'read-only-mode)
 
 
+(setq async-shell-command-display-buffer nil)
+
+
 ;; Startup details
 
 
