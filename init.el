@@ -1671,25 +1671,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (setq async-shell-command-display-buffer nil)
 
 
-;; Startup details
-
-
-(advice-add 'async-shell-command
-            :around
-            (lambda (f &rest args)
-              "Place startup details into the buffer"
-              (prog1 (apply f args)
-                (with-current-buffer (cadr args)
-                  (let ((info (format "*** `%s` in %s ***\n"
-                                      (car args)
-                                      (abbreviate-file-name default-directory))))
-                    (goto-char 1)
-                    (comint-output-filter (get-buffer-process (cadr args)) info)
-                    (set-marker comint-last-input-end (point))
-                    (highlight-regexp (regexp-quote info) 'shadow)
-                    (font-lock-update))))))
-
-
 ;; Process state transitions
 
 
