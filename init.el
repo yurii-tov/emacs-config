@@ -1674,38 +1674,35 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; Process state transitions
 
 
-(advice-add 'async-shell-command
-            :around
-            (lambda (f &rest args)
-              "Report process state transitions"
-              (prog1 (apply f args)
-                (when-let* ((p (get-buffer-process (cadr args))))
+(add-hook 'shell-command-mode-hook
+          (lambda ()
+            "Report process state transitions"
+            (when-let* ((p (get-buffer-process (current-buffer))))
+              (message "%s %s"
+                       (propertize "[started]" 'face 'shadow)
+                       (car args))
+              (set-process-sentinel
+               (get-process p)
+               `(lambda (p e)
                   (message "%s %s"
-                           (propertize "[started]" 'face 'shadow)
-                           (car args))
-                  (set-process-sentinel
-                   (get-process p)
-                   `(lambda (p e)
-                      (message "%s %s"
-                               (propertize
-                                (format "[%s]" (string-trim-right e))
-                                'face 'shadow)
-                               ,(car args))
-                      (unless (member (car (string-split e))
-                                      '("stopped" "run"))
-                        (read-only-mode -1))))))))
+                           (propertize
+                            (format "[%s]" (string-trim-right e))
+                            'face 'shadow)
+                           ,(car args))
+                  (unless (member (car (string-split e))
+                                  '("stopped" "run"))
+                    (read-only-mode -1)))))))
 
 
 ;; Restart
 
 
 (advice-add 'async-shell-command
-            :around
-            (lambda (f &rest args)
+            :after
+            (lambda (&rest args)
               "Store the command"
-              (prog1 (apply f args)
-                (with-current-buffer (cadr args)
-                  (setq-local command (car args))))))
+              (with-current-buffer (cadr args)
+                (setq-local command (car args)))))
 
 
 (defun asc-restart ()
@@ -1731,8 +1728,8 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 
 (advice-add 'async-shell-command
-            :around
-            (lambda (f &rest args)
+            :filter-args
+            (lambda (args)
               "Setup the buffer"
               (let ((buffer (or (cadr args)
                                 (thread-last
@@ -1741,9 +1738,9 @@ Optionally, formats the buffer with COMMAND (if provided)"
                                    (lambda (x) (member x '("sudo" "time"))))
                                   car
                                   (format "*asc:%s*")))))
-                (apply f (car args)
-                       (asc-handle-existing buffer)
-                       (cddr args)))))
+                (cl-list* (car args)
+                          (asc-handle-existing buffer)
+                          (cddr args)))))
 
 
 ;; Keybindings
