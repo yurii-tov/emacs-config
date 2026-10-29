@@ -2219,7 +2219,8 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (interactive)
   (let ((default-directory "~"))
     (async-shell-command
-     "while :; do ssh -o ServerAliveInterval=180 -NvD localhost:9999 proxy && exit 0 || sleep 5s; done" "*proxy*")))
+     "while :; do ssh -o ServerAliveInterval=180 -NvD localhost:9999 proxy && exit 0 || sleep 5s; done" "*proxy*")
+    (message "SOCKS proxy started at localhost:9999")))
 
 
 ;; Video capturing
