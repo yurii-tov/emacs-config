@@ -2204,8 +2204,8 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (let* ((default-directory (read-directory-name "Serve directory: "))
          (socket (read-string "Address: " "0.0.0.0:5555"))
          (command (apply 'format "python -m http.server -b %s %s" (split-string socket ":")))
-         (buffer (format "*python-server:%s*" socket)))
-    (async-shell-command command buffer)
+         (buffer (format "*file-server:%s*" socket)))
+    (start-process-shell-command "file-server" buffer command)
     (message "Serving %s at %s"
              (propertize (abbreviate-file-name default-directory) 'face 'bold)
              socket)))
