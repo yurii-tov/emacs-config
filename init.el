@@ -2126,8 +2126,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
 
 
-(with-eval-after-load 'nov
-  (setq nov-text-width 70))
+(setq nov-variable-pitch nil)
 
 
 ;; File server
