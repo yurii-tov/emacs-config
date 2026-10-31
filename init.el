@@ -520,15 +520,6 @@
                 (apply f args))))
 
 
-(advice-add 'kill-buffer-and-window
-            :around
-            (lambda (f &rest args)
-              "Fix 'single window' broken scenario"
-              (if (> (length (window-list)) 1)
-                  (apply f args)
-                (kill-buffer))))
-
-
 ;; Ibuffer
 ;; =======
 
