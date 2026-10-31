@@ -2055,9 +2055,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
                   (link . ,(format "https://dictionary.cambridge.org/search/direct/?datasetsearch=english-russian&q=%s"
                                    query-encoded))))
          (ru-en `((description . "from Russian to English")
-                  (command . "curl -sL '%s' | grep -oP '(?<=class=.tl.>)[^<]+' | head -5 | tail -n +2")
-                  (link . ,(format "https://en.openrussian.org/ru/%s"
-                                   query-encoded))))
+                  (command . "echo '%s' > /dev/null")))
          (preset (if (string-match "[a-zA-Z]" query)
                      en-ru ru-en))
          (link (cdr (assoc 'link preset)))
