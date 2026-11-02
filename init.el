@@ -1673,28 +1673,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
                          command))))
 
 
-(defun async-shell-command-restart ()
-  (interactive)
-  (when-let* ((p (get-buffer-process (current-buffer))))
-    (kill-process p)
-    (sit-for 0.5))
-  (let ((inhibit-read-only t))
-    (async-shell-command command (current-buffer)))
-  (when (file-remote-p default-directory)
-    (run-hooks 'shell-command-mode-hook)))
-
-
-(defun asc-handle-existing (buffer-name)
-  (if-let* ((p (get-buffer-process buffer-name)))
-      (if (y-or-n-p (format "Kill existing process in buffer %s?"
-                            (propertize buffer-name 'face 'bold)))
-          (prog1 buffer-name
-            (kill-process p)
-            (sit-for 0.5))
-        (generate-new-buffer-name buffer-name))
-    buffer-name))
-
-
 (advice-add 'async-shell-command
             :filter-args
             (lambda (args)
@@ -1707,8 +1685,27 @@ Optionally, formats the buffer with COMMAND (if provided)"
                                   car
                                   (format "*asc:%s*")))))
                 (cl-list* (car args)
-                          (asc-handle-existing buffer)
+                          (if-let* ((p (get-buffer-process buffer)))
+                              (if (y-or-n-p
+                                   (format "Kill existing process in buffer %s?"
+                                           (propertize buffer 'face 'bold)))
+                                  (prog1 buffer
+                                    (kill-process p)
+                                    (sit-for 0.5))
+                                (generate-new-buffer-name buffer))
+                            buffer)
                           (cddr args)))))
+
+
+(defun async-shell-command-restart ()
+  (interactive)
+  (when-let* ((p (get-buffer-process (current-buffer))))
+    (kill-process p)
+    (sit-for 0.5))
+  (let ((inhibit-read-only t))
+    (async-shell-command command (current-buffer)))
+  (when (file-remote-p default-directory)
+    (run-hooks 'shell-command-mode-hook)))
 
 
 (with-eval-after-load 'shell
