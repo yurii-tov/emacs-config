@@ -1673,7 +1673,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
                          command))))
 
 
-(defun asc-restart ()
+(defun async-shell-command-restart ()
   (interactive)
   (when-let* ((p (get-buffer-process (current-buffer))))
     (kill-process p)
@@ -1710,7 +1710,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 (with-eval-after-load 'shell
   (define-keymap :keymap shell-command-mode-map
-    "g" 'asc-restart
+    "g" 'async-shell-command-restart
     "k" 'comint-kill-subjob
     "q" 'quit-window))
 
