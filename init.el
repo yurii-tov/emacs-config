@@ -1678,7 +1678,10 @@ Optionally, formats the buffer with COMMAND (if provided)"
   (when-let* ((p (get-buffer-process (current-buffer))))
     (kill-process p)
     (sit-for 0.5))
-  (async-shell-command command (current-buffer)))
+  (let ((inhibit-read-only t))
+    (async-shell-command command (current-buffer)))
+  (when (file-remote-p default-directory)
+    (run-hooks 'shell-command-mode-hook)))
 
 
 (defun asc-handle-existing (buffer-name)
