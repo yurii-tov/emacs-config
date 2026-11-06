@@ -756,9 +756,6 @@
               (ido-record-work-directory default-directory)))
 
 
-(add-hook 'dired-mode-hook (lambda () (setq-local ido-use-filename-at-point nil)))
-
-
 ;; Colors
 
 
@@ -856,7 +853,8 @@
 (add-hook 'dired-mode-hook
           (lambda ()
             (diredfl-mode)
-            (auto-revert-mode)))
+            (auto-revert-mode)
+            (setq-local ffap-max-region-length 0)))
 
 
 (require 'ls-lisp)
