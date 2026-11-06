@@ -752,6 +752,9 @@
               (ido-record-work-directory default-directory)))
 
 
+(add-hook 'dired-mode-hook (lambda () (setq-local ido-use-filename-at-point nil)))
+
+
 ;; Colors
 
 
