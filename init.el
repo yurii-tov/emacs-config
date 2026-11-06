@@ -2250,9 +2250,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
       gptel-expert-commands t)
 
 
-;; The Chat
-
-
 (defun gptel-chat ()
   "\"Just drop me into LLM chat, now!\"
 Also grabs a selected region, if any."
