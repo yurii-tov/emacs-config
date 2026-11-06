@@ -849,8 +849,7 @@
 (add-hook 'dired-mode-hook
           (lambda ()
             (diredfl-mode)
-            (auto-revert-mode)
-            (setq-local ffap-file-finder nil)))
+            (auto-revert-mode)))
 
 
 (require 'ls-lisp)
