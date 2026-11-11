@@ -1289,7 +1289,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 
 
 (defun insert-path (path)
-  (interactive "fInsert path: ")
+  (interactive "FInsert path: ")
   (insert (or (file-remote-p path 'localname) path)))
 
 
