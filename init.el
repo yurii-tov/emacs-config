@@ -48,7 +48,7 @@
 (define-keymap :keymap search-map
   "f" 'find-dired
   "g" 'rgrep
-  "l" 'gptel-chat
+  "l" 'gptel-menu
   "s" 'browse-url
   "M-s" 'browse-url-at-point
   "d" 'camd
@@ -131,19 +131,19 @@
   "M-4" 'enclose-text-apostrophes   "C-x C-b" 'ibuffer
   "M-9" 'enclose-text-parenthesis   "C-x C-k" 'kill-buffer-and-window
   "M-(" 'enclose-text-angle         "C-x C-=" 'display-line-numbers-mode
-  "M-0" 'enclose-text-square        "C-x C-l" 'gptel-menu
-  "M-)" 'enclose-text-curly         "C-c j" 'cider-start-map
-  "M-i" 'imenu                      "C-c k" 'sql-connect
-  "M-u" 'force-revert-buffer        "C-c i" 'ielm
-  "M-j" 'switch-to-buffer           "C-c s" 'ssh
-  "M-`" 'shell                      "C-c x" 'run-proxy
-  "M-g" 'goto-line                  "C-c d" 'serve-directory
-  "M-/" project-prefix-map          "C-c v" 'capture-video
-  "M-l" 'move-line-up               "C-c c" 'org-capture
-  "M-M" 'mc/mark-all-dwim           "C-c a" 'org-agenda
-  "M-N" 'mc/mark-next-like-this     "C-c o" 'org-push
-  "M-P" 'mc/mark-previous-like-this "C-c w" 'watch-file
-  "S-<down-mouse-1>" nil            "C-c p" 'proced)
+  "M-0" 'enclose-text-square        "C-c j" 'cider-start-map
+  "M-)" 'enclose-text-curly         "C-c k" 'sql-connect
+  "M-i" 'imenu                      "C-c i" 'ielm
+  "M-u" 'force-revert-buffer        "C-c s" 'ssh
+  "M-j" 'switch-to-buffer           "C-c x" 'run-proxy
+  "M-`" 'shell                      "C-c d" 'serve-directory
+  "M-g" 'goto-line                  "C-c v" 'capture-video
+  "M-/" project-prefix-map          "C-c c" 'org-capture
+  "M-l" 'move-line-up               "C-c a" 'org-agenda
+  "M-M" 'mc/mark-all-dwim           "C-c o" 'org-push
+  "M-N" 'mc/mark-next-like-this     "C-c w" 'watch-file
+  "M-P" 'mc/mark-previous-like-this "C-c p" 'proced
+  "S-<down-mouse-1>" nil            "C-c h" 'hermes)
 
 
 ;; Conflicts
@@ -2251,25 +2251,8 @@ Optionally, formats the buffer with COMMAND (if provided)"
       gptel-prompt-prefix-alist '((org-mode . "* "))
       gptel-track-media t
       gptel-include-reasoning nil
-      gptel-expert-commands t)
-
-
-(defun gptel-chat ()
-  "\"Just drop me into LLM chat, now!\"
-Also grabs a selected region, if any."
-  (interactive)
-  (let* ((buffer-name "*LLM-chat*")
-         (exists-p (get-buffer buffer-name))
-         (region (when (use-region-p)
-                   (prog1 (buffer-substring
-                           (region-beginning)
-                           (region-end))
-                     (deactivate-mark)))))
-    (gptel buffer-name nil region t)
-    (when (and region exists-p)
-      (with-current-buffer buffer-name
-        (end-of-buffer)
-        (insert " " region)))))
+      gptel-expert-commands t
+      hermes-dashboard-transport-start-mode 'remote)
 
 
 ;; Statistics / combinatorics
