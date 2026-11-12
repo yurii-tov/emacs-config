@@ -559,6 +559,7 @@
                        (mode . eww-bookmark-mode)))
          ("📁 Directory" (mode . dired-mode))
          ("🧠 LSP" (name . "\\*EGLOT"))
+         ("👧 Hermes Chat" (mode . hermes-chat-mode))
          ("🧵 Process" (predicate . (get-buffer-process (current-buffer))))
          ("📦 Misc" (predicate . t)))))
 

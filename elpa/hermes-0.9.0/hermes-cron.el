@@ -1,0 +1,942 @@
+;;; hermes-cron.el --- Scheduled-job browser for Hermes  -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2026  Thanos Apollo
+
+;; Author: Thanos Apollo <public@thanosapollo.org>
+;; Assisted-by: Hermes:MoA
+;; Keywords: tools, convenience
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; A `tabulated-list' browser over Hermes dashboard cron APIs.  The t key pauses
+;; or resumes the job at point, D removes it, c creates one, e edits it, !
+;; triggers it immediately, and RET opens job details with recent run history.
+
+;;; Code:
+
+(require 'hermes-buffer)
+(require 'subr-x)
+(require 'seq)
+(require 'tabulated-list)
+(require 'url-util)
+(require 'hermes-transport)
+(require 'hermes-dashboard-transport)
+(require 'hermes-dashboard-rpc)
+(require 'hermes-promise)
+(require 'hermes-browser)
+(require 'hermes-chat-models)
+
+(declare-function read-string-from-buffer "string-edit")
+
+;;; Customization
+
+(defcustom hermes-cron-notify-on-failure nil
+  "When non-nil, raise a desktop notification when a cron job newly fails.
+Failures are only detected when the cron list refreshes; pair this with
+`hermes-cron-auto-refresh-interval' to be alerted without refreshing by hand."
+  :type 'boolean
+  :group 'hermes)
+
+(defcustom hermes-cron-auto-refresh-interval nil
+  "Seconds between automatic refreshes of a cron browser buffer.
+A positive number refreshes the list on that interval; nil or zero disables
+auto-refresh.  Existing lists start after their next successful refresh.
+Disabling takes effect on the next tick.
+Used with `hermes-cron-notify-on-failure'."
+  :type '(choice (const :tag "Disabled" nil) (natnum :tag "Seconds"))
+  :group 'hermes)
+
+;;; Fields
+
+(defvar-local hermes-cron--scope-profile nil
+  "Exact profile for a Routines view, or nil for the ordinary all-jobs view.")
+
+(defun hermes-cron--job-id (job)
+  "Return JOB's stable identifier."
+  (or (hermes-transport--non-blank-string (hermes-transport--display-field job 'id))
+      (hermes-transport--non-blank-string (hermes-transport--display-field job 'job_id))
+      (hermes-transport--non-blank-string (hermes-transport--display-field job 'name))
+      ""))
+
+(defun hermes-cron--profile (job)
+  "Return JOB's profile name, or an empty string."
+  (or (hermes-transport--non-blank-string (hermes-transport--display-field job 'profile))
+      (hermes-transport--non-blank-string (hermes-transport--display-field job 'profile_name))
+      ""))
+
+(defun hermes-cron--schedule (job)
+  "Return JOB's schedule display string."
+  (let ((schedule (hermes-transport--get job 'schedule)))
+    (or (hermes-transport--non-blank-string (hermes-transport--display-field job 'schedule_display))
+        (hermes-transport--non-blank-string (hermes-transport--display-field schedule 'display))
+        (hermes-transport--non-blank-string (hermes-transport--display-field schedule 'expr))
+        (hermes-transport--non-blank-string (hermes-transport--display-field job 'schedule))
+        "")))
+
+(defun hermes-cron--schedule-expr (job)
+  "Return JOB's raw schedule expression for editing."
+  (let ((schedule (hermes-transport--get job 'schedule)))
+    (or (hermes-transport--non-blank-string (hermes-transport--display-field schedule 'expr))
+        (hermes-transport--non-blank-string (hermes-transport--display-field job 'schedule))
+        (hermes-transport--non-blank-string (hermes-transport--display-field job 'schedule_display))
+        "")))
+
+(defun hermes-cron--state (job)
+  "Return JOB's state string."
+  (or (hermes-transport--non-blank-string (hermes-transport--display-field job 'state))
+      (and (hermes-transport--field-present-p job 'enabled)
+           (not (hermes-transport--get job 'enabled))
+           "disabled")
+      "scheduled"))
+
+(defun hermes-cron--prompt (job)
+  "Return JOB's prompt or prompt preview."
+  (or (hermes-transport--non-blank-string (hermes-transport--display-field job 'prompt))
+      (hermes-transport--non-blank-string (hermes-transport--display-field job 'prompt_preview))
+      (hermes-transport--non-blank-string (hermes-transport--display-field job 'script))
+      ""))
+
+(defun hermes-cron--skills (job)
+  "Return JOB's skill names as a list of strings."
+  (delq nil
+        (mapcar #'hermes-transport--scalar-string
+                (or (hermes-transport--get job 'skills) '()))))
+
+(defun hermes-cron--skills-string (job)
+  "Return JOB's skills as a comma-separated display string."
+  (string-join (hermes-cron--skills job) ", "))
+
+(defun hermes-cron--last-status (job)
+  "Return JOB's last-run outcome symbol: `error', `ok', or nil when unknown."
+  (pcase (downcase (or (hermes-transport--scalar-string
+                        (hermes-transport--get job 'last_status))
+                       ""))
+    ("error" 'error)
+    ("ok" 'ok)
+    (_ nil)))
+
+(defun hermes-cron--state-cell (job)
+  "Return JOB's state cell with its semantic and column faces.
+The cell text is unchanged so commands reading it by `equal' still match."
+  (hermes-browser--status-cell (hermes-cron--state job)
+                               'hermes-browser-state))
+
+(defun hermes-cron--deliver-cell (job)
+  "Return JOB's deliver cell, faced as an error after delivery failure."
+  (hermes-browser--face-cell
+   (hermes-transport--display-field job 'deliver)
+   (if (hermes-transport--non-blank-string
+        (hermes-transport--display-field job 'last_delivery_error))
+       'hermes-browser-error
+     'hermes-browser-delivery)))
+
+(defun hermes-cron--last-run-cell (job)
+  "Return JOB's last-run cell, faced by the most recent run outcome."
+  (hermes-browser--face-cell
+   (hermes-transport--display-field job 'last_run_at)
+   (pcase (hermes-cron--last-status job)
+     ('error 'hermes-browser-error)
+     ('ok 'hermes-browser-success)
+     (_ 'hermes-browser-timestamp))))
+
+(defun hermes-cron--rows (result)
+  "Return `tabulated-list' entries for a cron list RESULT."
+  (mapcar
+   (lambda (job)
+     (list (hermes-cron--job-id job)
+           (vector (hermes-browser--face-cell
+                    (hermes-transport--display-field job 'name)
+                    'hermes-browser-name)
+                   (hermes-browser--face-cell
+                    (hermes-cron--schedule job) 'hermes-browser-schedule)
+                   (hermes-cron--state-cell job)
+                   (hermes-browser--face-cell
+                    (hermes-cron--profile job) 'hermes-browser-profile)
+                   (hermes-cron--deliver-cell job)
+                   (hermes-cron--last-run-cell job)
+                   (hermes-browser--face-cell
+                    (hermes-transport--display-field job 'next_run_at)
+                    'hermes-browser-timestamp)
+                   (hermes-browser--face-cell
+                    (hermes-cron--prompt job) 'hermes-browser-prompt))))
+   (hermes-transport--get result 'jobs)))
+
+(defun hermes-cron--jobs-result (payload)
+  "Return cron list PAYLOAD normalized to a `jobs' result object."
+  (if (hermes-transport--field-present-p payload 'jobs)
+      payload
+    `((jobs . ,payload))))
+
+;;; Dashboard REST API
+
+(defun hermes-cron--api (client method path &optional body query)
+  "Return a promise of the cron REST METHOD PATH through CLIENT.
+BODY and QUERY extend the request; authentication comes from CLIENT's session
+token when present, otherwise the configured dashboard URL."
+  (hermes-dashboard-transport-api-request-async
+   method (concat "/api/cron" path) :body body :query query :client client))
+
+(defun hermes-cron--job-path (id &rest segments)
+  "Return the cron jobs path for ID extended by SEGMENTS."
+  (concat "/jobs/" (url-hexify-string id) (apply #'concat segments)))
+
+(defun hermes-cron--query (profile &optional extra)
+  "Return a REST query for PROFILE plus EXTRA query entries."
+  (append (and (hermes-transport--non-blank-string profile)
+               `((profile . ,profile)))
+          extra))
+
+(defun hermes-cron--entry-profile ()
+  "Return the profile shown on the current tabulated-list row, or nil."
+  (and-let* ((entry (tabulated-list-get-entry))
+             ((> (length entry) 3)))
+    (hermes-transport--non-blank-string (aref entry 3))))
+
+(defun hermes-cron--id-at-point ()
+  "Return the cron job id at point, or signal a `user-error'."
+  (or (tabulated-list-get-id) (user-error "No cron job on this line")))
+
+(defun hermes-cron--fetch-job (client id profile)
+  "Return a promise of cron job ID for PROFILE through CLIENT."
+  (hermes-cron--api client "GET" (hermes-cron--job-path id)
+                    nil (hermes-cron--query profile)))
+
+(defun hermes-cron--fetch-runs (client id profile)
+  "Return a promise of recent run history for cron job ID and PROFILE via CLIENT."
+  (hermes-cron--api client "GET" (hermes-cron--job-path id "/runs")
+                    nil (hermes-cron--query profile '((limit . 20)))))
+
+(defun hermes-cron--update-job (client id profile payload)
+  "Return a promise that sends PAYLOAD for cron job ID and PROFILE via CLIENT."
+  (hermes-cron--api client "PUT" (hermes-cron--job-path id)
+                    `((updates . ,payload))
+                    (hermes-cron--query profile)))
+
+;;; Job detail view
+
+(defun hermes-cron--time (value)
+  "Return VALUE as a display timestamp."
+  (cond
+   ((numberp value) (format-time-string "%F %R" value))
+   (t (or (hermes-transport--scalar-string value) ""))))
+
+(defun hermes-cron--format-job (job)
+  "Return detail text for cron JOB."
+  (string-join
+   (list (format "Name:     %s" (hermes-transport--display-field job 'name))
+         (format "ID:       %s" (hermes-cron--job-id job))
+         (format "Profile:  %s" (or (hermes-transport--non-blank-string
+                                      (hermes-cron--profile job))
+                                     "default"))
+         (format "State:    %s" (hermes-cron--state job))
+         (format "Paused:   %s" (or (hermes-transport--non-blank-string
+                                     (hermes-transport--display-field job 'paused_reason)) "-"))
+         (format "Schedule: %s" (hermes-cron--schedule job))
+         (format "Requested model: %s / %s"
+                 (hermes-cron--preference job 'provider)
+                 (hermes-cron--preference job 'model))
+         (format "Backend workdir: %s" (hermes-cron--preference job 'workdir))
+         (format "Deliver:  %s" (or (hermes-transport--non-blank-string
+                                      (hermes-transport--display-field job 'deliver))
+                                     "local"))
+         (format "Skills:   %s" (or (hermes-transport--non-blank-string
+                                      (hermes-cron--skills-string job))
+                                     "-"))
+         (format "Last:     %s" (hermes-transport--display-field job 'last_run_at))
+         (format "Next:     %s" (hermes-transport--display-field job 'next_run_at))
+         (format "Result:   %s" (or (hermes-transport--non-blank-string
+                                      (hermes-transport--display-field job 'last_status))
+                                     "-"))
+         (format "Error:    %s" (or (hermes-transport--non-blank-string
+                                      (hermes-transport--display-field job 'last_error))
+                                     "-"))
+         (format "Delivery: %s" (or (hermes-transport--non-blank-string
+                                      (hermes-transport--display-field job 'last_delivery_error))
+                                     "-"))
+         ""
+         "Prompt:"
+         (or (hermes-transport--non-blank-string (hermes-cron--prompt job)) "-"))
+   "\n"))
+
+(defvar-keymap hermes-cron--run-line-map
+  :doc "Keymap active on cron run lines in the job detail buffer."
+  "RET" #'hermes-cron-show-run-log
+  "<mouse-1>" #'hermes-cron-show-run-log)
+
+(defun hermes-cron--format-run (run)
+  "Return source-aware display text for cron RUN."
+  (let ((id (hermes-transport--display-field run 'id))
+        (line (format "  %s  %s  %s msg%s  %s%s"
+                      (or (hermes-transport--non-blank-string
+                           (hermes-cron--time
+                            (or (hermes-transport--get run 'started_at)
+                                (hermes-transport--get run 'created_at))))
+                          "Time unknown")
+                      (or (hermes-transport--non-blank-string
+                           (hermes-transport--display-field run 'title))
+                          (hermes-transport--display-field run 'id))
+                      (or (hermes-transport--non-blank-string
+                           (hermes-transport--display-field run 'message_count))
+                          "?")
+                      (if (equal (hermes-transport--display-field run 'message_count) "1") "" "s")
+                      (hermes-transport--display-field run 'source)
+                      (if (eq (hermes-transport--get run 'is_active) t) " active" ""))))
+    (if (and (hermes-transport--non-blank-string id)
+             (not (string-prefix-p "cron_output:" id))
+             (or (not (hermes-transport--field-present-p run 'source))
+                 (equal (hermes-transport--get run 'source) "cron")))
+        (propertize line
+                    'hermes-cron-run-id id
+                    'hermes-cron-run-profile (hermes-cron--profile run)
+                    'keymap hermes-cron--run-line-map
+                    'mouse-face 'highlight
+                    'help-echo "RET: show this run's transcript")
+      (concat line "  [No session transcript]\n    "
+              (or (hermes-transport--non-blank-string
+                   (hermes-transport--display-field run 'preview))
+                  "Preview unavailable")))))
+
+(defun hermes-cron--format-runs (runs)
+  "Return detail text for recent cron run history.
+RUNS is the run list from the dashboard."
+  (concat "\n\nRuns (RET on session lines for transcripts; output previews may be partial):\n"
+          (if runs
+              (string-join (mapcar #'hermes-cron--format-run runs) "\n")
+            "  No recorded runs.")))
+
+(define-derived-mode hermes-cron-detail-mode special-mode "Hermes Cron Job"
+  "Major mode for a scheduled job and its run history."
+  :interactive nil
+  (hermes-browser--setup-status))
+
+(define-derived-mode hermes-cron-run-mode special-mode "Hermes Cron Run"
+  "Major mode for an inert scheduled-run transcript."
+  :interactive nil
+  (hermes-browser--setup-status))
+
+(defun hermes-cron--display-detail (job runs &optional instance pinned-instance)
+  "Display cron JOB with run history in a detail buffer.
+RUNS is the detail run list.  Retain INSTANCE before rendering or display.
+PINNED-INSTANCE retains a Routines view's backend for transcript actions."
+  (with-current-buffer (hermes-buffer--get "*Hermes Cron Job*"
+                                          #'hermes-cron-detail-mode)
+    (setq hermes-browser--pinned-instance
+          (hermes-browser--copy-identity pinned-instance))
+    (when instance (hermes-browser--own-instance instance))
+    (hermes-browser--next-request-generation)
+    (let ((inhibit-read-only t))
+      (erase-buffer)
+      (insert (hermes-cron--format-job job))
+      (insert (hermes-cron--format-runs runs)))
+    (setq hermes-browser--status "Ready")
+    (goto-char (point-min))
+    (pop-to-buffer (current-buffer))))
+
+(defun hermes-cron-show ()
+  "Show details and recent run history for the cron job at point."
+  (interactive nil hermes-cron-mode)
+  (let ((instance (hermes-browser--instance))
+        (pinned hermes-browser--pinned-instance)
+        (id (hermes-cron--id-at-point))
+        (profile (hermes-cron--entry-profile))
+        (origin (current-buffer))
+        (generation (hermes-browser--next-request-generation)))
+    (hermes-browser--run-on-client
+     (lambda (client)
+       (hermes--promise-then
+        (hermes-cron--fetch-job client id profile)
+        (lambda (job)
+          (let ((job-profile (or (hermes-transport--non-blank-string
+                                  (hermes-cron--profile job))
+                                 profile)))
+            (hermes--promise-map
+             (hermes-cron--fetch-runs client id job-profile)
+             (lambda (runs-result)
+               (list job (hermes-transport--get runs-result 'runs))))))))
+     (lambda (detail)
+       (when (hermes-browser--request-current-mode-p
+              origin generation 'hermes-cron-mode)
+         (if pinned
+             (hermes-cron--display-detail (car detail) (cadr detail) instance pinned)
+           (hermes-cron--display-detail (car detail) (cadr detail) instance)))))))
+
+;;; Run transcript (log)
+
+(defun hermes-cron--fetch-run-messages (client session-id &optional profile)
+  "Return complete run SESSION-ID messages via CLIENT for PROFILE."
+  (hermes-dashboard-transport-session-messages-async
+   client session-id profile hermes-dashboard-transport--api-dispatch-guard))
+
+(defun hermes-cron--message-text (message)
+  "Return MESSAGE's textual content as a string."
+  (let ((content (hermes-transport--get message 'content)))
+    (or (hermes-transport--scalar-string content)
+        (and (or (listp content) (vectorp content))
+             (string-join
+              (delq nil
+                    (mapcar (lambda (part)
+                              (or (hermes-transport--scalar-string part)
+                                  (hermes-transport--non-blank-string
+                                   (hermes-transport--display-field part 'text))))
+                            (if (vectorp content) (append content nil) content)))
+              "\n"))
+        "")))
+
+(defun hermes-cron--format-message (message)
+  "Return display text for a run transcript MESSAGE."
+  (let ((role (or (hermes-transport--non-blank-string
+                   (hermes-transport--display-field message 'role))
+                  "message"))
+        (text (hermes-cron--message-text message)))
+    (concat "## " role "\n\n" (if (string-empty-p text) "(no content)" text) "\n")))
+
+(defun hermes-cron--display-run (session-id messages &optional profile instance)
+  "Display run SESSION-ID's transcript MESSAGES for PROFILE on INSTANCE."
+  (let ((entries (if (vectorp messages) (append messages nil) messages)))
+    (with-current-buffer (hermes-buffer--get "*Hermes Cron Run*"
+                                            #'hermes-cron-run-mode)
+      (when instance (hermes-browser--own-instance instance))
+      (let ((inhibit-read-only t))
+        (erase-buffer)
+        (insert (format "Run: %s\n" session-id))
+        (when (hermes-transport--non-blank-string profile)
+          (insert (format "Profile: %s\n" profile)))
+        (insert "\n")
+        (insert (if entries
+                    (string-join (mapcar #'hermes-cron--format-message entries) "\n")
+                  "No transcript recorded.")))
+      (setq hermes-browser--status (if entries "Ready" "Empty"))
+      (goto-char (point-min))
+      (pop-to-buffer (current-buffer)))))
+
+(defun hermes-cron-show-run-log ()
+  "Fetch the complete transcript of the cron run on the current detail line."
+  (declare (completion
+            (lambda (_command buffer)
+              (with-current-buffer buffer
+                (get-text-property (point) 'hermes-cron-run-id)))))
+  (interactive)
+  (let ((instance (hermes-browser--instance))
+        (id (get-text-property (point) 'hermes-cron-run-id))
+        (profile (get-text-property (point) 'hermes-cron-run-profile))
+        (origin (current-buffer))
+        (generation (hermes-browser--next-request-generation)))
+    (unless id (user-error "No cron run on this line"))
+    (hermes-browser--run-on-client
+     (lambda (client) (hermes-cron--fetch-run-messages client id profile))
+     (lambda (result)
+       (when (hermes-browser--request-current-p origin generation)
+         (hermes-cron--display-run
+          id (hermes-transport--get result 'messages) profile instance))))))
+
+;;; Job mutations
+
+(defun hermes-cron--checked-result (result)
+  "Return RESULT, or signal when it declares an unsuccessful operation."
+  (if (and (hermes-transport--field-present-p result 'ok)
+           (not (eq (hermes-transport--get result 'ok) t)))
+      (error "%s" (or (hermes-transport--non-blank-string
+                        (hermes-transport--display-field result 'error))
+                       (hermes-transport--non-blank-string
+                        (hermes-transport--display-field result 'detail))
+                       "Cron request failed"))
+    result))
+
+(defun hermes-cron--refresh-origin (buffer)
+  "Start a fresh read of live cron BUFFER."
+  (when (hermes-browser--buffer-mode-p buffer 'hermes-cron-mode)
+    (with-current-buffer buffer
+      (hermes-cron--revert))))
+
+(defun hermes-cron--selection ()
+  "Return the selected cron job's exact ID and profile."
+  (list (tabulated-list-get-id) (hermes-cron--entry-profile)))
+
+(defun hermes-cron--act (action id profile done-message &optional current)
+  "Run cron ACTION on job ID for PROFILE, then report DONE-MESSAGE.
+CURRENT, when non-nil, retains ownership captured before confirmation."
+  (let ((origin (current-buffer)))
+    (hermes-browser--run-owned
+     (lambda (client _guard)
+       (hermes--promise-map
+        (if (equal action "remove")
+            (hermes-cron--api client "DELETE" (hermes-cron--job-path id)
+                              nil (hermes-cron--query profile))
+          (hermes-cron--api client "POST"
+                            (hermes-cron--job-path id (concat "/" action))
+                            nil (hermes-cron--query profile)))
+        #'hermes-cron--checked-result))
+     (or current (hermes-browser--mutation-context #'hermes-cron--selection))
+     (lambda (_result)
+       (message "Hermes: %s" done-message)
+       (hermes-cron--refresh-origin origin))
+     #'hermes-browser--read-error)))
+
+(defun hermes-cron-toggle ()
+  "Pause or resume the cron job at point."
+  (interactive nil hermes-cron-mode)
+  (let ((id (tabulated-list-get-id))
+        (entry (tabulated-list-get-entry)))
+    (unless id (user-error "No cron job on this line"))
+    (let ((action (if (member (and entry (aref entry 2)) '("paused" "disabled"))
+                      "resume" "pause")))
+      (hermes-cron--act action id (hermes-cron--entry-profile)
+                        (format "%sd %s" action id)))))
+
+(defun hermes-cron-remove ()
+  "Remove the cron job at point."
+  (interactive nil hermes-cron-mode)
+  (let ((id (tabulated-list-get-id))
+        (profile (hermes-cron--entry-profile))
+        (origin (current-buffer)))
+    (unless id (user-error "No cron job on this line"))
+    (let ((current (hermes-browser--mutation-context #'hermes-cron--selection)))
+      (when (and (yes-or-no-p (format "Remove cron job %s? " id))
+                 (funcall current))
+        (with-current-buffer origin
+          (hermes-cron--act "remove" id profile (format "removed %s" id) current))))))
+
+(defun hermes-cron--split-skills (text)
+  "Return comma-separated skill names from TEXT."
+  (delq nil
+        (mapcar #'hermes-transport--non-blank-string
+                (split-string (or text "") ","))))
+
+(defun hermes-cron--editable-fields (job)
+  "Return JOB's editable values without display-only fallbacks."
+  `((name . ,(hermes-transport--display-field job 'name))
+    (schedule . ,(hermes-cron--schedule-expr job))
+    (prompt . ,(hermes-transport--display-field job 'prompt))
+    (deliver . ,(or (hermes-transport--non-blank-string
+                    (hermes-transport--display-field job 'deliver)) "local"))
+    (skills . ,(vconcat (hermes-cron--skills job)))))
+
+(defun hermes-cron--validate-execution (prompt skills job)
+  "Validate PROMPT and SKILLS with JOB's retained script and agent policy."
+  (let ((script (hermes-transport--non-blank-string
+                 (hermes-transport--display-field job 'script))))
+    (if (eq (hermes-transport--get job 'no_agent) t)
+        (unless script (user-error "Script-only jobs require a script"))
+      (unless (or (hermes-transport--non-blank-string prompt) skills script)
+        (user-error "A prompt, skill or script is required")))))
+
+(defun hermes-cron--read-updates (job)
+  "Read and return only changed editable fields for JOB."
+  (let* ((name (read-string "Name: " (hermes-transport--display-field job 'name)))
+         (schedule (read-string "Schedule: " (hermes-cron--schedule-expr job)))
+         (prompt (read-string-from-buffer
+                  "Prompt: " (hermes-transport--display-field job 'prompt)))
+         (deliver (read-string "Deliver: " (or (hermes-transport--non-blank-string
+                                                (hermes-transport--display-field job 'deliver))
+                                               "local")))
+         (skills (hermes-cron--split-skills
+                  (read-string "Skills (comma-separated): "
+                               (hermes-cron--skills-string job)))))
+    (unless prompt (signal 'quit nil))
+    (when (or (string-empty-p (string-trim name))
+              (string-empty-p (string-trim schedule)))
+      (user-error "Name and schedule are required"))
+    (hermes-cron--validate-execution prompt skills job)
+    (let ((original (hermes-cron--editable-fields job)))
+      (seq-remove
+       (lambda (field) (equal (cdr field) (alist-get (car field) original)))
+       `((name . ,(string-trim name))
+         (schedule . ,(string-trim schedule))
+         (prompt . ,prompt)
+         (deliver . ,(or (hermes-transport--non-blank-string deliver) "local"))
+         (skills . ,(vconcat skills)))))))
+
+(defun hermes-cron-edit ()
+  "Edit the cron job at point."
+  (interactive nil hermes-cron-mode)
+  (let ((job-id (hermes-cron--id-at-point))
+        (profile (hermes-cron--entry-profile))
+        (origin (current-buffer)))
+    (hermes-browser--run-owned
+     (lambda (client guard)
+       (hermes--promise-then
+        (hermes-cron--fetch-job client job-id profile)
+        (lambda (job)
+          (when (funcall guard)
+            (with-current-buffer origin
+              (when (or (and (hermes-transport--field-present-p job 'id)
+                             (not (equal job-id (hermes-cron--job-id job))))
+                        (and profile
+                             (hermes-transport--non-blank-string
+                              (hermes-cron--profile job))
+                             (not (equal profile (hermes-cron--profile job)))))
+                (user-error "Backend returned a different cron job or profile; refresh"))
+              (let ((updates (hermes-cron--read-updates job)))
+                (when (and updates (funcall guard))
+                  (let ((hermes-dashboard-transport--api-dispatch-guard guard))
+                    (hermes--promise-map
+                     (hermes-cron--update-job client job-id profile updates)
+                     #'hermes-cron--checked-result)))))))))
+     (hermes-browser--mutation-context #'hermes-cron--selection)
+     (lambda (result)
+       (if result
+           (progn (message "Hermes: updated %s" job-id)
+                  (hermes-cron--refresh-origin origin))
+         (message "Hermes: no cron fields changed")))
+     #'hermes-browser--read-error)))
+
+(defun hermes-cron-trigger ()
+  "Trigger the cron job at point immediately, even when it is paused."
+  (interactive nil hermes-cron-mode)
+  (let ((id (hermes-cron--id-at-point)))
+    (hermes-cron--act "trigger" id (hermes-cron--entry-profile)
+                      (format "triggered %s" id))))
+
+(defun hermes-cron--validate-profile (client profile guard)
+  "Check exact PROFILE against CLIENT's fresh catalogue under GUARD."
+  (hermes--promise-map
+   (hermes-dashboard-transport-api-request-async
+    "GET" "/api/profiles" :client client :current-p guard)
+   (lambda (result)
+     (unless (seq-some (lambda (row)
+                         (equal profile (hermes-transport--get row 'name)))
+                       (hermes-transport--get result 'profiles))
+       (user-error "Unknown cron profile: %s" profile)))))
+
+(defun hermes-cron-create (name schedule prompt &optional profile deliver skills paused)
+  "Create cron job NAME running PROMPT on SCHEDULE for PROFILE.
+When non-nil, DELIVER names the delivery target and SKILLS is a list of skill
+names.  PAUSED prevents scheduled automatic execution from creation; explicit
+Trigger can still force a run.  Interactive creation offers both initial states."
+  (interactive
+   (hermes-browser--read-owned-arguments
+    (lambda () (list (read-string "Cron job name: ")
+                     (read-string "Schedule (cron expression): ")
+                     (read-string-from-buffer "Prompt: " "")
+                     (or hermes-cron--scope-profile (read-string "Profile: " "default"))
+                     (read-string "Deliver: " "local")
+                     (hermes-cron--split-skills
+                      (read-string "Skills (comma-separated): "))
+                     (equal (completing-read
+                             "Initial state: " '("Create active" "Create paused")
+                             nil t nil nil "Create active")
+                            "Create paused")))))
+  (let* ((name (string-trim name))
+         (schedule (string-trim schedule))
+         (prompt (string-trim prompt))
+         (profile (or (hermes-transport--non-blank-string profile) "default"))
+         (origin (current-buffer)))
+    (when (or (string-empty-p name)
+              (string-empty-p schedule)
+              (string-empty-p prompt))
+      (user-error "Name, schedule and prompt are required"))
+    (when (and hermes-cron--scope-profile
+               (not (equal profile hermes-cron--scope-profile)))
+      (user-error "Routines creation must use profile %s" hermes-cron--scope-profile))
+    (hermes-browser--run-owned
+     (lambda (client guard)
+       (hermes--promise-then
+        (hermes-cron--validate-profile client profile guard)
+        (lambda (_)
+          (when (funcall guard)
+            (let ((hermes-dashboard-transport--api-dispatch-guard guard))
+              (hermes--promise-map
+               (hermes-cron--api
+                client "POST" "/jobs"
+                (append `((name . ,name) (schedule . ,schedule)
+                          (prompt . ,prompt) (paused . ,(if paused t :false)))
+                        (and deliver `((deliver . ,deliver)))
+                        (and skills `((skills . ,(vconcat skills)))))
+                (hermes-cron--query profile))
+               #'hermes-cron--checked-result))))))
+     (hermes-browser--mutation-context)
+     (lambda (_result)
+       (message "Hermes: created cron job %s" name)
+       (hermes-cron--refresh-origin origin))
+     #'hermes-browser--read-error)))
+
+;;; Execution preferences
+
+(defun hermes-cron--preference (job field)
+  "Return JOB's configured FIELD, keeping inheritance and unknown distinct."
+  (if (hermes-transport--field-present-p job field)
+      (or (hermes-transport--non-blank-string
+           (hermes-transport--display-field job field)) "inherited")
+    "unknown"))
+
+(defun hermes-cron--preference-action (label value)
+  "Read an explicit editing action for LABEL with configured VALUE."
+  (completing-read (format "%s (%s): " label value)
+                   '("Unchanged" "Set" "Inherit") nil t nil nil "Unchanged"))
+
+(defun hermes-cron--read-model-preference (catalog &optional job)
+  "Select an exact provider-qualified preference from fresh CATALOG.
+JOB's configured model, when present in CATALOG, is marked and the default."
+  (let* ((candidates (seq-filter
+                      (lambda (candidate)
+                        (hermes-transport--non-blank-string
+                         (plist-get (cdr candidate) :provider)))
+                      (hermes-chat--model-candidates catalog)))
+         (current (and job
+                       (hermes-chat--model-current-value
+                        candidates
+                        (hermes-transport--non-blank-string
+                         (hermes-transport--display-field job 'model))
+                        (hermes-transport--non-blank-string
+                         (hermes-transport--display-field job 'provider)))))
+         (candidate (cdr (hermes-chat--read-model-candidate
+                          "Model choice: " candidates current))))
+    (unless candidate (user-error "No provider-qualified model selected"))
+    `((model . ,(plist-get candidate :model))
+      (provider . ,(plist-get candidate :provider)))))
+
+(defun hermes-cron--read-workdir-preference (job)
+  "Read JOB's remote workdir preference without local filesystem access."
+  (pcase (hermes-cron--preference-action
+          "Backend workdir" (hermes-cron--preference job 'workdir))
+    ("Inherit" '((workdir . :null)))
+    ("Set"
+     (let ((value (read-string "Backend workdir (must exist on backend): "
+                               (hermes-transport--display-field job 'workdir))))
+       (unless (hermes-transport--non-blank-string value)
+         (user-error "Use Inherit to clear the workdir"))
+       `((workdir . ,value))))))
+
+(defun hermes-cron--retain-preference-draft (client id profile updates)
+  "Display a literal recovery copy of requested preferences.
+CLIENT, ID and PROFILE identify the target; UPDATES holds the draft fields."
+  (with-current-buffer (generate-new-buffer "*Hermes Cron Preference Draft*")
+    (insert (format "Requested cron preferences (not proof of persistence)\n\nBackend: %s\nJob: %s\nProfile: %s\n\n"
+                    (hermes-dashboard-transport--cache-base-url client) id profile))
+    (dolist (field updates)
+      (insert (format "%s: %s\n" (car field)
+                      (if (eq (cdr field) :null) "inherit" (cdr field)))))
+    (insert "\nKept for manual recovery; refresh the job before retrying.\n"
+            "Provider fallback remains enabled. Workdirs removed before a run are ignored.\n"
+            "Backend profile lookup is a hint, not atomic cross-profile isolation.\n")
+    (special-mode)
+    (display-buffer (current-buffer))))
+
+(defun hermes-cron--save-preferences (client id profile job model origin guard)
+  "Read workdir and save CLIENT's ID/PROFILE preferences under GUARD.
+JOB supplies defaults; MODEL holds explicit model updates.  Retain ORIGIN.
+Keep accepted input for manual recovery even when GUARD retires or the
+workdir is refused locally.  Explicit quit abandons the edit instead."
+  (let ((updates
+         (append model
+                 (when (funcall guard)
+                   (with-current-buffer origin
+                     (condition-case err
+                         (hermes-cron--read-workdir-preference job)
+                       (error
+                        (when model
+                          (hermes-cron--retain-preference-draft
+                           client id profile model))
+                        (signal (car err) (cdr err)))))))))
+    (when updates
+      (hermes-cron--retain-preference-draft client id profile updates)
+      (when (funcall guard)
+        (let ((hermes-dashboard-transport--api-dispatch-guard guard))
+          (hermes--promise-then
+           (hermes-cron--update-job client id profile updates)
+           (lambda (receipt)
+             (hermes-cron--checked-result receipt)
+             (hermes-dashboard-transport-api-request-async
+              "GET" (concat "/api/cron" (hermes-cron--job-path id))
+              :client client :query (hermes-cron--query profile)
+              :current-p guard))))))))
+
+(defun hermes-cron--choose-preferences (client id profile job origin guard)
+  "Choose CLIENT's ID/PROFILE preferences from JOB while ORIGIN owns GUARD."
+  (when (funcall guard)
+    (with-current-buffer origin
+      (unless (and (equal id (hermes-cron--job-id job))
+                   (equal profile (hermes-cron--profile job)))
+        (user-error "Backend returned a different cron job or profile; refresh"))
+      (let ((action (hermes-cron--preference-action
+                     "Model/provider"
+                     (format "%s / %s" (hermes-cron--preference job 'provider)
+                             (hermes-cron--preference job 'model)))))
+        (if (equal action "Set")
+            (when (funcall guard)
+              (hermes--promise-then
+               (hermes-dashboard-transport-call-fn
+                #'hermes-dashboard-transport-model-options-cached client :force t)
+               (lambda (catalog)
+                 (when (funcall guard)
+                   (with-current-buffer origin
+                     (hermes-cron--save-preferences
+                      client id profile job
+                      (hermes-cron--read-model-preference catalog job) origin guard))))))
+          (hermes-cron--save-preferences
+           client id profile job
+           (and (equal action "Inherit") '((model . :null) (provider . :null)))
+           origin guard))))))
+
+(defun hermes-cron-edit-preferences ()
+  "Edit requested model/provider and backend workdir for the selected job.
+Unchanged fields are omitted; Inherit explicitly clears overrides.  Retain a
+literal draft for recovery.  Read back saved preferences without running the
+job.  Provider fallback and missing-workdir behavior remain backend-owned."
+  (interactive nil hermes-cron-mode)
+  (let ((id (hermes-cron--id-at-point))
+        (profile (hermes-cron--entry-profile))
+        (origin (current-buffer)))
+    (hermes-browser--run-owned
+     (lambda (client guard)
+       (hermes--promise-then
+        (hermes-cron--fetch-job client id profile)
+        (lambda (job)
+          (hermes-cron--choose-preferences client id profile job origin guard))))
+     (hermes-browser--mutation-context #'hermes-cron--selection)
+     (lambda (job)
+       (when job
+         (unless (and (equal id (hermes-cron--job-id job))
+                      (equal profile (hermes-cron--profile job)))
+           (user-error "Cron readback changed job or profile; refresh before retrying"))
+         (message "Hermes: read back requested preferences: %s / %s; workdir %s"
+                  (hermes-cron--preference job 'provider)
+                  (hermes-cron--preference job 'model)
+                  (hermes-cron--preference job 'workdir))
+         (hermes-cron--refresh-origin origin)))
+     #'hermes-browser--read-error)))
+
+;;; Failure notifications and auto-refresh
+
+(defvar-local hermes-cron--seen-runs nil
+  "Hash of cron job id to last seen (LAST-RUN-AT . OUTCOME).
+Nil until the first render records a baseline.")
+
+(defun hermes-cron--note-failures (result)
+  "Notify about newly failed cron jobs in RESULT when enabled.
+The first render only records a baseline so pre-existing failures do not alert.
+Arm newly enabled auto-refresh after a successful owned read."
+  (hermes-cron--maybe-start-auto-refresh)
+  (let ((seen hermes-cron--seen-runs)
+        (next (make-hash-table :test 'equal)))
+    (dolist (job (hermes-transport--get result 'jobs))
+      (let* ((id (hermes-cron--job-id job))
+             (stamp (hermes-transport--display-field job 'last_run_at))
+             (outcome (hermes-cron--last-status job))
+             (entry (cons stamp outcome)))
+        (puthash id entry next)
+        (when (and seen hermes-cron-notify-on-failure
+                   (eq outcome 'error)
+                   (not (equal (gethash id seen) entry)))
+          (hermes-browser--notify
+           "Hermes cron failed"
+           (format "%s failed (%s)"
+                   (hermes-transport--display-field job 'name)
+                   (or (hermes-transport--non-blank-string stamp) "just now"))
+           'cron-failure (current-buffer)))))
+    (setq hermes-cron--seen-runs next)))
+
+(defvar-local hermes-cron--auto-refresh-timer nil
+  "Per-buffer repeat timer refreshing the cron list, or nil.")
+
+(defun hermes-cron--auto-refresh-tick (buffer &optional timer)
+  "Refresh BUFFER only while it still owns the cron refresh TIMER."
+  (when (buffer-live-p buffer)
+    (with-current-buffer buffer
+      (when (and (hermes-buffer--owned-p 'hermes-cron-mode)
+                 timer (eq timer hermes-cron--auto-refresh-timer))
+        (if (and (natnump hermes-cron-auto-refresh-interval)
+                 (> hermes-cron-auto-refresh-interval 0))
+            (hermes-cron--revert)
+          (hermes-cron--stop-auto-refresh))))))
+
+(defun hermes-cron--stop-auto-refresh ()
+  "Cancel this buffer's cron auto-refresh timer."
+  (when hermes-cron--auto-refresh-timer
+    (cancel-timer hermes-cron--auto-refresh-timer)
+    (setq hermes-cron--auto-refresh-timer nil)))
+
+(defun hermes-cron--maybe-start-auto-refresh ()
+  "Start a per-buffer cron auto-refresh timer when one is configured."
+  (setq-local hermes-browser--snapshot-variables '(hermes-cron--seen-runs))
+  (when (and (natnump hermes-cron-auto-refresh-interval)
+             (> hermes-cron-auto-refresh-interval 0)
+             (not hermes-cron--auto-refresh-timer))
+    (let ((buffer (current-buffer)) timer)
+      (setq timer
+            (run-at-time hermes-cron-auto-refresh-interval
+                         hermes-cron-auto-refresh-interval
+                         (lambda () (hermes-cron--auto-refresh-tick buffer timer))))
+      (setq hermes-cron--auto-refresh-timer timer))
+    (add-hook 'after-set-visited-file-name-hook
+              #'hermes-cron--stop-auto-refresh nil t)
+    (add-hook 'kill-buffer-hook #'hermes-cron--stop-auto-refresh nil t)
+    (add-hook 'change-major-mode-hook
+              #'hermes-cron--stop-auto-refresh nil t)))
+
+;;;###autoload (autoload 'hermes-list-crons "hermes-cron" nil t)
+(hermes-define-list-browser cron
+  :title "Hermes Cron"
+  :command hermes-list-crons
+  :buffer "*Hermes Cron*"
+  :doc "Major mode listing Hermes scheduled jobs."
+  :command-doc "Browse Hermes scheduled (cron) jobs."
+  :dynamic-columns (("Name" 14 3 t) ("Schedule" 12 1 t) ("State" 8 0 t)
+                    ("Profile" 10 1 t) ("Deliver" 9 0 t) ("Last run" 16 0 t)
+                    ("Next run" 16 0 t) ("Prompt" 24 5 nil))
+  :fetch (lambda (client)
+           (hermes--promise-map
+            (hermes-cron--api client "GET" "/jobs" nil
+                             `((profile . ,(or hermes-cron--scope-profile "all"))))
+            #'hermes-cron--jobs-result))
+  :rows #'hermes-cron--rows
+  :on-result #'hermes-cron--note-failures
+  :on-mode #'hermes-cron--maybe-start-auto-refresh
+  :help (:group "Job"
+         hermes-cron-show "Show details"
+         hermes-cron-create "Create"
+         hermes-cron-edit "Edit"
+         hermes-cron-edit-preferences "Execution preferences"
+         :group "Run"
+         hermes-cron-trigger "Run now"
+         hermes-cron-toggle "Toggle enabled"
+         hermes-cron-remove "Remove")
+  :keys ("RET" #'hermes-cron-show
+         "e" #'hermes-cron-edit
+         "E" #'hermes-cron-edit-preferences
+         "!" #'hermes-cron-trigger
+         "t" #'hermes-cron-toggle
+         "D" #'hermes-cron-remove
+         "c" #'hermes-cron-create))
+
+(defun hermes-cron-for-profile (profile instance)
+  "Browse existing cron jobs for exact PROFILE on INSTANCE.
+Use the ordinary cron editor and store; opening this view performs only reads."
+  (let* ((instance (hermes-browser--copy-identity instance))
+         (profile (copy-sequence profile))
+         (target (generate-new-buffer
+                  (format "*Hermes Routines@%s: %s*"
+                          (hermes-instance-name instance) profile))))
+    (with-current-buffer target
+      ;; Native refresh and inherited actions must see the selected authority.
+      (delay-mode-hooks (hermes-cron-mode))
+      (hermes-buffer--claim 'hermes-cron-mode)
+      (setq hermes-browser--pinned-instance (hermes-browser--copy-identity instance))
+      (hermes-browser--own-instance (hermes-browser--copy-identity instance))
+      (setq hermes-cron--scope-profile (copy-sequence profile))
+      (let ((owner hermes-buffer--owner))
+        (run-mode-hooks)
+        (unless (and (buffer-live-p target)
+                     (eq owner (buffer-local-value 'hermes-buffer--owner target))
+                     (with-current-buffer target
+                       (hermes-buffer--owned-p 'hermes-cron-mode)))
+          (user-error "Hermes Routines view changed during mode initialization"))))
+    (pop-to-buffer target)
+    (with-current-buffer target (hermes-cron--revert))
+    target))
+
+(provide 'hermes-cron)
+;;; hermes-cron.el ends here

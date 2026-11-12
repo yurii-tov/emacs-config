@@ -10,10 +10,5 @@
 /elpa/compiled.txt
 /elpa/**/*.elc
 
-# Hermes
-/elpa/hermes*
-/elpa/keymap-popup*
-/elpa/websocket*
-
 !/snippets
 !/snippets/**

@@ -1,0 +1,9 @@
+CONTRIBUTING.org
+LICENSE
+Makefile
+flake.lock
+flake.nix
+
+tests
+admin
+decks

@@ -1,0 +1,482 @@
+#+title: emacs-hermes Changelog
+
+* Version 0.9.0 (unreleased)
+
+Incompatible changes:
+
+- Chat buffer names follow the chat's project rather than the gateway's
+  live working directory (see below), and the DIRECTORY argument of
+  =hermes-chat-buffer-name-function= is now that stable naming directory.
+  Review custom naming functions that expected the live directory.
+- Chat, profile and cron model completion candidates now lead with the
+  model, for example =claude · Anthropic (anthropic)=.  Update any code or
+  completion configuration that matched the old candidate text.
+- List browsers keep their native column titles in the header line.  With
+  several instances configured, the instance name now follows the buffer
+  name in the mode line, and the scope or status text of the Pairing,
+  Webhooks, Tool Setup, Agent Plugins, Foreign histories and Skill Hub
+  views moved to the mode line.
+
+New features and fixes:
+
+- Completed paragraphs, closed code fences and complete table rows render
+  as Markdown while a reply is still streaming; unfinished text stays
+  literal until the turn ends.  =hermes-chat-stream-format-delay= (default
+  0.1 seconds) throttles the formatting.
+- Streaming no longer slows down as a reply or transcript grows: the
+  read-only protection rescans only changed text, and echo detection no
+  longer renormalizes the whole reply on every chunk.
+- =C-c C-c= in a chat interrupts the running turn (=hermes-chat-interrupt-turn=);
+  when idle it only reports that nothing is running.  =C-c C-k= is unchanged.
+- Chat actions menu (=C-c C-o=): Work is now Activity (=B=) and Workspace is
+  now Directory (=w=), so neither reads like Workers (=W=).  The Session menu
+  splits into Session (New, Rename, List sessions) and Fork (Branch =b=,
+  Hand off =H=, Compress =z=, the new =hermes-chat-compress=).  A new Aside
+  group exposes the formerly slash-only side question (=y=), background task
+  (=G=) and Stop processes (=!=).  Root =b= remains Switch chat buffer.
+  Stop processes stops the terminal processes registered with the whole
+  instance, across all chats; it does not cancel the model turn or
+  delegated workers.
+- While a turn runs with no backend event for 30 seconds
+  (=hermes-chat-status-rule-quiet-after=), the composer rule appends
+  =quiet 0:45= in the warning face; it clears as soon as an event arrives.
+- When output arrives while no window shows the end of the transcript, the
+  mode line shows =↓ new=.  =mouse-1= on it or =C-c C-j= jumps to the latest
+  output; scrolling the end into view also clears it.
+- The header's context usage turns warning-coloured from 80% and
+  error-coloured from 95%.  Its tooltip gives exact tokens and percentage,
+  and =mouse-1= opens the Context budget view.
+- The rule above the chat composer now shows the active turn's state,
+  elapsed time, current tool, task progress (=📋 1/3=) and queued count, then the last
+  turn's duration briefly.  Queued messages are listed above the rule and
+  open the queue panel on activation; the queue menu entries show the count.
+- The composer rule now always stays on one visual line.  It is fitted to
+  the narrowest window showing the chat, measured with that window's fonts
+  (emoji included), and reflows when windows change.  A long or multiline
+  tool command is shortened with an ellipsis, its full text in the tooltip;
+  the quiet hint and task progress give way next, while the state, clock and
+  queued count stay.
+- Each turn with a task list gets one collapsible transcript line,
+  =▸ Tasks 3/5 · now: ITEM=, updated in place as the list changes.
+- Approval readers show the tool description and the full command.  When
+  opened explicitly they take one-key answers (=o=nce, =s=ession, =a=lways,
+  =d=eny; =q= or =C-g= leaves the request pending); a reader that opens
+  automatically still requires submitting a choice with =RET=.  Very long commands open in a separate window while
+  reading.  Clarification readers use the question as their prompt.  A
+  pending prompt's transcript line has an =[Answer]= button to reopen it.
+- Chat discoverability: =?= opens the actions menu from the transcript or an
+  empty composer, and an empty composer shows key hints
+  (=hermes-chat-composer-placeholder=).  =n= / =p= move between user turns
+  in the transcript, and =imenu= lists them.
+- Transcript reading keys: =SPC= and =DEL= / =S-SPC= scroll the chat like
+  =view-mode= instead of hitting =Text is read-only=.  =w= copies the code of
+  the fenced block at point without its fences, or else the Markdown source
+  of the reply or message at point (=Copied code block (12 lines)=,
+  =Copied reply=); with an active region it is plain =kill-ring-save=.  In
+  the composer all these keys keep their ordinary editing meaning.
+- A new Show group in =C-c C-o= hides or shows tool output and reasoning
+  everywhere at once and expands or collapses every disclosure.  Every chat
+  menu group now has at most four entries: Refresh commands moved to
+  Inspect (=C-c C-o X r=), and Go to composer stays on =C-c C-j=.
+  Expanding or collapsing everything now includes task-list lines.
+- The chat model picker stays a single completion read but groups models by
+  provider, shows only the model inside each group, and annotates context
+  window, price and capabilities when the catalogue reports them.  The
+  current model is marked and offered as the default.  Profile and cron model
+  pickers share the same metadata.  Completion values now lead with the model,
+  for example =claude · Anthropic (anthropic)=.
+- Clicking the header's =🤖 N= / =⚙ N= work count opens that chat's observed
+  work view, even when its window is not selected.
+- Composer =@= path completion reopens automatically once the backend lookup
+  finishes, provided the composer is unchanged; a second =TAB= is no longer
+  needed.
+- Running tool, delegate and status rows show =●= in the new
+  =hermes-chat-tool-running= face; failed rows carry =error= on the whole
+  head line.  =/commands= opens a =*Hermes Commands*= help buffer instead of
+  writing the catalogue into the transcript; =RET= inserts a command into the
+  owning chat's empty composer.  Unknown events and notices longer than three
+  lines start collapsed, with the raw payload on expansion.  Disconnect and
+  socket-loss notices offer =[Reconnect]=, =[Recovery draft]= and
+  =[Session details]= buttons bound to that attachment; they turn inert once
+  it is replaced, and nothing is resent automatically.
+  =hermes-dashboard-reconnect= now also restarts a lost socket whose client
+  is still attached, not only a live one.
+- Chat buffer names now follow the chat's project rather than the gateway's
+  live working directory.  The launch project, or else the project of the
+  first gateway directory, is named with =project-name= when it exists
+  locally.  When the agent later changes directory, the buffer keeps its name
+  and the header shows the abbreviated cwd while it differs from the project
+  root.  =hermes-chat-buffer-name-function= keeps its signature; its
+  DIRECTORY argument is now this stable naming directory.  A directory in a
+  linked Git worktree names the main repository's project, and the header
+  shows the worktree quietly, for example =→ …/feature=.
+- =hermes-switch-to-chat= groups chats by project, lists the most recently
+  used first and the current chat last, and annotates each with its session
+  title, attention state, connection, activity and divergent cwd.
+- Pending chat prompts appear in the global mode line, for example
+  =[Hermes: Clarify]=, until they are answered, expire or are cleared.
+  Clicking the segment answers from the owning chat; set
+  =hermes-chat-prompt-indicator= to =nil= to hide it.  Prompt, reply and
+  error notifications are now suppressed only while the chat is in the
+  selected window of the focused frame, not when it is merely visible.
+- Chat buffers save their session, routing, title and unsent draft with
+  =desktop.el= and resume the session after restoration; the transcript
+  is reloaded from the backend.  Under =warm-restart=, chats with unsettled
+  work, unsaved Hermes editor views and a busy spawned dashboard block the
+  restart; otherwise the successor restarts the dashboard on the same
+  endpoint before the restored chats reattach.
+- Refreshing, renaming or reopening a session detail view keeps point and
+  every window's scroll position.
+- Setting =hermes-dashboard-transport-start-mode= to =remote= attaches to an
+  externally managed dashboard even on loopback.  Closing Emacs or
+  reconnecting does not stop it, a missing service fails with a hint
+  instead of spawning a replacement, and =hermes-dashboard-restart= refuses
+  it.  Project chats on such loopback gateways now open in the project root
+  instead of the service's default directory.
+- A spawned dashboard that is still starting keeps receiving connection
+  attempts for up to =hermes-dashboard-transport-spawn-connect-timeout=
+  (default 120 seconds), so a slow cold start no longer fails the first
+  message.  Requests queued meanwhile still expire after
+  =hermes-dashboard-transport-request-timeout=.  The startup row settles
+  once the gateway is ready, and connection errors no longer print the
+  full connection argument list.
+- Failed worker and process observations retry with per-source backoff (5,
+  10, 20, 40, then 60 seconds) instead of pausing until a manual refresh;
+  unsupported or malformed inventories still pause.
+- Pending approval and clarification prompts stay in the chat header when
+  usage, title or control updates arrive, and those updates no longer add
+  transcript rows.  Text the model wrote before a tool call no longer leaves
+  a duplicate Reasoning row marked running.
+- Percent signs in remote names, paths, board names and task identifiers
+  display literally in headers and mode lines.
+- When =hermes-exec-require-approval= is =hermes-exec-confirm-by-risk=,
+  more process, file, network, load and
+  compile functions, run-time dispatch through =intern=, =read= or
+  =call-interactively=, and =eval-buffer= / =eval-region= now require
+  confirmation; reading a function cell alone no longer does.
+- The echo-area notification fallback no longer logs a D-Bus error first
+  or repeats the reply preview.
+- The CLI chat fallback keeps its own metadata on a separate stderr buffer,
+  so dashboard replies keep lines beginning with =session_id:=.  Its stderr
+  drain after exit is bounded to one second.
+- RPC error messages with an empty backend message no longer echo a string
+  error code verbatim, and method-not-found replies pause work observation
+  as intended.
+
+* Version 0.8.0 (2026-10-01)
+
+- Negotiated server-to-client JSON-RPC requests for approvals, clarifications,
+  sudo and secret prompts.  Native readers answer the captured request once;
+  expired or disconnected requests cannot affect a replacement session.
+  Legacy prompt handling remains available.  Terminal-read requests remain
+  unsupported.
+- Added native browser-vault login, unlock and verification-code readers.
+  Sensitive responses bypass the chat transcript and shared kill history;
+  credential views are excluded from optional buffer capability reads.
+- Added =hermes-chat-attach-file= for bounded UTF-8 text/source files up to
+  2 MiB.  It uploads into the owning session's gateway-host workspace, verifies
+  byte readback, and inserts the returned reference only while the original
+  draft is unchanged.  Failure or uncertainty retains bytes and draft text for
+  manual recovery, with no automatic upload replay or remote rollback.
+  PDF extraction and arbitrary binary files are unsupported; gateway paths
+  do not establish terminal-backend filesystem equivalence.
+- Preserved selected-profile workspace defaults during session creation and
+  reconciled deliberately chosen directories before overrides or first input.
+  Passive backend directory updates do not change the editor's directory.
+- Added explicit import of foreign histories and an on-demand context-budget
+  view.  Import retains the serving backend and profile; estimates and partial
+  file manifests are labelled rather than presented as reconciled usage.
+- Added backend-owned hosted Group Chats with typed history, activity and
+  explicit room/work actions.  Reading a room does not start work; mutations
+  require the advertised protocol and current gateway authority.
+- Added canonical profile Bot Chats and scoped routine navigation.  Opening
+  a routine neither creates a replacement session nor triggers its job.
+- Added an optional Gnosis handoff and native tutoring linked to an existing
+  ordinary conversation.  Gnosis owns questions, grading and accepted results;
+  Hermes supplies teaching through normal chat without replacing its draft.
+- Added installed skill-content editing and source-qualified Skill Hub
+  previews and scans.  General Hub installation remains disabled until the
+  backend can prove target scope and installation outcome.
+- Added plugin catalog browsing and an explicit capability-consent handoff.
+  Enabling, updating and removing plugins retain their original instance and
+  verified target; catalog tiers do not imply a security guarantee.
+- Added named endpoint saving, probing and explicit activation as separate
+  actions.  An inert gateway-restart handoff shows operator guidance; it does
+  not restart a remote service or replay work.
+- Discovered dashboard tokens only for explicitly configured literal IPv4
+  loopback endpoints, without redirects, cookies or disk caching.  Configured
+  credentials remain authoritative.  Failed read authentication can recover
+  once; mutations are never automatically replayed.
+- Refreshed chat and profile model catalogues when opening their pickers and
+  rejected stale choices or receipts.  Streaming replies append text without
+  unnecessary full redraws.
+- Kept chat commands, worker controls, Kanban task-body edits and managed-file
+  views tied to their owning session, connection and constructor claim.
+  Accepted busy-input history durability still depends on backend guarantees.
+- Preserved initialized keymaps and customized direct, popup and buffer-local
+  maps during coherent source reload.  Incompatible retained transport or
+  event-tail layouts refuse loading before mutation and require a restart.
+- Restored strict Emacs 29.1 checks and markdown-mode 2.6 fence compatibility;
+  bounded reconnect attempts across flapping connections and optional eval
+  requests, and preserved literal recovery after interrupted restoration.
+
+- Preserved empty prompts when editing skills-only and script-only cron jobs;
+  ordinary edits now send only changed fields.
+- Added an initial paused choice to cron creation.  Paused jobs do not run
+  automatically, but the explicit Run now action can still force a run.
+- Added =E= in the cron browser for requested model/provider and backend
+  workdir overrides, with Unchanged, Set and Inherit choices.  A fresh model
+  catalogue supplies provider-qualified choices; a literal draft remains for
+  manual recovery after a failed or uncertain save.  Provider fallback still
+  applies, and a workdir removed before execution is ignored by the backend.
+  Cron profile lookup remains a backend hint, not atomic profile isolation.
+- Kept script-output history rows inert on newer backends.  Available previews
+  can be partial; only session-backed rows open transcripts.  Remote output
+  paths are never opened as local files.
+- Added optional client-local dictation and read-aloud through the owning
+  backend's audio relays.  Recording requires consent; transcription stays
+  in the draft or a manual recovery buffer and is never sent automatically.
+
+* Version 0.7.1 (2026-09-17)
+
+- Made buffer-specific commands context-aware in native =M-x= completion,
+  while keeping launchers available globally.  Filtering follows the user's
+  =read-extended-command-predicate= setting; Hermes does not change it.
+- Reorganized dashboard and chat action popups into smaller task groups,
+  preserved direct shortcuts, and exposed running Workers at the chat root.
+  Pending settings remain visible in narrow menus, and Plugins now uses =q=
+  to quit the view and =C-g= to dismiss the popup.
+- Preserved drafts, queued input, clarification answers and reader positions
+  across transcript updates, interrupted turns and session lifecycle races.
+- Read complete profile-scoped session histories and refreshed session
+  catalogues after changes.  Chat buffer names now follow the working
+  directory while project chats retain their launch-root identity.
+- Kept browser actions, edits and confirmations tied to their original
+  instance and view across reuse, authentication and asynchronous replies.
+  Configuration refresh is available through its native key, and edits send
+  only changed settings.
+- Hardened provider setup, OAuth recovery and authentication refresh against
+  stale callbacks; tool setup selects backend profiles through owned views.
+- Retired MCP monitoring and failed Kanban sockets with their connections,
+  preserved notification ownership, and settled eval approvals after quits.
+- Safely fontified code fences, preserved nested diff examples, showed staged
+  image drafts, and shared bounded validation of backend-managed file bytes.
+- Verified popup compatibility with the supported keymap-popup 0.4.0 release.
+
+* Version 0.7.0 (2026-09-14)
+
+- Excluded tests and development files from ELPA packages, preventing test
+  helper load errors during installation.
+- Added inert output previews for backend-managed files and HTML/SVG reply
+  blocks, with source inspection, explicit saving, and image zoom.
+- Added a session-owned live task panel that follows backend snapshots and
+  preserves pending tasks when a turn ends.
+- Added session pinning and named backend workspaces, with profile-scoped
+  management and readback after changes.
+- Added Markdown and code highlighting to editable chat drafts without
+  changing submitted text.
+- Added =hermes-request= for asynchronous prompts in fresh, profile-qualified
+  sessions without borrowing a chat's history.  Requests use the selected
+  profile's model and provider and support cancellation and timeouts.
+- Accepted clarification replies from the composer as well as the minibuffer,
+  preserving free-text answers and handling batched questions in order.
+- Preserved full accepted corrections between assistant reply segments and
+  contained callback failures without failing unrelated chats.
+- Kept queued input pending until an interrupt settles, including when an idle
+  notification arrives before the interrupt response.
+
+* Version 0.6.0 (2026-09-09)
+
+- Added local image drafts from files and PNG clipboard data.  Images can be
+  previewed or removed before submission; selecting them does not upload them.
+  Failed or uncertain submissions retain bytes in an in-memory recovery view
+  for explicit inspection and manual recovery.  Image staging is shared by a
+  backend session, so do not use another client to send into that session.
+- Rendered Markdown tables inline with wrapped cells and a copy-source action.
+  Tables reflow to the narrowest displaying window, account for line-number
+  gutters, and preserve the transcript, draft, and undo history during resize.
+- Added =hermes-chat-quote-region= to append selected transcript text as a
+  Markdown quote to the draft.  It preserves existing input and never sends or
+  queues the quote, including while a turn is running.
+- Added =M-x hermes-files= to browse backend-managed files and open inert text
+  or image previews without file-local variables or evaluation.  The viewer
+  can save validated bytes to a new local file, never overwrite an existing
+  destination.  Reads are capped at 4 MiB and listings at 2000 entries.
+- Added native pairing and webhook management, tool-provider setup, and agent
+  plugin installation, enablement, update, removal, and context-engine choice.
+  Commands retain their owning instance and reject stale confirmations or
+  unprovable mutation targets.
+- Expanded MCP management with server creation and removal, reviewed catalog
+  installation, backend-owned OAuth, and progress monitoring.  Cancelling
+  monitoring does not imply cancellation of a remote installation.
+- Added system-log source, level, component, and line-count filters, optional
+  auto-refresh, and popup controls.  Worker views can open logs when the
+  backend publishes an exact transcript or child-session identity.
+- Added optional chat-header and process icons, with text fallbacks.  Settings
+  menus show reported values and distinguish pending create-time choices from
+  active settings.
+- Preserved browser position and instance ownership across refreshes, kept
+  asynchronous completion from displacing later window choices, and settled
+  failed initial client acquisition so views can be retried.
+- Added =M-x hermes-dashboard-restart= in chat buffers.  After confirming its
+  shared impact, it restarts the Emacs-owned dashboard and eagerly reattaches
+  live chats to their durable sessions without replacing buffers or drafts.
+  Queued and uncertain input is copied to editable recovery buffers for manual
+  sending.  The backend may recover interrupted turns under its own policy;
+  Emacs never resends input.  Remote dashboards are not restarted: use
+  =hermes-dashboard-reconnect= for an idle socket reconnect.
+- Rechecked eval enablement immediately before execution, kept non-loopback
+  connections authenticated when token configuration changes, and closed
+  accepted connections when stopping or replacing a dead listener.  IPv6
+  loopback listeners now use the correct address family.
+- Retired capability sockets before reconnect backoff so late callbacks cannot
+  dispatch requests or affect a replacement connection.
+- Preserved HTTPS and URL path prefixes when explicitly attaching to a
+  loopback dashboard in remote mode.
+- Kept rollback checkpoints tied to the session attachment that listed them;
+  switching chats, reconnecting, or changing the owner retires old selections.
+- Rechecked management mutation ownership after authentication waits, and
+  released busy state when client acquisition fails or is cancelled.
+- Refused model and reasoning changes on detached durable sessions instead of
+  silently losing them during resume.  Fresh chats and owned failed-create
+  retries still support pending settings.
+- Cleared old status and log content when reopening a view, before assigning
+  the next response to its new instance.
+
+* Version 0.5.0 (2026-09-05)
+
+- Added =C-c C-w= (=hermes-chat-work=) to inspect a chat's observed delegates
+  and registered background processes in a native tabulated list.  =RET= opens
+  details, =g= refreshes, =h= explains scope, and =i= opens instance-wide
+  subagents.  The view reports stale or incomplete observations; it is not a
+  complete work history, and disappearance does not imply completion.
+- Kept idle chat headers quiet and showed observed running delegates as
+  =🤖 N=, with an =Agents N= fallback when the selected frame cannot display
+  the icon.  The actions menu's Inspect group shows =Workers N= with a
+  separately styled count.  Unknown or stale observations use =🤖 ?= rather
+  than implying zero workers.  Narrow headers preserve attention states and
+  YOLO warnings before optional details.
+- Replaced repeated reasoning updates with a temporary =Thinking…= row that
+  disappears when tools or replies arrive.  Added transcript-button navigation
+  with =TAB= and =S-TAB=, and =C-c C-j= to return to the composer; =TAB= still
+  completes text in the composer.
+- Activated work observation for already attached chats after =make load=,
+  without restarting their sessions or changing drafts.  Existing observation
+  requests and timers are preserved.
+- Preserved draft undo and narrowing while the transcript updates, and kept
+  native diff navigation relative to the chat that opened the diff.
+- Restored running turns when resuming saved sessions.  Fixed submission
+  settlement when a turn finishes before its acknowledgement, and retained
+  rejected queued messages without automatically retrying them.
+- Explicit disconnect now copies unsent, rejected, and delivery-uncertain input
+  into an editable recovery buffer while keeping the current chat draft.
+  Resume through Sessions, inspect history, then select and send text manually.
+  Recovery buffers are in memory only; save them if needed.
+- Reacquired authentication for replacement WebSockets and kept reconnect
+  callbacks tied to their current connection.  Late responses to retired
+  requests no longer report errors against newer work.  Capability providers
+  now retry socket-construction failures after authentication.
+- Made =/stop= explicitly instance-wide and required confirmation before
+  stopping processes across chats.  Confirmation cannot affect a replacement
+  connection or session.
+- Fixed idle-chat cleanup after an unexpected connection loss and worker
+  discovery when a new chat initially lacks a durable session key.
+- Cleared browser rows and cached snapshots when switching instances.  SOUL
+  editors retain their original instance and profile, reject overlapping
+  saves, and keep edits made during a save marked as modified.
+- Changed configuration list editing to JSON arrays, preserving empty arrays,
+  nested values, booleans, nulls, and strings containing commas.  Bound eval
+  approval answers to the request actually shown, so an expired prompt cannot
+  approve its replacement.
+
+* Version 0.4.3 (2026-09-01)
+
+- Kept project-chat names tied to their launch root while separating editor
+  directory from gateway cwd.  Passive cwd updates leave the editor context
+  alone; an explicit “Set directory” adopts the backend-returned path.
+
+* Version 0.4.2 (2026-08-30)
+
+- Kept =hermes-project-chat= buffer names anchored to their launching project,
+  independent of the gateway working directory, and added
+  =hermes-chat-buffer-name-function= for custom naming conventions.
+
+* Version 0.4.1 (2026-08-29)
+
+- Kept named remote instances in the gateway filesystem namespace across chat
+  creation, resume, and working-directory changes without overwriting the
+  editor's local directory.
+- Serialized fresh-session setup and create-time runtime overrides so retries,
+  concurrent callers, and stale callbacks cannot duplicate or replace work.
+- Preferred valid stored basic credentials before browser PKCE in auto mode,
+  while preserving native fallback and normalizing unusable secret errors.
+
+* Version 0.4.0 (2026-08-29)
+
+- Added pre-session model and reasoning selection, including explicit
+  confirmation before applying expensive model switches.
+- Applied create-time runtime choices before the first prompt and kept retries
+  scoped to the exact session that owns them.
+- Restored active dashboard turns after reconnect without letting stale socket
+  callbacks mutate successor sessions.
+- Added complete batched clarification support for single-choice, multi-select,
+  and free-form questions, including partial retries and resumed sessions.
+
+* Version 0.3.3 (2026-08-22)
+
+- Aligned pipe tables in settled chat markdown so columns line up.
+- Routed =/compact= through =session.compress= with a live progress line.
+- Made live loading fail closed and kept reconnect, authentication, startup,
+  and token persistence effects owned by the exact current client.
+- Serialized prompt, submission, queue, and terminal authority so stale
+  callbacks cannot settle or mutate a successor operation.
+- Owned spawned dashboard processes through startup, socket opening, shutdown,
+  and early exit; failed spawns no longer attach to an unrelated listener.
+- Styled the dashboard header and suppressed stale session-archive success.
+
+* Version 0.3.2 (2026-08-16)
+
+- Added =hermes-project-chat= to reuse or create a chat at the current
+  project root; a prefix argument always opens another.
+- Grouped the dashboard by Hermes instance, rebalanced chat action popup
+  groups, and reused one status line for compression warnings.
+- Isolated prompt, steer, background-submit, and session-panel ownership so
+  stale callbacks cannot mutate a successor chat or restore a rejected draft
+  into the wrong buffer.
+- Kept instance-scoped browsers, Kanban tails, cron edits, MCP toggles,
+  rollback restores, provider-key saves, capability connects, and subagent
+  interrupts from leaking across instance switches or list refreshes.
+
+* Version 0.3.1 (2026-08-15)
+
+- Added shell-style completion and direct session switching for =/model= while
+  preserving the interactive model picker.
+- Serialized session handoffs and command mutations so stale callbacks,
+  disconnects, and overdue handoffs cannot race or permanently block chats.
+- Improved queued and background turn ordering, session working-directory
+  updates, credential-prompt expiry, and pending-reply rendering.
+- Hardened provider authentication, OAuth token rollback, reconnect readiness,
+  and bounded embedded-image parsing.
+
+* Version 0.3.0 (2026-08-14)
+
+- Added named Hermes instances with per-instance dashboard endpoints and
+  instance selection across chats and management browsers.
+- Kept asynchronous reads, mutations, and singleton browsers scoped to their
+  owning instance; stale callbacks no longer leak state or report actions after
+  a buffer changes ownership.
+- Preserved the single-instance workflow as the default configuration.
+
+* Version 0.2.1 (2026-08-13)
+
+- Added a backend-driven provider-account browser for OAuth and external
+  account flows.  Dashboard-provided shell commands are copied, never run.
+- Kept provider-account list, OAuth, and disconnect operations scoped to the
+  Hermes profile that opened them.
+- Kept OAuth-only providers out of API-key onboarding.
+- Reported backend account errors while suppressing stale asynchronous errors;
+  failed OAuth operations no longer trigger success effects.
+
+* Version 0.2.0 (2026-08-13)
+
+- Published on [[https://elpa.nongnu.org/nongnu/hermes.html][NonGNU ELPA]].

@@ -1,0 +1,2089 @@
+;;; hermes-kanban.el --- Kanban board browser for Hermes  -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2026  Thanos Apollo
+
+;; Author: Thanos Apollo <public@thanosapollo.org>
+;; Assisted-by: Hermes:MoA
+;; Keywords: tools, convenience
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; Two `tabulated-list' browsers over the dashboard kanban HTTP plugin
+;; (`/api/plugins/kanban/...'), mirroring how the web dashboard renders the
+;; board.  Everything goes through the dashboard at
+;; `hermes-dashboard-transport-url' -- never the local `hermes' CLI, which
+;; reads local SQLite and ignores the configured remote.
+;;
+;; `hermes-list-kanban' opens the boards overview: one row per board with a
+;; per-status count summary.  RET drills into a board's tasks, where RET shows
+;; a task and the popup exposes editing, triage, recovery, and view actions.
+
+;;; Code:
+
+(require 'hermes-buffer)
+(require 'tabulated-list)
+(require 'json)
+(require 'outline)
+(require 'subr-x)
+(require 'url-util)
+(require 'keymap-popup)
+(require 'hermes-transport)
+(require 'hermes-dashboard-transport)
+(require 'hermes-promise)
+(require 'hermes-browser)
+(require 'hermes-kanban-log)
+(require 'hermes-kanban-events)
+(require 'hermes-chat-format)
+(require 'cl-lib)
+
+(declare-function markdown-mode "markdown-mode")
+(declare-function read-string-from-buffer "string-edit")
+
+;;; HTTP against the dashboard kanban plugin
+
+(defconst hermes-kanban-log-tail-bytes 100000
+  "Number of worker-log bytes fetched for `hermes-kanban-show-log'.")
+
+(defcustom hermes-kanban-triage-action-timeout 300
+  "Seconds before a triage specify or decompose request gives up."
+  :type 'number
+  :group 'hermes)
+
+(defconst hermes-kanban--superseded :hermes-kanban-superseded
+  "Rejection marker for an operation whose buffer changed ownership.")
+
+(defvar hermes-kanban--request-owner nil
+  "Buffer that explicitly owns the current cold Kanban request.")
+
+(defvar hermes-kanban--input-current-p nil
+  "Predicate retaining the owner captured before Kanban input.")
+
+(defvar hermes-kanban--input-backend nil
+  "Cell retaining the selected backend of one input operation.
+This is separate from the origin's buffer-local instance and owner predicate.")
+
+(defun hermes-kanban--operation-instance ()
+  "Return the selected operation backend, resolving it only once."
+  (or (car hermes-kanban--input-backend)
+      (let ((instance (save-current-buffer (hermes-instance-resolve))))
+        (when hermes-kanban--input-current-p
+          (unless (funcall hermes-kanban--input-current-p)
+            (user-error "Kanban changed during backend selection")))
+        (when hermes-kanban--input-backend
+          (setcar hermes-kanban--input-backend
+                  (hermes-browser--copy-identity instance)))
+        instance)))
+
+(defun hermes-kanban--run-on-backend (function current)
+  "Call FUNCTION on the selected backend while CURRENT retains the origin.
+Limit instance bindings to acquisition.  In particular, authentication and
+request callbacks must see real buffer ownership, not temporary bindings."
+  (if (null hermes-kanban--input-backend)
+      (hermes-browser--run-on-client function nil #'hermes--promise-rejected)
+    (let* ((instance (hermes-kanban--operation-instance))
+           (lease (let ((hermes-instance instance))
+                    (hermes-browser--with-client
+                     (lambda (client done) (cons client done))))))
+      (condition-case err
+          (hermes--promise-finally
+           (if (funcall current) (funcall function (car lease))
+             (hermes--promise-rejected hermes-kanban--superseded))
+           (cdr lease))
+        ((error quit)
+         (funcall (cdr lease))
+         (signal (car err) (cdr err)))))))
+
+(defun hermes-kanban--read-and-act (reader action selection &optional current)
+  "Call ACTION with READER's result while SELECTION retains its owner.
+Capture ownership before recursive input and restore the exact origin.
+READER receives the retained predicate to check between successive prompts.
+CURRENT, when non-nil, continues an owner captured before a task lookup."
+  (let ((hermes-kanban--input-backend
+         (if current hermes-kanban--input-backend (list nil)))
+        (current (or current (hermes-browser--mutation-context selection))))
+    (unless (funcall current) (user-error "Kanban view is no longer owned"))
+    (let ((value (save-current-buffer
+                   (let ((hermes-kanban--input-current-p nil)
+                         (hermes-kanban--input-backend nil))
+                     (funcall reader current)))))
+      (unless (funcall current)
+        (user-error "Kanban changed during input; try again"))
+      (let ((hermes-kanban--input-current-p current))
+        (funcall action value)))))
+
+(defun hermes-kanban--read-current (current reader &rest arguments)
+  "Call READER with ARGUMENTS and revalidate CURRENT before returning."
+  (unless (funcall current) (user-error "Kanban changed during input"))
+  (let ((value (save-current-buffer (apply reader arguments))))
+    (unless (funcall current) (user-error "Kanban changed during input"))
+    value))
+
+(defun hermes-kanban--task-selection ()
+  "Return the current task's board and identity for mutation ownership."
+  (list (hermes-kanban--board-slug-for-command)
+        (hermes-kanban--task-id-for-command)))
+
+(defun hermes-kanban--report-rejection (reason)
+  "Report REASON unless it indicates a superseded Kanban request."
+  (unless (eq reason hermes-kanban--superseded)
+    (message "Hermes: %s" reason)))
+
+(defun hermes-kanban--api (method path &optional body query timeout)
+  "Return a promise of the kanban plugin response for METHOD PATH.
+BODY, QUERY, and TIMEOUT extend the request.  Retain input ownership through
+client acquisition, authentication and receipt; never replay a mutation."
+  (let* ((origin (or hermes-kanban--request-owner (current-buffer)))
+         (current (or hermes-kanban--input-current-p
+                      (with-current-buffer origin
+                        (hermes-browser--owned-predicate)))))
+    (if (not (funcall current))
+        (hermes--promise-rejected hermes-kanban--superseded)
+      (with-current-buffer origin
+        (hermes-kanban--run-on-backend
+         (lambda (client)
+           (let ((guard (hermes-browser--dispatch-guard client current)))
+             (hermes--promise-then
+              (hermes-dashboard-transport-api-request-async
+               method (concat "/api/plugins/kanban" path)
+               :body body :query query :timeout timeout :client client :current-p guard)
+              (lambda (result)
+                ;; Settle before final lease release can retire CLIENT.
+                (if (funcall guard) result
+                  (hermes--promise-rejected
+                   (if (equal method "GET") hermes-kanban--superseded
+                     "Kanban update superseded; check board before retrying")))))))
+         current)))))
+
+(defun hermes-kanban--then (promise on-ok)
+  "Run ON-OK on PROMISE's resolved value in its origin, reporting rejection."
+  (let ((origin (current-buffer))
+        (input-current hermes-kanban--input-current-p)
+        (backend hermes-kanban--input-backend)
+        (current (or hermes-kanban--input-current-p
+                     (hermes-browser--owned-predicate))))
+    (hermes--promise-then
+     promise (lambda (result)
+               (when (funcall current)
+                 (with-current-buffer origin
+                   (let ((hermes-kanban--input-current-p input-current)
+                         (hermes-kanban--input-backend backend))
+                     (funcall on-ok result)))))
+     #'hermes-kanban--report-rejection)))
+
+(defvar hermes-kanban--board-request-id 0)
+
+(defun hermes-kanban--begin-request (slot)
+  "Advance request identity SLOT and return its new value."
+  (let ((request-id (1+ (symbol-value slot))))
+    (set slot request-id)
+    request-id))
+
+(defun hermes-kanban--request-current-p (slot request-id)
+  "Return non-nil when REQUEST-ID is the latest value of SLOT."
+  (= request-id (symbol-value slot)))
+
+(defun hermes-kanban--read-view (target fetch render &optional display)
+  "Fetch and RENDER one owned TARGET view without deferred selection.
+FETCH starts the read in TARGET.  DISPLAY selects the pending view now."
+  (with-current-buffer target
+    (let ((mode major-mode)
+          (instance hermes-instance)
+          (current (when hermes-kanban--input-current-p
+                     (let ((input-current hermes-kanban--input-current-p)
+                           (target-current (hermes-browser--owned-predicate)))
+                       (lambda () (and (funcall input-current)
+                                       (funcall target-current))))))
+          (generation (if hermes-kanban--input-current-p
+                          hermes-browser--request-generation
+                        (hermes-browser--next-request-generation))))
+      (setq hermes-browser--status "Loading")
+      (force-mode-line-update)
+      (when display (pop-to-buffer target))
+      (when (and (hermes-browser--request-current-mode-p target generation mode)
+                 (equal instance (buffer-local-value 'hermes-instance target)))
+        (hermes--promise-catch
+         (hermes--promise-then
+          (condition-case err
+              (let ((hermes-kanban--request-owner target)
+                    (hermes-kanban--input-current-p current))
+                (funcall fetch))
+            ((error quit) (hermes--promise-rejected (error-message-string err))))
+          (lambda (payload)
+            (when (and (or (null current) (funcall current))
+                       (hermes-browser--request-current-mode-p target generation mode)
+                       (equal instance (buffer-local-value 'hermes-instance target)))
+              (with-current-buffer target
+                (setq hermes-browser--status "Ready")
+                ;; The accepted read ends the input operation before rendering
+                ;; replaces its selected row and starts ancillary reads.
+                (let ((hermes-kanban--input-current-p nil)
+                      (hermes-kanban--input-backend nil))
+                  (funcall render payload))))))
+         (lambda (reason)
+           (when (and (or (null current) (funcall current))
+                      (hermes-browser--request-current-mode-p target generation mode)
+                      (equal instance (buffer-local-value 'hermes-instance target)))
+             (with-current-buffer target
+               (if (eq reason hermes-kanban--superseded)
+                   (setq hermes-browser--status "Cancelled; g retry")
+                 (hermes-browser--read-error reason))))))))))
+
+;;; Field helpers
+
+(defun hermes-kanban--count (counts status)
+  "Return COUNTS' tally for STATUS as a string."
+  (let ((n (hermes-transport--get counts (intern status))))
+    (if (numberp n) (number-to-string n) "0")))
+
+(defun hermes-kanban--format-time (value)
+  "Return VALUE (a Unix timestamp) formatted, or an empty string."
+  (if (numberp value)
+      (format-time-string "%F %R" value)
+    ""))
+
+;;; Shared status display helpers
+
+(defface hermes-kanban-triage-face
+  '((t :inherit warning))
+  "Face for triage tasks and board counts."
+  :group 'hermes)
+
+(defface hermes-kanban-todo-face
+  '((t :inherit font-lock-variable-name-face))
+  "Face for todo tasks and board counts."
+  :group 'hermes)
+
+(defface hermes-kanban-scheduled-face
+  '((t :inherit font-lock-constant-face))
+  "Face for scheduled tasks and board counts."
+  :group 'hermes)
+
+(defface hermes-kanban-ready-face
+  '((t :inherit font-lock-type-face))
+  "Face for ready tasks and board counts."
+  :group 'hermes)
+
+(defface hermes-kanban-running-face
+  '((t :inherit font-lock-keyword-face))
+  "Face for running tasks and board counts."
+  :group 'hermes)
+
+(defface hermes-kanban-blocked-face
+  '((t :inherit error))
+  "Face for blocked tasks and board counts."
+  :group 'hermes)
+
+(defface hermes-kanban-review-face
+  '((t :inherit font-lock-function-name-face))
+  "Face for review tasks and board counts."
+  :group 'hermes)
+
+(defface hermes-kanban-done-face
+  '((t :inherit success))
+  "Face for done tasks and board counts."
+  :group 'hermes)
+
+(defface hermes-kanban-archived-face
+  '((t :inherit shadow))
+  "Face for archived tasks and board counts."
+  :group 'hermes)
+
+(defconst hermes-kanban--current-board-marker "📍"
+  "Marker used for the current Hermes Kanban board.")
+
+(defconst hermes-kanban--protected-board-slugs '("default")
+  "Board slugs protected from archive/delete by the Hermes backend.")
+
+(defconst hermes-kanban--status-display
+  '(("triage" :icon "💡" :label "triage" :face hermes-kanban-triage-face)
+    ("todo" :icon "📝" :label "todo" :face hermes-kanban-todo-face)
+    ("scheduled" :icon "⏰" :label "scheduled"
+     :face hermes-kanban-scheduled-face)
+    ("ready" :icon "✅" :label "ready" :face hermes-kanban-ready-face)
+    ("running" :icon "⚙️" :label "running" :face hermes-kanban-running-face)
+    ("blocked" :icon "⛔" :label "blocked" :face hermes-kanban-blocked-face)
+    ("review" :icon "👀" :label "review" :face hermes-kanban-review-face)
+    ("done" :icon "🏁" :label "done" :face hermes-kanban-done-face)
+    ("archived" :icon "🗄️" :label "archived"
+     :face hermes-kanban-archived-face))
+  "User-facing display metadata for Kanban task statuses.
+Each entry maps a status string to :icon, :label, and optional :face.")
+
+(defconst hermes-kanban--board-count-statuses
+  '("triage" "todo" "scheduled" "ready" "running" "blocked" "review"
+    "done" "archived")
+  "Statuses displayed as count columns in the boards overview.")
+
+(defconst hermes-kanban--task-title-column-max-width 64
+  "Maximum width used for task titles in `hermes-kanban-mode'.")
+
+(defun hermes-kanban--status-info (status)
+  "Return display metadata for STATUS, or nil when STATUS is unknown."
+  (alist-get (hermes-transport--scalar-string status)
+             hermes-kanban--status-display nil nil #'equal))
+
+(defun hermes-kanban--status-icon (status)
+  "Return the shared icon for STATUS, or an empty string."
+  (or (plist-get (hermes-kanban--status-info status) :icon) ""))
+
+(defun hermes-kanban--status-label (status)
+  "Return the shared label for STATUS, falling back to STATUS itself."
+  (let ((raw (or (hermes-transport--scalar-string status) "")))
+    (or (plist-get (hermes-kanban--status-info raw) :label) raw)))
+
+(defun hermes-kanban--format-status (status)
+  "Return STATUS as a user-facing icon plus label.
+The returned string carries the raw status as the `hermes-kanban-status'
+text property, so commands can keep using backend status values."
+  (let* ((raw (or (hermes-transport--scalar-string status) ""))
+         (info (hermes-kanban--status-info raw))
+         (icon (plist-get info :icon))
+         (label (or (plist-get info :label) raw))
+         (face (or (plist-get info :face) 'hermes-browser-status))
+         (text (copy-sequence
+                (if (and icon (not (string-empty-p icon)))
+                    (format "%s %s" icon label)
+                  label))))
+    (when (and face (not (string-empty-p text)))
+      (setq text (propertize text 'face face)))
+    (when (not (string-empty-p text))
+      (add-text-properties 0 (length text) `(hermes-kanban-status ,raw) text))
+    text))
+
+(defun hermes-kanban-format-status (status)
+  "Return STATUS with the standard Kanban icon and semantic face."
+  (hermes-kanban--format-status status))
+
+(defun hermes-kanban--format-status-indicator (status)
+  "Return STATUS as a compact task-table indicator.
+Known statuses use only their icon.  Unknown statuses fall back to their
+raw label.  The returned string carries the raw status as the
+`hermes-kanban-status' text property, so commands can keep using backend
+status values."
+  (let* ((raw (or (hermes-transport--scalar-string status) ""))
+         (info (hermes-kanban--status-info raw))
+         (icon (plist-get info :icon))
+         (face (or (plist-get info :face) 'hermes-browser-status))
+         (text (copy-sequence
+                (or (hermes-transport--non-empty-string icon) raw))))
+    (when (and face (not (string-empty-p text)))
+      (setq text (propertize text 'face face)))
+    (when (not (string-empty-p text))
+      (add-text-properties 0 (length text) `(hermes-kanban-status ,raw) text))
+    text))
+
+(defun hermes-kanban--format-status-count (counts status)
+  "Return COUNTS' tally for STATUS."
+  (hermes-browser--face-cell
+   (hermes-kanban--count counts status)
+   (or (plist-get (hermes-kanban--status-info status) :face)
+       'hermes-browser-count)))
+
+(defun hermes-kanban--status-column-heading (status)
+  "Return the boards-overview heading for STATUS."
+  (or (hermes-transport--non-empty-string (hermes-kanban--status-icon status))
+      (capitalize (hermes-kanban--status-label status))))
+
+(defun hermes-kanban--display-status-value (display)
+  "Return the backend status represented by DISPLAY."
+  (let* ((plain (substring-no-properties display))
+         (parts (split-string plain " " t)))
+    (if parts (car (last parts)) plain)))
+
+(defun hermes-kanban--entry-status (entry)
+  "Return ENTRY's raw task status from its display cell."
+  (let ((status (and (vectorp entry)
+                     (> (length entry) 0)
+                     (aref entry 0))))
+    (or (and (stringp status)
+             (> (length status) 0)
+             (get-text-property 0 'hermes-kanban-status status))
+        (and (stringp status) (hermes-kanban--display-status-value status))
+        "")))
+
+(defun hermes-kanban--boards-tabulated-list-format (&optional width)
+  "Return the dynamic boards `tabulated-list-format' for WIDTH."
+  (let* ((widths (hermes-browser--allocate-column-widths
+                  width
+                  (append '((2 0) (12 7) (4 1))
+                          (mapcar (lambda (_) '(4 1))
+                                  hermes-kanban--board-count-statuses))))
+         (fixed-columns (vector (list "" (nth 0 widths) t)
+                                (list "📋" (nth 1 widths) t)
+                                (list "Σ" (nth 2 widths) t))))
+    (vconcat fixed-columns
+             (cl-mapcar (lambda (status column-width)
+                          (list (hermes-kanban--status-column-heading status)
+                                column-width t))
+                        hermes-kanban--board-count-statuses
+                        (nthcdr 3 widths)))))
+
+(defun hermes-kanban--tasks-tabulated-list-format (&optional width)
+  "Return the dynamic task `tabulated-list-format' for WIDTH."
+  (let* ((widths (hermes-browser--allocate-column-widths
+                  width '((6 0) (4 0) (10 2) (20 6))))
+         (title-width (min (nth 3 widths)
+                           hermes-kanban--task-title-column-max-width)))
+    `[("Status" ,(nth 0 widths) t) ("Pri" ,(nth 1 widths) t)
+      ("Assignee" ,(nth 2 widths) t) ("Title" ,title-width t)]))
+
+;;; Boards overview buffer
+
+(defun hermes-kanban--board-rows (boards)
+  "Return `tabulated-list' entries for BOARDS, the dashboard board list."
+  (mapcar
+   (lambda (board)
+     (let ((slug (hermes-transport--display-field board 'slug))
+           (counts (hermes-transport--get board 'counts))
+           (total (hermes-transport--get board 'total)))
+       (list (cons slug (hermes-transport--non-empty-string (hermes-transport--display-field board 'name)))
+             (vconcat
+              (vector (hermes-browser--face-cell
+                       (if (eq (hermes-transport--get board 'is_current) t)
+                           hermes-kanban--current-board-marker
+                         "")
+                       'hermes-browser-default)
+                      (hermes-browser--face-cell
+                       (or (hermes-transport--non-empty-string
+                            (hermes-transport--display-field board 'name))
+                           slug)
+                       'hermes-browser-name)
+                      (hermes-browser--face-cell
+                       (if (numberp total) total 0) 'hermes-browser-total))
+              (mapcar (lambda (status)
+                        (hermes-kanban--format-status-count counts status))
+                      hermes-kanban--board-count-statuses)))))
+   boards))
+
+(hermes-define-list-browser kanban-boards
+  :title "Hermes Boards"
+  :description "Hermes Kanban Boards"
+  :buffer "*Hermes Kanban Boards*"
+  :command hermes-kanban-boards
+  :command-doc "Return to the boards overview."
+  :doc "Major mode for the Hermes Kanban boards overview."
+  :columns (hermes-kanban--boards-tabulated-list-format)
+  :refresh #'hermes-kanban--boards-revert
+  :rows (lambda (payload)
+          (hermes-kanban--board-rows (hermes-transport--get payload 'boards)))
+  :on-mode (lambda ()
+             (add-hook 'window-size-change-functions
+                       #'hermes-kanban--window-size-change nil t))
+  :help (:group "Navigate"
+         hermes-kanban-open-board "Open board"
+         :group "Board"
+         hermes-kanban-create-board "New board"
+         hermes-kanban-switch-board "Switch current board"
+         hermes-kanban-rename-board "Rename board"
+         hermes-kanban-archive-board "Archive non-default board")
+  :keys ("RET" #'hermes-kanban-open-board
+         "+" #'hermes-kanban-create-board
+         "s" #'hermes-kanban-switch-board
+         "r" #'hermes-kanban-rename-board
+         "D" #'hermes-kanban-archive-board))
+
+(defun hermes-kanban--init-boards-header (&optional width)
+  "Refresh the boards buffer `tabulated-list' header for WIDTH."
+  (setq tabulated-list-format (hermes-kanban--boards-tabulated-list-format width))
+  (tabulated-list-init-header))
+
+(defun hermes-kanban--window-size-change (window)
+  "Refresh Kanban tabulated-list columns for resized WINDOW."
+  (when (and (hermes-buffer--owned-p)
+             (derived-mode-p 'hermes-kanban-boards-mode 'hermes-kanban-mode))
+    (let ((old-format tabulated-list-format)
+          (width (window-body-width window)))
+      (if (derived-mode-p 'hermes-kanban-boards-mode)
+          (hermes-kanban--init-boards-header width)
+        (hermes-kanban--init-board-header width))
+      (unless (equal old-format tabulated-list-format)
+        (tabulated-list-print t)))))
+
+(defun hermes-kanban--render-boards (&optional in-place)
+  "Fetch and render the dashboard boards overview asynchronously.
+With IN-PLACE non-nil, refresh the current overview without selecting it."
+  (let ((instance (hermes-kanban--operation-instance))
+        (target (if (and in-place (not (hermes-buffer--retired-p))
+                         (derived-mode-p 'hermes-kanban-boards-mode))
+                    (current-buffer)
+                  (hermes-buffer--get "*Hermes Kanban Boards*"
+                                      #'hermes-kanban-boards-mode))))
+    (unless (and in-place hermes-kanban--input-current-p (eq target (current-buffer)))
+      (with-current-buffer target
+        (unless (derived-mode-p 'hermes-kanban-boards-mode) (hermes-kanban-boards-mode))
+        (hermes-browser--own-instance instance)))
+    (hermes-kanban--read-view
+     target (lambda () (hermes-kanban--api "GET" "/boards"))
+     (lambda (payload)
+       (hermes-kanban--init-boards-header (hermes-browser--visible-window-width))
+       (hermes-kanban-boards--render payload))
+     (not in-place))))
+
+(defun hermes-kanban--boards-revert (&rest _)
+  "Refresh the boards overview in place."
+  (hermes-kanban--render-boards t))
+
+(defun hermes-kanban--board-at-point ()
+  "Return the selected board as (SLUG . NAME), or signal a `user-error'."
+  (or (tabulated-list-get-id) (user-error "No board on this line")))
+
+(defun hermes-kanban--board-path (slug &rest segments)
+  "Return the kanban boards path for SLUG extended by SEGMENTS."
+  (concat "/boards/" (url-hexify-string slug) (apply #'concat segments)))
+
+(defun hermes-kanban--protected-board-p (slug)
+  "Return non-nil when SLUG names a backend-protected board."
+  (member slug hermes-kanban--protected-board-slugs))
+
+(defun hermes-kanban--current-board-row-p ()
+  "Return non-nil when the selected board row is marked current."
+  (and-let* ((entry (tabulated-list-get-entry)))
+    (equal (aref entry 0) hermes-kanban--current-board-marker)))
+
+(defun hermes-kanban-open-board ()
+  "Open the board at point in the detail buffer."
+  (interactive nil hermes-kanban-boards-mode)
+  (let ((id (hermes-kanban--board-at-point)))
+    (hermes-kanban--render-board (car id) (cdr id))))
+
+(defun hermes-kanban-create-board ()
+  "Create a new board from the boards overview."
+  (interactive)
+  (hermes-kanban--read-and-act
+   (lambda (current)
+     (let ((slug (save-current-buffer (read-string "New board slug: "))))
+       (unless (funcall current) (user-error "Kanban changed during input"))
+       (list slug (read-string "Display name: "))))
+   (lambda (values)
+     (let ((slug (car values)) (name (cadr values)))
+       (when (string-empty-p slug) (user-error "Board slug is required"))
+       (hermes-kanban--then
+        (hermes-kanban--api "POST" "/boards"
+                            `((slug . ,slug)
+                              (name . ,(if (string-empty-p name) slug name))
+                              (switch . :false)))
+        (lambda (_) (hermes-kanban--render-boards t)))))
+   #'tabulated-list-get-id))
+
+(defun hermes-kanban-switch-board ()
+  "Make the selected board the current Hermes Kanban board."
+  (interactive nil hermes-kanban-boards-mode)
+  (let* ((instance (hermes-instance-resolve))
+         (board (hermes-kanban--board-at-point))
+         (slug (car board)))
+    (hermes-kanban--then
+     (hermes-kanban--api "POST" (hermes-kanban--board-path slug "/switch"))
+     (lambda (_)
+       (let ((hermes-instance instance))
+         (hermes-kanban--render-boards))
+       (message "Current Hermes Kanban board: %s" slug)))))
+
+(defun hermes-kanban-rename-board (&optional name)
+  "Rename the selected board's display NAME, reading it when omitted."
+  (interactive nil hermes-kanban-boards-mode)
+  (let* ((board (hermes-browser--copy-identity (hermes-kanban--board-at-point)))
+         (slug (car board)))
+    (hermes-kanban--read-and-act
+     (lambda (_) (or name (read-string "New board display name: "
+                                      (or (cdr board) slug))))
+     (lambda (value)
+       (let ((trimmed (string-trim value)))
+         (when (string-empty-p trimmed) (user-error "Board name cannot be empty"))
+         (hermes-kanban--then
+          (hermes-kanban--api "PATCH" (hermes-kanban--board-path slug)
+                              `((name . ,trimmed)))
+          (lambda (_)
+            (hermes-kanban--render-boards t)
+            (message "Renamed board %s to %s" slug trimmed)))))
+     #'hermes-kanban--board-at-point)))
+
+(defun hermes-kanban-archive-board ()
+  "Archive the selected board after confirmation.
+This uses the dashboard's recoverable archive endpoint and never hard-deletes."
+  (interactive nil hermes-kanban-boards-mode)
+  (let* ((board (hermes-kanban--board-at-point))
+         (slug (copy-sequence (car board)))
+         (name (or (cdr board) slug))
+         (current-p (hermes-kanban--current-board-row-p)))
+    (when (hermes-kanban--protected-board-p slug)
+      (user-error "Board %s is protected and cannot be archived" slug))
+    (hermes-kanban--read-and-act
+     (lambda (current)
+       (when (and current-p
+                  (not (save-current-buffer
+                         (yes-or-no-p
+                          (format "Archive current board %s and fall back to default?" slug)))))
+         (user-error "Archive cancelled"))
+       (unless (funcall current) (user-error "Kanban changed during confirmation"))
+       (yes-or-no-p
+        (format "Archive board %s (%s) recoverably, without hard delete?" slug name)))
+     (lambda (confirmed)
+       (when confirmed
+         (hermes-kanban--then
+          (hermes-kanban--api "DELETE" (hermes-kanban--board-path slug))
+          (lambda (_) (hermes-kanban--render-boards t)
+            (message "Archived board %s" slug)))))
+     #'hermes-kanban--board-at-point)))
+
+;;; Board detail buffer
+
+(defvar-local hermes-kanban-diagnostics--slug nil
+  "Board slug owned by the diagnostics overview.")
+
+(defvar-local hermes-kanban-diagnostics--name nil
+  "Board name owned by the diagnostics overview.")
+
+(defvar-local hermes-kanban--slug nil
+  "Slug of the board shown in this detail buffer.")
+
+(defvar-local hermes-kanban--name nil
+  "Display name of the board shown in this detail buffer.")
+
+(defvar-local hermes-kanban--assignees nil
+  "Known assignees on the current board, for completion.")
+
+(defvar-local hermes-kanban--latest-event-id nil
+  "Most recent task-event id from the last board render, for live seeding.")
+
+(defvar-local hermes-kanban--orchestration-mode 'unknown
+  "Current triage orchestration mode: `auto', `manual', or `unknown'.")
+
+(defun hermes-kanban--triage-mode-indicator ()
+  "Return the current triage orchestration mode for the mode line."
+  (pcase hermes-kanban--orchestration-mode
+    ('auto (propertize " [Triage: auto]" 'face 'success))
+    ('manual (propertize " [Triage: manual]" 'face 'warning))
+    (_ (propertize " [Triage: …]" 'face 'shadow))))
+
+(defun hermes-kanban--task-created-desc-p (left right)
+  "Return non-nil when LEFT is newer (created_at) than RIGHT.
+LEFT and RIGHT are task plists/alists as produced by the dashboard.
+A missing or non-numeric `created_at' sorts oldest (treated as 0), so
+tasks without a reliable timestamp never jump above dated ones.  This is
+a strict comparator for `sort'; ties keep their input order, since
+`sort' is stable."
+  (let ((a (hermes-transport--get left 'created_at))
+        (b (hermes-transport--get right 'created_at)))
+    (> (if (numberp a) a 0)
+       (if (numberp b) b 0))))
+
+(defun hermes-kanban--task-rows (columns)
+  "Flatten dashboard COLUMNS into `tabulated-list' entries, newest first.
+Tasks are sorted by `created_at' descending across all status columns, so
+the board detail buffer shows the most recently created tasks at the top."
+  (let* ((tasks (mapcan (lambda (column)
+                          (append (hermes-transport--get column 'tasks) nil))
+                        columns))
+         (sorted (sort tasks #'hermes-kanban--task-created-desc-p)))
+    (mapcar
+     (lambda (task)
+       (list (hermes-transport--display-field task 'id)
+             (vector (hermes-kanban--format-status-indicator
+                      (hermes-transport--display-field task 'status))
+                     (hermes-browser--face-cell
+                      (hermes-transport--display-field task 'priority)
+                      'hermes-browser-priority)
+                     (hermes-browser--face-cell
+                      (or (hermes-transport--non-empty-string
+                           (hermes-transport--display-field task 'assignee))
+                          "-")
+                      'hermes-browser-assignee)
+                     (hermes-browser--face-cell
+                      (hermes-transport--display-field task 'title)
+                      'hermes-browser-title))))
+     sorted)))
+
+(defvar hermes-kanban-mode-map)
+
+(defun hermes-kanban--popup-title ()
+  "Identify the cached board and selected task."
+  (concat "Kanban: "
+          (propertize (or hermes-kanban--name hermes-kanban--slug "no board")
+                      'face 'font-lock-type-face)
+          " / "
+          (if-let* ((task (tabulated-list-get-id)))
+              (propertize task 'face 'font-lock-constant-face)
+            "no task selected")))
+
+(defun hermes-kanban--no-task-p ()
+  "Return non-nil when the board has no selected task."
+  (not (tabulated-list-get-id)))
+
+(keymap-popup-define hermes-kanban-mode-map
+  "Keymap for `hermes-kanban-mode'."
+  :parent tabulated-list-mode-map
+  :description #'hermes-kanban--popup-title
+  :group "Navigate"
+  "RET" ("Show task" hermes-kanban-show
+       :inapt-if #'hermes-kanban--no-task-p)
+  "b" ("Back to boards" hermes-kanban-boards)
+  :group ("Edit task" :inapt-if #'hermes-kanban--no-task-p)
+  "e" ("Edit title/priority" hermes-kanban-edit)
+  "E" ("Edit body" hermes-kanban-edit-body)
+  "a" ("Assign / reassign" hermes-kanban-change-assignee)
+  "s" ("Set status" hermes-kanban-set-status)
+  "c" ("Comment" hermes-kanban-comment)
+  :row
+  :group "Triage"
+  "i" ("New rough idea" hermes-kanban-create-triage-task)
+  "S" ("Specify as one task" hermes-kanban-specify-triage-task
+       :inapt-if #'hermes-kanban--no-task-p)
+  "x" ("Decompose now" hermes-kanban-decompose-triage-task
+       :inapt-if #'hermes-kanban--no-task-p)
+  :group "Board"
+  "+" ("New task" hermes-kanban-create-task)
+  "D" ("Delete task" hermes-kanban-delete
+       :inapt-if #'hermes-kanban--no-task-p)
+  "N" ("Nudge dispatcher" hermes-kanban-nudge-dispatch)
+  :row
+  :group ("Recovery" :inapt-if #'hermes-kanban--no-task-p)
+  "R" ("Reclaim task" hermes-kanban-reclaim)
+  "K" ("Terminate run" hermes-kanban-terminate-run)
+  :group "View"
+  "g" ("Refresh" revert-buffer :stay-open t)
+  "t" ("Toggle live updates" hermes-kanban-toggle-live :stay-open t)
+  "l" ("View selected task log" hermes-kanban-show-log
+       :inapt-if #'hermes-kanban--no-task-p)
+  "d" ("Diagnostics overview" hermes-kanban-diagnostics)
+  "?" ("Help" hermes-kanban-mode-map-popup))
+
+(put 'hermes-kanban-mode-map-popup 'command-modes '(hermes-kanban-mode))
+
+(defun hermes-kanban--init-board-header (&optional width)
+  "Refresh the board detail `tabulated-list' header for WIDTH."
+  (setq tabulated-list-format (hermes-kanban--tasks-tabulated-list-format width))
+  (tabulated-list-init-header))
+
+(define-derived-mode hermes-kanban-mode tabulated-list-mode "Hermes Kanban"
+  "Major mode for browsing a single Hermes Kanban board."
+  :interactive nil
+  (setq-local revert-buffer-function #'hermes-kanban--revert)
+  (hermes-browser--setup-status)
+  (setq-local hermes-browser--snapshot-variables
+              '(hermes-kanban--assignees hermes-kanban--latest-event-id
+                hermes-kanban--orchestration-mode mode-line-process))
+  (add-hook 'kill-buffer-hook #'hermes-kanban--events-teardown nil t)
+  (add-hook 'change-major-mode-hook #'hermes-kanban--events-teardown nil t)
+  (add-hook 'window-size-change-functions
+            #'hermes-kanban--window-size-change nil t)
+  (hermes-kanban--init-board-header))
+
+(defun hermes-kanban--display-board (payload slug name in-place &optional instance)
+  "Display board PAYLOAD for SLUG and NAME, optionally IN-PLACE.
+INSTANCE is the Hermes instance inherited from the boards overview."
+  (let ((assignees
+         (delq nil (mapcar #'hermes-transport--scalar-string
+                           (hermes-transport--get payload 'assignees)))))
+    (with-current-buffer (if (and in-place (not (hermes-buffer--retired-p))
+                                  (derived-mode-p 'hermes-kanban-mode))
+                             (current-buffer)
+                           (hermes-buffer--get "*Hermes Kanban*" #'hermes-kanban-mode))
+      (unless (derived-mode-p 'hermes-kanban-mode)
+        (hermes-kanban-mode))
+      (when instance (hermes-browser--own-instance instance))
+      (setq hermes-kanban--slug slug
+            hermes-kanban--name name
+            hermes-kanban--assignees assignees
+            hermes-kanban--latest-event-id
+            (hermes-transport--get payload 'latest_event_id)
+            mode-line-process
+            (list (format " [%s]" (hermes-buffer--mode-line-literal (or name slug "board")))
+                  '(:eval (hermes-kanban--triage-mode-indicator))
+                  '(:eval (hermes-kanban--live-indicator)))
+            tabulated-list-entries
+            (hermes-kanban--task-rows
+             (hermes-transport--get payload 'columns)))
+      (hermes-kanban--events-retarget slug hermes-kanban--latest-event-id)
+      ;; Display first so header sizing can use the live window width.
+      (unless in-place (pop-to-buffer (current-buffer)))
+      (hermes-kanban--init-board-header
+       (hermes-browser--visible-window-width))
+      (hermes-browser--preserve-reading-position (lambda () (tabulated-list-print t)))
+      (setq hermes-browser--status (if tabulated-list-entries "Ready" "Empty")))))
+
+(defun hermes-kanban--refresh-orchestration-mode (request-id slug)
+  "Refresh orchestration mode for REQUEST-ID and board SLUG."
+  (let ((target (current-buffer))
+        (generation hermes-browser--request-generation)
+        (instance hermes-instance))
+    (hermes--promise-then
+     (hermes-kanban--api "GET" "/orchestration")
+     (lambda (settings)
+       (when (and (hermes-browser--request-current-mode-p target generation 'hermes-kanban-mode)
+                  (equal instance (buffer-local-value 'hermes-instance target))
+                  (hermes-kanban--request-current-p 'hermes-kanban--board-request-id request-id))
+         (with-current-buffer target
+           (when (equal hermes-kanban--slug slug)
+             (setq hermes-kanban--orchestration-mode
+                   (if (hermes-kanban--truthy-p (hermes-transport--get settings 'auto_decompose))
+                       'auto 'manual))
+             (force-mode-line-update)))))
+     #'ignore)))
+
+(defun hermes-kanban--goto-task-row (task-id)
+  "Move point to TASK-ID in the current Kanban board."
+  (goto-char (point-min))
+  (when-let* ((match (text-property-search-forward
+                      'tabulated-list-id task-id #'equal)))
+    (goto-char (prop-match-beginning match))
+    (beginning-of-line)))
+
+(defun hermes-kanban--render-board (slug name &optional in-place task-id)
+  "Fetch board SLUG (display NAME), optionally selecting TASK-ID on arrival.
+With IN-PLACE non-nil, refresh without selecting the board buffer."
+  (let* ((instance (hermes-kanban--operation-instance))
+         (target (if (and in-place (not (hermes-buffer--retired-p))
+                          (derived-mode-p 'hermes-kanban-mode))
+                     (current-buffer)
+                   (hermes-buffer--get "*Hermes Kanban*" #'hermes-kanban-mode)))
+         (request-id (hermes-kanban--begin-request 'hermes-kanban--board-request-id)))
+    (unless (and in-place hermes-kanban--input-current-p (eq target (current-buffer)))
+      (with-current-buffer target
+        (unless (derived-mode-p 'hermes-kanban-mode) (hermes-kanban-mode))
+        (unless (and (equal hermes-instance instance) (equal hermes-kanban--slug slug))
+          (when hermes-kanban--events-tail
+            (hermes-kanban--events-disconnect hermes-kanban--events-tail))
+          (setq tabulated-list-entries nil tabulated-list-sort-key nil
+                hermes-kanban--assignees nil hermes-kanban--latest-event-id nil
+                hermes-kanban--orchestration-mode 'unknown)
+          (let ((inhibit-read-only t)) (erase-buffer)))
+        (hermes-browser--own-instance instance)
+        (setq hermes-kanban--slug slug hermes-kanban--name name
+              mode-line-process (format " [%s]" (hermes-buffer--mode-line-literal
+                                                  (or name slug "board"))))))
+    (hermes-kanban--read-view
+     target
+     (lambda () (hermes-kanban--api "GET" "/board" nil (hermes-kanban--query-for-board slug)))
+     (lambda (payload)
+       (hermes-kanban--display-board payload slug name t instance)
+       (hermes-kanban--refresh-orchestration-mode request-id slug)
+       (when task-id (hermes-kanban--goto-task-row task-id)))
+     (not in-place))))
+
+(defun hermes-kanban-open-board-task (board-slug task-id)
+  "Open BOARD-SLUG, select TASK-ID, and return the request promise."
+  (hermes-kanban--render-board board-slug board-slug nil task-id))
+
+(defun hermes-kanban--revert (&rest _)
+  "Refresh the current board detail buffer in place."
+  (hermes-kanban--render-board hermes-kanban--slug hermes-kanban--name t))
+
+(defun hermes-kanban--board-query ()
+  "Return a board query alist for the current detail buffer, or nil."
+  (hermes-kanban--query-for-board (hermes-kanban--board-slug-for-command)))
+
+(defun hermes-kanban--id-at-point ()
+  "Return the task id on the current line or signal a `user-error'."
+  (or (tabulated-list-get-id) (user-error "No task on this line")))
+
+(defun hermes-kanban--task-path (id &rest segments)
+  "Return the kanban tasks path for ID extended by SEGMENTS."
+  (concat "/tasks/" (url-hexify-string id) (apply #'concat segments)))
+
+;;; Task detail and log views
+
+(defvar-local hermes-kanban-task--task-id nil
+  "Task id displayed in the current task detail buffer.")
+
+(defvar-local hermes-kanban-task--board-slug nil
+  "Board slug displayed in the current task detail buffer.")
+
+(defvar-local hermes-kanban-task--status nil
+  "Raw task status displayed in the current task detail buffer.")
+
+(defvar-local hermes-kanban-task--assignees nil
+  "Assignee names known when the current task detail buffer was opened.")
+
+(defvar hermes-kanban-task-detail-functions nil
+  "Functions run after rendering a Kanban task detail.
+Each function receives the task payload and board slug.  The current buffer is
+the writable task detail buffer.")
+
+(defvar-local hermes-kanban-log--task-id nil
+  "Task id displayed in the current worker-log buffer.")
+
+(defvar-local hermes-kanban-log--board-slug nil
+  "Board slug displayed in the current worker-log buffer.")
+
+(defun hermes-kanban--items (value)
+  "Return VALUE as a list of response items."
+  (cond
+   ((null value) nil)
+   ((vectorp value) (append value nil))
+   ((listp value) value)))
+
+(defun hermes-kanban--truthy-p (value)
+  "Return non-nil when VALUE is a JSON true-ish value."
+  (and value (not (memq value '(false :false :json-false)))))
+
+(defun hermes-kanban--object-string (object)
+  "Return OBJECT as a compact display string."
+  (when object
+    (string-trim
+     (condition-case nil
+         (json-serialize object)
+       (error (pp-to-string object))))))
+
+(defun hermes-kanban--fontify-markdown-string (text)
+  "Return TEXT fontified with `markdown-mode', or TEXT on failure."
+  (condition-case nil
+      (if (not (require 'markdown-mode nil t))
+          text
+        (with-temp-buffer
+          (insert text)
+          (hermes-chat--fontify-markdown-buffer
+           markdown-fontify-code-blocks-natively)
+          (remove-text-properties (point-min) (point-max) '(invisible nil))
+          (buffer-string)))
+    (error text)))
+
+(defun hermes-kanban--outline-level ()
+  "Return the Markdown heading level for `outline-minor-mode'."
+  (length (match-string 1)))
+
+(defun hermes-kanban--format-size (bytes)
+  "Return BYTES as a small human-readable size string."
+  (cond
+   ((not (numberp bytes)) "")
+   ((< bytes 1024) (format "%d B" bytes))
+   ((< bytes (* 1024 1024)) (format "%.1f KiB" (/ bytes 1024.0)))
+   (t (format "%.1f MiB" (/ bytes 1048576.0)))))
+
+(defun hermes-kanban--format-section (title items empty-name formatter)
+  "Return a Markdown section TITLE for ITEMS using FORMATTER.
+EMPTY-NAME is inserted in the explicit empty-state line."
+  (let ((rows (hermes-kanban--items items)))
+    (concat "\n## " title " (" (number-to-string (length rows)) ")\n\n"
+            (if rows
+                (string-join (mapcar formatter rows) "\n\n")
+              (format "— no %s —" empty-name))
+            "\n")))
+
+(defun hermes-kanban--format-failure-fields (task)
+  "Return TASK's branch, run, and failure metadata as header lines.
+Healthy tasks add nothing: a zero failure count and an empty error are dropped,
+and an absent branch or run id is omitted."
+  (let* ((branch (hermes-transport--non-empty-string
+                  (hermes-transport--display-field task 'branch_name)))
+         (run (hermes-transport--get task 'current_run_id))
+         (failures (hermes-transport--get task 'consecutive_failures))
+         (error (hermes-transport--non-empty-string
+                 (hermes-transport--display-field task 'last_failure_error)))
+         (lines (delq nil
+                      (list (and branch (format "- Branch: `%s`" branch))
+                            (and (numberp run) (format "- Run: `#%s`" run))
+                            (and (numberp failures) (> failures 0)
+                                 (format "- Failures: %d" failures))
+                            (and error (format "- Last error: %s" error))))))
+    (if lines (concat (string-join lines "\n") "\n") "")))
+
+(defun hermes-kanban--format-task (task)
+  "Return TASK's header and body as a display string."
+  (let ((latest-summary (hermes-transport--non-empty-string
+                         (hermes-transport--display-field task 'latest_summary)))
+        (body (hermes-transport--non-empty-string (hermes-transport--display-field task 'body))))
+    (concat
+     (format "# %s\n\n- ID: `%s`\n- Status: `%s`\n- Priority: `%s`\n- Assignee: `%s`\n- Created: %s\n"
+             (hermes-transport--display-field task 'title)
+             (hermes-transport--display-field task 'id)
+             (hermes-kanban-format-status (hermes-transport--display-field task 'status))
+             (hermes-transport--display-field task 'priority)
+             (or (hermes-transport--non-empty-string (hermes-transport--display-field task 'assignee)) "-")
+             (hermes-kanban--format-time (hermes-transport--get task 'created_at)))
+     (when-let* ((workspace (hermes-transport--non-empty-string
+                             (hermes-transport--display-field task 'workspace_kind))))
+       (format "- Workspace: %s%s\n" workspace
+               (if-let* ((path (hermes-transport--non-empty-string
+                                (hermes-transport--display-field task 'workspace_path))))
+                   (concat ": " path)
+                 "")))
+     (when latest-summary
+       (format "- Summary: %s\n" latest-summary))
+     (hermes-kanban--format-failure-fields task)
+     "\n## Description\n\n"
+     (or body "— no description —")
+     "\n")))
+
+(defun hermes-kanban--format-comment-row (comment)
+  "Return COMMENT as one Markdown row."
+  (format "### %s — %s\n\n%s"
+          (hermes-kanban--format-time (hermes-transport--get comment 'created_at))
+          (or (hermes-transport--non-empty-string (hermes-transport--display-field comment 'author))
+              "anon")
+          (hermes-transport--display-field comment 'body)))
+
+(defun hermes-kanban--format-event-row (event)
+  "Return EVENT as one Markdown row."
+  (let ((payload (hermes-transport--get event 'payload)))
+    (concat
+     (format "### %s — %s"
+             (hermes-kanban--format-time (hermes-transport--get event 'created_at))
+             (hermes-transport--display-field event 'kind))
+     (and payload
+          (format "\n\n- Payload: %s" (hermes-kanban--object-string payload))))))
+
+(defun hermes-kanban--format-attachment (attachment)
+  "Return ATTACHMENT as one Markdown row."
+  (let ((size (hermes-kanban--format-size
+               (hermes-transport--get attachment 'size)))
+        (content-type (hermes-transport--non-empty-string
+                       (hermes-transport--display-field attachment 'content_type)))
+        (uploaded-by (hermes-transport--non-empty-string
+                      (hermes-transport--display-field attachment 'uploaded_by)))
+        (path (hermes-transport--non-empty-string
+               (hermes-transport--display-field attachment 'stored_path))))
+    (concat
+     (format "### %s (#%s)%s"
+             (hermes-transport--display-field attachment 'filename)
+             (hermes-transport--display-field attachment 'id)
+             (if (string-empty-p size) "" (format " (%s)" size)))
+     (and content-type (format "\n\n- Type: %s" content-type))
+     (and uploaded-by (format "\n- Uploaded by: %s" uploaded-by))
+     (and path (format "\n- Path: %s" path)))))
+
+(defun hermes-kanban--format-diagnostic-action (action)
+  "Return ACTION as a short diagnostic action label."
+  (let ((label (or (hermes-transport--non-empty-string (hermes-transport--display-field action 'label))
+                   (hermes-transport--display-field action 'kind))))
+    (if (hermes-kanban--truthy-p (hermes-transport--get action 'suggested))
+        (concat label " (suggested)")
+      label)))
+
+(defun hermes-kanban--format-diagnostic (diagnostic)
+  "Return DIAGNOSTIC as one Markdown row."
+  (let ((actions (hermes-kanban--items
+                  (hermes-transport--get diagnostic 'actions)))
+        (data (hermes-transport--get diagnostic 'data)))
+    (concat
+     (format "### [%s] %s: %s"
+             (hermes-transport--display-field diagnostic 'severity)
+             (hermes-transport--display-field diagnostic 'kind)
+             (hermes-transport--display-field diagnostic 'title))
+     (when-let* ((detail (hermes-transport--non-empty-string
+                          (hermes-transport--display-field diagnostic 'detail))))
+       (format "\n\n%s" detail))
+     (when (or (hermes-transport--get diagnostic 'run_id)
+               (hermes-transport--get diagnostic 'count))
+       (format "\n\n- Run: %s\n- Count: %s"
+               (or (hermes-transport--display-field diagnostic 'run_id) "-")
+               (or (hermes-transport--display-field diagnostic 'count) "-")))
+     (when data
+       (format "\n- Data: %s" (hermes-kanban--object-string data)))
+     (when actions
+       (format "\n- Actions: %s"
+               (string-join (mapcar #'hermes-kanban--format-diagnostic-action
+                                    actions)
+                            ", "))))))
+
+(defun hermes-kanban--format-run (run)
+  "Return RUN as one Markdown row."
+  (let* ((outcome (hermes-transport--non-empty-string
+                   (hermes-transport--display-field run 'outcome)))
+         (status (hermes-transport--non-empty-string
+                  (hermes-transport--display-field run 'status)))
+         (state (or outcome status "-"))
+         (profile (or (hermes-transport--non-empty-string
+                       (hermes-transport--display-field run 'profile))
+                      "-"))
+         (started (hermes-transport--get run 'started_at))
+         (ended (hermes-transport--get run 'ended_at))
+         (metadata (hermes-transport--get run 'metadata)))
+    (concat
+     (format "### Run #%s — %s @%s"
+             (hermes-transport--display-field run 'id) state profile)
+     (when (and (numberp started) (numberp ended))
+       (format " (%ss)" (max 0 (- ended started))))
+     (when (numberp started)
+       (format "\n\n- Started: %s" (hermes-kanban--format-time started)))
+     (when (numberp ended)
+       (format "\n- Ended: %s" (hermes-kanban--format-time ended)))
+     (when-let* ((pid (hermes-transport--non-empty-string
+                       (hermes-transport--display-field run 'worker_pid))))
+       (format "\n- PID: %s" pid))
+     (when-let* ((summary (hermes-transport--non-empty-string
+                           (hermes-transport--display-field run 'summary))))
+       (format "\n- Summary: %s" summary))
+     (when-let* ((error-text (hermes-transport--non-empty-string
+                              (hermes-transport--display-field run 'error))))
+       (format "\n- Error: %s" error-text))
+     (when metadata
+       (format "\n- Metadata: %s" (hermes-kanban--object-string metadata))))))
+
+(defun hermes-kanban--format-task-detail (payload)
+  "Return rich task detail text for PAYLOAD from GET /tasks/:id."
+  (let* ((task (hermes-transport--get payload 'task))
+         (diagnostics (or (hermes-transport--get task 'diagnostics)
+                          (hermes-transport--get payload 'diagnostics))))
+    (concat
+     (hermes-kanban--format-task task)
+     (hermes-kanban--format-section
+      "Diagnostics" diagnostics "diagnostics"
+      #'hermes-kanban--format-diagnostic)
+     (hermes-kanban--format-section
+      "Attachments" (hermes-transport--get payload 'attachments) "attachments"
+      #'hermes-kanban--format-attachment)
+     (hermes-kanban--format-section
+      "Comments" (hermes-transport--get payload 'comments) "comments"
+      #'hermes-kanban--format-comment-row)
+     (hermes-kanban--format-section
+      "Events" (hermes-transport--get payload 'events) "events"
+      #'hermes-kanban--format-event-row)
+     (hermes-kanban--format-section
+      "Run history" (hermes-transport--get payload 'runs) "runs"
+      #'hermes-kanban--format-run))))
+
+(defvar hermes-kanban-task-mode-map)
+
+(defun hermes-kanban-task--popup-title ()
+  "Identify the cached task and its owning board."
+  (concat "Kanban: "
+          (propertize (or hermes-kanban-task--board-slug "no board")
+                      'face 'font-lock-type-face)
+          " / "
+          (propertize (or hermes-kanban-task--task-id "no task")
+                      'face 'font-lock-constant-face)))
+
+(keymap-popup-define hermes-kanban-task-mode-map
+  "Keymap for `hermes-kanban-task-mode'."
+  :parent special-mode-map
+  :description #'hermes-kanban-task--popup-title
+  :group "Task"
+  "E" ("Edit body" hermes-kanban-edit-body)
+  "c" ("Comment" hermes-kanban-comment)
+  "a" ("Change assignee" hermes-kanban-change-assignee)
+  :group "Triage"
+  "S" ("Specify as one task" hermes-kanban-specify-triage-task)
+  "x" ("Decompose now" hermes-kanban-decompose-triage-task)
+  :row
+  :group "Recovery"
+  "R" ("Reclaim task" hermes-kanban-reclaim)
+  "K" ("Terminate run" hermes-kanban-terminate-run)
+  "N" ("Nudge dispatcher" hermes-kanban-nudge-dispatch)
+  :group "View"
+  "g" ("Refresh" revert-buffer :stay-open t)
+  "l" ("View worker log" hermes-kanban-show-log)
+  "d" ("Diagnostics overview" hermes-kanban-diagnostics)
+  "?" ("Help" hermes-kanban-task-mode-map-popup))
+
+(put 'hermes-kanban-task-mode-map-popup 'command-modes '(hermes-kanban-task-mode))
+
+(defun hermes-kanban--task-mode-setup ()
+  "Set up buffer-local state for `hermes-kanban-task-mode'."
+  (setq-local revert-buffer-function #'hermes-kanban--task-revert)
+  (hermes-browser--setup-status)
+  (setq-local outline-regexp "^\\(#+\\) ")
+  (setq-local outline-level #'hermes-kanban--outline-level)
+  (outline-minor-mode 1)
+  (read-only-mode 1))
+
+(define-derived-mode hermes-kanban-task-mode special-mode "Hermes Task"
+  "Major mode for a literal, guarded Markdown task detail buffer."
+  :interactive nil
+  (hermes-kanban--task-mode-setup))
+
+(defun hermes-kanban--query-for-board (slug)
+  "Return a board query alist for SLUG, or nil."
+  (and slug `((board . ,slug))))
+
+(defun hermes-kanban--task-revert (&rest _)
+  "Refresh the current task detail buffer in place."
+  (unless hermes-kanban-task--task-id (user-error "No task id for this detail buffer"))
+  (hermes-kanban--open-task hermes-kanban-task--task-id hermes-kanban-task--board-slug
+                            hermes-kanban-task--assignees t))
+
+(defun hermes-kanban--display-task
+    (payload &optional board-slug in-place assignees instance)
+  "Render task PAYLOAD in a read-only detail buffer.
+BOARD-SLUG is remembered for refreshes and log requests.  With IN-PLACE non-nil,
+refresh without re-displaying the buffer (used by revert).  ASSIGNEES carries
+the board-known assignee names for cold profile-cache completion fallback.
+INSTANCE is inherited from the owning board buffer."
+  (let* ((task (hermes-transport--get payload 'task))
+         (task-id (hermes-transport--display-field task 'id))
+         (task-status (hermes-transport--display-field task 'status)))
+    (with-current-buffer (if (and in-place (not (hermes-buffer--retired-p))
+                                  (derived-mode-p 'hermes-kanban-task-mode))
+                             (current-buffer)
+                           (hermes-buffer--get "*Hermes Kanban Task*"
+                                               #'hermes-kanban-task-mode))
+      (unless (derived-mode-p 'hermes-kanban-task-mode)
+        (hermes-kanban-task-mode))
+      (when instance (hermes-browser--own-instance instance))
+      (setq hermes-kanban-task--task-id task-id
+            hermes-kanban-task--board-slug board-slug
+            hermes-kanban-task--status task-status
+            hermes-kanban-task--assignees assignees
+            mode-line-process (format " [%s]" (hermes-buffer--mode-line-literal
+                                                (or task-id "task"))))
+      (hermes-browser--preserve-reading-position
+       (lambda ()
+         (let ((inhibit-read-only t))
+           (erase-buffer)
+           (insert (hermes-kanban--fontify-markdown-string
+                    (hermes-kanban--format-task-detail payload)))
+           (run-hook-with-args 'hermes-kanban-task-detail-functions payload board-slug)
+           (read-only-mode 1))))
+      (unless in-place (goto-char (point-min)))
+      (unless in-place (pop-to-buffer (current-buffer))))))
+
+(defun hermes-kanban--open-task (task-id board-slug assignees &optional in-place)
+  "Display TASK-ID from BOARD-SLUG with ASSIGNEES and return its promise.
+With IN-PLACE non-nil, refresh the current detail without selecting it."
+  (let ((instance (hermes-kanban--operation-instance))
+        (target (if (and in-place (not (hermes-buffer--retired-p))
+                         (derived-mode-p 'hermes-kanban-task-mode))
+                    (current-buffer)
+                  (hermes-buffer--get "*Hermes Kanban Task*" #'hermes-kanban-task-mode))))
+    (unless (and in-place hermes-kanban--input-current-p (eq target (current-buffer)))
+      (with-current-buffer target
+        (unless (derived-mode-p 'hermes-kanban-task-mode) (hermes-kanban-task-mode))
+        (unless (and (equal hermes-instance instance)
+                     (equal hermes-kanban-task--task-id task-id)
+                     (equal hermes-kanban-task--board-slug board-slug))
+          (let ((inhibit-read-only t)) (erase-buffer))
+          (setq hermes-kanban-task--status nil))
+        (hermes-browser--own-instance instance)
+        (setq hermes-kanban-task--task-id task-id
+              hermes-kanban-task--board-slug board-slug
+              hermes-kanban-task--assignees assignees
+              mode-line-process (format " [%s]"
+                                        (hermes-buffer--mode-line-literal task-id)))))
+    (hermes-kanban--read-view
+     target
+     (lambda () (hermes-kanban--api "GET" (hermes-kanban--task-path task-id)
+                                     nil (hermes-kanban--query-for-board board-slug)))
+     (lambda (payload) (hermes-kanban--display-task payload board-slug t assignees instance))
+     (not in-place))))
+
+(defun hermes-kanban-open-task (task-id &optional board-slug)
+  "Display TASK-ID from optional BOARD-SLUG and return its promise."
+  (hermes-kanban--open-task task-id board-slug nil))
+
+(defun hermes-kanban-show ()
+  "Show the kanban task at point."
+  (interactive nil hermes-kanban-mode hermes-kanban-diagnostics-mode)
+  (hermes-kanban--open-task
+   (hermes-kanban--id-at-point)
+   (hermes-kanban--board-slug-for-command)
+   (hermes-kanban--assignees-for-command)))
+
+(defun hermes-kanban--task-id-for-command ()
+  "Return the current task id for a board or task-detail command."
+  (if (derived-mode-p 'hermes-kanban-task-mode)
+      (or hermes-kanban-task--task-id
+          (user-error "No task for this detail buffer"))
+    (hermes-kanban--id-at-point)))
+
+(defun hermes-kanban--board-slug-for-command ()
+  "Return the current board slug for a board or task-detail command."
+  (cond ((derived-mode-p 'hermes-kanban-task-mode) hermes-kanban-task--board-slug)
+        ((derived-mode-p 'hermes-kanban-diagnostics-mode)
+         (unless (local-variable-p 'hermes-kanban-diagnostics--slug)
+           (user-error "Reopen diagnostics from its board after reloading Hermes"))
+         hermes-kanban-diagnostics--slug)
+        (t hermes-kanban--slug)))
+
+(defun hermes-kanban--board-name-for-command ()
+  "Return the board name owned by the current board or diagnostics overview."
+  (if (derived-mode-p 'hermes-kanban-diagnostics-mode)
+      hermes-kanban-diagnostics--name
+    hermes-kanban--name))
+
+(defun hermes-kanban--task-status-for-command ()
+  "Return the current task status for a board or task-detail command."
+  (if (derived-mode-p 'hermes-kanban-task-mode)
+      (or hermes-kanban-task--status "")
+    (hermes-kanban--entry-status (tabulated-list-get-entry))))
+
+(defun hermes-kanban--assignees-for-command ()
+  "Return board-known assignees for the current board or task detail buffer."
+  (cond ((derived-mode-p 'hermes-kanban-task-mode) hermes-kanban-task--assignees)
+        ((derived-mode-p 'hermes-kanban-diagnostics-mode) nil)
+        (t hermes-kanban--assignees)))
+
+(defun hermes-kanban--log-query (board-slug)
+  "Return the query alist for fetching a task log on BOARD-SLUG."
+  (append (hermes-kanban--query-for-board board-slug)
+          `((tail . ,hermes-kanban-log-tail-bytes))))
+
+(defun hermes-kanban--fetch-log (id board-slug)
+  "Return a promise of the worker log payload for task ID on BOARD-SLUG.
+A request failure resolves to an error payload so the log buffer shows it
+instead of surfacing a transport error."
+  (hermes--promise-catch
+   (hermes-kanban--api "GET" (hermes-kanban--task-path id "/log")
+                       nil (hermes-kanban--log-query board-slug))
+   (lambda (reason) `((task_id . ,id) (error . ,reason)))))
+
+(defun hermes-kanban--format-log (payload)
+  "Return worker-log text for PAYLOAD from GET /tasks/:id/log."
+  (let ((task-id (hermes-transport--display-field payload 'task_id))
+        (path (hermes-transport--display-field payload 'path))
+        (size (hermes-transport--get payload 'size_bytes))
+        (content (hermes-transport--display-field payload 'content))
+        (error (hermes-transport--non-empty-string (hermes-transport--display-field payload 'error))))
+    (concat
+     (format "Worker log for %s\n" (or (hermes-transport--non-empty-string task-id) "task"))
+     (unless (string-empty-p path)
+       (format "Path: %s\n" path))
+     (when (numberp size)
+       (format "Size: %s\n" (hermes-kanban--format-size size)))
+     "\n"
+     (cond
+      (error (format "failed to load worker log: %s\n" error))
+      ((not (hermes-kanban--truthy-p (hermes-transport--get payload 'exists)))
+       "— no worker log yet (task has not spawned or the log was rotated away) —\n")
+      ((string-empty-p content) "(empty)\n")
+      (t (hermes-kanban--render-log-content content)))
+     (when (hermes-kanban--truthy-p (hermes-transport--get payload 'truncated))
+       (format "\n\n(showing last %s; full log path above)\n"
+               (hermes-kanban--format-size hermes-kanban-log-tail-bytes))))))
+
+(defvar hermes-kanban-log-mode-map)
+
+(keymap-popup-define hermes-kanban-log-mode-map
+  "Keymap for `hermes-kanban-log-mode'."
+  :parent special-mode-map
+  :description "Hermes Kanban Log"
+  :group "Diff"
+  "n" ("Next hunk" hermes-kanban-log-next-hunk)
+  "p" ("Previous hunk" hermes-kanban-log-previous-hunk)
+  :group "View"
+  "g" ("Refresh" revert-buffer)
+  "?" ("Help" hermes-kanban-log-mode-map-popup))
+
+(put 'hermes-kanban-log-mode-map-popup 'command-modes '(hermes-kanban-log-mode))
+
+(defun hermes-kanban--log-revert (&rest _)
+  "Refresh the current worker-log buffer in place."
+  (unless hermes-kanban-log--task-id (user-error "No task id for this log buffer"))
+  (hermes-kanban--open-log hermes-kanban-log--task-id hermes-kanban-log--board-slug t))
+
+(define-derived-mode hermes-kanban-log-mode special-mode "Hermes Log"
+  "Major mode for a Hermes Kanban worker log buffer."
+  :interactive nil
+  (setq-local revert-buffer-function #'hermes-kanban--log-revert)
+  (hermes-browser--setup-status)
+  (setq-local truncate-lines nil)
+  (visual-line-mode 1))
+
+(defun hermes-kanban--display-log
+    (payload &optional board-slug in-place instance)
+  "Render worker log PAYLOAD for BOARD-SLUG in a read-only buffer.
+With IN-PLACE non-nil, refresh without re-displaying (used by revert).
+INSTANCE is inherited from the owning board or task buffer."
+  (let ((task-id (hermes-transport--non-empty-string
+                  (hermes-transport--display-field payload 'task_id))))
+    (with-current-buffer (if (and in-place (not (hermes-buffer--retired-p))
+                                  (derived-mode-p 'hermes-kanban-log-mode))
+                             (current-buffer)
+                           (hermes-buffer--get "*Hermes Kanban Log*"
+                                               #'hermes-kanban-log-mode))
+      (unless (derived-mode-p 'hermes-kanban-log-mode)
+        (hermes-kanban-log-mode))
+      (when instance (hermes-browser--own-instance instance))
+      (setq hermes-kanban-log--task-id task-id
+            hermes-kanban-log--board-slug board-slug
+            mode-line-process (format " [%s]" (hermes-buffer--mode-line-literal
+                                                (or (hermes-transport--non-empty-string task-id)
+                                                    "task"))))
+      (hermes-browser--preserve-reading-position
+       (lambda ()
+         (let ((inhibit-read-only t))
+           (erase-buffer)
+           (insert (hermes-kanban--format-log payload)))))
+      (setq hermes-browser--status
+            (cond ((hermes-transport--get payload 'error) "Failed; g retry")
+                  ((string-empty-p (hermes-transport--display-field payload 'content)) "Empty")
+                  (t "Ready")))
+      (unless in-place (goto-char (point-min)))
+      (unless in-place (pop-to-buffer (current-buffer))))))
+
+(defun hermes-kanban-show-log ()
+  "Fetch and display the worker log for the task at point or current detail."
+  (interactive nil hermes-kanban-mode hermes-kanban-task-mode hermes-kanban-diagnostics-mode)
+  (hermes-kanban--open-log (hermes-kanban--task-id-for-command)
+                           (hermes-kanban--board-slug-for-command)))
+
+(defun hermes-kanban--open-log (id board-slug &optional in-place)
+  "Open task ID's log on BOARD-SLUG, or refresh IN-PLACE without selecting it."
+  (let ((instance (hermes-kanban--operation-instance))
+        (target (if (and in-place (not (hermes-buffer--retired-p))
+                         (derived-mode-p 'hermes-kanban-log-mode))
+                    (current-buffer)
+                  (hermes-buffer--get "*Hermes Kanban Log*" #'hermes-kanban-log-mode))))
+    (with-current-buffer target
+      (unless (derived-mode-p 'hermes-kanban-log-mode) (hermes-kanban-log-mode))
+      (unless (and (equal hermes-instance instance)
+                   (equal hermes-kanban-log--task-id id)
+                   (equal hermes-kanban-log--board-slug board-slug))
+        (let ((inhibit-read-only t)) (erase-buffer)))
+      (hermes-browser--own-instance instance)
+      (setq hermes-kanban-log--task-id id hermes-kanban-log--board-slug board-slug
+            mode-line-process (format " [%s]" (hermes-buffer--mode-line-literal id))))
+    (hermes-kanban--read-view
+     target (lambda () (hermes-kanban--fetch-log id board-slug))
+     (lambda (payload) (hermes-kanban--display-log payload board-slug t instance))
+     (not in-place))))
+
+;;; Task mutations
+
+(defun hermes-kanban-edit ()
+  "Edit the title and priority of the task at point."
+  (interactive nil hermes-kanban-mode)
+  (let ((id (copy-sequence (hermes-kanban--id-at-point)))
+        (entry (copy-sequence (tabulated-list-get-entry)))
+        (query (hermes-browser--copy-identity (hermes-kanban--board-query))))
+    (hermes-kanban--read-and-act
+     (lambda (current)
+       (let ((title (save-current-buffer (read-string "Title: " (aref entry 3)))))
+         (unless (funcall current) (user-error "Kanban changed during input"))
+         (list title (read-number "Priority: " (string-to-number (aref entry 1))))))
+     (lambda (values)
+       (when (string-empty-p (string-trim (car values)))
+         (user-error "Title cannot be empty"))
+       (hermes-kanban--then
+        (hermes-kanban--api "PATCH" (hermes-kanban--task-path id)
+                            `((title . ,(car values)) (priority . ,(cadr values))) query)
+        (lambda (_) (hermes-kanban--revert))))
+     (lambda () (list hermes-kanban--slug (hermes-kanban--id-at-point))))))
+
+;;; Task body editor
+
+(defvar-local hermes-kanban-body--task nil
+  "Exact task id retained by this body editor.")
+(defvar-local hermes-kanban-body--board nil
+  "Exact board slug retained by this body editor.")
+(defvar-local hermes-kanban-body--source-current nil
+  "Predicate for the original task selection and backend.")
+(defvar-local hermes-kanban-body--current nil
+  "Predicate for this editor's claim, mode and routing fields.")
+(defvar-local hermes-kanban-body--save nil
+  "Token of the pending explicit save, or nil.")
+
+(defvar hermes-kanban-body-mode-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map text-mode-map)
+    (define-key map (kbd "C-c C-c") #'hermes-kanban-body-save)
+    (define-key map (kbd "C-c C-k") #'hermes-kanban-body-discard)
+    map)
+  "Keymap for editing a Kanban task body.")
+
+(define-derived-mode hermes-kanban-body-mode text-mode "Hermes Body"
+  "Edit only a task body; explicit saves use backend last-write-wins semantics.
+Saving can overwrite concurrent edits.  Errors retain the draft; no save is
+retried automatically.  Discard closes only this editor."
+  :interactive nil
+  (hermes-browser--setup-status)
+  (setq-local header-line-format
+              (substitute-command-keys
+               "\\<hermes-kanban-body-mode-map>\\[hermes-kanban-body-save] Save  \\[hermes-kanban-body-discard] Discard  | Last write wins")))
+
+(defun hermes-kanban--body-editor (payload id board current instance)
+  "Open PAYLOAD's body for ID on BOARD under CURRENT and INSTANCE."
+  (let ((task (hermes-transport--get payload 'task)))
+    (unless (and (equal id (hermes-transport--get task 'id))
+                 (stringp (hermes-transport--get task 'body)))
+      (user-error "Task body unavailable; refresh the task"))
+    (let ((editor (generate-new-buffer "*Hermes Task Body*")))
+      (with-current-buffer editor
+        (hermes-kanban-body-mode)
+        (hermes-buffer--claim 'hermes-kanban-body-mode)
+        (setq hermes-instance instance
+              hermes-kanban-body--task id
+              hermes-kanban-body--board board
+              hermes-kanban-body--source-current current)
+        (insert (hermes-transport--get task 'body))
+        (goto-char (point-min))
+        (set-buffer-modified-p nil)
+        (setq hermes-kanban-body--current
+              (hermes-browser--owned-predicate
+               '(hermes-kanban-body--task hermes-kanban-body--board)))
+        (setq hermes-browser--status "Draft"))
+      (pop-to-buffer editor))))
+
+(defun hermes-kanban-edit-body ()
+  "Fetch the selected task into a separate, owned multiline body editor.
+Only the body is saved.  Concurrent backend edits are last-write-wins."
+  (interactive nil hermes-kanban-mode hermes-kanban-task-mode)
+  (let* ((id (copy-sequence (hermes-kanban--task-id-for-command)))
+         (board (hermes-browser--copy-identity (hermes-kanban--board-slug-for-command)))
+         (current (hermes-browser--mutation-context
+                   (lambda () (list (hermes-kanban--board-slug-for-command)
+                                    (hermes-kanban--task-id-for-command)))))
+         (instance (hermes-browser--copy-identity
+                    (or (hermes-instance-context)
+                        (user-error "Open the task from its backend first"))))
+         (hermes-kanban--input-current-p current))
+    (hermes-kanban--then
+     (hermes-kanban--api "GET" (hermes-kanban--task-path id)
+                         nil (hermes-kanban--query-for-board board))
+     (lambda (payload)
+       (when (funcall current)
+         (hermes-kanban--body-editor payload id board current instance))))))
+
+(defun hermes-kanban-body-discard ()
+  "Discard the current task-body draft without making a remote change."
+  (interactive nil hermes-kanban-body-mode)
+  (unless (and hermes-kanban-body--current (funcall hermes-kanban-body--current))
+    (user-error "This task-body editor is no longer owned"))
+  (let ((current hermes-kanban-body--current))
+    (when (or (not (buffer-modified-p))
+              (save-current-buffer (yes-or-no-p "Discard task body draft?")))
+      (when (funcall current) (kill-buffer (current-buffer))))))
+
+(defun hermes-kanban-body--readback (id query body current)
+  "Read back ID with QUERY after saving BODY while CURRENT remains valid."
+  (let ((hermes-kanban--input-current-p current))
+    (hermes--promise-then
+     (hermes-kanban--api "GET" (hermes-kanban--task-path id) nil query)
+     (lambda (payload)
+       (let ((task (hermes-transport--get payload 'task)))
+         (unless (and (equal id (hermes-transport--get task 'id))
+                      (equal body (hermes-transport--get task 'body)))
+           (error "Saved body differs or task disappeared; check board before retrying"))
+         payload)))))
+
+(defun hermes-kanban-body-save ()
+  "Save only this editor's body, then verify exact task-detail readback.
+Retain the draft on failure or uncertainty; never automatically retry."
+  (interactive nil hermes-kanban-body-mode)
+  (unless (and hermes-kanban-body--current
+               (funcall hermes-kanban-body--current)
+               (funcall hermes-kanban-body--source-current))
+    (user-error "Task owner changed; draft retained, reopen the task"))
+  (when hermes-kanban-body--save (user-error "Task body save is pending"))
+  (let* ((editor (current-buffer))
+         (owned hermes-kanban-body--current)
+         (source hermes-kanban-body--source-current)
+         (token (list 'save))
+         (id hermes-kanban-body--task)
+         (query (hermes-kanban--query-for-board hermes-kanban-body--board))
+         (body (save-restriction (widen) (buffer-substring-no-properties (point-min) (point-max))))
+         (tick (buffer-chars-modified-tick))
+         (current (lambda ()
+                    (and (funcall owned) (funcall source)
+                         (eq token (buffer-local-value 'hermes-kanban-body--save editor)))))
+         (hermes-kanban--input-current-p current))
+    (setq hermes-kanban-body--save token hermes-browser--status "Saving")
+    (condition-case err
+        (hermes--promise-then
+         (hermes--promise-then
+          (hermes-kanban--api "PATCH" (hermes-kanban--task-path id) `((body . ,body)) query)
+          (lambda (_)
+            (with-current-buffer editor
+              (hermes-kanban-body--readback id query body current))))
+         (lambda (_)
+           (when (funcall current)
+             (with-current-buffer editor
+               (setq hermes-kanban-body--save nil
+                     hermes-browser--status
+                     (if (= tick (buffer-chars-modified-tick)) "Saved"
+                       "Saved snapshot; newer draft retained"))
+               (when (= tick (buffer-chars-modified-tick)) (set-buffer-modified-p nil)))))
+         (lambda (reason)
+           (when (funcall owned)
+             (with-current-buffer editor
+               (setq hermes-kanban-body--save nil
+                     hermes-browser--status "Save unverified; draft retained")))
+           (hermes-kanban--report-rejection reason)))
+      ((error quit)
+       (when (funcall owned)
+         (setq hermes-kanban-body--save nil hermes-browser--status "Save failed; draft retained"))
+       (signal (car err) (cdr err))))))
+
+(defconst hermes-kanban--statuses
+  '("triage" "todo" "scheduled" "ready" "running" "blocked" "review"
+    "done" "archived")
+  "Statuses settable through the dashboard PATCH endpoint.")
+
+(defun hermes-kanban--profile-name (profile)
+  "Return PROFILE's non-empty name string, or nil."
+  (and-let* ((name (hermes-transport--scalar-string
+                    (hermes-transport--get profile 'name)))
+             (trimmed (string-trim name))
+             ((not (string-empty-p trimmed))))
+    trimmed))
+
+(defun hermes-kanban--profile-default-p (profile)
+  "Return non-nil when PROFILE denotes the dashboard default profile."
+  (or (eq (hermes-transport--get profile 'is_default) t)
+      (equal (hermes-kanban--profile-name profile) "default")))
+
+(defun hermes-kanban--profile-less-p (left right)
+  "Return non-nil when LEFT should sort before RIGHT in the assignee picker."
+  (let ((left-default (hermes-kanban--profile-default-p left))
+        (right-default (hermes-kanban--profile-default-p right)))
+    (cond
+     ((and left-default (not right-default)) t)
+     ((and right-default (not left-default)) nil)
+     (t (string-lessp (downcase (or (hermes-kanban--profile-name left) ""))
+                      (downcase (or (hermes-kanban--profile-name right) "")))))))
+
+(defun hermes-kanban--profile-candidates ()
+  "Return assignee completion candidates for the current buffer.
+Use the warmed dashboard `/api/profiles' cache from
+`hermes-dashboard-transport-cached-profile-list' and merge it with the
+buffer-local `hermes-kanban--assignees' known to the current board, so
+completion stays useful when the profile cache is cold.  The default profile
+sorts first; the rest are case-insensitive.  Returns a list of name strings."
+  (let* ((cached (hermes-transport--get
+                  (or (hermes-dashboard-transport-cached-profile-list) '())
+                  'profiles))
+         (from-cache (delq nil (mapcar #'hermes-kanban--profile-name cached)))
+         (from-board (delq nil (mapcar #'hermes-kanban--profile-name
+                                       (mapcar (lambda (name) `((name . ,name)))
+                                               (hermes-kanban--assignees-for-command)))))
+         (profiles (mapcar (lambda (name) `((name . ,name)))
+                           (cl-remove-duplicates (append from-cache from-board)
+                                                 :test #'equal))))
+    (mapcar #'hermes-kanban--profile-name
+            (sort profiles #'hermes-kanban--profile-less-p))))
+
+(defun hermes-kanban-change-assignee ()
+  "Change the assignee of the current task.
+Read a profile with completion; empty input unassigns.  Running tasks use
+the reclaiming reassign endpoint; other tasks PATCH only the assignee.
+Retain the task and backend across input and refresh the owner in place."
+  (interactive nil hermes-kanban-mode hermes-kanban-task-mode)
+  (let ((id (copy-sequence (hermes-kanban--task-id-for-command)))
+        (status (hermes-kanban--task-status-for-command))
+        (query (hermes-browser--copy-identity (hermes-kanban--board-query)))
+        (refresh (hermes-kanban--context-refresher)))
+    (hermes-kanban--read-and-act
+     (lambda (_)
+       (completing-read "Assignee (empty to unassign): "
+                        (hermes-kanban--profile-candidates) nil nil))
+     (lambda (who)
+       (hermes-kanban--then
+        (if (equal status "running")
+            (hermes-kanban--api "POST" (hermes-kanban--task-path id "/reassign")
+                                `((profile . ,who) (reclaim_first . t)) query)
+          (hermes-kanban--api "PATCH" (hermes-kanban--task-path id)
+                              `((assignee . ,who)) query))
+        (lambda (_)
+          (message "Assignee for %s set to %s" id (if (string-empty-p who) "-" who))
+          (funcall refresh))))
+     (lambda () (list (hermes-kanban--task-selection)
+                      (hermes-kanban--task-status-for-command))))))
+
+(defun hermes-kanban-set-status ()
+  "Set the status of the task at point."
+  (interactive nil hermes-kanban-mode hermes-kanban-diagnostics-mode)
+  (let ((id (copy-sequence (hermes-kanban--id-at-point)))
+        (query (hermes-browser--copy-identity (hermes-kanban--board-query)))
+        (refresh (hermes-kanban--context-refresher)))
+    (hermes-kanban--read-and-act
+     (lambda (_) (completing-read "Status: " hermes-kanban--statuses nil t))
+     (lambda (status)
+       (hermes-kanban--then
+        (hermes-kanban--api "PATCH" (hermes-kanban--task-path id)
+                            `((status . ,status)) query)
+        (lambda (_) (funcall refresh))))
+     #'hermes-kanban--task-selection)))
+
+(defun hermes-kanban-comment ()
+  "Append a comment to the current task, then refresh the owned buffer.
+Use the dashboard `POST /tasks/:id/comments' from a board, task or
+diagnostics view, retaining its task and backend across composition."
+  (interactive nil hermes-kanban-mode hermes-kanban-task-mode hermes-kanban-diagnostics-mode)
+  (let ((id (copy-sequence (hermes-kanban--task-id-for-command)))
+        (query (hermes-browser--copy-identity (hermes-kanban--board-query)))
+        (refresh (hermes-kanban--context-refresher)))
+    (hermes-kanban--read-and-act
+     (lambda (_) (read-string-from-buffer "Comment: " ""))
+     (lambda (body)
+       (when (string-empty-p (string-trim body)) (user-error "Comment cannot be empty"))
+       (hermes-kanban--then
+        (hermes-kanban--api "POST" (hermes-kanban--task-path id "/comments")
+                            `((body . ,body)) query)
+        (lambda (_) (message "Comment added to task %s" id) (funcall refresh))))
+     #'hermes-kanban--task-selection)))
+
+(defun hermes-kanban--create-task-body
+    (title description priority assignee triage)
+  "Return a task body from TITLE, DESCRIPTION, PRIORITY, ASSIGNEE, and TRIAGE."
+  (append `((title . ,title) (priority . ,priority))
+          (and (not (string-empty-p (string-trim description)))
+               `((body . ,description)))
+          (and (not (string-empty-p assignee)) `((assignee . ,assignee)))
+          (and triage '((triage . t)))))
+
+(defun hermes-kanban--created-task-summary (result triage orchestration-mode)
+  "Return a creation summary for RESULT, TRIAGE, and ORCHESTRATION-MODE."
+  (let ((id (or (hermes-transport--non-empty-string
+                 (hermes-transport--display-field
+                  (hermes-transport--get result 'task) 'id))
+                "task")))
+    (cond
+     ((not triage) (format "Created task %s" id))
+     ((eq orchestration-mode 'auto)
+      (format "Created triage task %s; queued for automatic decomposition" id))
+     ((eq orchestration-mode 'manual)
+      (format "Created triage task %s; use x to decompose" id))
+     (t (format "Created triage task %s" id)))))
+
+(defun hermes-kanban--create-task (triage)
+  "Create a task on the current board.
+When TRIAGE is non-nil, create it in the triage column."
+  (let ((query (hermes-browser--copy-identity (hermes-kanban--board-query)))
+        (orchestration-mode hermes-kanban--orchestration-mode))
+    (hermes-kanban--read-and-act
+     (lambda (current)
+       (let ((title (hermes-kanban--read-current
+                     current #'read-string (if triage "Rough idea title: " "Title: "))))
+         (when (string-empty-p (string-trim title)) (user-error "Title is required"))
+         (let* ((description (hermes-kanban--read-current
+                              current #'read-string-from-buffer "Description: " ""))
+                (assignee (if triage ""
+                            (hermes-kanban--read-current
+                             current #'completing-read "Assignee (optional): "
+                             (hermes-kanban--profile-candidates) nil nil)))
+                (priority (hermes-kanban--read-current current #'read-number "Priority: " 0)))
+           (hermes-kanban--create-task-body title description priority assignee triage))))
+     (lambda (body)
+       (hermes-kanban--then
+        (hermes-kanban--api "POST" "/tasks" body query)
+        (lambda (result)
+          (hermes-kanban--revert)
+          (message "%s" (hermes-kanban--created-task-summary
+                         result triage orchestration-mode)))))
+     (lambda () (list hermes-kanban--slug (tabulated-list-get-id))))))
+
+(defun hermes-kanban-create-task ()
+  "Create a normal task on the current board."
+  (interactive)
+  (hermes-kanban--create-task nil))
+
+(defun hermes-kanban-create-triage-task ()
+  "Create a rough idea in the current board's triage column."
+  (interactive)
+  (hermes-kanban--create-task t))
+
+(defun hermes-kanban--specify-summary (result)
+  "Return a user-facing summary of a triage specifier RESULT."
+  (if (hermes-kanban--truthy-p (hermes-transport--get result 'ok))
+      (if-let* ((title (hermes-transport--non-empty-string
+                        (hermes-transport--display-field result 'new_title))))
+          (format "Specified task: %s" title)
+        "Specified task")
+    (format "Specify failed: %s"
+            (or (hermes-transport--non-empty-string
+                 (hermes-transport--display-field result 'reason))
+                "unknown error"))))
+
+(defun hermes-kanban--run-triage-action (endpoint summary-function)
+  "POST ENDPOINT for the current triage task and call SUMMARY-FUNCTION."
+  (let ((id (hermes-kanban--task-id-for-command))
+        (status (hermes-kanban--task-status-for-command))
+        (query (hermes-kanban--query-for-board
+                (hermes-kanban--board-slug-for-command)))
+        (refresh (hermes-kanban--context-refresher)))
+    (unless (equal status "triage")
+      (user-error "Task %s is not in triage" id))
+    (hermes-kanban--then
+     (hermes-kanban--api "POST" (hermes-kanban--task-path id endpoint)
+                         '((author . :null)) query
+                         hermes-kanban-triage-action-timeout)
+     (lambda (result)
+       (message "%s" (funcall summary-function result))
+       (funcall refresh)))))
+
+(defun hermes-kanban-specify-triage-task ()
+  "Flesh out the current triage task and promote it to todo."
+  (interactive nil hermes-kanban-mode hermes-kanban-task-mode)
+  (hermes-kanban--run-triage-action "/specify"
+                                    #'hermes-kanban--specify-summary))
+
+(defun hermes-kanban--decompose-summary (result)
+  "Return a user-facing summary of a triage decomposer RESULT."
+  (let ((children (delq nil (mapcar #'hermes-transport--scalar-string
+                                    (hermes-kanban--items
+                                     (hermes-transport--get result 'child_ids))))))
+    (cond
+     ((not (hermes-kanban--truthy-p (hermes-transport--get result 'ok)))
+      (format "Decompose failed: %s"
+              (or (hermes-transport--non-empty-string
+                   (hermes-transport--display-field result 'reason))
+                  "unknown error")))
+     (children
+      (format "Decomposed task into %d children: %s"
+              (length children) (string-join children ", ")))
+     ((hermes-transport--non-empty-string
+       (hermes-transport--display-field result 'new_title))
+      (format "Kept as one task: %s"
+              (hermes-transport--display-field result 'new_title)))
+     (t "Kept as one task"))))
+
+(defun hermes-kanban-decompose-triage-task ()
+  "Decompose the current triage task into a dependency graph."
+  (interactive nil hermes-kanban-mode hermes-kanban-task-mode)
+  (hermes-kanban--run-triage-action "/decompose"
+                                    #'hermes-kanban--decompose-summary))
+
+(defun hermes-kanban-delete ()
+  "Delete the task at point after confirmation."
+  (interactive nil hermes-kanban-mode)
+  (let* ((id (copy-sequence (hermes-kanban--id-at-point)))
+         (origin (current-buffer))
+         (query (hermes-browser--copy-identity (hermes-kanban--board-query)))
+         (current (hermes-browser--mutation-context
+                   (lambda () (list hermes-kanban--slug
+                                    (hermes-kanban--id-at-point))))))
+    (when (and (yes-or-no-p (format "Delete task %s? " id))
+               (funcall current))
+      (with-current-buffer origin
+        (hermes-browser--run-owned
+         (lambda (client guard)
+           (hermes-dashboard-transport-api-request-async
+            "DELETE" (concat "/api/plugins/kanban" (hermes-kanban--task-path id))
+            :query query :client client :current-p guard))
+         current
+         (lambda (_) (hermes-kanban--revert))
+         #'hermes-browser--read-error)))))
+
+;;; Diagnostics overview
+
+(defconst hermes-kanban--diagnostics-format
+  [("Sev" 10 t) ("Task" 30 t) ("Assignee" 14 t) ("Diagnostic" 50 t)]
+  "Column format for the Hermes Kanban diagnostics overview.")
+
+(defun hermes-kanban--diagnostic-summary (top count)
+  "Return TOP diagnostic's title, suffixed with COUNT when more than one exists."
+  (let ((title (hermes-transport--display-field top 'title)))
+    (if (> count 1) (format "%s (+%d more)" title (1- count)) title)))
+
+(defun hermes-kanban--diagnostic-row (group)
+  "Return a tabulated-list entry (TASK-ID . [cells]) for one task GROUP.
+The cells are the top diagnostic's severity, the task title, its assignee, and a
+summary of the top diagnostic; absent fields fall back to placeholders."
+  (let* ((task-id (hermes-transport--display-field group 'task_id))
+         (diagnostics (hermes-kanban--items
+                       (hermes-transport--get group 'diagnostics)))
+         (top (car diagnostics)))
+    (list task-id
+          (vector
+           (hermes-browser--status-cell
+            (hermes-transport--display-field top 'severity)
+            'hermes-browser-severity)
+           (hermes-browser--face-cell
+            (or (hermes-transport--non-empty-string
+                 (hermes-transport--display-field group 'task_title))
+                task-id)
+            'hermes-browser-title)
+           (hermes-browser--face-cell
+            (or (hermes-transport--non-empty-string
+                 (hermes-transport--display-field group 'task_assignee))
+                "-")
+            'hermes-browser-assignee)
+           (hermes-browser--face-cell
+            (hermes-kanban--diagnostic-summary top (length diagnostics))
+            'hermes-browser-diagnostic)))))
+
+(defun hermes-kanban--diagnostic-rows (groups)
+  "Return tabulated-list entries for diagnostic GROUPS from GET /diagnostics."
+  (mapcar #'hermes-kanban--diagnostic-row (hermes-kanban--items groups)))
+
+(hermes-define-list-browser kanban-diagnostics
+  :title "Hermes Diagnostics"
+  :description "Hermes Kanban Diagnostics"
+  :buffer "*Hermes Kanban Diagnostics*"
+  :command hermes-kanban--list-diagnostics
+  :command-doc "Display diagnostics after its board context has been installed."
+  :command-modes (hermes-kanban-diagnostics-mode)
+  :doc "Major mode for the Hermes Kanban diagnostics overview."
+  :columns hermes-kanban--diagnostics-format
+  :refresh #'hermes-kanban--diagnostics-revert
+  :rows (lambda (payload)
+          (hermes-kanban--diagnostic-rows
+           (hermes-transport--get payload 'diagnostics)))
+  :on-result (lambda (_payload)
+               (unless tabulated-list-entries
+                 (message "No active diagnostics on this board")))
+  :help (:group "Navigate" hermes-kanban-show "Show task")
+  :keys ("RET" #'hermes-kanban-show))
+
+(defun hermes-kanban--diagnostics-revert (&rest _)
+  "Refresh the diagnostics overview in place under its retained board."
+  (let ((slug (hermes-kanban--board-slug-for-command)))
+    (hermes-kanban--read-view
+     (current-buffer)
+     (lambda () (hermes-kanban--api "GET" "/diagnostics" nil
+                                   (hermes-kanban--query-for-board slug)))
+     #'hermes-kanban-diagnostics--render)))
+
+(defun hermes-kanban--render-diagnostics (slug name &optional in-place)
+  "Fetch board SLUG's diagnostics, remembering NAME for refreshes.
+With IN-PLACE non-nil, refresh without selecting the buffer."
+  (let ((instance (hermes-kanban--operation-instance))
+        (target (if (and in-place (not (hermes-buffer--retired-p))
+                         (derived-mode-p 'hermes-kanban-diagnostics-mode))
+                    (current-buffer)
+                  (hermes-buffer--get "*Hermes Kanban Diagnostics*"
+                                      #'hermes-kanban-diagnostics-mode))))
+    (with-current-buffer target
+      (unless (derived-mode-p 'hermes-kanban-diagnostics-mode) (hermes-kanban-diagnostics-mode))
+      (unless (and (equal hermes-instance instance) (equal hermes-kanban-diagnostics--slug slug))
+        (setq tabulated-list-entries nil tabulated-list-sort-key nil)
+        (let ((inhibit-read-only t)) (erase-buffer)))
+      (hermes-browser--own-instance instance)
+      (setq hermes-kanban-diagnostics--slug slug
+            hermes-kanban-diagnostics--name name
+            mode-line-process (and slug (format " [%s]"
+                                                (hermes-buffer--mode-line-literal slug)))))
+    (with-current-buffer target
+      (if in-place (hermes-kanban--diagnostics-revert)
+        (hermes-kanban--list-diagnostics)))))
+
+;;;###autoload
+(defun hermes-kanban-diagnostics ()
+  "Show the dashboard diagnostics overview for the current board.
+Lists every task with an active diagnostic, highest severity first; RET opens
+the task and `g' refreshes."
+  (interactive)
+  (hermes-kanban--render-diagnostics
+   (hermes-kanban--board-slug-for-command) (hermes-kanban--board-name-for-command)))
+
+;;; Recovery actions
+
+(defun hermes-kanban--run-id-for-task (task)
+  "Return TASK's current run id as a number, or nil when there is no live run."
+  (let ((run (hermes-transport--get task 'current_run_id)))
+    (and (numberp run) run)))
+
+(defun hermes-kanban--read-reason (prompt)
+  "Read an optional reason string with PROMPT; return nil when blank."
+  (let ((reason (string-trim (read-string prompt))))
+    (and (not (string-empty-p reason)) reason)))
+
+(defun hermes-kanban--reason-body (reason)
+  "Return a request-body alist carrying REASON, or nil when REASON is nil."
+  (and reason `((reason . ,reason))))
+
+(defun hermes-kanban--context-refresher ()
+  "Return a thunk that re-renders the current Kanban buffer in place.
+The buffer is captured now so the thunk is safe to call from an async callback
+whose then-current buffer may differ."
+  (let ((buffer (current-buffer)))
+    (lambda ()
+      (when (buffer-live-p buffer)
+        (with-current-buffer buffer (revert-buffer nil t))))))
+
+(defun hermes-kanban--dispatch-summary (result)
+  "Return a one-line dispatcher summary for a `/dispatch' RESULT."
+  (let* ((spawned (length (hermes-transport--get result 'spawned)))
+         (auto (length (hermes-transport--get result 'auto_assigned_default)))
+         (promoted (or (hermes-transport--get result 'promoted) 0))
+         (reclaimed (or (hermes-transport--get result 'reclaimed) 0))
+         (unassigned (length (hermes-transport--get result 'skipped_unassigned)))
+         (parts (delq nil
+                      (list (and (> spawned 0)
+                                 (if (> auto 0)
+                                     (format "%d spawned (%d auto-assigned)"
+                                             spawned auto)
+                                   (format "%d spawned" spawned)))
+                            (and (> promoted 0) (format "%d promoted" promoted))
+                            (and (> reclaimed 0)
+                                 (format "%d reclaimed" reclaimed))
+                            (and (> unassigned 0)
+                                 (format "%d skipped unassigned" unassigned))))))
+    (if parts
+        (concat "Dispatcher: " (string-join parts ", "))
+      "Dispatcher: nothing ready to dispatch")))
+
+(defun hermes-kanban-nudge-dispatch (&optional dry-run)
+  "Wake the kanban dispatcher to claim ready tasks now.
+With prefix argument DRY-RUN, report what would spawn without spawning
+anything.  Maps to the dashboard `POST /dispatch', the same quick-path
+behind the web UI's Nudge dispatcher button; without it, ready tasks wait
+for the dispatcher's next tick."
+  (interactive "P" hermes-kanban-mode hermes-kanban-task-mode hermes-kanban-diagnostics-mode)
+  (let ((query (append (hermes-kanban--query-for-board
+                        (hermes-kanban--board-slug-for-command))
+                       (and dry-run '((dry_run . "true")))))
+        (refresh (hermes-kanban--context-refresher)))
+    (hermes-kanban--then
+     (hermes-kanban--api "POST" "/dispatch" nil query)
+     (lambda (result)
+       (message "%s%s" (hermes-kanban--dispatch-summary result)
+                (if dry-run " (dry run)" ""))
+       (unless dry-run (funcall refresh))))))
+
+(defun hermes-kanban-reclaim ()
+  "Release the worker claim on the task at point after confirmation.
+Read an optional reason and refresh the owner on success.  The dashboard
+`POST /tasks/:id/reclaim' reports a no-longer-claimable task as an error."
+  (interactive nil hermes-kanban-mode hermes-kanban-task-mode hermes-kanban-diagnostics-mode)
+  (let ((id (copy-sequence (hermes-kanban--task-id-for-command)))
+        (query (hermes-browser--copy-identity (hermes-kanban--board-query)))
+        (refresh (hermes-kanban--context-refresher)))
+    (hermes-kanban--read-and-act
+     (lambda (current)
+       (when (hermes-kanban--read-current current #'yes-or-no-p (format "Reclaim task %s? " id))
+         (list (hermes-kanban--read-reason "Reclaim reason (optional): "))))
+     (lambda (values)
+       (when values
+         (hermes-kanban--then
+          (hermes-kanban--api "POST" (hermes-kanban--task-path id "/reclaim")
+                              (hermes-kanban--reason-body (car values)) query)
+          (lambda (_) (message "Reclaimed task %s" id) (funcall refresh)))))
+     #'hermes-kanban--task-selection)))
+
+(defun hermes-kanban--terminate-run-for-task (task task-id query refresh)
+  "Confirm and terminate TASK's current run, then call REFRESH.
+TASK-ID labels the prompts and QUERY pins the board for the terminate call.
+A task with no active run is reported and left untouched."
+  (let ((run (hermes-kanban--run-id-for-task task)))
+    (if (not run) (message "Task %s has no active run to terminate" task-id)
+      (hermes-kanban--read-and-act
+       (lambda (current)
+         (when (hermes-kanban--read-current
+                current #'yes-or-no-p (format "Terminate run #%d of task %s? " run task-id))
+           (list (hermes-kanban--read-reason "Terminate reason (optional): "))))
+       (lambda (values)
+         (when values
+           (hermes-kanban--then
+            (hermes-kanban--api "POST" (format "/runs/%d/terminate" run)
+                                (hermes-kanban--reason-body (car values)) query)
+            (lambda (_) (message "Terminated run #%d" run) (funcall refresh)))))
+       nil hermes-kanban--input-current-p))))
+
+(defun hermes-kanban-terminate-run ()
+  "Terminate the worker process backing the task at point's current run.
+Fetch the task under its captured owner, confirm, then POST the terminate.
+A task with no active run is reported; a 404/409 surfaces as a message."
+  (interactive nil hermes-kanban-mode hermes-kanban-task-mode hermes-kanban-diagnostics-mode)
+  (let ((id (copy-sequence (hermes-kanban--task-id-for-command)))
+        (query (hermes-browser--copy-identity (hermes-kanban--board-query)))
+        (refresh (hermes-kanban--context-refresher)))
+    (hermes-kanban--read-and-act
+     #'ignore
+     (lambda (_)
+       (hermes-kanban--then
+        (hermes-kanban--api "GET" (hermes-kanban--task-path id) nil query)
+        (lambda (payload)
+          (hermes-kanban--terminate-run-for-task
+           (hermes-transport--get payload 'task) id query refresh))))
+     #'hermes-kanban--task-selection)))
+
+;;;###autoload
+(defun hermes-list-kanban ()
+  "Browse Hermes Kanban boards via the dashboard API."
+  (interactive)
+  (hermes-kanban--render-boards))
+
+(provide 'hermes-kanban)
+;;; hermes-kanban.el ends here

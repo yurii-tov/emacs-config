@@ -1,0 +1,2 @@
+;; Generated package description from keymap-popup.el  -*- mode: lisp-data; no-byte-compile: t; lexical-binding:t -*-
+(define-package "keymap-popup" "0.4.5" "Described keymaps with popup help" '((emacs "29.1")) :commit "b3c692cb80c577d0149f16ef8d59a668c425a1a5" :authors '(("Thanos Apollo" . "public@thanosapollo.org")) :maintainer '("Thanos Apollo" . "public@thanosapollo.org") :keywords '("convenience") :url "https://git.thanosapollo.org/emacs-keymap-popup/")

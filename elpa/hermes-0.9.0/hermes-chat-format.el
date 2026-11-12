@@ -1,0 +1,1161 @@
+;;; hermes-chat-format.el --- Pure formatting helpers for Hermes chat  -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2026  Thanos Apollo
+
+;; Author: Thanos Apollo <public@thanosapollo.org>
+;; Assisted-by: Hermes:MoA
+;; Keywords: tools, convenience
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; Pure, side-effect-free formatting and sanitizing helpers shared by the
+;; Hermes chat buffer.  These take plain values (strings, plists, transport
+;; events) and return display strings, faces, or icons without touching buffer,
+;; process, or header state.  `hermes-chat' requires this file and keeps the
+;; stateful rendering, EWOC, and transport code.
+
+;;; Code:
+
+(require 'diff-mode)
+(require 'markdown-mode)
+(require 'subr-x)
+(require 'hermes-transport)
+
+(defun hermes-chat--displayable-char-p (char)
+  "Return non-nil if CHAR is safe to display in chat content."
+  (or (memq char '(?\t ?\n))
+      (and (>= char ?\s)
+           (/= char ?\177)
+           (not (and (>= char #x80)
+                     (<= char #x9f))))))
+
+(defun hermes-chat--strip-ansi-escape-sequences (content &optional fragment)
+  "Return (TEXT . FRAGMENT) for CONTENT after stripping ANSI escapes.
+FRAGMENT is a partial escape sequence carried over from the same stream, or
+nil.  This is deliberately not `ansi-color-filter-apply': besides SGR/CSI
+color codes it also strips OSC sequences (terminal-title and the like) that
+`ansi-color' leaves in place, and it carries a trailing partial escape -- a
+CSI, an OSC, or a lone ESC -- across stream chunks through FRAGMENT.
+`ansi-color''s single global context models neither."
+  (let ((text (concat (or fragment "") (or content "")))
+        next-fragment)
+    (setq text (replace-regexp-in-string
+                "\e\\[[0-?]*[ -/]*[@-~]" "" text t t))
+    (setq text (replace-regexp-in-string
+                "\e\\][^\a\e]*\\(?:\a\\|\e\\\\\\)" "" text t t))
+    (when (string-match
+           "\\(\e\\][^\a]*\\|\e\\[[0-?]*[ -/]*\\|\e\\)\\'" text)
+      (setq next-fragment (match-string 1 text)
+            text (substring text 0 (match-beginning 1))))
+    (cons text next-fragment)))
+
+(defun hermes-chat--sanitize-content-with-fragment (content fragment)
+  "Return (TEXT . FRAGMENT) after sanitizing CONTENT with ANSI FRAGMENT."
+  (let* ((stripped (hermes-chat--strip-ansi-escape-sequences content fragment))
+         (text (car stripped)))
+    (unless (multibyte-string-p text)
+      (setq text (decode-coding-string text 'utf-8-unix t)))
+    (cons (concat (seq-filter #'hermes-chat--displayable-char-p text))
+          (cdr stripped))))
+
+(defun hermes-chat--sanitize-content (content)
+  "Return sanitized CONTENT for display in chat buffers."
+  (car (hermes-chat--sanitize-content-with-fragment content nil)))
+
+(defun hermes-chat--sanitize-assistant-content (content &optional _final)
+  "Return assistant CONTENT cleaned for display.
+Transport metadata never reaches reply text: the CLI transport keeps the
+`hermes chat -Q' session_id line on stderr, and the dashboard gateway
+streams model text only.  The optional FINAL argument is ignored."
+  (hermes-chat--sanitize-content content))
+
+(defun hermes-chat--offset-range (start end)
+  "Return zero-based half-open range for buffer positions START and END."
+  (cons (1- start) (1- end)))
+
+(defun hermes-chat--scalar-string (value)
+  "Return VALUE as a display string, stringifying non-scalar values.
+Extends `hermes-transport--scalar-string', which returns nil for compound
+values, with a `format' fallback the chat renderer relies on."
+  (or (hermes-transport--scalar-string value)
+      (and value (format "%s" value))))
+
+(defun hermes-chat--event-value (event keys)
+  "Return the first non-nil plist value in EVENT for KEYS."
+  (cl-some (lambda (key) (cadr (plist-member event key))) keys))
+
+(defun hermes-chat--event-string (event keys)
+  "Return the first scalar plist value in EVENT for KEYS as a string."
+  (hermes-chat--scalar-string (hermes-chat--event-value event keys)))
+
+(defun hermes-chat--event-phase (event)
+  "Return EVENT's trailing event-name phase, if any."
+  (and-let* ((name (hermes-chat--event-string event '(:event))))
+    (car (last (split-string name "\\." t)))))
+
+(defun hermes-chat--humanize-event-name (name)
+  "Return NAME as a compact human-readable event label."
+  (and name
+       (string-trim
+	(replace-regexp-in-string "[._-]+" " " name))))
+
+(defun hermes-chat--status-name (status)
+  "Return normalized display/comparison name for STATUS."
+  (and-let* ((name (hermes-chat--scalar-string status)))
+    (downcase (replace-regexp-in-string "_" "-" name))))
+
+(defconst hermes-chat--ready-statuses
+  '("done" "completed" "complete" "success" "succeeded" "ready")
+  "Status names that read as a successful, settled turn.")
+
+(defconst hermes-chat--error-statuses
+  '("error" "failed" "failure" "cancelled" "canceled" "interrupted")
+  "Status names that read as a failed or aborted turn.")
+
+(defconst hermes-chat--active-statuses
+  '("pending" "waiting" "queued" "streaming" "started" "starting"
+    "loading" "connecting" "reconnecting" "running" "busy"
+    "progress" "in-progress" "preparing" "handoff" "requested"
+    "approval-requested")
+  "Status names denoting an unsettled transport entry.")
+
+(defun hermes-chat--active-status-p (status)
+  "Return non-nil when STATUS denotes an unsettled transport entry."
+  (and (member (hermes-chat--status-name status) hermes-chat--active-statuses)
+       t))
+
+(defun hermes-chat--finished-status-p (status)
+  "Return non-nil when STATUS denotes a settled transport entry."
+  (and (member (hermes-chat--status-name status)
+               (append hermes-chat--ready-statuses
+                       hermes-chat--error-statuses
+                       '("closed")))
+       t))
+
+(defun hermes-chat--status-icon (status)
+  "Return compact icon for transport STATUS.
+Active statuses show a neutral dot rather than the settled checkmark."
+  (let ((name (hermes-chat--status-name status)))
+    (cond
+     ((member name hermes-chat--ready-statuses) "✓")
+     ((or (member name hermes-chat--error-statuses) (member name '("closed" "disconnected"))) "!")
+     (t "·"))))
+
+(defface hermes-chat-tool-running
+  '((t :inherit font-lock-keyword-face))
+  "Face for the marker of a running tool, delegate or status row."
+  :group 'hermes)
+
+(defconst hermes-chat--failed-statuses '("error" "failed" "failure")
+  "Status names that mark a transcript row as a genuine failure.
+Interrupted and cancelled rows keep a quiet head line.")
+
+(defun hermes-chat--entry-marker (status)
+  "Return (MARKER . FACE) for a transcript row in STATUS.
+Running rows show a filled dot so they stand apart from settled rows; the
+marker alone keeps the state legible without faces."
+  (if (hermes-chat--active-status-p status)
+      (cons "●" 'hermes-chat-tool-running)
+    (cons (hermes-chat--status-icon status) (hermes-chat--status-face status))))
+
+(defun hermes-chat--entry-head-face (status)
+  "Return the face for a transcript row's head text in STATUS, or nil.
+Failures colour the whole head line, connection loss warns, running rows
+stay in the default face and settled rows recede into `shadow'."
+  (let ((name (hermes-chat--status-name status)))
+    (cond ((member name hermes-chat--failed-statuses) 'error)
+          ((member name '("closed" "disconnected")) 'warning)
+          ((hermes-chat--active-status-p status) nil)
+          (t 'shadow))))
+
+(defun hermes-chat--header-status-label (status)
+  "Return compact header label for STATUS."
+  (pcase (hermes-chat--status-name status)
+    ((or "done" "completed" "complete" "success" "succeeded" "ready") "Ready")
+    ((or "error" "failed" "failure") "Error")
+    ((or "cancelled" "canceled") "Cancelled")
+    ((or "closed" "disconnected") "Disconnected")
+    ((or "interrupted") "Interrupted")
+    ((or "approval-requested") "Approval requested")
+    ((or "requested") "Input requested")
+    ((or "queued") "Queued")
+    ((or "pending" "waiting") "Waiting")
+    ((or "starting" "loading") "Loading")
+    ((or "connecting" "reconnecting") "Connecting")
+    ((or "streaming") "Streaming")
+    ((or "handoff") "Handing off")
+    ((or "started" "running" "busy" "progress" "in-progress" "preparing") "Running")
+    ("thinking" "Thinking")
+    ((or "idle" "") "Idle")
+    (_ "Unknown")))
+
+(defun hermes-chat--status-face (status)
+  "Return face for transport STATUS."
+  (let ((name (hermes-chat--status-name status)))
+    (cond
+     ((member name hermes-chat--ready-statuses) 'success)
+     ((member name hermes-chat--error-statuses) 'error)
+     ((member name '("closed" "disconnected")) 'warning)
+     (t 'shadow))))
+
+(defun hermes-chat--header-status-face (status)
+  "Return face for STATUS in the chat header."
+  (pcase (hermes-chat--header-status-label status)
+    ((or "Running" "Thinking" "Streaming") 'font-lock-keyword-face)
+    ((or "Approval requested" "Input requested") 'warning)
+    (_ (hermes-chat--status-face status))))
+
+(defun hermes-chat--error-status (event)
+  "Return terminal status to display for an error-like transport EVENT."
+  (or (hermes-chat--event-value event '(:status)) 'error))
+
+(defun hermes-chat--message-start-noise-content-p (content)
+  "Return non-nil when CONTENT is only message-start status boilerplate."
+  (let ((content (downcase (string-trim (or content "")))))
+    (or (string-empty-p content)
+        (member content
+                '("started" "message start: started"
+                  "message.start: started" "message_start: started")))))
+
+(defun hermes-chat--thinking-activity (content)
+  "Return neutral activity for non-empty provider notice CONTENT."
+  (unless (string-empty-p (string-trim (or content "")))
+    "Working"))
+
+(defun hermes-chat--abbrev-tokens (n)
+  "Return token count N abbreviated, e.g. 45k."
+  (cond
+   ((not (numberp n)) "?")
+   ((>= n 1000) (format "%dk" (round (/ n 1000.0))))
+   (t (number-to-string n))))
+
+(defun hermes-chat--format-context (context)
+  "Return a compact context-window string for CONTEXT, or nil.
+CONTEXT is a plist of :used and :max token counts."
+  (and-let* ((max (plist-get context :max))
+             ((and (numberp max) (> max 0))))
+    (format "%s/%s"
+            (hermes-chat--abbrev-tokens (plist-get context :used))
+            (hermes-chat--abbrev-tokens max))))
+
+(defun hermes-chat--format-duration (duration)
+  "Return DURATION as a compact seconds string, or nil."
+  (cond
+   ((numberp duration) (format "%.1fs" duration))
+   ((stringp duration) duration)))
+
+(defun hermes-chat--format-status-event (event)
+  "Return display content for a transport status EVENT."
+  (or (hermes-chat--event-string event '(:content :text :preview))
+      (let ((event-name (hermes-chat--event-string event '(:event)))
+            (status (or (hermes-chat--event-string event '(:status))
+                        (hermes-chat--event-phase event))))
+        (string-join (delq nil (list (hermes-chat--humanize-event-name event-name)
+                                     status))
+                     ": "))))
+
+(defun hermes-chat--tool-name (event)
+  "Return tool name from transport EVENT, if present."
+  (hermes-chat--event-string event '(:name :tool-name :tool_name :tool :kind)))
+
+(defconst hermes-chat--tool-emojis
+  '(("terminal" . "💻") ("read_file" . "📖") ("write_file" . "✍️")
+    ("patch" . "🔧") ("search_files" . "🔎") ("web_search" . "🔍")
+    ("web_extract" . "📄") ("todo" . "📋") ("session_search" . "🔍")
+    ("memory" . "🧠") ("skill_view" . "📚") ("skills_list" . "📚")
+    ("skill_manage" . "📝") ("read_terminal" . "🖥️") ("send_message" . "📨")
+    ("process" . "⚙️") ("browser_navigate" . "🌐") ("image_generate" . "🎨")
+    ("text_to_speech" . "🔊") ("vision_analyze" . "👁️")
+    ("mixture_of_agents" . "🧠") ("delegate_task" . "🧠") ("clarify" . "❓"))
+  "Tool name to display emoji, mirroring the Hermes tool registry.")
+
+(defconst hermes-chat--tool-primary-args
+  '(("terminal" . command) ("web_search" . query) ("web_extract" . urls)
+    ("read_file" . path) ("write_file" . path) ("patch" . path)
+    ("search_files" . pattern) ("browser_navigate" . url)
+    ("browser_click" . ref) ("browser_type" . text) ("image_generate" . prompt)
+    ("text_to_speech" . text) ("vision_analyze" . question)
+    ("mixture_of_agents" . user_prompt) ("skill_view" . name)
+    ("skills_list" . category) ("cronjob" . action) ("execute_code" . code)
+    ("delegate_task" . goal) ("clarify" . question) ("skill_manage" . name)
+    ("session_search" . query) ("memory" . content))
+  "Tool name to its primary argument key, mirroring `build_tool_preview'.")
+
+(defconst hermes-chat--tool-detail-keys
+  '(command path query pattern name skill url goal code prompt content question text)
+  "Fallback argument keys to derive a tool detail string.")
+
+(defun hermes-chat--tool-emoji (name)
+  "Return the display emoji for tool NAME."
+  (or (and name (cdr (assoc name hermes-chat--tool-emojis))) "⚡"))
+
+(defun hermes-chat--first-arg-detail (args keys)
+  "Return the first non-empty scalar value among KEYS in ARGS."
+  (cl-some (lambda (key)
+             (hermes-transport--non-empty-string
+              (hermes-transport--scalar-string
+               (hermes-transport--get args key))))
+           keys))
+
+(defun hermes-chat--tool-args-detail (event name)
+  "Return a detail string from EVENT's args for tool NAME, or nil.
+Args arrive as a structured map on `tool.complete' and as text when verbose."
+  (let ((args (hermes-chat--event-value event '(:args))))
+    (cond
+     ((stringp args) (hermes-transport--non-empty-string args))
+     ((or (consp args) (hash-table-p args))
+      (hermes-chat--first-arg-detail
+       args (delq nil (cons (cdr (assoc name hermes-chat--tool-primary-args))
+                            hermes-chat--tool-detail-keys)))))))
+
+(defun hermes-chat--tool-detail (event name)
+  "Return the best command/path detail string for tool EVENT named NAME.
+Prefers the gateway preview, then the call arguments, so the command survives
+a `tool.complete' that omits the start preview."
+  (or (hermes-transport--non-empty-string (hermes-chat--event-string event '(:context)))
+      (hermes-chat--tool-args-detail event name)
+      (hermes-transport--non-empty-string
+       (hermes-chat--event-string event '(:preview :summary)))))
+
+(defun hermes-chat--tool-head (name detail)
+  "Return the emoji-prefixed head for tool NAME with optional DETAIL."
+  (if detail
+      (format "%s %s: %s" (hermes-chat--tool-emoji name) name detail)
+    (format "%s %s" (hermes-chat--tool-emoji name) name)))
+
+(defun hermes-chat--format-progress-event (event)
+  "Return display content for a tool progress EVENT."
+  (let* ((name (or (hermes-chat--tool-name event) "tool"))
+         (detail (or (hermes-chat--event-string
+                      event '(:content :delta :text :preview))
+                     (hermes-chat--tool-detail event name)
+                     (hermes-chat--event-string event '(:progress)))))
+    (hermes-chat--tool-head name detail)))
+
+(defun hermes-chat--format-tool-event (event)
+  "Return display content for a tool lifecycle EVENT.
+Shows the tool emoji, name, and its command/path detail, plus a duration or
+error.  The entry's status icon conveys running/done/failed separately, so the
+detail is kept rather than replaced by a bare \"completed\" line."
+  (let* ((name (or (hermes-chat--tool-name event) "tool"))
+         (head (hermes-chat--tool-head name (hermes-chat--tool-detail event name)))
+         (duration (hermes-chat--format-duration
+                    (hermes-chat--event-value event '(:duration))))
+         (error (hermes-chat--event-string event '(:error))))
+    (cond
+     (error (format "%s  %s" head error))
+     (duration (format "%s  %s" head duration))
+     (t head))))
+
+;;; Diff detection
+
+(defun hermes-chat--fenced-block-at-point ()
+  "Consume a Markdown fence at point and return (START END TEXT LANGUAGE).
+START and END are zero-based offsets spanning the whole block; TEXT is its
+body.  Skip nested delimiters, and extend unfinished blocks to buffer end.
+Return nil without moving point when no opening fence is present."
+  (when (or (looking-at markdown-regex-gfm-code-block-open)
+            (looking-at markdown-regex-tilde-fence-begin))
+    (let* ((start (point))
+           (fence (match-string-no-properties 1))
+           (language (match-string-no-properties 3))
+           (body (line-beginning-position 2))
+           ;; markdown-make-gfm-fence-regex arrived in markdown-mode 2.8;
+           ;; the declared 2.6 floor predates it, so scan with plain regexes
+           ;; when the builder is absent (pre-2.8 releases).
+           (closing (if (eq (aref fence 0) ?`)
+                        (if (fboundp 'markdown-make-gfm-fence-regex)
+                            (funcall #'markdown-make-gfm-fence-regex
+                                     (length fence) "[[:blank:]]*$")
+                          (concat "^[[:blank:]]*" fence "+[[:blank:]]*$"))
+                      (if (fboundp 'markdown-make-tilde-fence-regex)
+                          (funcall #'markdown-make-tilde-fence-regex
+                                   (length fence) "[[:blank:]]*$")
+                        (concat "^[[:blank:]]*" fence "+[[:blank:]]*$"))))
+           (end (progn
+                  (goto-char body)
+                  (if (re-search-forward closing nil t)
+                      (match-beginning 0)
+                    (point-max)))))
+      (goto-char end)
+      (forward-line 1)
+      (list (1- start) (1- (point))
+            (buffer-substring-no-properties body end) language))))
+
+(defun hermes-chat--unified-diff-hunk-counts ()
+  "Return old/new line counts for a unified diff hunk at point."
+  (when (looking-at diff-hunk-header-re-unified)
+    (cons (if-let* ((count (match-string 2)))
+              (string-to-number count)
+            1)
+          (if-let* ((count (match-string 4)))
+              (string-to-number count)
+            1))))
+
+(defun hermes-chat--unified-diff-hunk-header-p ()
+  "Return non-nil if point is at a unified diff hunk header."
+  (hermes-chat--unified-diff-hunk-counts))
+
+(defun hermes-chat--unified-diff-header-line-p ()
+  "Return non-nil if point is at unified diff file metadata."
+  (looking-at
+   (concat "^\\(?:diff --git \\|index \\|old mode \\|new mode \\|"
+           "new file mode \\|deleted file mode \\|similarity index \\|"
+           "dissimilarity index \\|rename from \\|rename to \\|"
+           "copy from \\|copy to \\|--- \\|\\+\\+\\+ \\)")))
+
+(defun hermes-chat--unified-diff-body-line-counts ()
+  "Return old/new line counts for the current unified diff body line."
+  (cond
+   ((looking-at "^\\\\ No newline at end of file") '(0 . 0))
+   ((looking-at "^\\+") '(0 . 1))
+   ((looking-at "^-") '(1 . 0))
+   ((looking-at "^ ") '(1 . 1))
+   ((looking-at "^$") '(1 . 1))))
+
+(defun hermes-chat--consume-unified-diff-hunk ()
+  "Move over a complete unified diff hunk at point.
+Return non-nil if both line counts are exhausted and a line was added or
+removed.  Otherwise return nil and restore point."
+  (let ((start (point)))
+    (when-let* ((counts (hermes-chat--unified-diff-hunk-counts)))
+      (let ((old-left (car counts))
+            (new-left (cdr counts))
+            saw-change valid)
+        (forward-line 1)
+        (setq valid t)
+        (while (and valid
+                    (not (and (<= old-left 0) (<= new-left 0)))
+                    (not (eobp)))
+          (if-let* ((line-counts
+                     (hermes-chat--unified-diff-body-line-counts)))
+              (let ((old-count (car line-counts))
+                    (new-count (cdr line-counts)))
+                (if (or (> old-count old-left)
+                        (> new-count new-left))
+                    (setq valid nil)
+                  (when (or (and (= old-count 1) (= new-count 0))
+                            (and (= old-count 0) (= new-count 1)))
+                    (setq saw-change t))
+                  (setq old-left (- old-left old-count)
+                        new-left (- new-left new-count))
+                  (forward-line 1)))
+            (setq valid nil)))
+        (while (and valid
+                    (not (eobp))
+                    (looking-at "^\\\\ No newline at end of file"))
+          (forward-line 1))
+        (if (and valid saw-change (zerop old-left) (zerop new-left))
+            t
+          (goto-char start)
+          nil)))))
+
+(defun hermes-chat--unified-diff-range-at-point ()
+  "Return unified diff range at point as zero-based offsets, or nil."
+  (let ((start (point)) saw-hunk saw-change)
+    (when (or (hermes-chat--unified-diff-header-line-p)
+              (hermes-chat--unified-diff-hunk-header-p))
+      (while (and (not saw-hunk)
+                  (hermes-chat--unified-diff-header-line-p))
+        (forward-line 1))
+      (let ((keep-scanning t))
+        (while (and keep-scanning
+                    (hermes-chat--unified-diff-hunk-header-p))
+          (if (hermes-chat--consume-unified-diff-hunk)
+              (setq saw-hunk t
+                    saw-change t)
+            (setq keep-scanning nil))))
+      (when (and saw-hunk saw-change (< start (point)))
+        (hermes-chat--offset-range start (point))))))
+
+(defun hermes-chat--diff-blocks (content)
+  "Return top-level diff blocks in CONTENT as (START END TEXT), zero-based.
+Scan in source order, skipping all Markdown fences as opaque blocks.  Only
+fences labelled diff or patch disclose their body; nested examples stay
+literal.  Outside fences, recognize valid unified diff hunks."
+  (with-temp-buffer
+    (insert content)
+    (goto-char (point-min))
+    (let (blocks)
+      (while (not (eobp))
+        (if-let* ((fence (hermes-chat--fenced-block-at-point)))
+            (when (member (downcase (or (nth 3 fence) "")) '("diff" "patch"))
+              (push (butlast fence) blocks))
+          (if-let* ((range (save-excursion
+                             (hermes-chat--unified-diff-range-at-point))))
+              (progn
+                (push (list (car range) (cdr range)
+                            (buffer-substring-no-properties
+                             (1+ (car range)) (1+ (cdr range))))
+                      blocks)
+                (goto-char (1+ (cdr range))))
+            (forward-line 1))))
+      (nreverse blocks))))
+
+;;; Markdown fontification
+
+(defun hermes-chat--face-spans (start end)
+  "Return face spans between START and END, relative to START.
+Copy no syntax, invisibility, display, editing, or keymap properties."
+  (cl-loop for pos = start then next
+           while (< pos end)
+           for next = (min (next-single-property-change pos 'face nil end)
+                           (next-single-property-change pos 'font-lock-face nil end))
+           for face = (get-text-property pos 'face)
+           for font-face = (get-text-property pos 'font-lock-face)
+           when (or face font-face)
+           collect (list (- pos start) (- next start)
+                         (cond ((and face font-face) (list face font-face))
+                               (face face) (t font-face)))))
+
+(defun hermes-chat--language-mode (language)
+  "Return LANGUAGE's programming major mode, or nil for plain code.
+When LANGUAGE is nil, use `markdown-fontify-code-block-default-mode'.
+Load autoload definitions to inspect their declared ancestry, never invoke a
+mode to discover its type.  Minor modes and arbitrary commands are not modes
+suitable for fontifying source, even when their names end in `-mode'."
+  (condition-case nil
+      (when-let* ((mode (if language (markdown-get-lang-mode language)
+                         markdown-fontify-code-block-default-mode))
+                  ((symbolp mode))
+                  ((fboundp mode)))
+        (when (autoloadp (symbol-function mode))
+          (autoload-do-load (symbol-function mode) mode))
+        (and (provided-mode-derived-p mode 'prog-mode) mode))
+    (error nil)))
+
+(defun hermes-chat--code-faces (mode start end)
+  "Return MODE face spans for START through END in a disposable buffer."
+  (let ((text (buffer-substring-no-properties start end)))
+    (condition-case nil
+        (with-temp-buffer
+          (insert text)
+          (delay-mode-hooks
+            (funcall mode)
+            (font-lock-ensure))
+          (hermes-chat--face-spans (point-min) (point-max)))
+      (error nil))))
+
+(defun hermes-chat--fontify-fences ()
+  "Apply native language faces using Markdown's fence syntax properties.
+Unlike Markdown's native fontifier, never reuse globally named mode buffers.
+An opening fence without its closing delimiter extends to the buffer end."
+  (dolist (pair markdown-fenced-block-pairs)
+    (when (memq (cadar pair) '(markdown-gfm-block-begin markdown-tilde-fence-begin))
+      (goto-char (point-min))
+      (while (and (< (point) (point-max))
+                  (markdown-match-propertized-text (cadar pair) (point-max)))
+        (let* ((opening (match-beginning 0))
+               (width (- (match-end 1) (match-beginning 1)))
+               (start (progn (goto-char opening) (line-beginning-position 2)))
+               (lang (markdown-code-block-lang (cons opening (cadar pair))))
+               (end (progn
+                      (goto-char start)
+                      (if (re-search-forward
+                           (markdown-maybe-funcall-regexp (caadr pair) width) nil t)
+                          (match-beginning 0)
+                        (point-max))))
+               (mode (hermes-chat--language-mode lang)))
+          (when (< start end)
+            (if mode
+                (progn
+                  (remove-text-properties start end '(face nil))
+                  (dolist (span (hermes-chat--code-faces mode start end))
+                    (put-text-property (+ start (nth 0 span)) (+ start (nth 1 span))
+                                       'face (nth 2 span))))
+              (put-text-property start end 'face 'markdown-pre-face))
+            ;; Match `markdown-fontify-code-blocks-generic': native faces
+            ;; take precedence, with the block face underneath every span.
+            (font-lock-append-text-property start end 'face 'markdown-code-face))
+          (goto-char (min (point-max) (1+ end))))))))
+
+(defun hermes-chat--fontify-markdown-buffer (&optional native)
+  "Fontify the owned temporary Markdown buffer, using NATIVE language faces.
+Fence labels select only programming major modes.  This is not a sandbox
+for installed mode code; suppress hooks throughout work in each owned buffer
+and bypass Markdown's shared-buffer native fontifier."
+  (let ((markdown-fontify-code-blocks-natively nil))
+    (delay-mode-hooks
+      (markdown-mode)
+      (font-lock-ensure)
+      (when native (hermes-chat--fontify-fences)))))
+
+(defun hermes-chat--mark-markdown-tables ()
+  "Mark native Markdown tables with their exact original source.
+Store the source in the `hermes-chat-table' text property.  Closed and
+unfinished fenced code blocks stay unchanged."
+  (save-excursion
+    (goto-char (point-min))
+    (while (not (eobp))
+      (if (and (markdown-table-at-point-p)
+               ;; Native table detection misses unfinished fenced blocks.
+               (not (markdown-find-previous-block)))
+          (let* ((begin (markdown-table-begin))
+                 (source (buffer-substring-no-properties
+                          begin (markdown-table-end))))
+            (put-text-property begin (markdown-table-end)
+                               'hermes-chat-table source)
+            (goto-char (markdown-table-end)))
+        (forward-line 1)))))
+
+(defun hermes-chat--mark-code-blocks ()
+  "Mark each fenced code block with its exact body source.
+Store the body, without fence lines, in the `hermes-chat-code' text
+property across the whole block, delimiters included."
+  (save-excursion
+    (goto-char (point-min))
+    (while (not (eobp))
+      (if-let* ((block (hermes-chat--fenced-block-at-point)))
+          (put-text-property (1+ (nth 0 block)) (min (point-max) (1+ (nth 1 block)))
+                             'hermes-chat-code (nth 2 block))
+        (forward-line 1)))))
+
+(defun hermes-chat--code-marked-string (text)
+  "Return a copy of TEXT with fenced code blocks marked for copying.
+Unlike `hermes-chat--fontify-markdown-string', leave TEXT's faces alone."
+  (with-temp-buffer
+    (insert text)
+    (hermes-chat--mark-code-blocks)
+    (buffer-string)))
+
+(defun hermes-chat--fontify-markdown-string (text)
+  "Return TEXT fontified with `markdown-mode', or TEXT on failure.
+Markup markers (* _ ` # ...) keep their faces but are never hidden, so the raw
+markdown stays visible and easy to copy.  Pipe tables retain their source
+in a text property for width-aware inline rendering.  When
+`markdown-fontify-code-blocks-natively' is non-nil, fontify programming
+languages in owned buffers with mode hooks suppressed."
+  (condition-case nil
+      (with-temp-buffer
+        (insert text)
+        (hermes-chat--fontify-markdown-buffer
+         markdown-fontify-code-blocks-natively)
+        (hermes-chat--mark-markdown-tables)
+        (hermes-chat--mark-code-blocks)
+        (remove-text-properties (point-min) (point-max) '(invisible nil))
+        (buffer-string))
+    (error text)))
+
+(defun hermes-chat--stream-fence (line)
+  "Return LINE's opening Markdown fence delimiter, or nil."
+  (when (or (string-match markdown-regex-gfm-code-block-open line)
+            (string-match markdown-regex-tilde-fence-begin line))
+    (match-string 1 line)))
+
+(defun hermes-chat--stream-table-row (cells widths width &optional rows)
+  "Return fontified CELLS within WIDTH using established WIDTHS.
+With ROWS, render the complete cached table instead of a single-row suffix;
+column panels need their headers beside every subsequent data row."
+  (let ((grid (hermes-chat--table-grid
+               (or rows
+                   (list (append cells (make-list (- (length widths) (length cells)) ""))))
+               width widths)))
+    ;; Only a single-grid suffix shares the preceding row's opening rule.
+    (unless rows (setq grid (substring grid (1+ (string-match "\n" grid)))))
+    (remove-text-properties 0 (length grid)
+                            '(invisible nil display nil hermes-chat-table nil) grid)
+    (add-face-text-property 0 (length grid) 'fixed-pitch nil grid)
+    grid))
+
+(defun hermes-chat--stream-table-widths (cells width)
+  "Return compact widths for maximum CELLS within viewport WIDTH."
+  (hermes-chat--table-widths
+   (list cells) width
+   (cl-loop for cell in cells maximize
+            (apply #'max 2 (mapcar #'string-width (string-glyph-split cell))))))
+
+(defun hermes-chat--table-cell-lines (text width)
+  "Split TEXT into literal-preserving lines of at most WIDTH columns.
+Prefer whitespace boundaries, keeping the whitespace itself.  Never split
+combining sequences or discard an over-wide glyph.  TEXT may have faces."
+  (let ((glyphs (string-glyph-split text))
+        (start 0) (end 0) (columns 0) break lines)
+    (while glyphs
+      (let* ((glyph (car glyphs))
+             (size (string-width glyph)))
+        (if (and (> columns 0) (> (+ columns size) width))
+            (let ((cut (or break end)))
+              (push (substring text start cut) lines)
+              (setq start cut columns (string-width (substring text cut end))
+                    break nil))
+          (setq end (+ end (length glyph)) columns (+ columns size)
+                glyphs (cdr glyphs))
+          (when (string-match-p "\\`[ \t]+\\'" glyph)
+            (setq break end)))))
+    (nreverse (cons (substring text start end) lines))))
+
+(defun hermes-chat--table-widths (rows width minimum)
+  "Allocate column widths for ROWS within total grid WIDTH.
+Give each column at least MINIMUM columns, then share the remaining space."
+  (let* ((count (apply #'max (mapcar #'length rows)))
+         (natural (vconcat
+                   (cl-loop for i below count collect
+                            (apply #'max minimum
+                                   (mapcar (lambda (row)
+                                             (string-width (or (nth i row) "")))
+                                           rows)))))
+         (widths (make-vector count minimum))
+         (remaining (- width 1 (* count (+ minimum 3)))))
+    (while (and (> remaining 0) (not (equal widths natural)))
+      (dotimes (i count)
+        (when (and (> remaining 0) (< (aref widths i) (aref natural i)))
+          (aset widths i (1+ (aref widths i)))
+          (setq remaining (1- remaining)))))
+    (append widths nil)))
+
+(defun hermes-chat--table-row (cells widths)
+  "Return wrapped grid text for CELLS using WIDTHS."
+  (let ((lines (cl-mapcar (lambda (cell width)
+                           (hermes-chat--table-cell-lines (or cell "") width))
+                         cells widths)))
+    (mapconcat
+     (lambda (i)
+       (concat "| "
+               (mapconcat
+                #'identity
+                (cl-mapcar
+                 (lambda (column width)
+                   (let ((text (or (nth i column) "")))
+                     (concat text (make-string (max 0 (- width (string-width text)))
+                                               ?\s))))
+                 lines widths)
+                " | ")
+               " |\n"))
+     (number-sequence 0 (1- (apply #'max (mapcar #'length lines)))) "")))
+
+(defun hermes-chat--table-grid (rows width &optional fixed-widths)
+  "Return a wrapped grid for fontified ROWS bounded by WIDTH.
+FIXED-WIDTHS retains a streaming table's established column allocation.
+When columns cannot fit their widest glyphs, use consecutive column panels
+with their respective headers rather than splitting glyphs or losing cells."
+  (let* ((count (apply #'max (mapcar #'length rows)))
+         (minimum (cl-loop for row in rows maximize
+                           ;; A ragged row may have no cells in this panel.
+                           (or (cl-loop for cell in row maximize
+                                        (apply #'max 2 (mapcar #'string-width
+                                                              (string-glyph-split cell))))
+                               2)))
+         (panel-size (max 1 (/ (- width 1) (+ minimum 3)))))
+    (if (> count panel-size)
+        (mapconcat
+         (lambda (start)
+           (hermes-chat--table-grid
+            (mapcar (lambda (row)
+                      (seq-subseq row (min start (length row))
+                                  (min (+ start panel-size) (length row))))
+                    rows)
+            width (and fixed-widths
+                       (seq-subseq fixed-widths start (min (+ start panel-size) count)))))
+         (number-sequence 0 (1- count) panel-size) "\n")
+      (let* ((widths (or fixed-widths (hermes-chat--table-widths rows width minimum)))
+             (rule (concat "+-" (mapconcat (lambda (w) (make-string w ?-))
+                                          widths "-+-") "-+\n")))
+        (concat rule
+                (mapconcat
+                 (lambda (row)
+                   (concat (hermes-chat--table-row
+                            (append row (make-list (- count (length row)) ""))
+                            widths)
+                           rule))
+                 rows ""))))))
+
+(defun hermes-chat--table-cells (line)
+  "Return native table cells from fontified LINE, retaining their faces.
+The native column parser returns plain strings.  Recover each matching
+substring so inline code and emphasis retain their original table context."
+  (let ((start 0))
+    (mapcar (lambda (cell)
+              (let* ((begin (string-match (regexp-quote cell) line start))
+                     (end (+ begin (length cell))))
+                (setq start end)
+                (replace-regexp-in-string
+                 "\t" "    " (substring line begin end) t t)))
+            ;; Padding avoids the native parser's one-character final-cell
+            ;; edge case when the optional closing pipe is absent.
+            (mapcar #'string-trim-right
+                    (markdown--table-line-to-columns (concat line " "))))))
+
+(defun hermes-chat--format-table (source width &optional fixed-widths)
+  "Return SOURCE as a fontified literal grid within WIDTH columns.
+Use Markdown's native column parser, including escaped and code-span pipes.
+Tabs become spaces in the presentation; SOURCE itself is never modified.
+FIXED-WIDTHS retains a streaming table's established column allocation."
+  (let* ((text (hermes-chat--fontify-markdown-string source))
+         (rows (mapcar #'hermes-chat--table-cells
+                       (seq-remove #'markdown--is-delimiter-row
+                                   (split-string text "\n" t))))
+         (grid (if (seq-some #'identity rows)
+                   (hermes-chat--table-grid rows (max 6 width) fixed-widths)
+                 text)))
+    ;; Native markup hiding/display substitutions would invalidate widths.
+    (remove-text-properties 0 (length grid)
+                            '(invisible nil display nil hermes-chat-table nil) grid)
+    (add-face-text-property 0 (length grid) 'fixed-pitch nil grid)
+    grid))
+
+;;; Value coercion helpers
+
+;; Pure plist/alist/vector coercions shared by the chat siblings;
+;; they live in this pure layer so no module needs a declare-function
+;; to reach them.
+
+(defun hermes-chat--result-string (result key)
+  "Return RESULT's scalar value for KEY as a string."
+  (hermes-transport--scalar-string (hermes-transport--get result key)))
+
+(defun hermes-chat--listify (value)
+  "Return VALUE as a list when it is a list or vector."
+  (cond
+   ((vectorp value) (append value nil))
+   ((listp value) value)))
+
+(defun hermes-chat--pair-command (pair)
+  "Return command name from catalog PAIR."
+  (cond
+   ((vectorp pair) (and (> (length pair) 0) (aref pair 0)))
+   ((consp pair) (car pair))))
+
+(defun hermes-chat--pair-description (pair)
+  "Return command description from catalog PAIR."
+  (cond
+   ((vectorp pair) (and (> (length pair) 1) (aref pair 1)))
+   ((consp pair) (cadr pair))))
+
+(defun hermes-chat--maplike-entries (value)
+  "Return VALUE's entries when VALUE is an alist or hash table."
+  (cond
+   ((hash-table-p value)
+    (let (entries)
+      (maphash (lambda (key item) (push (cons key item) entries)) value)
+      (nreverse entries)))
+   ((listp value) value)))
+
+
+;;; Event classification
+
+;; Pure event predicates and diagnostics shared by the chat siblings.
+
+(defconst hermes-chat--unknown-event-raw-preview-width 180
+  "Maximum width for raw unknown transport event previews.")
+
+(defun hermes-chat--session-info-event-p (event)
+  "Return non-nil when EVENT is a `session.info' status event."
+  (equal (hermes-chat--event-string event '(:event)) "session.info"))
+
+(defun hermes-chat--message-start-status-event-p (event)
+  "Return non-nil when EVENT is low-value message-start status noise."
+  (and (eq (plist-get event :type) 'status)
+       (and-let* ((name (hermes-chat--event-string event '(:event))))
+         (member (downcase name)
+                 '("message.start" "message_start"
+                   "message.started" "message_started")))
+       (equal (hermes-chat--status-name (plist-get event :status)) "started")
+       (hermes-chat--message-start-noise-content-p
+        (hermes-chat--event-string event '(:content :text :preview)))))
+
+(defconst hermes-chat--unknown-event-preview-print-length 20
+  "`print-length' bound while printing unknown event raw previews.")
+
+(defconst hermes-chat--unknown-event-preview-print-level 4
+  "`print-level' bound while printing unknown event raw previews.")
+
+(defconst hermes-chat--unknown-event-preview-string-limit 200
+  "Maximum characters kept from each string in an unknown event preview.")
+
+(defconst hermes-chat--unknown-event-preview-budget '(200 . 180)
+  "Shared (NODES . CHARACTERS) budget for an unknown event raw preview.")
+
+(defun hermes-chat--unknown-event-bounded-copy
+    (object depth length string-limit budget)
+  "Return a copy of OBJECT that is cheap to print.
+BUDGET is a cons (NODES . CHARACTERS) shared by the whole walk: every
+visited object costs one node and about its printed size in characters.
+Once either runs out, remaining elements are not visited and become the
+symbol `…'; this bounds wide trees, shared structure, cycles and the
+printed size alike.  Containers nested deeper than DEPTH become `…'.  Lists,
+vectors and hash tables keep at most LENGTH elements, with `…' marking
+the rest of a list or vector.  Strings are cut to STRING-LIMIT
+characters and the remaining character budget, end in \"…\" when cut,
+and lose their text properties.  Only strings, numbers, symbols, conses,
+plain vectors and hash tables are walked; any other object becomes an
+opaque symbol such as `#<record>' or `#<buffer>' and is never printed.
+Bignums wider than `hermes-chat--unknown-event-bignum-bits' become
+`#<bignum>' without decimal conversion, and hash tables whose capacity
+exceeds `hermes-chat--unknown-event-hash-size-limit' become a symbol such
+as `#<hash-table:count=2>' without being iterated."
+  (hermes-chat--unknown-event-bounded-walk
+   object depth length string-limit (cons (car budget) (cdr budget))))
+
+(defconst hermes-chat--unknown-event-bignum-bits 256
+  "Bit width above which an unknown event bignum is not converted.")
+
+(defconst hermes-chat--unknown-event-hash-size-limit 1024
+  "Hash table capacity above which an unknown event table is not iterated.
+`maphash' scans the whole capacity, even when the table is nearly empty.")
+
+(defun hermes-chat--unknown-event-opaque (object)
+  "Return a short placeholder symbol naming the type of OBJECT."
+  ;; `type-of' of a record is its arbitrary first slot, so never use it.
+  (intern (format "#<%s>" (if (recordp object) 'record (type-of object)))))
+
+(defun hermes-chat--unknown-event-bounded-walk
+    (object depth length string-limit budget)
+  "Return the bounded copy of OBJECT, spending the mutable BUDGET cell.
+DEPTH, LENGTH and STRING-LIMIT are as in
+`hermes-chat--unknown-event-bounded-copy'.  Each visit costs one node and
+roughly its printed size in characters; a hash table costs its header."
+  (if (not (and (> (car budget) 0) (> (cdr budget) 0)))
+      '…
+    (setcar budget (1- (car budget)))
+    (let ((walk (lambda (child)
+                  (hermes-chat--unknown-event-bounded-walk
+                   child (1- depth) length string-limit budget)))
+          (more (lambda () (and (> (car budget) 0) (> (cdr budget) 0))))
+          (spend (lambda (chars) (setcdr budget (- (cdr budget) chars)))))
+      (cond
+       ((stringp object)
+        (let ((keep (min (length object) string-limit (cdr budget))))
+          (funcall spend (+ keep 2))
+          (if (< keep (length object))
+              (concat (substring-no-properties object 0 keep) "…")
+            (substring-no-properties object))))
+       ((and (bignump object)
+             (> (logb (abs object)) hermes-chat--unknown-event-bignum-bits))
+        (funcall spend 10)
+        '\#<bignum>)
+       ((or (numberp object) (symbolp object))
+        (let ((size (1+ (length (if (symbolp object) (symbol-name object)
+                                  (number-to-string object))))))
+          (if (> size (cdr budget))
+              (progn (funcall spend size) '…)
+            (funcall spend size)
+            object)))
+       ((recordp object) (funcall spend 10)
+        (hermes-chat--unknown-event-opaque object))
+       ((not (or (consp object) (vectorp object) (hash-table-p object)))
+        (funcall spend 10)
+        (hermes-chat--unknown-event-opaque object))
+       ((<= depth 0) (funcall spend 2) '…)
+       ((consp object)
+        (funcall spend 2)
+        (let ((tail object) (count 0) items)
+          (while (and (consp tail) (< count length) (funcall more))
+            (push (funcall walk (car tail)) items)
+            (setq tail (cdr tail) count (1+ count)))
+          (nconc (nreverse items)
+                 (cond ((null tail) nil)
+                       ((or (consp tail) (not (funcall more))) (list '…))
+                       (t (funcall walk tail))))))
+       ((vectorp object)
+        (funcall spend 2)
+        (let ((count 0) items)
+          (while (and (< count (min length (length object))) (funcall more))
+            (push (funcall walk (aref object count)) items)
+            (setq count (1+ count)))
+          (vconcat (nreverse items)
+                   (and (< count (length object)) (list '…)))))
+       ((> (hash-table-size object) hermes-chat--unknown-event-hash-size-limit)
+        (funcall spend 30)
+        (intern (format "#<hash-table:count=%d>" (hash-table-count object))))
+       (t
+        (funcall spend 60)
+        (let ((copy (make-hash-table :test (hash-table-test object)))
+              (count 0))
+          (catch 'full
+            (maphash (lambda (key value)
+                       (unless (and (< count length) (funcall more))
+                         (throw 'full nil))
+                       (puthash (funcall walk key) (funcall walk value) copy)
+                       (setq count (1+ count)))
+                     object))
+          copy))))))
+
+(defun hermes-chat--unknown-event-raw-preview (raw)
+  "Return a one-line preview of unknown event payload RAW.
+RAW is first reduced with `hermes-chat--unknown-event-bounded-copy', so
+the preview never traverses or prints all of a huge payload or string."
+  (let* ((width hermes-chat--unknown-event-raw-preview-width)
+         (print-length hermes-chat--unknown-event-preview-print-length)
+         (print-level hermes-chat--unknown-event-preview-print-level)
+         (print-escape-newlines t)
+         (object (hermes-chat--unknown-event-bounded-copy
+                  raw print-level print-length
+                  (min width hermes-chat--unknown-event-preview-string-limit)
+                  hermes-chat--unknown-event-preview-budget)))
+    (truncate-string-to-width (prin1-to-string object) width nil nil "…")))
+
+(defun hermes-chat--unknown-event-content (event)
+  "Return visible diagnostic text for unknown transport EVENT."
+  (let* ((name (or (hermes-chat--event-string event '(:event)) "unnamed"))
+         (raw (plist-get event :raw))
+         (preview (and raw (hermes-chat--unknown-event-raw-preview raw))))
+    (string-join
+     (delq nil (list (format "Unknown Hermes transport event: %s" name)
+                     (and preview (format "raw: %s" preview))))
+     "\n")))
+
+(defconst hermes-chat--unknown-event-raw-detail-limit 4000
+  "Maximum characters of raw data shown in an expanded unknown event.")
+
+(defun hermes-chat--unknown-event-summary (event)
+  "Return the one-line collapsed summary for unknown transport EVENT."
+  (format "Unknown event %s"
+          (or (hermes-chat--event-string event '(:event)) "unnamed")))
+
+(defconst hermes-chat--unknown-event-print-length 200
+  "`print-length' bound while formatting unknown event raw payloads.")
+
+(defconst hermes-chat--unknown-event-print-level 12
+  "`print-level' bound while formatting unknown event raw payloads.")
+
+(defconst hermes-chat--unknown-event-string-limit 1000
+  "Maximum characters kept from each string in expanded unknown event detail.")
+
+(defconst hermes-chat--unknown-event-detail-budget '(1000 . 4000)
+  "Shared (NODES . CHARACTERS) budget for expanded unknown event detail.")
+
+(defun hermes-chat--unknown-event-detail (event)
+  "Return expanded raw detail for unknown transport EVENT.
+The raw payload is pretty-printed and bounded rather than truncated to one
+line, so the expanded disclosure retains the data needed for a bug report.
+RAW is first reduced with `hermes-chat--unknown-event-bounded-copy', and
+payloads whose flat form exceeds `hermes-chat--unknown-event-raw-detail-limit'
+are truncated without pretty-printing."
+  (let ((raw (plist-get event :raw)))
+    (if (null raw)
+        "No raw payload"
+      (let* ((print-length hermes-chat--unknown-event-print-length)
+             (print-level hermes-chat--unknown-event-print-level)
+             (limit hermes-chat--unknown-event-raw-detail-limit)
+             (raw (hermes-chat--unknown-event-bounded-copy
+                   raw print-level print-length
+                   hermes-chat--unknown-event-string-limit
+                   hermes-chat--unknown-event-detail-budget))
+             (flat (prin1-to-string raw)))
+        (if (> (length flat) limit)
+            (concat (substring flat 0 limit) "\n… (raw payload truncated)")
+          (let ((text (string-trim-right (pp-to-string raw))))
+            (if (> (length text) limit)
+                (concat (substring text 0 limit) "\n… (raw payload truncated)")
+              text)))))))
+
+
+(defun hermes-chat--model-config-value (candidate)
+  "Return the `config.set' model value for CANDIDATE."
+  (let ((model (if (stringp candidate)
+                   candidate
+                 (plist-get candidate :model)))
+        (provider (and (not (stringp candidate))
+                       (plist-get candidate :provider))))
+    (if (and provider (not (string-empty-p provider)))
+        (format "%s --provider %s" model provider)
+      model)))
+
+(defconst hermes-chat--data-image-prefix "data:image/"
+  "Prefix used by gateway-embedded image data URLs.")
+
+(defconst hermes-chat--min-embedded-image-base64 64
+  "Minimum base64 payload length accepted as an embedded image.")
+
+(defconst hermes-chat--max-embedded-image-decoded-bytes (* 2 1024 1024)
+  "Hard cap on decoded embedded data:image bytes before `create-image'.
+Conservative bound for chat thumbnails: rejects multi-megabyte dumps without
+fetching remote images or redesigning rendering.")
+
+(defconst hermes-chat--max-embedded-image-base64
+  (+ (/ (* hermes-chat--max-embedded-image-decoded-bytes 4) 3) 4)
+  "Hard cap on base64 payload length before decoding an embedded image.
+Derived from `hermes-chat--max-embedded-image-decoded-bytes' (4/3 expand + pad).")
+
+(defconst hermes-chat--max-embedded-image-mime-length 127
+  "Hard cap on the MIME subtype portion of embedded image URLs.")
+
+(defun hermes-chat--string-prefix-at-p (prefix text start)
+  "Return non-nil when PREFIX occurs in TEXT at START."
+  (let ((end (+ start (length prefix))))
+    (and (<= end (length text))
+         (string= prefix (substring text start end)))))
+
+(defun hermes-chat--bounded-valid-run-length (text start invalid-regexp max-length)
+  "Return a valid run length in TEXT from START, or nil when oversized.
+INVALID-REGEXP matches the first forbidden character; MAX-LENGTH bounds work."
+  (let* ((end (min (length text) (+ start max-length 1)))
+         (sample (substring text start end))
+         (invalid (string-match-p invalid-regexp sample))
+         (run-length (or invalid (length sample))))
+    (and (<= run-length max-length) run-length)))
+
+(defun hermes-chat--data-image-url-at (text start)
+  "Return (END . URL) for a data:image URL in TEXT at START, or nil."
+  (when (and (stringp text)
+             (<= 0 start)
+             (hermes-chat--string-prefix-at-p
+              hermes-chat--data-image-prefix text start))
+    (let* ((mime-start (+ start (length hermes-chat--data-image-prefix)))
+           (mime-length
+            (hermes-chat--bounded-valid-run-length
+             text mime-start "[^[:alnum:]._+-]"
+             hermes-chat--max-embedded-image-mime-length))
+           (mime-end (and mime-length (+ mime-start mime-length))))
+      (when (and (> (or mime-length 0) 0)
+                 (hermes-chat--string-prefix-at-p ";base64," text mime-end))
+        (let* ((base64-start (+ mime-end (length ";base64,")))
+               (base64-length
+                (hermes-chat--bounded-valid-run-length
+                 text base64-start "[^[:alnum:]+/=]"
+                 hermes-chat--max-embedded-image-base64)))
+          (when (and base64-length
+                     (>= base64-length hermes-chat--min-embedded-image-base64))
+            (let ((end (+ base64-start base64-length)))
+              (cons end (substring text start end)))))))))
+
+(defun hermes-chat--extract-embedded-images (text)
+  "Return (CLEANED . IMAGES) lifting data:image URLs out of TEXT.
+Matches Hermes desktop `extractEmbeddedImages': keep prose, collect image
+data URLs for separate insertion.  Non-string TEXT is returned unchanged."
+  (if (or (not (stringp text))
+          (not (string-match-p (regexp-quote hermes-chat--data-image-prefix) text)))
+      (cons text nil)
+    (let ((images nil)
+          (pieces nil)
+          (append-at 0)
+          (search-at 0)
+          (len (length text)))
+      (while (< search-at len)
+        (let ((data-start (string-match (regexp-quote hermes-chat--data-image-prefix)
+                                        text search-at)))
+          (if (not data-start)
+              (setq search-at len)
+            (if-let* ((found (hermes-chat--data-image-url-at text data-start)))
+                (progn
+                  (push (substring text append-at data-start) pieces)
+                  (push (cdr found) images)
+                  (setq append-at (car found)
+                        search-at (car found)))
+              (setq search-at (+ data-start
+                                 (length hermes-chat--data-image-prefix)))))))
+      (if (null images)
+          (cons text nil)
+        (push (substring text append-at) pieces)
+        (cons (string-trim
+               (replace-regexp-in-string
+                "\n\\{3,\\}" "\n\n"
+                (replace-regexp-in-string "[ \t]+\n" "\n"
+                                          (string-join (nreverse pieces) ""))))
+              (nreverse images))))))
+
+(provide 'hermes-chat-format)
+;;; hermes-chat-format.el ends here

@@ -1,0 +1,2 @@
+;; Generated package description from hermes.el  -*- mode: lisp-data; no-byte-compile: t; lexical-binding:t -*-
+(define-package "hermes" "0.9.0" "Emacs frontend for Hermes Agent" '((emacs "29.1") (keymap-popup "0.4.0") (websocket "1.15") (markdown-mode "2.6")) :commit "3f5cc4ea8686471fee72a89f742c792071e7e17d" :authors '(("Thanos Apollo" . "public@thanosapollo.org")) :maintainer '("Thanos Apollo" . "public@thanosapollo.org") :keywords '("tools" "convenience") :url "https://git.thanosapollo.org/emacs-hermes")

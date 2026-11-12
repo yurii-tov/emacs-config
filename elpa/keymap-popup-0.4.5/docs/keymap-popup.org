@@ -1,0 +1,585 @@
+#+title: Keymap Popup User Manual
+#+author: Thanos Apollo
+#+email: public@thanosapollo.org
+#+language: en
+#+options: ':t toc:t author:t email:t num:t
+#+texinfo_filename: keymap-popup.info
+#+texinfo_dir_category: Emacs misc features
+#+texinfo_dir_title: Keymap Popup: (keymap-popup)
+#+texinfo_dir_desc: Define a keymap once, dispatch keys and show a popup menu
+
+* Table of Contents :noexport:
+:PROPERTIES:
+:TOC: this
+:END:
+
+- [[#introduction][Introduction]]
+- [[#installation][Installation]]
+- [[#quick-start][Quick start]]
+- [[#defining-keymaps][Defining keymaps]]
+- [[#showing-popup][Showing the popup]]
+- [[#special-bindings][Special bindings]]
+- [[#prompting][Prompting and re-entry]]
+- [[#annotate][Annotating existing keymaps]]
+- [[#customization][Customization]]
+- [[#vs-transient][When to use this vs transient]]
+- [[#contributing][Contributing]]
+- [[#gfdl][GNU Free Documentation License]]
+
+* Introduction
+:PROPERTIES:
+:CUSTOM_ID: introduction
+:END:
+
+=keymap-popup= defines a normal Emacs keymap with embedded
+descriptions, and renders it as a popup menu on demand.  One
+definition, two uses: direct key dispatch and an interactive menu.
+
+Requires Emacs 29.1 or later (for =defvar-keymap=).
+No external dependencies.
+
+* Installation
+:PROPERTIES:
+:CUSTOM_ID: installation
+:END:
+
+** From source
+
+#+begin_src emacs-lisp
+(add-to-list 'load-path "/path/to/keymap-popup")
+(require 'keymap-popup)
+#+end_src
+
+** With ~use-package~
+
+#+begin_src emacs-lisp
+(use-package keymap-popup
+  :ensure t)
+#+end_src
+
+** Upgrading in an existing Emacs session
+
+Previously compiled consumers and keymaps already created by
+=keymap-popup-define=, =keymap-popup-annotate= or =keymap-popup-attach=
+continue to work after loading the new library.  Recompilation or
+reevaluation is not required to keep their descriptions, exit key,
+title or persistence setting.  Existing map objects, anonymous commands,
+custom bindings, parents and composed maps are retained.
+
+Legacy metadata is converted on first popup use, metadata access or
+update, without rebuilding the keymap.  The converted metadata is inert
+for native help and key lookup.  Until a retained map has been used by
+the new library, native help can still show its old pseudo-key entries;
+loading the library does not search all variables for keymaps.  Copies
+made before or after conversion remain usable, and changing a copy's
+popup descriptions does not change the original.
+
+Reevaluating a declaration refreshes its descriptions and options while
+preserving existing bindings.  Reattaching runtime descriptions replaces
+previous descriptions and options, with omitted options returning to
+their defaults.  The private metadata representation is not a public
+API, and loading an older library over converted maps is not supported.
+
+* Quick start
+:PROPERTIES:
+:CUSTOM_ID: quick-start
+:END:
+
+#+begin_src emacs-lisp
+(keymap-popup-define my-commands-map
+  "My commands."
+  :group "Edit"
+  "c" ("Comment" comment-dwim)
+  "r" ("Rename" rename-file)
+  :group "View"
+  "g" ("Refresh" revert-buffer)
+  "b" ("Bury buffer" bury-buffer))
+
+(keymap-set some-mode-map "C-c m" my-commands-map)
+#+end_src
+
+The macro auto-binds =h= inside the keymap, so =C-c m h= opens the
+popup.  =q= or =C-g= dismisses it.
+
+* Defining keymaps
+:PROPERTIES:
+:CUSTOM_ID: defining-keymaps
+:END:
+
+** Macro syntax
+
+#+begin_src emacs-lisp
+(keymap-popup-define MAP-NAME
+  DOCSTRING
+  :popup-key KEY  :exit-key KEY
+  :parent KEYMAP  :description STRING-OR-FN
+  :persistent BOOL
+  BINDING...)
+#+end_src
+
+Only =MAP-NAME= and the bindings are required.  Leading options are
+optional and may appear in any order before the first binding.
+=keymap-popup-annotate=
+accepts the display keywords above except =:parent=, but does /not/
+apply defaults for =:popup-key= or =:exit-key= -- it never binds keys
+unless asked.  A popup key may not replace an ordinary local binding;
+such a collision signals an error.  Inherited bindings may be shadowed.
+
+A binding takes one of three forms:
+
+#+begin_src emacs-lisp
+KEY (DESC COMMAND     [PROP VALUE...])    ; ordinary command
+KEY (DESC :switch VAR [PROP VALUE...])    ; toggle
+KEY (DESC :keymap MAP [PROP VALUE...])    ; sub-menu
+#+end_src
+
+- =KEY= -- =key-valid-p= string.
+- =DESC= -- string or zero-arg function (called at render time in the
+  user's buffer, so it sees buffer-local state).
+- =COMMAND= -- command symbol or a =(lambda () (interactive) ...)=.
+  Anonymous commands retain their lexical environment and share one function
+  object between the binding and its popup description.  Moving that object
+  to another key moves its label; replacing it with a different function
+  does not transfer the old label or popup restrictions.
+- =MAP= -- keymap variable symbol.  It may be defined after its parent;
+  its value is resolved when the sub-menu opens.
+- =PROP= -- one of =:if=, =:inapt-if=, =:stay-open=, =:c-u= (see
+  [[#special-bindings][Special bindings]]).
+  =:stay-open= is a boolean flag and may omit its =t= value.
+
+Declarations are checked when the macro expands.  Invalid keys, malformed
+entries, missing switch variables or sub-menu targets, duplicate or unknown
+properties, and unsupported options report the offending entry directly.
+
+** Groups and rows
+
+#+begin_src emacs-lisp
+(keymap-popup-define my-feed-map
+  :group "Navigation"
+  "n" ("Next" next-line :stay-open t)
+  "p" ("Previous" previous-line :stay-open t)
+  :group "Tags"
+  "r" ("Toggle read" my-feed-toggle-read :stay-open t)
+  :row
+  :group "Feeds"
+  "A" ("Add feed" my-feed-add)
+  "D" ("Remove feed" my-feed-remove))
+#+end_src
+
+At display time, groups flow from left to right and automatically continue
+on another display row when the popup window is too narrow.  This applies
+even when the declaration contains no =:row=.  An individual group wider
+than the window is truncated with an ellipsis rather than disturbing the
+column alignment.
+
+=:row= between groups forces a fresh row beneath the first regardless of
+the available width.  Groups may attach their own predicates:
+=:group ("Bulk" :if PRED :inapt-if PRED)=.
+
+** Dynamic descriptions
+
+#+begin_src emacs-lisp
+(keymap-popup-define my-encryption-map
+  :description (lambda ()
+                 (format "Encryption: %s" my-chat-encryption))
+  "o" ("OMEMO" my-chat-encryption-set-omemo)
+  "g" ("OpenPGP" my-chat-encryption-set-openpgp)
+  "p" ("Plaintext" my-chat-encryption-set-plaintext))
+#+end_src
+
+The header is re-rendered after each command.
+
+** Sharing bindings with =:parent=
+
+Same semantics as =defvar-keymap='s =:parent=.  The popup walks the
+parent chain, so parent bindings appear in the child's menu under
+their original group.
+
+If a key is bound in both parent and child, the child wins for
+both dispatch and display.  Shadowed parent entries are dropped
+from the popup, and a parent group whose entries are all shadowed
+disappears entirely.
+
+#+begin_src emacs-lisp
+(keymap-popup-define my-items-mode-map
+  :parent my-dashboard-common-map
+  :group "Items"
+  "RET" ("Open" my-items-open)
+  "q" ("Back" my-items-back))
+#+end_src
+
+** Adding and removing entries at runtime
+
+#+begin_src emacs-lisp
+(keymap-popup-add-entry my-commands-map
+                        "l" "Log message" #'my-log-message
+                        "Edit")
+
+(keymap-popup-remove-entry my-commands-map "l")
+#+end_src
+
+Signatures:
+
+- =(keymap-popup-add-entry KEYMAP KEY DESC COMMAND &optional GROUP)=
+- =(keymap-popup-remove-entry KEYMAP KEY)=
+
+Both mutate the keymap and its descriptions in place.  Re-adding a
+key replaces the prior entry (in whatever group it was in),
+matching =keymap-set='s semantics.  Both require existing popup
+metadata; removing the last entry clears that metadata.
+
+* Showing the popup
+:PROPERTIES:
+:CUSTOM_ID: showing-popup
+:END:
+
+#+begin_src emacs-lisp
+;;;###autoload
+(defun yeetube ()
+  (interactive)
+  (keymap-popup yeetube-mode-map))
+#+end_src
+
+=C-g= always dismisses, regardless of the configured =:exit-key=.
+
+** Display backends
+
+=keymap-popup-backend= selects =keymap-popup-backend-side-window=
+(default) or =keymap-popup-backend-child-frame=.  Bind it locally for
+a one-off floating popup:
+
+#+begin_src emacs-lisp
+(defun my-commands-floating ()
+  (interactive)
+  (let ((keymap-popup-backend #'keymap-popup-backend-child-frame))
+    (keymap-popup my-commands-map)))
+#+end_src
+
+** Persistent popups
+:PROPERTIES:
+:CUSTOM_ID: persistent
+:END:
+
+By default the popup dismisses after a suffix command runs.
+=:persistent t= keeps it open until the exit key or =C-g=:
+
+#+begin_src emacs-lisp
+(keymap-popup-define my-map :persistent t ...)
+(keymap-popup-annotate dired-mode-map :popup-key "C-c C-p" :persistent t ...)
+(setopt keymap-popup-persistent t)        ; global default
+#+end_src
+
+Per-keymap setting wins over the global one.
+Use =:persistent nil= on a definition or annotation to disable a non-nil
+global default for that keymap.
+
+** Dismissing programmatically
+
+Call =keymap-popup-dismiss= from a command to close the popup before
+transitioning elsewhere:
+
+#+begin_src emacs-lisp
+(defun my-open-detail ()
+  (interactive)
+  (keymap-popup-dismiss)
+  (pop-to-buffer "*detail*"))
+#+end_src
+
+* Special bindings
+:PROPERTIES:
+:CUSTOM_ID: special-bindings
+:END:
+
+Predicate quick reference:
+
+- =:if=       -- /hide/ the entry (or group) when the predicate returns nil.
+- =:inapt-if= -- /grey out/ the entry and block its key when the predicate returns non-nil.
+
+Predicates may be evaluated repeatedly.  =:if= runs during ordinary
+keymap lookup as well as popup rendering; =:inapt-if= runs while
+rendering and handling popup keys.  Keep both cheap and free of side
+effects.
+
+** Sub-menus with =:keymap=
+
+#+begin_src emacs-lisp
+(keymap-popup-define my-dashboard-mode-map
+  :group "Navigate"
+  "n" ("Nodes" :keymap my-dashboard-nodes-map)
+  "t" ("Themata" :keymap my-dashboard-themata-map)
+  :group "More"
+  "x" ("Import/Export" :keymap my-dashboard-io-map))
+#+end_src
+
+Sub-menu entries use the =keymap-popup-submenu= face.  Nesting is
+unlimited; the exit key pops one level.
+
+** Toggles with =:switch=
+
+#+begin_src emacs-lisp
+(keymap-popup-define yeetube-mode-map
+  :group "Actions"
+  "o" ("Settings" :switch yeetube--show-settings)
+  :group "Settings"
+  "V" ("No video" :switch yeetube-mpv-no-video
+       :if (lambda () yeetube--show-settings)))
+#+end_src
+
+The variable is auto-declared with =defvar-local=; each buffer gets its
+own value.  Switches always keep
+the popup open -- no need to add =:stay-open t=.
+
+** Stay-open commands with =:stay-open=
+
+#+begin_src emacs-lisp
+(keymap-popup-define my-mark-map
+  :group "Mark"
+  "m" ("Mark" dired-mark :stay-open)
+  "u" ("Unmark" dired-unmark :stay-open)
+  "U" ("Unmark all" dired-unmark-all-marks))
+#+end_src
+
+For an entire popup, prefer =:persistent t= (see [[#persistent][Persistent popups]]).
+
+** Disabling entries with =:inapt-if=
+
+#+begin_src emacs-lisp
+(keymap-popup-define yeetube-mode-map
+  :group "Settings"
+  "p" ("Toggle pause" yeetube-mpv-toggle-pause
+       :inapt-if (lambda () (not (get-process yeetube-mpv--process-name)))))
+
+;; Group-level applies to every entry in the group:
+(keymap-popup-define my-bulk-map
+  :group ("Bulk" :inapt-if (lambda () (not (my-marked-files))))
+  "c" ("Chmod" my-do-chmod)
+  "z" ("Compress" my-do-compress))
+#+end_src
+
+Inapt entries render in =keymap-popup-inapt= and print "Command
+unavailable" when pressed.
+
+** Hiding entries with =:if=
+
+#+begin_src emacs-lisp
+(keymap-popup-define yeetube-mode-map
+  "o" ("Settings" :switch yeetube--show-settings)
+  :group ("Playback" :if (lambda () yeetube--show-settings))
+  "p" ("Toggle pause" yeetube-mpv-toggle-pause)
+  "v" ("Toggle video" yeetube-mpv-toggle-video))
+#+end_src
+
+** Prefix-arg variants with =:c-u=
+
+#+begin_src emacs-lisp
+(keymap-popup-define my-greet-map
+  :group "Actions"
+  "a" ("Greet" my-greet :c-u "SHOUT (C-u)"))
+#+end_src
+
+The =:c-u= label renders in =shadow= alongside the description as a
+hint.  Pressing =C-u= enters prefix-arg mode: =:c-u= entries switch
+to =warning=, all other entries dim with =shadow=, and
+=universal-argument-map= takes over so further =C-u=, digits, and
+=-= compose the prefix as usual.  Pressing the key then runs the
+command with =current-prefix-arg= set, exactly like any
+=interactive "P"= command.
+
+** Mouse activation
+
+A single left click on an enabled entry's key or description selects the
+original source window and invokes its current key binding there, without
+moving source point.  The action may then select another window normally.
+Pending prefix arguments, switches, submenus and =:stay-open= work as
+with keyboard input.  Entry text uses native hover highlighting.
+
+Activation requires a matching left-button press and release on the same
+entry in the same popup navigation state.  A release alone, or one after
+replacing the popup or changing its submenu, does not activate an entry.
+
+Headings, padding and blank space are inert.  Disabled or hidden entries,
+changed bindings and drags do not activate an old action.  Popup clicks
+are ignored while a minibuffer prompt is active, including presses whose
+release arrives after the prompt closes.  Inert clicks leave the selected
+window unchanged; clicks outside the popup retain their ordinary bindings.
+If the source window no longer displays the source buffer, mouse activation
+is refused rather than redirecting an action to a different buffer.
+Reinitializing the source's major mode or changing its visited file retires
+the old popup's mouse activation; open a new popup to use the new source
+context.  Renaming the buffer alone does not retire it.
+
+The replay check runs before native transient-map teardown.  As with typed
+keys, subsequent command hooks can still change the command's buffer or
+other execution context.
+
+* Prompting and re-entry
+:PROPERTIES:
+:CUSTOM_ID: prompting
+:END:
+
+Suffix commands dismiss the popup when they return.  For commands
+that prompt (=read-string=, =completing-read=, ...) and should leave
+the popup visible, either set =:persistent t= on the keymap or
+re-invoke =keymap-popup= at the end of the command:
+
+#+begin_src emacs-lisp
+(defun my-edit-set-title ()
+  (interactive)
+  (let ((new (read-string "Title: ")))
+    (my-db-set-title new))
+  (keymap-popup my-edit-map))
+
+(keymap-popup-define my-edit-map
+  :group "Edit"
+  "t" ("Title" my-edit-set-title))
+#+end_src
+
+The same pattern works with a lambda in the binding itself:
+
+#+begin_src emacs-lisp
+(keymap-popup-define my-settings-map
+  :group "Settings"
+  "n" ((lambda () (format "Limit: %d" my--limit))
+       (lambda ()
+         (interactive)
+         (setq-local my--limit (read-number "Limit: "))
+         (keymap-popup my-settings-map))))
+#+end_src
+
+* Annotating existing keymaps
+:PROPERTIES:
+:CUSTOM_ID: annotate
+:END:
+
+=keymap-popup-annotate= attaches descriptions to a keymap you don't
+own (like =dired-mode-map=) without rebinding its keys.  Keys are
+resolved at popup time via =where-is-internal=, so the popup tracks
+the user's current bindings.
+
+#+begin_src emacs-lisp
+(keymap-popup-annotate dired-mode-map
+  :popup-key "C-c C-p"
+  :persistent t
+  :description (lambda ()
+                 (format "Dired: %s" (abbreviate-file-name default-directory)))
+  :group "File"
+  dired-find-file "Open"
+  dired-do-copy "Copy"
+  dired-do-rename "Rename"
+  dired-do-delete "Delete"
+  :group "Navigate"
+  dired-up-directory "Up"
+  dired-previous-line "Prev"
+  dired-next-line "Next"
+  :group "More"
+  "M" ("Mark operations" :keymap my-dired-mark-map))
+#+end_src
+
+Entries are =COMMAND-SYMBOL DESCRIPTION= (the key comes from the
+user's binding).  String-key entries are allowed too -- that's how
+sub-menus attach to an annotated keymap.
+
+The example uses =C-c C-p= to preserve Dired's =?= help binding.
+Choose an unbound popup key; existing local bindings are never replaced.
+
+** Attaching descriptions built from data
+
+Both macros take bindings written literally in source.  When the
+menu itself is computed at runtime -- an anonymous keymap, entries
+generated from a list -- use the function =keymap-popup-attach=:
+
+#+begin_src emacs-lisp
+(defun my-project-popup ()
+  "Pick a recent project from a popup."
+  (interactive)
+  (let* ((projects (seq-take (project-known-project-roots) 9))
+         (map (make-sparse-keymap))
+         (bindings
+          (cl-loop for root in projects
+                   for key from ?1
+                   for cmd = (let ((r root))
+                               (lambda () (interactive)
+                                 (project-switch-project r)))
+                   do (keymap-set map (char-to-string key) cmd)
+                   append (list (char-to-string key)
+                                (list (abbreviate-file-name root) cmd)))))
+    (keymap-popup (keymap-popup-attach
+                   map (append '(:group "Projects") bindings)))))
+#+end_src
+
+Signature:
+
+- =(keymap-popup-attach KEYMAP BINDINGS &rest OPTS)=
+
+BINDINGS is an evaluated list in the same shape as
+=keymap-popup-annotate='s body; commands and predicates are actual
+objects rather than forms.  Function symbols may precede their definitions;
+they must be callable when the popup uses them.  OPTS accepts =:exit-key=,
+=:description=, and =:persistent=.  Reattaching replaces prior descriptions
+and options, so omitted options return to their defaults.  Unlike the macros,
+no keys are bound and no commands are defined -- keyed entries should already
+be bound in KEYMAP.  Runtime values and options are validated before metadata
+is attached.  =:switch= entries require =keymap-popup-define= and are rejected
+by this runtime API.  Returns KEYMAP.
+
+* Customization
+:PROPERTIES:
+:CUSTOM_ID: customization
+:END:
+
+** User options
+
+- =keymap-popup-backend= -- display function; built-ins are
+  =keymap-popup-backend-side-window= (default) and
+  =keymap-popup-backend-child-frame=.
+- =keymap-popup-display-action= -- =display-buffer= action for the
+  side-window backend.
+- =keymap-popup-buffer-parameters= -- buffer-local parameters applied
+  to the popup buffer.
+- =keymap-popup-child-frame-parameters= -- frame parameters for the
+  child-frame backend.
+- =keymap-popup-persistent= -- global default for =:persistent=.
+- =keymap-popup-default-popup-key= -- default =:popup-key= (=h=).
+- =keymap-popup-default-exit-key= -- default =:exit-key= (=q=).
+
+** Faces
+
+- =keymap-popup-key= -- key string (inherits =help-key-binding=).
+- =keymap-popup-group-header= -- group header.
+- =keymap-popup-value= -- =[on]= / =[off]= and inline values.
+- =keymap-popup-submenu= -- sub-menu entries.
+- =keymap-popup-inapt= -- disabled entries (inherits =shadow=).
+
+* When to use this vs =transient=
+:PROPERTIES:
+:CUSTOM_ID: vs-transient
+:END:
+
+=transient= is its own abstraction: a class hierarchy built on
+EIEIO, with prefix/suffix/infix objects and a custom dispatch loop.
+The menu is not an Emacs keymap.  It fits codebases that already
+lean on EIEIO and benefit from typed, extensible class machinery
+(magit being the canonical example).
+
+=keymap-popup= is just a =defvar-keymap= plus metadata, displayed via
+the built-in =set-transient-map= primitive (which predates the
+=transient= package by years and is unrelated to it, despite the
+naming collision).  Use it when you want a real keymap that also knows
+how to draw itself: bindings show up in =where-is= and
+=describe-key=, and the popup does not block =M-x=.  There is no
+class hierarchy to learn, and state lives wherever you choose to
+put it.
+
+* Contributing
+:PROPERTIES:
+:CUSTOM_ID: contributing
+:END:
+
+Source is a single file, =keymap-popup.el=, with tests in
+=tests/keymap-popup-tests.el=.  Run them with:
+
+#+begin_src sh
+emacs --batch -l ert -l keymap-popup.el \
+              -l tests/keymap-popup-tests.el \
+              -f ert-run-tests-batch-and-exit
+#+end_src

@@ -1,0 +1,1007 @@
+;;; hermes-browser.el --- Shared foundation for Hermes dashboard browsers  -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2026  Thanos Apollo
+
+;; Author: Thanos Apollo <public@thanosapollo.org>
+;; Assisted-by: Hermes:MoA
+;; Keywords: tools, convenience
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; Foundation shared by the dashboard browser views (sessions, rollback,
+;; cron, subagents, inventory, ...).  It provides dashboard client
+;; provisioning -- reusing a live chat connection when one exists, else a
+;; transient client released when its work settles -- so each browser
+;; composes its RPC over a promise without re-implementing the plumbing.
+
+;;; Code:
+
+(require 'hermes-buffer)
+(require 'cl-lib)
+(require 'tabulated-list)
+(require 'keymap-popup)
+(require 'hermes-dashboard-transport)
+(require 'hermes-notifications)
+(require 'hermes-promise)
+(require 'hermes-chat)
+
+;;; Faces
+
+(defface hermes-browser-name
+  '((t :inherit bold))
+  "Face for names in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-title
+  '((t :inherit bold))
+  "Face for titles in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-description
+  '((t :inherit font-lock-doc-face))
+  "Face for descriptions in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-identifier
+  '((t :inherit font-lock-constant-face))
+  "Face for identifiers in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-profile
+  '((t :inherit font-lock-variable-name-face))
+  "Face for profile names in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-count
+  '((t :inherit font-lock-number-face))
+  "Face for generic counts in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-message-count
+  '((t :inherit font-lock-number-face))
+  "Face for message counts in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-tool-count
+  '((t :inherit font-lock-builtin-face))
+  "Face for tool counts in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-total
+  '((t :inherit shadow))
+  "Face for aggregate totals in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-priority
+  '((t :inherit warning))
+  "Face for priorities in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-assignee
+  '((t :inherit font-lock-variable-use-face))
+  "Face for assignees in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-model
+  '((t :inherit font-lock-type-face))
+  "Face for model names in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-provider
+  '((t :inherit font-lock-builtin-face))
+  "Face for provider names in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-type
+  '((t :inherit font-lock-property-name-face))
+  "Face for transport and resource types in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-timestamp
+  '((t :inherit shadow))
+  "Face for timestamps in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-schedule
+  '((t :inherit font-lock-string-face))
+  "Face for schedules in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-delivery
+  '((t :inherit font-lock-function-call-face))
+  "Face for delivery targets in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-prompt
+  '((t :inherit font-lock-doc-face))
+  "Face for prompt previews in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-command
+  '((t :inherit font-lock-string-face))
+  "Face for commands in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-category
+  '((t :inherit font-lock-keyword-face))
+  "Face for categories in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-version
+  '((t :inherit font-lock-constant-face))
+  "Face for versions in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-source
+  '((t :inherit font-lock-property-name-face))
+  "Face for source names in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-message
+  '((t :inherit font-lock-string-face))
+  "Face for messages in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-default
+  '((t :inherit success))
+  "Face for default markers in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-reasoning
+  '((t :inherit shadow))
+  "Face for reasoning settings in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-diagnostic
+  '((t :inherit font-lock-warning-face))
+  "Face for diagnostic summaries in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-uptime
+  '((t :inherit font-lock-number-face))
+  "Face for uptime values in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-goal
+  '((t :inherit font-lock-doc-face))
+  "Face for subagent goals in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-enabled
+  '((t :inherit font-lock-variable-use-face :slant italic))
+  "Face for enabled-state columns in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-state
+  '((t :inherit font-lock-keyword-face :weight semi-bold))
+  "Face for lifecycle-state columns in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-status
+  '((t :inherit font-lock-keyword-face))
+  "Face for status columns in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-severity
+  '((t :inherit font-lock-warning-face))
+  "Face for severity columns in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-active
+  '((t :inherit font-lock-keyword-face))
+  "Face for active states in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-success
+  '((t :inherit success))
+  "Face for successful states in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-pending
+  '((t :inherit warning))
+  "Face for pending states in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-error
+  '((t :inherit error))
+  "Face for failed or blocked states in Hermes browser rows."
+  :group 'hermes)
+
+(defface hermes-browser-muted
+  '((t :inherit shadow))
+  "Face for inactive states and secondary data in Hermes browser rows."
+  :group 'hermes)
+
+(defun hermes-browser--face-cell (value face)
+  "Return VALUE as a string carrying FACE when both are non-empty."
+  (let ((text (if (stringp value)
+                  (copy-sequence value)
+                (format "%s" (or value "")))))
+    (if (and face (not (string-empty-p text)))
+        (propertize text 'face face)
+      text)))
+
+(defun hermes-browser--status-face (status)
+  "Return the shared semantic face for STATUS."
+  (let ((status (downcase (substring-no-properties
+                           (format "%s" (or status ""))))))
+    (cond
+     ((member status '("active" "in-progress" "open" "running" "streaming"
+                       "working"))
+      'hermes-browser-active)
+     ((member status '("complete" "completed" "configured" "done" "enabled"
+                       "healthy" "ok" "on" "ready" "succeeded" "success"))
+      'hermes-browser-success)
+     ((member status '("connecting" "paused" "pending" "queued" "scheduled"
+                       "todo" "triage" "waiting" "warning"))
+      'hermes-browser-pending)
+     ((member status '("blocked" "critical" "degraded" "error" "failed"
+                       "failure" "rejected" "unhealthy"))
+      'hermes-browser-error)
+     ((member status '("archived" "closed" "disabled" "idle" "info" "off"
+                       "stopped" "unknown"))
+      'hermes-browser-muted)
+     (t 'hermes-browser-status))))
+
+(defun hermes-browser--status-cell (status &optional column-face)
+  "Return STATUS styled with its semantic and optional COLUMN-FACE."
+  (let* ((status-face (hermes-browser--status-face status))
+         (face (cond
+                ((null column-face) status-face)
+                ((eq status-face column-face) status-face)
+                (t (list status-face column-face)))))
+    (hermes-browser--face-cell
+     status face)))
+
+(defun hermes-browser--instance-label ()
+  "Return the current view's instance name when several exist, or nil."
+  (when (and (hermes-instance-multiple-p)
+             (hermes-instance--valid-p hermes-instance))
+    (hermes-instance-name hermes-instance)))
+
+(defun hermes-browser--instance-header-line ()
+  "Return a compact instance header for the current view, or nil."
+  (when-let* ((name (hermes-browser--instance-label)))
+    (format " Hermes instance: %s " name)))
+
+(defun hermes-browser--instance-mode-line-label ()
+  "Return a compact mode-line label for the current view's instance, or nil."
+  (when-let* ((name (hermes-browser--instance-label)))
+    (concat " " (propertize (format "[%s]" name)
+                            'face 'hermes-browser-profile
+                            'help-echo (format "Hermes instance: %s" name)))))
+
+(defconst hermes-browser--instance-mode-line
+  '(:eval (hermes-browser--instance-mode-line-label))
+  "Mode-line construct naming a browser's instance when several exist.")
+
+(defun hermes-browser--mode-line-has-p (value construct)
+  "Return non-nil if mode-line VALUE already ends with CONSTRUCT.
+Search only the wrappers made by `hermes-browser--mode-line-add'."
+  (pcase value
+    (`("" ,inner ,last)
+     (or (equal last construct)
+         (hermes-browser--mode-line-has-p inner construct)))))
+
+(defun hermes-browser--mode-line-add (variable construct)
+  "Show CONSTRUCT after the buffer-local mode-line VARIABLE's value.
+The value may be any mode-line construct, such as a string or a single
+`:eval' form, so nest it whole rather than splicing into it."
+  (let ((value (symbol-value variable)))
+    (unless (hermes-browser--mode-line-has-p value construct)
+      (set (make-local-variable variable) (list "" value construct)))))
+
+(defun hermes-browser--show-instance ()
+  "Name the current view's instance after its mode-line buffer name.
+Leave `header-line-format' alone: tabulated browsers keep column titles there,
+and other views own their header text."
+  (hermes-browser--mode-line-add 'mode-line-buffer-identification
+                                 hermes-browser--instance-mode-line))
+
+(defun hermes-browser--show-context (construct)
+  "Show mode-line CONSTRUCT as the current view's scope or status context.
+Tabulated browsers keep their native column titles in the header line, so
+their context joins the mode line; other views show it in the header line."
+  (if (derived-mode-p 'tabulated-list-mode)
+      (hermes-browser--mode-line-add 'mode-line-misc-info construct)
+    (setq-local header-line-format construct)))
+
+(defvar-local hermes-browser--snapshot-variables nil
+  "Buffer-local cache variables to clear when the browser changes instance.
+Browser modes register snapshot data here, not filters or request parameters.
+Tabulated rows and their rendered text are always invalidated together.")
+
+(defvar-local hermes-browser--pinned-instance nil
+  "Captured backend for a scoped browser, or nil for ordinary resolution.
+A scoped view must retain this identity through refresh and acquisition.")
+
+(defun hermes-browser--instance (&optional no-prompt)
+  "Return this view's pinned backend or resolve its ordinary instance.
+When NO-PROMPT is non-nil, return nil for ambiguous ordinary contexts."
+  (or (hermes-browser--copy-identity hermes-browser--pinned-instance)
+      (if no-prompt (hermes-instance-context) (hermes-instance-resolve))))
+
+(defun hermes-browser--own-instance (instance)
+  "Make the current browser buffer own INSTANCE.
+Invalidate the previous instance's rows and registered caches first."
+  (when (and (hermes-instance--valid-p hermes-instance)
+             (not (equal hermes-instance instance)))
+    (hermes-browser--next-request-generation)
+    (when (or (derived-mode-p 'tabulated-list-mode)
+              hermes-browser--snapshot-variables)
+      (dolist (variable hermes-browser--snapshot-variables)
+        (set (make-local-variable variable) nil))
+      (when (derived-mode-p 'tabulated-list-mode)
+        (setq tabulated-list-entries nil))
+      (let ((inhibit-read-only t))
+        (erase-buffer))))
+  (setq-local hermes-instance instance)
+  (hermes-browser--show-instance))
+
+(defun hermes-browser--existing-client ()
+  "Return a live dashboard client for the current Hermes instance, or nil."
+  (when-let* ((instance (hermes-browser--instance t)))
+    (cl-some (lambda (buffer)
+               (with-current-buffer buffer
+                 (and (derived-mode-p 'hermes-chat-mode)
+                      (equal hermes-instance instance)
+                      (hermes-chat--dashboard-client-live-p
+                       hermes-chat--dashboard-client)
+                      hermes-chat--dashboard-client)))
+             (buffer-list))))
+
+(defvar hermes-browser--request-error-owner nil
+  "Optional (BUFFER GENERATION MODE) owner for a browser request error.")
+
+(defun hermes-browser--with-client (fn)
+  "Call FN with a connected CLIENT and a DONE cleanup thunk.
+Reuses a live chat connection when one exists; otherwise acquires a shared
+client that DONE releases.  Resolve the endpoint only for acquisition;
+FN runs without shadowing the source buffer's instance ownership."
+  (let* ((instance (hermes-browser--instance))
+         (existing (let ((hermes-instance instance))
+                     (hermes-browser--existing-client)))
+         (existing
+          (and existing
+               (or (null hermes-browser--pinned-instance)
+                   (equal (hermes-dashboard-transport--normalize-base-url
+                           (hermes-instance-url instance))
+                          (hermes-dashboard-transport--api-client-base-url existing)))
+               existing))
+         (client (or existing
+                     (let ((hermes-instance instance)
+                           (hermes-dashboard-transport-url
+                            (hermes-instance-url instance)))
+                       (hermes-dashboard-transport-acquire :callback #'ignore))))
+         released
+         (done (lambda ()
+                 (when (and (not existing) (not released))
+                   (setq released t)
+                   (hermes-dashboard-transport-release client)))))
+    (funcall fn client done)))
+
+(defvar-local hermes-browser--request-generation nil
+  "Token of the newest asynchronous request for this buffer.")
+
+(defun hermes-browser--copy-identity (value)
+  "Copy the conses and strings in browser identity VALUE."
+  (cond ((consp value) (cons (hermes-browser--copy-identity (car value))
+                             (hermes-browser--copy-identity (cdr value))))
+        ((stringp value) (copy-sequence value))
+        (t value)))
+
+(defun hermes-browser--owner (&optional variables mode)
+  "Capture this browser's request, instance, claim and optional VARIABLES.
+VARIABLES names buffer-local domain values to snapshot independently.
+MODE defaults to the current major mode.  This does not grant a
+constructor claim to an unclaimed origin."
+  (list (current-buffer) hermes-browser--request-generation (or mode major-mode)
+        hermes-instance (hermes-browser--copy-identity hermes-instance)
+        hermes-buffer--owner
+        (mapcar (lambda (variable)
+                  (cons variable (hermes-browser--copy-identity
+                                  (symbol-value variable))))
+                (cons 'hermes-browser--pinned-instance variables))))
+
+(defun hermes-browser--owner-current-p (owner)
+  "Return non-nil if captured OWNER retains its request and exact claim."
+  (pcase-let ((`(,buffer ,generation ,mode ,instance ,value ,claim ,values) owner))
+    (and (hermes-browser--request-current-mode-p buffer generation mode)
+         (with-current-buffer buffer
+           (and (eq claim hermes-buffer--owner)
+                (eq instance hermes-instance)
+                (equal value instance)
+                (seq-every-p (lambda (entry)
+                               (equal (cdr entry) (symbol-value (car entry))))
+                             values))))))
+
+(defun hermes-browser--publish-text (owner text)
+  "Replace OWNER's text with TEXT while retaining native hook boundaries.
+Return non-nil only when both hook phases leave the same owner and text.
+Roll back errors and quits only while OWNER still owns the buffer; never
+undo a hook's transfer to a successor.  Prepare TEXT before calling this."
+  (when (hermes-browser--owner-current-p owner)
+    (with-current-buffer (car owner)
+      (let ((handle (prepare-change-group))
+            (tick (buffer-chars-modified-tick))
+            (retired (make-symbol "retired-publication"))
+            (undo-outer-limit nil)
+            (undo-limit most-positive-fixnum)
+            (undo-strong-limit most-positive-fixnum)
+            finished obsolete)
+        (unwind-protect
+            (progn
+              (activate-change-group handle)
+              ;; Emacs 29's combiner needs a nonempty undo tail to splice.
+              (unless buffer-undo-list (push nil buffer-undo-list))
+              (catch retired
+                (let ((inhibit-read-only t))
+                  (combine-change-calls (point-min) (point-max)
+                    (unless (and (eq (current-buffer) (car owner))
+                                 (hermes-browser--owner-current-p owner)
+                                 (= tick (buffer-chars-modified-tick)))
+                      (setq obsolete t)
+                      (throw retired nil))
+                    (let ((inhibit-modification-hooks t) (inhibit-quit t))
+                      (erase-buffer)
+                      (insert text)
+                      (setq tick (buffer-chars-modified-tick)))))
+                (setq finished
+                      (and (hermes-browser--owner-current-p owner)
+                           (= tick (buffer-chars-modified-tick))))))
+          (let ((inhibit-modification-hooks t) (inhibit-quit t))
+            (if (or finished obsolete
+                    (not (hermes-browser--owner-current-p owner)))
+                (accept-change-group handle)
+              (cancel-change-group handle))))))))
+
+(defun hermes-browser--owned-predicate (&optional variables mode)
+  "Capture a current-owner predicate for optional VARIABLES and MODE.
+See `hermes-browser--owner' for the captured ownership contract."
+  (let ((owner (hermes-browser--owner variables mode)))
+    (lambda () (hermes-browser--owner-current-p owner))))
+
+(defun hermes-browser--client-scope (client)
+  "Return CLIENT's generation and copied endpoint, or nil for no client."
+  (when (hermes-dashboard-transport-client-p client)
+    (list (hermes-dashboard-transport-client-generation client)
+          (copy-sequence (hermes-dashboard-transport--api-client-base-url client)))))
+
+(defun hermes-browser--client-current-p (client scope)
+  "Return non-nil if CLIENT still owns the non-nil captured SCOPE."
+  (and scope (equal scope (hermes-browser--client-scope client))))
+
+(defun hermes-browser--dispatch-guard (client &optional current-p)
+  "Return a transport-entry predicate for this browser and CLIENT.
+CURRENT-P, when non-nil, supplies ownership captured before acquisition."
+  (let ((owner (or current-p (hermes-browser--owned-predicate)))
+        (scope (hermes-browser--client-scope client)))
+    (lambda ()
+      (and (funcall owner)
+           (or (null scope) (hermes-browser--client-current-p client scope))))))
+
+(defun hermes-browser--run-on-client (make-promise &optional on-success on-error)
+  "Run MAKE-PROMISE on a client released when its promise settles.
+MAKE-PROMISE receives CLIENT.  ON-SUCCESS receives the result; ON-ERROR
+receives a rejection.  Synchronous acquisition errors and quits notify
+ON-ERROR before re-signalling the original condition.
+Browser REST mutations retain their owner through authentication."
+  (let* ((owner hermes-browser--request-error-owner)
+         (current-p (hermes-browser--dispatch-guard nil))
+         (failure (or on-error
+                      (lambda (reason)
+                        (when (or (null owner)
+                                  (apply #'hermes-browser--request-current-mode-p owner))
+                          (message "Hermes: %s" reason)))))
+         entered)
+    (condition-case err
+        (hermes-browser--with-client
+         (lambda (client done)
+           (setq entered t)
+           (let ((hermes-dashboard-transport--api-dispatch-guard
+                  (hermes-browser--dispatch-guard client current-p)))
+             (hermes--promise-catch
+              (hermes--promise-then
+               (condition-case err
+                   (hermes--promise-finally (funcall make-promise client) done)
+                 ((error quit)
+                  (funcall done)
+                  (hermes--promise-rejected (error-message-string err))))
+               on-success)
+              failure))))
+      ((error quit)
+       (unless entered (funcall failure (error-message-string err)))
+       (signal (car err) (cdr err))))))
+
+(defun hermes-browser--profiled-read (client path profile current-p)
+  "Read PATH from CLIENT in an explicit backend PROFILE under CURRENT-P.
+When PROFILE is nil, ask for an exact name from the backend catalogue.
+Return a promise of (PROFILE . RESULT); never guess the launch profile."
+  (let ((buffer (current-buffer)))
+    (hermes--promise-then
+     (if profile (hermes--promise-resolved profile)
+       (hermes--promise-then
+        (hermes-dashboard-transport-api-request-async
+         "GET" "/api/profiles" :client client :current-p current-p)
+        (lambda (catalog)
+          (when (funcall current-p)
+            (with-current-buffer buffer
+              (let* ((names (seq-filter
+                             (lambda (name)
+                               (and (stringp name)
+                                    (string-match-p "\\`[A-Za-z0-9][A-Za-z0-9_-]*\\'" name)
+                                    (not (equal (downcase name) "current"))))
+                             (mapcar (lambda (row) (hermes-transport--get row 'name))
+                                     (hermes-transport--get catalog 'profiles))))
+                     (name (and names (completing-read "Backend profile: " names nil t))))
+                (unless (member name names) (user-error "No backend profile selected"))
+                (copy-sequence name)))))))
+     (lambda (selected)
+       (when (and selected (funcall current-p))
+         (hermes--promise-map
+          (hermes-dashboard-transport-api-request-async
+           "GET" path :client client :query `((profile . ,selected)) :current-p current-p)
+          (lambda (result)
+            (when (funcall current-p) (cons selected result)))))))))
+
+(defun hermes-browser--mutation-context (&optional selection)
+  "Start an operation and capture its owner and optional SELECTION thunk.
+SELECTION returns the exact selected entity identity in the owner buffer.
+Retain resolution authority separately from the raw buffer-local owner."
+  (hermes-browser--next-request-generation)
+  (let ((buffer (current-buffer))
+        (owner (hermes-browser--dispatch-guard nil))
+        ;; Keep resolution authority separate from the raw buffer owner.  The
+        ;; legacy resolver ignores that owner; an unowned multi-instance entry
+        ;; instead retains its catalogue until acquisition asks for a choice.
+        (endpoint (hermes-browser--copy-identity
+                   (or (hermes-browser--instance t) (hermes-instance-configured))))
+        (identity (and selection (hermes-browser--copy-identity (funcall selection)))))
+    (lambda ()
+      (and (funcall owner)
+           (with-current-buffer buffer
+             (equal endpoint
+                    (or (hermes-browser--instance t) (hermes-instance-configured))))
+           (or (null selection)
+               (with-current-buffer buffer
+                 (equal identity (condition-case nil (funcall selection)
+                                   (user-error nil)))))))))
+
+(defun hermes-browser--read-owned-arguments (reader &optional selection)
+  "Read interactive arguments with READER, retaining optional SELECTION.
+Restore the originating buffer and reject input if its operation retired."
+  (let ((current (hermes-browser--mutation-context selection)))
+    (save-current-buffer
+      (let ((arguments (funcall reader)))
+        (unless (funcall current)
+          (user-error "Browser changed during input; try again"))
+        arguments))))
+
+(defvar-local hermes-browser--status nil
+  "Visible status of the current browser read.")
+
+(defvar-local hermes-browser--owned-cleanup nil
+  "Cleanup thunk for this buffer's short, guarded remote operation.")
+
+(defun hermes-browser--retire-owned ()
+  "Release this buffer's pending operation without retrying remote writes."
+  (when hermes-browser--owned-cleanup
+    (funcall hermes-browser--owned-cleanup)))
+
+(defun hermes-browser--invoke-owned
+    (make-promise client active token success failure cleanup)
+  "Invoke MAKE-PROMISE on CLIENT under ACTIVE and request TOKEN.
+Publish SUCCESS or FAILURE only in the owner buffer, then run CLEANUP."
+  (let ((buffer (current-buffer))
+        (hermes-dashboard-transport--api-dispatch-guard active)
+        (hermes-dashboard-transport-dispatch-guard active)
+        (hermes-dashboard-transport-request-owner token))
+    (hermes--promise-finally
+     (hermes--promise-catch
+      (hermes--promise-then
+       (condition-case err (funcall make-promise client active)
+         ((error quit) (hermes--promise-rejected (error-message-string err))))
+       (lambda (result)
+         (when (funcall active)
+           (with-current-buffer buffer (funcall success result)))))
+      (lambda (reason)
+        (when (funcall active)
+          (with-current-buffer buffer (funcall failure reason)))))
+     cleanup)))
+
+(defun hermes-browser--start-owned
+    (client done make-promise current-p success failure finish)
+  "Start MAKE-PROMISE on CLIENT with DONE under CURRENT-P.
+Deliver SUCCESS or FAILURE while current; release resources and run FINISH
+once on settlement or retirement.  The current buffer owns the operation."
+  (let* ((buffer (current-buffer))
+         (token (list 'browser-operation))
+         (guard (hermes-browser--dispatch-guard client current-p))
+         closed subscription cleanup
+         (active (lambda () (and (not closed) (funcall guard)))))
+    (setq cleanup
+          (lambda ()
+            (unless closed
+              (setq closed t)
+              (when subscription
+                (hermes-dashboard-transport-unsubscribe client subscription))
+              (hermes-dashboard-transport-cancel-owner-requests client token)
+              (when (buffer-live-p buffer)
+                (with-current-buffer buffer
+                  (when (eq hermes-browser--owned-cleanup cleanup)
+                    (setq hermes-browser--owned-cleanup nil)
+                    (when (member hermes-browser--status '("Loading" "Saving"))
+                      (setq hermes-browser--status "Interrupted; g reconcile")))))
+              (unwind-protect (funcall done) (funcall finish)))))
+    (condition-case err
+        (if (not (funcall active)) (funcall cleanup)
+          (setq hermes-browser--owned-cleanup cleanup)
+          (when (hermes-dashboard-transport-client-p client)
+            (setq subscription
+                  (hermes-dashboard-transport-subscribe client nil cleanup)))
+          (add-hook 'kill-buffer-hook #'hermes-browser--retire-owned nil t)
+          (add-hook 'change-major-mode-hook #'hermes-browser--retire-owned nil t)
+          (hermes-browser--invoke-owned
+           make-promise client active token success failure cleanup))
+      ((error quit)
+       (funcall cleanup)
+       (signal (car err) (cdr err))))))
+
+(defun hermes-browser--run-owned (make-promise current-p success failure &optional finish)
+  "Run MAKE-PROMISE under CURRENT-P and settle via SUCCESS or FAILURE.
+MAKE-PROMISE receives a client and a dispatch predicate.  Capture CURRENT-P
+before prompting.  All callbacks run in the owner buffer.  Killing the owner,
+changing mode, or issuing a new generation releases its client and RPC timers;
+an already dispatched mutation may still complete remotely.
+Optional FINISH runs once on settlement or retirement, including acquisition
+failure.  Synchronous acquisition errors and quits re-signal their original
+condition after cleanup; asynchronous rejections call FAILURE normally."
+  (let* ((buffer (current-buffer))
+         (finish-once (lambda ()
+                        (when finish
+                          (let ((fn finish))
+                            (setq finish nil)
+                            (funcall fn))))))
+    (condition-case err
+        (hermes-browser--with-client
+         (lambda (client done)
+           (if (not (buffer-live-p buffer))
+               (unwind-protect (funcall done) (funcall finish-once))
+             (with-current-buffer buffer
+               (hermes-browser--start-owned
+                client done make-promise current-p success failure finish-once)))))
+      ((error quit)
+       (unwind-protect
+           (unwind-protect
+               (when (funcall current-p)
+                 (with-current-buffer buffer
+                   (funcall failure (error-message-string err))))
+             (funcall finish-once))
+         (signal (car err) (cdr err)))))))
+
+(defvar hermes-browser--request-sequence 0
+  "Sequence used to issue request tokens that are unique across mode resets.")
+
+(defun hermes-browser--next-request-generation ()
+  "Issue and return a new request token for the current buffer."
+  (hermes-browser--retire-owned)
+  (setq hermes-browser--request-generation
+        (cl-incf hermes-browser--request-sequence)))
+
+(defun hermes-browser--request-current-p (buffer generation)
+  "Return non-nil when BUFFER still owns request GENERATION."
+  (and (buffer-live-p buffer)
+       (not (with-current-buffer buffer (hermes-buffer--retired-p)))
+       (eql generation
+            (buffer-local-value 'hermes-browser--request-generation buffer))))
+
+(defun hermes-browser--buffer-mode-p (buffer mode)
+  "Return non-nil when BUFFER is live and derives from MODE."
+  (and (buffer-live-p buffer)
+       (with-current-buffer buffer (derived-mode-p mode))))
+
+(defun hermes-browser--request-current-mode-p (buffer generation mode)
+  "Return non-nil when BUFFER owns GENERATION and derives from MODE."
+  (and (hermes-browser--request-current-p buffer generation)
+       (hermes-browser--buffer-mode-p buffer mode)))
+
+(defun hermes-browser--notify (title body &optional event buffer)
+  "Show desktop notification TITLE/BODY, falling back to the echo area.
+Uses `notifications-notify' when D-Bus notifications are available, and quietly
+degrades to a `message' on systems or builds without them.  Optional EVENT
+applies the shared notification policy.  Optional BUFFER is the notice target."
+  (hermes-notifications-notify event title body :buffer buffer))
+
+(defun hermes-browser--setup-status ()
+  "Expose read status and contextual help in this browser's mode line."
+  (hermes-browser--mode-line-add
+   'mode-line-misc-info
+   '(:eval (concat " [" (or hermes-browser--status "Not fetched") "; ? help]"))))
+
+(defun hermes-browser--read-error (reason)
+  "Show read failure REASON while retaining the current snapshot."
+  (setq hermes-browser--status
+        (propertize "Failed; g retry" 'face 'error
+                    'help-echo (format "%s" reason)))
+  (force-mode-line-update)
+  (message "Hermes: %s" reason))
+
+(defun hermes-browser--reading-position (position)
+  "Return the logical row, line and column at POSITION."
+  (save-excursion
+    (goto-char position)
+    (list (and (derived-mode-p 'tabulated-list-mode) (tabulated-list-get-id))
+          (line-number-at-pos nil t) (current-column))))
+
+(defun hermes-browser--reading-point (position)
+  "Return a bounded buffer point for logical POSITION."
+  (save-excursion
+    (goto-char (point-min))
+    (let ((row (and (car position)
+                    (text-property-search-forward
+                     'tabulated-list-id (car position) #'equal))))
+      (if row (goto-char (prop-match-beginning row))
+        (forward-line (1- (cadr position))))
+      (move-to-column (caddr position))
+      (point))))
+
+(defun hermes-browser--preserve-reading-position (render)
+  "Call RENDER, retaining this buffer's point and every window's reading state."
+  (let* ((buffer (current-buffer))
+         (mode major-mode)
+         (generation hermes-browser--request-generation)
+         (position (hermes-browser--reading-position (point)))
+         (windows (mapcar
+                   (lambda (window)
+                     (list window
+                           (hermes-browser--reading-position (window-start window))
+                           (hermes-browser--reading-position (window-point window))))
+                   (get-buffer-window-list buffer nil t))))
+    (unwind-protect (funcall render)
+      (when (and (hermes-browser--request-current-mode-p buffer generation mode)
+                 (eq mode (buffer-local-value 'major-mode buffer)))
+        (with-current-buffer buffer
+          (goto-char (hermes-browser--reading-point position))
+          (dolist (entry windows)
+            (when (and (window-live-p (car entry))
+                       (eq (window-buffer (car entry)) buffer))
+              (set-window-point (car entry) (hermes-browser--reading-point (caddr entry)))
+              (set-window-start (car entry) (hermes-browser--reading-point (cadr entry)) t))))))))
+
+;;; Dynamic column widths
+
+(defun hermes-browser--visible-window-width ()
+  "Return the current buffer's visible text width, or nil if not visible."
+  (and-let* ((window (get-buffer-window (current-buffer) t)))
+    (window-body-width window)))
+
+(defun hermes-browser--display-width (&optional width)
+  "Return WIDTH or the visible text width, clamped to a positive value."
+  (max 1 (or width
+             (hermes-browser--visible-window-width)
+             (window-body-width))))
+
+(defun hermes-browser--sum (numbers)
+  "Return the sum of NUMBERS."
+  (apply #'+ numbers))
+
+(defun hermes-browser--shrink-widths (widths target)
+  "Return WIDTHS reduced to fit TARGET while keeping columns positive."
+  (let ((widths (copy-sequence widths)))
+    (while (> (hermes-browser--sum widths) target)
+      (let ((max-width 1)
+            max-cell)
+        (dotimes (i (length widths))
+          (let ((width (nth i widths)))
+            (when (> width max-width)
+              (setq max-width width
+                    max-cell i))))
+        (if max-cell
+            (setcar (nthcdr max-cell widths) (1- max-width))
+          (setq target (hermes-browser--sum widths)))))
+    widths))
+
+(defun hermes-browser--allocate-column-widths (width specs)
+  "Return column widths fitting WIDTH for SPECS.
+Each item in SPECS is (MINIMUM WEIGHT).  The returned widths account for
+one character of `tabulated-list' padding between columns and fit WIDTH
+when WIDTH can hold one character per column plus padding."
+  (let* ((column-count (length specs))
+         (separator-width (max 0 (1- column-count)))
+         (available (max column-count
+                         (- (hermes-browser--display-width width)
+                            separator-width)))
+         (minimums (mapcar #'car specs))
+         (minimum-total (hermes-browser--sum minimums)))
+    (if (> minimum-total available)
+        (hermes-browser--shrink-widths minimums available)
+      (let* ((weights (mapcar #'cadr specs))
+             (weight-total (hermes-browser--sum weights))
+             (remaining (- available minimum-total))
+             (widths (copy-sequence minimums))
+             (assigned 0))
+        (when (> weight-total 0)
+          (dotimes (i column-count)
+            (let ((share (/ (* remaining (nth i weights)) weight-total)))
+              (setq assigned (+ assigned share))
+              (setcar (nthcdr i widths) (+ (nth i widths) share))))
+          (let ((left (- remaining assigned))
+                (i 0))
+            (while (> left 0)
+              (when (> (nth i weights) 0)
+                (setcar (nthcdr i widths) (1+ (nth i widths)))
+                (setq left (1- left)))
+              (setq i (% (1+ i) column-count)))))
+        widths))))
+
+(defun hermes-browser--dynamic-format (width specs)
+  "Return a `tabulated-list-format' vector fitting WIDTH for SPECS.
+Each SPEC is (NAME MINIMUM WEIGHT &optional SORT MAX): NAME is the header,
+MINIMUM the smallest width, WEIGHT its share of leftover space, SORT the sort
+predicate, and MAX an optional width cap."
+  (let ((widths (hermes-browser--allocate-column-widths
+                 width (mapcar (lambda (spec) (list (nth 1 spec) (nth 2 spec)))
+                               specs))))
+    (apply #'vector
+           (cl-loop for spec in specs
+                    for column-width in widths
+                    for max = (nth 4 spec)
+                    collect (list (nth 0 spec)
+                                  (if max (min column-width max) column-width)
+                                  (nth 3 spec))))))
+
+(defmacro hermes-define-list-browser (name &rest body)
+  "Define a `tabulated-list' browser NAME backed by a dashboard RPC.
+NAME is the short browser name; the macro defines `hermes-NAME-mode',
+`hermes-NAME-mode-map', `hermes-NAME--render', `hermes-NAME--revert', and the
+command `hermes-list-NAME'.  BODY is a plist:
+
+  :title           display/mode-line name (string)
+  :buffer          browser buffer name (string)
+  :columns         static `tabulated-list-format' vector
+  :dynamic-columns window-responsive column specs, each
+                   (NAME MINIMUM WEIGHT &optional SORT MAX); columns flex with
+                   the window width and re-fit on resize.  Mutually exclusive
+                   with `:columns'
+  :command         list-command symbol when it differs from `hermes-list-NAME';
+                   it must match the caller's `(autoload ...)' cookie
+  :fetch           function (CLIENT -> promise) that starts asynchronous I/O
+  :refresh         optional command owning a custom guarded refresh lifecycle
+  :rows            pure function (RESULT -> list of `tabulated-list' entries)
+  :keys            extra bindings, spliced into `defvar-keymap'
+  :help            command descriptions for `keymap-popup-annotate'
+  :description     popup title string or function, optional
+  :doc             major-mode docstring, optional
+  :command-doc     list-command docstring, optional
+  :command-modes   modes for a context-dependent list command, optional
+  :on-result       function (RESULT) called in the buffer after each render,
+                   for side effects only (e.g. failure notifications)
+  :on-mode         function called when the generated major mode initializes
+
+`:rows' must be a pure result-to-entry transform.  `:fetch' starts the async
+dashboard operation; this macro owns its client lifecycle and buffer effects."
+  (declare (indent 1))
+  (let ((mode (intern (format "hermes-%s-mode" name)))
+        (map (intern (format "hermes-%s-mode-map" name)))
+        (render (intern (format "hermes-%s--render" name)))
+        (revert (intern (format "hermes-%s--revert" name)))
+        (format-fn (intern (format "hermes-%s--format" name)))
+        (size-change (intern (format "hermes-%s--window-size-change" name)))
+        (command (or (plist-get body :command)
+                     (intern (format "hermes-list-%s" name))))
+        (title (plist-get body :title))
+        (buffer (plist-get body :buffer))
+        (columns (plist-get body :columns))
+        (dynamic (plist-get body :dynamic-columns))
+        (fetch (plist-get body :fetch))
+        (rows (plist-get body :rows))
+        (keys (plist-get body :keys))
+        (help (plist-get body :help))
+        (description (or (plist-get body :description) (plist-get body :title)))
+        (doc (plist-get body :doc))
+        (command-doc (plist-get body :command-doc))
+        (on-result (plist-get body :on-result))
+        (on-mode (plist-get body :on-mode)))
+    `(progn
+       (defvar-keymap ,map
+         :doc ,(format "Keymap for `%s'." mode)
+         :parent tabulated-list-mode-map
+         "h" #'describe-mode
+         ,@keys)
+       (keymap-popup-annotate ,map
+         :popup-key "?" :exit-key "C-g"
+         :description ,description
+         ,@help
+         :group "View"
+         revert-buffer ("Refresh" :stay-open t)
+         describe-mode "Describe mode"
+         quit-window "Quit view")
+       (put ',(intern (format "%s-popup" map)) 'command-modes '(,mode))
+       ,@(and dynamic
+              `((defun ,format-fn (&optional width)
+                  ,(format "Return the dynamic `tabulated-list-format' for the %s browser."
+                           title)
+                  (hermes-browser--dynamic-format width ',dynamic))
+                (defun ,size-change (window)
+                  ,(format "Re-fit %s columns when WINDOW changes size." title)
+                  (when (hermes-buffer--owned-p ',mode)
+                    (let ((old-format tabulated-list-format))
+                      (setq tabulated-list-format
+                            (,format-fn (window-body-width window)))
+                      (unless (equal old-format tabulated-list-format)
+                        (tabulated-list-init-header)
+                        (tabulated-list-print t)))))))
+       (define-derived-mode ,mode tabulated-list-mode ,title
+         ,(or doc (format "Major mode for the %s browser." title))
+         :interactive nil
+         (setq tabulated-list-format ,(if dynamic `(,format-fn) columns))
+         (setq-local revert-buffer-function #',revert)
+         (hermes-browser--setup-status)
+         ,@(and dynamic
+                `((add-hook 'window-size-change-functions #',size-change nil t)))
+         ,@(and on-mode `((funcall ,on-mode)))
+         (tabulated-list-init-header))
+       (defun ,render (result)
+         ,(format "Render dashboard RESULT into the %s buffer in place." title)
+         ,@(and dynamic
+                `((setq tabulated-list-format (,format-fn))
+                  (tabulated-list-init-header)))
+         (setq tabulated-list-entries (funcall ,rows result))
+         (hermes-browser--preserve-reading-position
+          (lambda () (tabulated-list-print t)))
+         (setq hermes-browser--status (if tabulated-list-entries "Ready" "Empty"))
+         ,@(and on-result `((funcall ,on-result result))))
+       (defun ,revert (&rest _)
+         ,(format "Refresh the %s browser without re-displaying it." title)
+         (if ,(plist-get body :refresh)
+             (funcall ,(plist-get body :refresh))
+           (hermes-browser--own-instance (hermes-browser--instance))
+         (let* ((target (current-buffer))
+                (instance hermes-instance)
+                (generation (hermes-browser--next-request-generation))
+                (current-p
+                 (lambda ()
+                   (and (hermes-browser--request-current-mode-p target generation ',mode)
+                        (equal instance (buffer-local-value 'hermes-instance target)))))
+                (on-error
+                 (lambda (reason)
+                   (when (funcall current-p)
+                     (with-current-buffer target (hermes-browser--read-error reason))))))
+           (setq hermes-browser--status "Loading")
+           (force-mode-line-update)
+           (condition-case err
+               (hermes-browser--run-on-client
+                ,fetch
+                (lambda (result)
+                  (when (funcall current-p)
+                    (with-current-buffer target (,render result))))
+                on-error)
+             ((error quit) (funcall on-error (error-message-string err)))))))
+       (defun ,command ()
+         ,(or command-doc (format "Browse %s from the Hermes dashboard." title))
+         (interactive nil ,@(plist-get body :command-modes))
+         (let ((instance (hermes-instance-resolve))
+               (target (hermes-buffer--get ,buffer #',mode)))
+           (with-current-buffer target
+             (unless (derived-mode-p ',mode)
+               (,mode))
+             (hermes-browser--own-instance instance)
+             (setq hermes-browser--status "Loading"))
+           (pop-to-buffer target)
+           (with-current-buffer target (,revert)))))))
+
+(provide 'hermes-browser)
+;;; hermes-browser.el ends here
