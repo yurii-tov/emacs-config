@@ -2255,6 +2255,12 @@ Optionally, formats the buffer with COMMAND (if provided)"
       hermes-dashboard-transport-start-mode 'remote)
 
 
+(defun hermes-tunnel ()
+  (interactive)
+  (async-shell-command "ssh -NvL localhost:9119:localhost:9119 hermes"
+                       "*hermes-tunnel*"))
+
+
 ;; Statistics / combinatorics
 ;; ==========================
 
