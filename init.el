@@ -116,18 +116,18 @@
   "C-v" 'scroll-up-3                "C-M-l" 'move-line-down
   "M-v" 'scroll-down-3              "C-=" 'text-scale-increase
   "M-c" 'text-edit-map              "C--" 'text-scale-decrease
-  "M-o" 'other-window               "C-x ," 'compile
-  "C-1" 'delete-other-windows       "C-x ." 'recompile
-  "C-2" 'split-window-below         "C-x =" 'hl-line-mode
-  "C-3" 'split-window-right         "C-x o" 'open-in-external-program
-  "C-0" 'delete-window              "C-x i" 'what-cursor-position
-  "M-k" 'kill-whole-line            "C-x d" 'diff-map
-  "M-=" 'count-words                "C-x b" 'bookmark-set
-  "M-q" 'hippie-expand              "C-x B" 'bookmark-delete
-  "M-1" 'shell-command              "C-x j" 'bookmark-jump
-  "M-!" 'async-shell-command        "C-x u" 'reopen-with-sudo
-  "M-2" 'enclose-text-quotes        "C-x l" 'eglot
-  "M-3" 'enclose-text-asterisks     "C-x p" 'pass
+  "M-o" 'other-window               "C-x =" 'hl-line-mode
+  "C-1" 'delete-other-windows       "C-x o" 'open-in-external-program
+  "C-2" 'split-window-below         "C-x i" 'what-cursor-position
+  "C-3" 'split-window-right         "C-x d" 'diff-map
+  "C-0" 'delete-window              "C-x b" 'bookmark-set
+  "M-k" 'kill-whole-line            "C-x B" 'bookmark-delete
+  "M-=" 'count-words                "C-x j" 'bookmark-jump
+  "M-q" 'hippie-expand              "C-x u" 'reopen-with-sudo
+  "M-1" 'shell-command              "C-x ." 'eglot
+  "M-!" 'async-shell-command        "C-x p" 'pass
+  "M-2" 'enclose-text-quotes        "C-x l" 'recompile
+  "M-3" 'enclose-text-asterisks     "C-x C-l" 'compile
   "M-4" 'enclose-text-apostrophes   "C-x C-b" 'ibuffer
   "M-9" 'enclose-text-parenthesis   "C-x C-k" 'kill-buffer-and-window
   "M-(" 'enclose-text-angle         "C-x C-=" 'display-line-numbers-mode
