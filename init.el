@@ -135,7 +135,7 @@
   "M-)" 'enclose-text-curly         "C-c k" 'sql-connect
   "M-i" 'imenu                      "C-c i" 'ielm
   "M-u" 'force-revert-buffer        "C-c s" 'ssh
-  "M-j" 'switch-to-buffer           "C-c x" 'run-proxy
+  "M-j" 'switch-to-buffer           "C-c x" 'ssh-tunnel
   "M-`" 'shell                      "C-c d" 'serve-directory
   "M-g" 'goto-line                  "C-c v" 'capture-video
   "M-/" project-prefix-map          "C-c c" 'org-capture
@@ -1914,17 +1914,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
                         nil t))))
 
 
-;; Ssh sessions
-
-
-(defun ssh (host)
-  "Establishes interactive ssh session"
-  (interactive (list (read-string "Run ssh session: " nil 'ssh-host-history)))
-  (let ((default-directory (format "/sshx:%s:" host))
-        (explicit-shell-file-name "/bin/bash"))
-    (shell (shell-buffer-name))))
-
-
 ;; Elevation of privilege
 
 
@@ -1977,6 +1966,38 @@ Optionally, formats the buffer with COMMAND (if provided)"
                 (setq-local completion-at-point-functions
                             '(shell-environment-variable-completion
                               comint-filename-completion)))))
+
+;; ===
+;; SSH
+;; ===
+
+
+(defun ssh (host)
+  "Establishes interactive ssh session"
+  (interactive (list (read-string "Run ssh session: " nil 'ssh-host-history)))
+  (let ((default-directory (format "/sshx:%s:" host))
+        (explicit-shell-file-name "/bin/bash"))
+    (shell (shell-buffer-name))))
+
+
+(setq ssh-tunnels '((proxy . "-NvD localhost:9999 proxy")
+                    (hermes-dashboard . "-NvL localhost:9119:localhost:9119 hermes")))
+
+
+(defun ssh-tunnel (name tunnel)
+  "Start SSH tunnel NAME using TUNNEL.
+NAME is used as the buffer name \"*tunnel:NAME*\" and should match a
+key in `ssh-tunnels'.  TUNNEL is the argument string for ssh(1), e.g.
+\"-L 8080:localhost:80 user@host\".
+
+The tunnel reconnects every 5 seconds if dropped, and exits on success."
+  (interactive (let* ((name (completing-read "Run tunnel: " ssh-tunnels))
+                      (tunnel (alist-get (intern name) ssh-tunnels)))
+                 (list name tunnel)))
+  (async-shell-command (format "while :; do ssh -o ServerAliveInterval=180 %s && exit 0 || sleep 5s; done"
+                               tunnel)
+                       (format "*tunnel:%s*" name))
+  (message "Running tunnel: %s" tunnel))
 
 
 ;; Web browser
@@ -2134,18 +2155,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
              socket)))
 
 
-;; Proxy
-;; =====
-
-
-(defun run-proxy ()
-  (interactive)
-  (let ((default-directory "~"))
-    (async-shell-command
-     "while :; do ssh -o ServerAliveInterval=180 -NvD localhost:9999 proxy && exit 0 || sleep 5s; done" "*proxy*")
-    (message "SOCKS proxy started at localhost:9999")))
-
-
 ;; Video capturing
 ;; ===============
 
@@ -2253,12 +2262,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
       gptel-include-reasoning nil
       gptel-expert-commands t
       hermes-dashboard-transport-start-mode 'remote)
-
-
-(defun hermes-tunnel ()
-  (interactive)
-  (async-shell-command "ssh -NvL localhost:9119:localhost:9119 hermes"
-                       "*hermes-tunnel*"))
 
 
 ;; Statistics / combinatorics
