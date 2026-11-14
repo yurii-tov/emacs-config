@@ -2250,9 +2250,8 @@ The tunnel reconnects every 5 seconds if dropped, and exits on success."
 
 (setq gptel-backend (gptel-make-deepseek "DeepSeek"
                       :key (lambda ()
-                             (with-temp-buffer (insert-file-contents
-                                                "~/.password-store/deepseek-key.gpg")
-                                               (string-trim (buffer-string))))
+                             (shell-command-to-string
+                              "gpg -qd ~/.password-store/deepseek.gpg | sed -n 's/api-key: //p'"))
                       :models '(deepseek-flash))
       gptel-model 'deepseek-flash
       gptel--set-buffer-locally t
