@@ -2355,7 +2355,7 @@ The tunnel reconnects every 5 seconds if dropped, and exits on success."
 (defun org-push ()
   (interactive)
   (when-let* ((default-directory org-directory)
-              (c "git add * && git commit -m 'Updated' && touch *.org")
+              (c "git add * && git commit -m 'Updated' && find -iname '*.org' | xargs touch")
               ((zerop (shell-command c))))
     (vc-push)))
 
