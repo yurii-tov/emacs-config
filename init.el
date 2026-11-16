@@ -1994,10 +1994,11 @@ The tunnel reconnects every 5 seconds if dropped, and exits on success."
   (interactive (let* ((name (completing-read "Run tunnel: " ssh-tunnels))
                       (tunnel (alist-get (intern name) ssh-tunnels)))
                  (list name tunnel)))
-  (async-shell-command (format "while :; do ssh -o ServerAliveInterval=180 %s && exit 0 || sleep 5s; done"
-                               tunnel)
-                       (format "*tunnel:%s*" name))
-  (message "Running tunnel: %s" tunnel))
+  (let ((default-directory "~"))
+    (async-shell-command (format "while :; do ssh -o ServerAliveInterval=180 %s && exit 0 || sleep 5s; done"
+                                 tunnel)
+                         (format "*tunnel:%s*" name))
+    (message "Running tunnel: %s" tunnel)))
 
 
 ;; Web browser
