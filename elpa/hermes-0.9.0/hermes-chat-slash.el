@@ -782,11 +782,107 @@ Unavailable or stale reads offer no candidates and never edit the input."
                                         predicate)))
               :hermes-path-owner snapshot :exclusive 'no)))))
 
+(defun hermes-chat--command-choice-rows (result)
+  "Return (CANDIDATE . ANNOTATION) rows for the catalog in RESULT.
+Each command is a \"/NAME\" candidate annotated with its description.
+Each subcommand follows its parent as \"/NAME SUB\", annotated with the
+parent's description, so a narrowed list still says what the pair does."
+  (let ((commands (hermes-chat--catalog-candidates result))
+        (rows nil))
+    (dolist (pair commands)
+      (push (cons (concat "/" (car pair)) (or (cdr pair) "")) rows))
+    (dolist (entry (hermes-chat--maplike-entries (hermes-transport--get result 'sub)))
+      (when-let* ((name (hermes-chat--subcommand-name (car-safe entry)))
+                  (description (or (cdr (assoc name commands))
+                                   (concat "subcommand of /" name))))
+        (dolist (sub (delq nil (mapcar #'hermes-chat--scalar-string
+                                       (hermes-chat--listify (cdr-safe entry)))))
+          (push (cons (concat "/" name " " sub) description) rows))))
+    (nreverse rows)))
+
+(defun hermes-chat--command-completion-table (rows)
+  "Return a completion table over ROWS that annotates each candidate.
+ROWS are (CANDIDATE . ANNOTATION) cells; catalogue order is kept."
+  (let ((candidates (mapcar #'car rows)))
+    (lambda (string predicate action)
+      (if (eq action 'metadata)
+          `(metadata
+            (category . hermes-slash-command)
+            (annotation-function
+             . ,(lambda (candidate)
+                  (when-let* ((annotation (cdr (assoc candidate rows))))
+                    (and (not (string-empty-p annotation))
+                         (concat "  " (propertize annotation 'face 'shadow))))))
+            (display-sort-function . identity)
+            (cycle-sort-function . identity))
+        (complete-with-action action candidates string predicate)))))
+
+(defvar hermes-chat--command-history nil
+  "Minibuffer history for `hermes-chat-show-commands'.")
+
+(defun hermes-chat--read-command-choice (rows)
+  "Read one command from ROWS in the minibuffer and return the text.
+Candidates are annotated with their descriptions.  Free text is
+accepted, so an argument or a command missing from the catalog can still
+be typed."
+  (completing-read "Hermes command: "
+                   (hermes-chat--command-completion-table rows)
+                   nil nil nil 'hermes-chat--command-history))
+
+(defun hermes-chat--insert-command (command buffer lifetime)
+  "Insert COMMAND into the composer of chat BUFFER, which must own LIFETIME.
+An existing draft is never edited: COMMAND goes to the kill ring instead."
+  (unless (and (buffer-live-p buffer)
+               (with-current-buffer buffer
+                 (hermes-chat--current-lifetime-p lifetime)))
+    (user-error
+     "The chat that listed these commands has changed; run /commands again"))
+  (if (with-current-buffer buffer
+        (save-restriction
+          (widen)
+          (not (string-empty-p (hermes-chat-input-string)))))
+      (progn
+        (kill-new command)
+        (message "Composer has a draft; copied %s to the kill ring" command))
+    (with-current-buffer buffer
+      (save-restriction
+        (widen)
+        (goto-char (point-max))
+        (insert command " ")))
+    (let ((window (or (get-buffer-window buffer) (display-buffer buffer))))
+      (when window
+        (select-window window)
+        (goto-char (point-max))))))
+
+(defun hermes-chat--choose-command (rows buffer lifetime)
+  "Read one of ROWS in the minibuffer and insert it into chat BUFFER.
+BUFFER and LIFETIME identify the chat that owns the catalog; an empty
+choice inserts nothing."
+  (when-let* ((choice (hermes-chat--read-command-choice rows))
+              (command (hermes-transport--non-empty-string
+                        (string-trim choice))))
+    (hermes-chat--insert-command command buffer lifetime)))
+
+(defun hermes-chat--show-command-choice (result buffer lifetime)
+  "Prompt for one command from catalog RESULT and insert it into BUFFER.
+BUFFER's chat must still own LIFETIME.  A catalog warning is reported in
+the echo area; an empty catalog falls back to the
+`hermes-chat-commands-mode' listing."
+  (let ((warning (hermes-chat--result-string result 'warning))
+        (rows (hermes-chat--command-choice-rows result)))
+    (when (hermes-transport--non-empty-string warning)
+      (message "%s" warning))
+    (if rows
+        (hermes-chat--choose-command rows buffer lifetime)
+      (display-buffer (hermes-chat--commands-view result buffer lifetime)))))
+
 (defun hermes-chat-show-commands ()
-  "Fetch the dashboard slash command catalog and show it in a help buffer.
-The catalog never enters the transcript.  In that buffer,
-\\<hermes-chat-commands-mode-map>\\[hermes-chat-commands-insert] \
-inserts the command at point into this chat's composer."
+  "Read a slash command from the dashboard catalog in the minibuffer.
+Each candidate is annotated with its description and each subcommand is
+offered as \"/COMMAND SUB\".  The chosen command is inserted into this
+chat's composer; an existing draft is never edited, so the command goes
+to the kill ring instead.  The catalog never enters the transcript.  The
+catalog is fetched first and the prompt opens when it lands."
   (interactive nil hermes-chat-mode)
   (let ((buffer (current-buffer))
         (lifetime hermes-chat--lifecycle-generation)
@@ -795,8 +891,9 @@ inserts the command at point into this chat's composer."
      client
      :resolve (lambda (result)
                 (hermes-chat--in-lifetime buffer lifetime
-                  (display-buffer
-                   (hermes-chat--commands-view result buffer lifetime))))
+                  (setq hermes-chat--commands-cache
+                        (hermes-chat--catalog-candidates result))
+                  (hermes-chat--show-command-choice result buffer lifetime)))
      :reject (lambda (message)
                (hermes-chat--in-lifetime buffer lifetime
                  (hermes-chat--command-error message))))))
@@ -926,26 +1023,7 @@ draft is never edited: the command goes to the kill ring instead."
         (owner hermes-chat-commands--owner))
     (unless command (user-error "No command on this line"))
     (pcase-let ((`(,buffer ,lifetime) owner))
-      (unless (and (buffer-live-p buffer)
-                   (with-current-buffer buffer
-                     (hermes-chat--current-lifetime-p lifetime)))
-        (user-error "The chat that listed these commands has changed; run /commands again"))
-      (if (with-current-buffer buffer
-            (save-restriction
-              (widen)
-              (not (string-empty-p (hermes-chat-input-string)))))
-          (progn
-            (kill-new command)
-            (message "Composer has a draft; copied %s to the kill ring" command))
-        (with-current-buffer buffer
-          (save-restriction
-            (widen)
-            (goto-char (point-max))
-            (insert command " ")))
-        (let ((window (or (get-buffer-window buffer) (display-buffer buffer))))
-          (when window
-            (select-window window)
-            (goto-char (point-max))))))))
+      (hermes-chat--insert-command command buffer lifetime))))
 
 (defvar hermes-chat--native-slash-commands nil
   "Native in-client slash commands as (NAMES . HANDLER) entries.
@@ -1066,7 +1144,7 @@ Interactively, a prefix argument prompts for the focus topic."
 (defun hermes-chat--alias-content (target arg)
   "Return slash content for alias TARGET with original ARG."
   (when-let* ((command (hermes-transport--non-empty-string
-			(string-trim (or target "")))))
+                        (string-trim (or target "")))))
     (string-join
      (delq nil (list (concat "/" (string-remove-prefix "/" command))
                      (hermes-transport--non-empty-string arg)))
