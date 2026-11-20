@@ -251,10 +251,20 @@ CONTEXT is a plist of :used and :max token counts."
             (hermes-chat--abbrev-tokens (plist-get context :used))
             (hermes-chat--abbrev-tokens max))))
 
+(defun hermes-chat--clock (seconds &optional tenths)
+  "Return SECONDS as the shared clock: 12s, 4:26 or 1:02:03.
+With TENTHS, keep one decimal below ten seconds, as in 1.8s, for quick
+tool calls whose whole seconds would mostly read 0s or 1s."
+  (let ((s (max 0 (floor seconds))))
+    (cond ((and tenths (< seconds 9.95)) (format "%.1fs" (max 0 seconds)))
+          ((< s 60) (format "%ds" s))
+          ((< s 3600) (format "%d:%02d" (/ s 60) (% s 60)))
+          (t (format "%d:%02d:%02d" (/ s 3600) (/ (% s 3600) 60) (% s 60))))))
+
 (defun hermes-chat--format-duration (duration)
-  "Return DURATION as a compact seconds string, or nil."
+  "Return DURATION, seconds or backend text, as the shared clock, or nil."
   (cond
-   ((numberp duration) (format "%.1fs" duration))
+   ((numberp duration) (hermes-chat--clock duration t))
    ((stringp duration) duration)))
 
 (defun hermes-chat--format-status-event (event)
@@ -582,12 +592,19 @@ An opening fence without its closing delimiter extends to the buffer end."
             (font-lock-append-text-property start end 'face 'markdown-code-face))
           (goto-char (min (point-max) (1+ end))))))))
 
+(defconst hermes-chat--markdown-regex-uri
+  (concat "\\<" markdown-regex-uri)
+  "Like `markdown-regex-uri', but only at the start of a word.
+Markdown's own regexp has no boundary before the scheme, so prose such as
+\"profile:\" or \"metadata:\" fontifies as a \"file:\" or \"data:\" link.")
+
 (defun hermes-chat--fontify-markdown-buffer (&optional native)
   "Fontify the owned temporary Markdown buffer, using NATIVE language faces.
 Fence labels select only programming major modes.  This is not a sandbox
 for installed mode code; suppress hooks throughout work in each owned buffer
 and bypass Markdown's shared-buffer native fontifier."
-  (let ((markdown-fontify-code-blocks-natively nil))
+  (let ((markdown-fontify-code-blocks-natively nil)
+        (markdown-regex-uri hermes-chat--markdown-regex-uri))
     (delay-mode-hooks
       (markdown-mode)
       (font-lock-ensure)

@@ -39,8 +39,10 @@
 (require 'hermes-chat-format)
 (require 'hermes-chat-buffer)
 (require 'hermes-chat-todos)
+(require 'hermes-session-control)
 (require 'hermes-chat-images)
 (require 'hermes-chat-prompts)
+(require 'hermes-connectors)
 (require 'hermes-notifications)
 (require 'hermes-session-title)
 
@@ -466,11 +468,30 @@ stops its poll) instead of being called by name from this file.")
          (when-let* ((valid (plist-get owner :view-valid-p)))
            (and (funcall valid owner) (plist-get owner :view))))))
 
+(defconst hermes-chat--work-cadence 5
+  "Seconds between roster reads while a chat or its work view is visible.")
+
+(defcustom hermes-chat-work-hidden-cadence 30
+  "Seconds between roster reads of chats no window displays.
+Hidden chats are read only while `hermes-chat-work-indicator' shows their
+work in the mode line; visible chats are read every few seconds."
+  :type 'natnum
+  :group 'hermes)
+
+(defvar hermes-chat-work-indicator)
+
+(defun hermes-chat--work-hidden-polling-p ()
+  "Return non-nil when hidden chats' rosters are read on a slow cadence."
+  (bound-and-true-p hermes-chat-work-indicator))
+
+(defvar hermes-chat--work-kinds '(:delegates :processes)
+  "Roster kinds each chat reads: workers and background processes.")
+
 (defun hermes-chat--work-cancel-timer (owner)
-  "Unpublish and cancel OWNER's cadence timer."
+  "Cancel OWNER's poll timer, if any."
   (let ((timer (plist-get owner :timer)))
     (setf (plist-get owner :timer) nil)
-    (when (cdr timer) (cancel-timer (cdr timer)))))
+    (when (timerp timer) (cancel-timer timer))))
 
 (defun hermes-chat--work-stop ()
   "Release observation resources and return the detached owner.
@@ -480,18 +501,12 @@ Report uncertainty for dispatched worker controls whose receipts are lost."
     (setq hermes-chat--work-owner nil)
     (when owner
       (hermes-chat--work-cancel-timer owner)
-      (when-let* ((context (plist-get owner :request)))
-        (setf (plist-get owner :request) nil)
+      (dolist (entry (plist-get owner :inflight))
         (hermes-dashboard-transport-cancel-owner-requests
-         (plist-get owner :client) context))
+         (plist-get owner :client) (cdr entry)))
+      (setf (plist-get owner :inflight) nil)
       (when-let* ((settle (plist-get owner :settle)))
-        (funcall settle owner))
-      (when-let* ((token (plist-get owner :adoption)))
-        (setf (plist-get owner :adoption) nil)
-        (hermes-dashboard-transport-cancel-owner-requests
-         (plist-get owner :client) token))
-      (hermes-dashboard-transport-cancel-owner-requests
-       (plist-get owner :client) owner))
+        (funcall settle owner)))
     owner))
 
 (defun hermes-chat--work-publish-detached (owner)
@@ -501,107 +516,185 @@ Report uncertainty for dispatched worker controls whose receipts are lost."
     ;; renderer checks the exact view cross-link, even after buffer reuse.
     (run-at-time 0 nil render owner)))
 
-(defconst hermes-chat--work-cadence 5
-  "Seconds between ordinary observation cycles; also the first retry delay.")
+(defvar hermes-chat-work-changed-hook nil
+  "Normal hook run in a chat buffer after its observed work changed.")
 
-(defconst hermes-chat--work-retry-cap 60
-  "Maximum seconds a failing observation source waits before retrying.")
+(defun hermes-chat--work-changed (owner)
+  "Announce a roster change to OWNER's chat header and work view."
+  (setf (plist-get owner :published) (float-time))
+  (with-current-buffer (plist-get owner :buffer)
+    (when-let* ((settle (plist-get owner :settle)))
+      (funcall settle owner))
+    (run-hooks 'hermes-chat-work-changed-hook)
+    (force-mode-line-update)
+    (hermes-chat--notify-state-change)))
 
-(defvar hermes-chat--work-clock #'float-time
-  "Function returning the current time in seconds for retry deadlines.")
+(defun hermes-chat--work-release (owner kind context)
+  "Release OWNER's KIND read CONTEXT and its pending transport request."
+  (setf (alist-get kind (plist-get owner :inflight) nil 'remove) nil)
+  (hermes-dashboard-transport-cancel-owner-requests (plist-get owner :client) context))
 
-(defun hermes-chat--work-source-eligible-p (owner source)
-  "Return non-nil when OWNER's SOURCE is bound and not paused."
-  (let ((binding (plist-get owner :runtime)))
-    (and (stringp binding) (not (string-empty-p binding))
-         (not (plist-get (plist-get owner source) :paused)))))
+(defun hermes-chat--work-received (owner kind context result)
+  "Replace OWNER's KIND snapshot with RESULT of read CONTEXT.
+An invalid RESULT is a failed read and leaves the snapshot unchanged.
+CONTEXT is (KIND SENT), SENT being when the read was sent."
+  (hermes-chat--work-release owner kind context)
+  (pcase (condition-case nil
+             (list (if (eq kind :delegates)
+                       (hermes-transport-work-subagents result)
+                     (hermes-transport-work-processes result)))
+           (error nil))
+    (`(,all)
+     (let ((previous (plist-get (plist-get owner kind) :rows))
+           ;; Persisted failures are history, never live control targets.
+           (rows (seq-remove (lambda (row) (plist-get row :persisted)) all))
+           (now (float-time)))
+       ;; Unchanged rows keep identity, so pending tails and controls survive.
+       (setf (plist-get owner kind)
+             (list :sid (plist-get owner :runtime)
+                   :rows (mapcar (lambda (row) (or (car (member row previous)) row)) rows)
+                   :failures (seq-filter (lambda (row) (plist-get row :persisted)) all)
+                   :observed now))
+       (when (eq kind :delegates)
+         (setf (plist-get owner :events)
+               (hermes-chat--work-retire (plist-get owner :events) previous rows
+                                         (cadr context) now))))
+     (hermes-chat--work-changed owner))))
 
-(defun hermes-chat--work-source-due-p (owner source)
-  "Return non-nil when OWNER's eligible SOURCE has no pending retry backoff."
-  (and (hermes-chat--work-source-eligible-p owner source)
-       (<= (or (plist-get (plist-get owner source) :retry-at) 0)
-           (funcall hermes-chat--work-clock))))
+(defun hermes-chat--work-failed (owner kind context message)
+  "Release OWNER's KIND read CONTEXT after rejection MESSAGE.
+The snapshot stays as it was.  Stop reading KIND when the backend lacks it."
+  (hermes-chat--work-release owner kind context)
+  (when (and (stringp message) (> (length message) 0)
+             (eql (get-text-property 0 'hermes-rpc-code message) -32601))
+    (push kind (plist-get owner :unsupported))))
 
-(defun hermes-chat--work-retry-delay (failures)
-  "Return the backoff in seconds after FAILURES consecutive failures."
-  (min hermes-chat--work-retry-cap
-       (* hermes-chat--work-cadence (expt 2 (1- (min (max failures 1) 8))))))
+(defun hermes-chat--work-request (owner kind)
+  "Send one bounded KIND roster read for OWNER."
+  (let* ((context (list kind (float-time)))
+         (current (lambda ()
+                    (and (hermes-chat--work-current-p owner)
+                         (eq context (alist-get kind (plist-get owner :inflight))))))
+         (hermes-dashboard-transport-dispatch-guard current)
+         (hermes-dashboard-transport-request-owner context)
+         (hermes-dashboard-transport-request-timeout 10)
+         (hermes-dashboard-transport-request-lossless-result t))
+    (setf (alist-get kind (plist-get owner :inflight)) context)
+    (condition-case nil
+        (funcall (if (eq kind :delegates)
+                     #'hermes-dashboard-transport-subagent-list
+                   #'hermes-dashboard-transport-process-list)
+                 (plist-get owner :client)
+                 :resolve (lambda (result)
+                            (when (funcall current)
+                              (hermes-chat--work-received owner kind context result)))
+                 :reject (lambda (message)
+                           (when (funcall current)
+                             (hermes-chat--work-failed owner kind context message)))
+                 :session-id (plist-get owner :runtime))
+      (error (when (funcall current)
+               (hermes-chat--work-failed owner kind context nil))))))
 
-(defun hermes-chat--work-next-delay (owner)
-  "Return seconds until OWNER's next cycle: the cadence or the earliest retry."
-  (let* ((now (funcall hermes-chat--work-clock))
-         (due (delq nil (mapcar (lambda (source)
-                                  (and (hermes-chat--work-source-eligible-p owner source)
-                                       (or (plist-get (plist-get owner source) :retry-at)
-                                           now)))
-                                '(:delegates :processes)))))
-    (max hermes-chat--work-cadence (- (if due (apply #'min due) now) now))))
+(defun hermes-chat--work-poll (owner)
+  "Read each supported roster kind of OWNER that has no read in flight.
+Callers choose the cadence; visibility does not gate a read."
+  (when (and (hermes-chat--work-current-p owner)
+             (stringp (plist-get owner :runtime))
+             (not (string-empty-p (plist-get owner :runtime)))
+             (hermes-dashboard-transport-client-ready-p (plist-get owner :client)))
+    (dolist (kind hermes-chat--work-kinds)
+      (unless (or (memq kind (plist-get owner :unsupported))
+                  (alist-get kind (plist-get owner :inflight)))
+        (hermes-chat--work-request owner kind)))))
 
-(defun hermes-chat--work-eligible-p (owner)
-  "Return non-nil when OWNER can request either observation source."
-  (and (hermes-chat--work-current-p owner)
-       (or (hermes-chat--work-source-eligible-p owner :delegates)
-           (hermes-chat--work-source-eligible-p owner :processes))
-       (hermes-dashboard-transport-client-ready-p (plist-get owner :client))
-       (hermes-chat--work-visible-p owner)))
+(defun hermes-chat--work-arm (owner delay &optional hidden)
+  "Run OWNER's next roster read after DELAY seconds.
+HIDDEN non-nil marks the timer as the slow cadence of a hidden chat;
+`initial' marks the one read a chat gets on bind whatever its visibility."
+  (setf (plist-get owner :hidden) hidden
+        (plist-get owner :timer)
+        (run-at-time delay nil #'hermes-chat--work-tick owner)))
 
-(defun hermes-chat--work-schedule (owner delay)
-  "Schedule OWNER's next refresh after DELAY without sending from a hook."
-  (when (and (hermes-chat--work-eligible-p owner)
-             (not (plist-get owner :cycle))
-             (not (plist-get owner :timer)))
-    (let ((token (list nil)))
-      (setf (plist-get owner :timer) token)
-      (setcdr token
-              (run-at-time
-               delay nil
-               (lambda ()
-                 (when (and (hermes-chat--work-current-p owner)
-                            (eq token (plist-get owner :timer)))
-                   (setf (plist-get owner :timer) nil)
-                   (hermes-chat--work-refresh owner))))))))
+(defun hermes-chat--work-expire (owner now)
+  "Drop OWNER's expired events and republish if its roster changed by NOW.
+Retention is time-based, so the roster can change without any read: compare
+it with the roster at the last publication."
+  (let ((before (hermes-chat--work-roster owner (or (plist-get owner :published) now))))
+    (setf (plist-get owner :events)
+          (hermes-chat--work-prune
+           (plist-get owner :events)
+           (hermes-chat--work-snapshot-rows (plist-get owner :delegates)
+                                            (plist-get owner :runtime))
+           now))
+    (unless (equal before (hermes-chat--work-roster owner now))
+      (hermes-chat--work-changed owner))))
+
+(defun hermes-chat--work-tick (owner)
+  "Read OWNER's rosters, then rearm while it stays attached.
+A visible chat rearms at `hermes-chat--work-cadence'.  A hidden one reads
+and rearms at `hermes-chat-work-hidden-cadence' while the mode-line
+indicator wants its counts, and otherwise reads only on bind.  Publish
+retention expiry even when reads fail or are unsupported.  A superseded
+timer that fires while a newer one is pending does nothing."
+  (unless (memq (plist-get owner :timer) timer-list)
+    (setf (plist-get owner :timer) nil)
+    (let ((visible (hermes-chat--work-visible-p owner))
+          (polling (hermes-chat--work-hidden-polling-p)))
+      (when (and (hermes-chat--work-current-p owner)
+                 (or visible polling (eq (plist-get owner :hidden) 'initial)))
+        (hermes-chat--work-expire owner (float-time))
+        (hermes-chat--work-poll owner)
+        (cond (visible (hermes-chat--work-arm owner hermes-chat--work-cadence))
+              (polling (hermes-chat--work-arm owner hermes-chat-work-hidden-cadence t))
+              (t (setf (plist-get owner :hidden) nil)))))))
 
 (defun hermes-chat--work-visibility (&optional departing)
-  "Reconcile existing chat owners, excluding optional DEPARTING frame.
-Window hooks only arm timers; they never send requests during redisplay."
+  "Run each chat's poll timer at the cadence its visibility needs.
+A visible chat or work view reads fast; a hidden chat reads slowly while
+`hermes-chat-work-indicator' is on, and not at all otherwise.  Ignore
+windows on DEPARTING frame.  Visibility never touches snapshots, and window
+hooks only arm timers; reads run from the timer."
   (dolist (buffer (buffer-list))
-    (with-current-buffer buffer
-      (when-let* ((owner hermes-chat--work-owner))
-        (let ((visible (and (hermes-chat--work-current-p owner)
-                            (hermes-chat--work-visible-p owner departing))))
-          (unless (eq (not visible) (not (plist-get owner :visible)))
-            (setf (plist-get owner :visible) visible)
-            (dolist (source '(:delegates :processes))
-              (when (plist-get owner source)
-                (setf (plist-get (plist-get owner source) :coverage) 'stale)))
-            (force-mode-line-update)
-            (when-let* ((render (plist-get owner :render)))
-              (funcall render owner)))
-          (if visible
-              (hermes-chat--work-schedule owner 0)
-            (hermes-chat--work-cancel-timer owner)))))))
+    (when-let* ((owner (buffer-local-value 'hermes-chat--work-owner buffer)))
+      (let ((timer (plist-get owner :timer)))
+        (cond
+         ((not (hermes-chat--work-current-p owner))
+          (hermes-chat--work-cancel-timer owner))
+         ((hermes-chat--work-visible-p owner departing)
+          (when (or (not timer) (plist-get owner :hidden))
+            (hermes-chat--work-cancel-timer owner)
+            (hermes-chat--work-arm owner 0)))
+         ;; Keep the read a hidden chat gets on bind.
+         ((and timer (eq (plist-get owner :hidden) 'initial)))
+         ((not (hermes-chat--work-hidden-polling-p))
+          (hermes-chat--work-cancel-timer owner))
+         ((not (and timer (plist-get owner :hidden)))
+          (hermes-chat--work-cancel-timer owner)
+          (hermes-chat--work-arm owner hermes-chat-work-hidden-cadence t)))))))
 
 (defun hermes-chat--work-window-change (_window)
   "Reconcile visibility before redisplaying _WINDOW."
   (hermes-chat--work-visibility))
 
-(defun hermes-chat--work-bind (client runtime key)
-  "Attach observations to CLIENT, RUNTIME and verified durable KEY.
-A new binding never inherits an unverified key or prior request authority."
+(defun hermes-chat--work-bind (client runtime)
+  "Attach observations to CLIENT and live session RUNTIME, starting empty."
   (let ((detached (hermes-chat--work-stop)))
     (setq hermes-chat--work-owner
           (list :buffer (current-buffer) :generation hermes-chat--work-generation
                 :lifetime hermes-chat--lifecycle-generation
                 :instance (copy-tree hermes-instance) :profile hermes-chat--profile
                 :client client :connection (hermes-dashboard-transport-client-generation client)
-                :runtime runtime :key key :request nil :timer nil :cycle nil :adoption nil
-                :delegates nil :processes nil :controls nil
-                :visible nil :view nil :view-valid-p nil :render nil :refresh nil :settle nil
+                :runtime runtime :delegates nil :processes nil :events nil :published nil
+                :inflight nil :unsupported nil :timer nil :hidden nil
+                :controls nil
+                :view nil :view-valid-p nil :render nil :refresh nil :settle nil
                 :current-p #'hermes-chat--work-current-p))
     (let ((owner hermes-chat--work-owner))
       (setf (plist-get owner :refresh)
             (lambda ()
-              (when (hermes-chat--work-current-p owner)
+              ;; Details alone never authorize a read of a hidden chat.
+              (when (and (hermes-chat--work-current-p owner)
+                         (hermes-chat--work-visible-p owner))
                 (with-current-buffer (plist-get owner :buffer)
                   (hermes-chat-work-refresh))))))
     ;; Iconification need not change window state.  Focus notifications cover
@@ -610,41 +703,42 @@ A new binding never inherits an unverified key or prior request authority."
     (add-hook 'pre-redisplay-functions #'hermes-chat--work-window-change)
     (add-hook 'delete-frame-functions #'hermes-chat--work-visibility)
     (hermes-chat--work-visibility)
+    ;; One read per kind soon, visible or not: hidden chats need counts too.
+    (unless (hermes-chat--work-visible-p hermes-chat--work-owner)
+      (hermes-chat--work-cancel-timer hermes-chat--work-owner)
+      (hermes-chat--work-arm hermes-chat--work-owner 0 'initial))
     (hermes-chat--work-publish-detached detached)))
 
-(defun hermes-chat--work-adopt-key (owner token result)
-  "Accept RESULT's durable key only for OWNER's exact metadata read TOKEN."
-  (when (and (hermes-chat--work-current-p owner)
-             (eq token (plist-get owner :adoption)))
-    (setf (plist-get owner :adoption) nil
-          (plist-get owner :key) (hermes-transport-work-string result 'session_key))
-    (with-current-buffer (plist-get owner :buffer)
-      (hermes-chat--work-schedule owner 0)
-      (force-mode-line-update))))
+(defun hermes-chat--work-legacy-p (owner)
+  "Return non-nil when OWNER was built by an older, incompatible release.
+Such owners keep sources without session snapshots and token-wrapped timers
+whose closures call functions with older signatures."
+  (not (and (plist-member owner :inflight) (plist-member owner :events))))
 
-(defun hermes-chat--work-read-key (owner)
-  "Read OWNER's durable key without an explicit rename or runtime change.
-The backend title getter may flush an already pending session title."
-  (let* ((token (list 'work-adoption))
-         (client (plist-get owner :client))
-         (hermes-dashboard-transport-request-owner token)
-         (hermes-dashboard-transport-request-timeout 10)
-         (settle (lambda (result) (hermes-chat--work-adopt-key owner token result))))
-    (setf (plist-get owner :adoption) token)
-    (condition-case nil
-        (hermes-dashboard-transport-session-title-fetch
-         client :session-id (plist-get owner :runtime)
-         :resolve settle :reject (lambda (_error) (funcall settle nil)))
-      ((error quit)
-       (hermes-dashboard-transport-cancel-owner-requests client token)
-       (funcall settle nil)))))
+(defun hermes-chat--work-retire-legacy ()
+  "Release this chat's legacy work owner without calling its old closures.
+Cancel its timer and every request it may own; never run its settle or render
+functions, which belong to the older release."
+  (let ((owner hermes-chat--work-owner)
+        (client (plist-get hermes-chat--work-owner :client)))
+    (cl-incf hermes-chat--work-generation)
+    (setq hermes-chat--work-owner nil)
+    (pcase (plist-get owner :timer)
+      ((and timer (pred timerp)) (cancel-timer timer))
+      (`(,_ . ,(and timer (pred timerp))) (cancel-timer timer)))
+    (dolist (token (list (plist-get owner :request) (plist-get owner :adoption) owner))
+      (when token
+        (hermes-dashboard-transport-cancel-owner-requests client token)))))
 
 (defun hermes-chat--work-activate ()
   "Activate observations for an already attached chat after ordered reload.
-Preserve existing owners, including their pollers and pending reads.  A legacy
-stored ID can be a runtime fallback, so fetch metadata with no explicit title
-to obtain the missing durable key.  The backend may flush a pending title.
-Never restart, resume, or change the chat's input."
+Preserve a compatible owner, and replace one left by an older release with
+a fresh owner for the same attachment.  Never restart, resume, or change the
+chat's input."
+  (when (and (derived-mode-p 'hermes-chat-mode)
+             hermes-chat--work-owner
+             (hermes-chat--work-legacy-p hermes-chat--work-owner))
+    (hermes-chat--work-retire-legacy))
   (when (and (derived-mode-p 'hermes-chat-mode)
              (not hermes-chat--work-owner)
              hermes-chat--dashboard-session-ready-p
@@ -653,168 +747,40 @@ Never restart, resume, or change the chat's input."
              (stringp hermes-chat--dashboard-active-session-id)
              (not (string-empty-p hermes-chat--dashboard-active-session-id)))
     (hermes-chat--work-bind
-     hermes-chat--dashboard-client hermes-chat--dashboard-active-session-id nil)
-    (hermes-chat--work-read-key hermes-chat--work-owner)))
+     hermes-chat--dashboard-client hermes-chat--dashboard-active-session-id)))
 
-(defun hermes-chat--work-settle (owner context snapshot)
-  "Publish SNAPSHOT only for OWNER's exact outstanding CONTEXT."
-  (when (and (hermes-chat--work-current-p owner)
-             (eq context (plist-get owner :request)))
-    (with-current-buffer (plist-get owner :buffer)
-      (setf (plist-get owner :request) nil
-            (plist-get owner (plist-get context :source)) snapshot)
-      (when-let* ((settle (plist-get owner :settle)))
-        (funcall settle owner))
-      (let (published)
-        (unwind-protect
-            (progn
-              (hermes-chat--notify-state-change)
-              (setq published t))
-          ;; Hooks may exit nonlocally or replace the attachment.  Finish only
-          ;; this cycle on failure; a later refresh can retry both sources.
-          (when (and (hermes-chat--work-current-p owner)
-                     (eq (plist-get context :cycle) (plist-get owner :cycle)))
-            (hermes-chat--work-stage
-             owner (plist-get context :cycle)
-             (and published (eq (plist-get context :source) :delegates)
-                  :processes))))))))
+(defun hermes-chat--work-process-notice-p (event)
+  "Return non-nil when EVENT is a background process notice."
+  (and (equal (plist-get event :event) "status.update")
+       (equal (plist-get event :status) "process")))
 
-(defun hermes-chat--work-rejection-reason (message)
-  "Return a permanent pause reason for rejection MESSAGE, or nil if transient.
-Only JSON-RPC method-not-found proves the backend lacks the inventory."
-  (and (stringp message) (> (length message) 0)
-       (eql (get-text-property 0 'hermes-rpc-code message) -32601)
-       "Backend lacks this inventory; press g to retry"))
+(defun hermes-chat--work-event-p (event)
+  "Return non-nil when EVENT reports a worker's lifecycle or activity."
+  (and (stringp (plist-get event :subagent-id))
+       (string-prefix-p "subagent." (or (plist-get event :event) ""))))
 
-(defun hermes-chat--work-failed (owner context &optional permanent)
-  "Settle OWNER's source after failure of CONTEXT, retaining only stale rows.
-With PERMANENT reason, pause automatic refresh until an explicit retry.
-Otherwise retry on the cadence after bounded per-source exponential backoff."
-  (when (and (hermes-chat--work-current-p owner)
-             (eq context (plist-get owner :request)))
-    (hermes-dashboard-transport-cancel-owner-requests (plist-get owner :client) context)
-    (let* ((previous (plist-get owner (plist-get context :source)))
-           (failures (1+ (or (plist-get previous :failures) 0)))
-           (delay (hermes-chat--work-retry-delay failures)))
-      (hermes-chat--work-settle
-       owner context
-       (list :rows (plist-get previous :rows)
-             :coverage 'stale :paused (and permanent t) :failures failures
-             :retry-at (and (not permanent) (+ (funcall hermes-chat--work-clock) delay))
-             :reason (or permanent
-                         (format "Refresh failed; retrying in %ds (g retries now)" delay))
-             :observed (plist-get previous :observed))))))
-
-(defun hermes-chat--work-received (owner context result)
-  "Validate RESULT for OWNER and settle CONTEXT without affecting the turn."
-  (when (and (hermes-chat--work-current-p owner)
-             (eq context (plist-get owner :request)))
-    (let ((snapshot
-           (condition-case nil
-               (if (eq (plist-get context :source) :delegates)
-                   (hermes-transport-work-subagents result)
-                 (hermes-transport-work-processes result))
-             (error nil))))
-      (if (not snapshot)
-          ;; A malformed answer is a contract problem, not a transient one.
-          (hermes-chat--work-failed
-           owner context "Unexpected inventory response; press g to retry")
-        (when (eq (plist-get context :source) :delegates)
-          ;; Keep unchanged worker occurrences across cadence reads.  Changed or
-          ;; disappeared rows retire pending input and tail authority.
-          (setf (plist-get snapshot :rows)
-                (mapcar (lambda (row)
-                          (or (car (member row (plist-get
-                                               (plist-get owner :delegates) :rows)))
-                              row))
-                        (plist-get snapshot :rows))))
-        (setf (plist-get snapshot :observed) (float-time)
-              (plist-get snapshot :paused) (eq (plist-get snapshot :coverage) 'partial)
-              (plist-get snapshot :reason)
-              (and (eq (plist-get snapshot :coverage) 'partial)
-                   "Partial inventory; press g to retry"))
-        (hermes-chat--work-settle owner context snapshot)))))
-
-(defun hermes-chat--work-stage (owner cycle source)
-  "Advance OWNER's exact CYCLE to SOURCE or finish its sequential refresh."
-  (when (and (hermes-chat--work-current-p owner)
-             (eq cycle (plist-get owner :cycle))
-             (not (plist-get owner :request)))
-    (cond
-     ((not (and source (hermes-chat--work-eligible-p owner)))
-      (setf (plist-get owner :cycle) nil)
-      (hermes-chat--work-schedule owner (hermes-chat--work-next-delay owner)))
-     ((not (hermes-chat--work-source-due-p owner source))
-      (hermes-chat--work-stage owner cycle (and (eq source :delegates) :processes)))
-     (t (hermes-chat--work-request owner cycle source)))))
-
-(defun hermes-chat--work-request (owner cycle source)
-  "Register one bounded SOURCE request for OWNER's current CYCLE."
-  (let* ((context (list :id nil :cycle cycle :source source))
-         (hermes-dashboard-transport-dispatch-guard
-          (lambda ()
-            (and (hermes-chat--work-current-p owner)
-                 (eq context (plist-get owner :request))
-                 (hermes-chat--work-visible-p owner))))
-         (hermes-dashboard-transport-request-owner context)
-         (hermes-dashboard-transport-request-timeout 10)
-         (hermes-dashboard-transport-request-lossless-result t))
-    (setf (plist-get owner :request) context)
-    (condition-case nil
-        (let ((id (apply (if (eq source :delegates)
-                             #'hermes-dashboard-transport-subagent-list
-                           #'hermes-dashboard-transport-process-list)
-                         (plist-get owner :client)
-                         :resolve (lambda (result)
-                                    (hermes-chat--work-received owner context result))
-                         :reject (lambda (message)
-                                   (hermes-chat--work-failed
-                                    owner context
-                                    (hermes-chat--work-rejection-reason message)))
-                         (list :session-id (plist-get owner :runtime)))))
-          (when (and (hermes-chat--work-current-p owner)
-                     (eq context (plist-get owner :request)))
-            (setf (plist-get context :id) id)))
-      (error (hermes-chat--work-failed owner context)))))
-
-(defun hermes-chat--work-refresh (owner)
-  "Start one sequential observation cycle for eligible OWNER."
-  (when (and (hermes-chat--work-eligible-p owner)
-             (not (plist-get owner :cycle)))
-    (hermes-chat--work-cancel-timer owner)
-    (let ((cycle (list nil)))
-      (setf (plist-get owner :cycle) cycle)
-      (hermes-chat--work-stage owner cycle :delegates))))
+(defun hermes-chat--work-note-event (event)
+  "Merge subagent EVENT into this chat's roster.
+A background process notice reads the rosters at once."
+  (when-let* ((owner hermes-chat--work-owner)
+              ((hermes-chat--work-current-p owner)))
+    (if (hermes-chat--work-process-notice-p event)
+        (hermes-chat--work-poll owner)
+      (let* ((events (plist-get owner :events))
+             (next (hermes-chat--work-apply-event events event (float-time))))
+        (setf (plist-get owner :events) next)
+        ;; Every event advances its worker's :seen; only other changes show.
+        (unless (hermes-chat--work-same-events-p next events)
+          (hermes-chat--work-changed owner))))))
 
 (defun hermes-chat-work-refresh ()
-  "Refresh this chat's observed work; rearm a paused source when idle.
-Also retry a backing-off source now and reset its backoff.  Repeated refresh
-while busy coalesces; it does not authorize a later retry."
+  "Read this chat's workers and processes now.
+This also retries kinds the backend earlier reported as unsupported."
   (interactive nil hermes-chat-mode)
-  (when-let* ((owner hermes-chat--work-owner))
-    (when (and (hermes-chat--work-current-p owner)
-               (not (plist-get owner :cycle)))
-      (dolist (source '(:delegates :processes))
-        (when (plist-get owner source)
-          (setf (plist-get (plist-get owner source) :paused) nil
-                (plist-get (plist-get owner source) :failures) nil
-                (plist-get (plist-get owner source) :retry-at) nil
-                (plist-get (plist-get owner source) :coverage) 'stale)))
-      (hermes-chat--work-cancel-timer owner)
-      (let ((cycle (list nil)) published)
-        ;; Reserve before rendering: a view hook may refresh or replace us.
-        (setf (plist-get owner :cycle) cycle)
-        (unwind-protect
-            (progn
-              (force-mode-line-update)
-              (when-let* ((render (plist-get owner :render)))
-                (funcall render owner))
-              (setq published t))
-          (when (and (hermes-chat--work-current-p owner)
-                     (eq cycle (plist-get owner :cycle)))
-            (if published
-                (hermes-chat--work-stage owner cycle :delegates)
-              (setf (plist-get owner :cycle) nil))))))))
+  (when-let* ((owner hermes-chat--work-owner)
+              ((hermes-chat--work-current-p owner)))
+    (setf (plist-get owner :unsupported) nil)
+    (hermes-chat--work-poll owner)))
 
 (defun hermes-chat--forget-live-dashboard-session ()
   "Forget the live dashboard session while preserving the durable session key."
@@ -823,6 +789,9 @@ while busy coalesces; it does not authorize a later retry."
     (setq hermes-chat--dashboard-session-ready-p nil
           hermes-chat--dashboard-running-p nil
           hermes-chat--dashboard-active-session-id nil)
+    ;; After detaching, so an open controls view shows it disconnected.
+    (hermes-session-control-forget)
+    (hermes-chat--cancel-automation-resume)
     (hermes-chat--work-publish-detached detached)))
 
 (defun hermes-chat--stop-dashboard-client ()
@@ -1194,6 +1163,8 @@ When INTERRUPTED-P is non-nil, also clear the interrupt request state."
   (hermes-chat--dashboard-note-session-info event)
   (hermes-chat--dashboard-note-server-queued-terminal event)
   (cond
+   ((eq (plist-get event :type) 'session-control)
+    (hermes-session-control-accept event))
    ;; A background (`/btw') result is owned by its own session and arrives out
    ;; of band, so handle it before the stale-turn guard would drop it and apart
    ;; from the active turn's assistant entry.
@@ -1316,21 +1287,6 @@ The shared CLIENT contributes no session identity on a shared socket."
        result '(stored_session_id resumed session_key))
       active-id))
 
-(defun hermes-chat--dashboard-goal-status-projection (output)
-  "Return compact goal projection parsed from vanilla Hermes OUTPUT.
-Return nil for unknown output and leave the current goal state unchanged."
-  (cond
-   ((and (stringp output) (string-prefix-p "No active goal." output))
-    '(:goal nil))
-   ((and (stringp output)
-         (string-match "\\([0-9]+\\)/\\([0-9]+\\) turns" output))
-    (let ((running (string-prefix-p "⊙ Goal (active," output)))
-      (list :goal
-            (list :status (if running "active" "inactive")
-                  :running running
-                  :turns-used (string-to-number (match-string 1 output))
-                  :max-turns (string-to-number (match-string 2 output))))))))
-
 (defun hermes-chat--dashboard-record-session (client result)
   "Record live and durable session identifiers from RPC RESULT in this buffer.
 CLIENT is the shared transport client; it is used only to bind the
@@ -1354,8 +1310,9 @@ shared client."
         (when (equal cwd hermes-chat--dashboard-create-cwd)
           (setq hermes-chat--dashboard-create-cwd nil)))
       (when (hermes-dashboard-transport-client-p client)
-        (hermes-chat--work-bind
-         client active-id (hermes-transport-work-string result 'session_key))
+        ;; Same attachment keeps its roster; a new session starts empty.
+        (unless (hermes-chat--work-current-p hermes-chat--work-owner)
+          (hermes-chat--work-bind client active-id))
         (hermes-chat--ensure-idle-listener client (current-buffer))
         (hermes-dashboard-transport-subscribe-session
          client hermes-chat--dashboard-token active-id))
@@ -1369,7 +1326,8 @@ shared client."
      "clarify.request" `((session_id . ,session-id)) payload)))
 
 (defun hermes-chat--dashboard-restore-pending-clarify (result)
-  "Restore RESULT's pending clarification through the live event path."
+  "Restore RESULT's pending connection and clarification requests."
+  (hermes-connectors--restore result)
   (when-let* ((event (hermes-chat--dashboard-pending-clarify-event result))
               (key (hermes-chat--prompt-event-key event)))
     (let* ((existing (gethash key hermes-chat--pending-prompts))
@@ -1380,9 +1338,11 @@ shared client."
       (hermes-chat--render-dashboard-turn-event assistant-id event))))
 
 (defun hermes-chat--dashboard-result-live-turn-p (result)
-  "Return non-nil when RESULT reports the resumed session is still busy."
+  "Return non-nil when RESULT reports the resumed session is still busy.
+An in-flight snapshot of a turn that already failed is not a live turn."
   (or (hermes-transport--get result 'running)
-      (hermes-transport--get result 'inflight)))
+      (when-let* ((inflight (hermes-transport--get result 'inflight)))
+        (not (hermes-transport-retained-turn-failure inflight)))))
 
 (defun hermes-chat--dashboard-context-current-p
     (client generation &optional session-id)
@@ -1392,15 +1352,22 @@ shared client."
        (or (null session-id)
            (equal session-id hermes-chat--dashboard-active-session-id))))
 
+(defun hermes-chat--dashboard-bootstrap-connection-p (owner)
+  "Return non-nil when OWNER's client still has the connection OWNER began on."
+  (= (plist-get owner :queue-connection)
+     (hermes-dashboard-transport-client-generation (plist-get owner :client))))
+
 (defun hermes-chat--dashboard-bootstrap-current-p (owner)
   "Return non-nil when OWNER still owns this buffer's fresh session setup."
   (and (eq owner hermes-chat--session-bootstrap)
-       (or (not (eq (plist-get owner :kind) 'queued))
-           (and (eq (plist-get owner :queue-context)
-                    hermes-chat--unsettled-submit-context)
-                (= (plist-get owner :queue-connection)
-                   (hermes-dashboard-transport-client-generation
-                    (plist-get owner :client)))))
+       (pcase (plist-get owner :kind)
+         ('queued
+          (and (eq (plist-get owner :queue-context)
+                   hermes-chat--unsettled-submit-context)
+               (hermes-chat--dashboard-bootstrap-connection-p owner)))
+         ;; A resume receipt is meaningful only on the socket that sent it.
+         ('resume (hermes-chat--dashboard-bootstrap-connection-p owner))
+         (_ t))
        (hermes-chat--dashboard-context-current-p (plist-get owner :client)
                                                   (plist-get owner :generation)
                                                   (plist-get owner :session-id))))
@@ -1439,6 +1406,23 @@ shared client."
         (funcall continuation)
       ((error quit) (funcall (plist-get owner :reject) (error-message-string err))))))
 
+(defun hermes-chat--dashboard-resume-bootstrap (owner buffer resolver)
+  "Resume BUFFER's stored session for OWNER through RESOLVER.
+OWNER keeps the reservation until the receipt, so no other resume starts
+meanwhile and only this resume's receipt reaches RESOLVER."
+  (setf (plist-get owner :phase) 'resume)
+  (condition-case err
+      (hermes-dashboard-transport-session-resume
+       (plist-get owner :client) hermes-chat--session-id
+       :cols (hermes-chat--dashboard-cols)
+       :profile hermes-chat--profile
+       :resolve resolver
+       :reject (lambda (message)
+                 (hermes-chat--in-buffer buffer
+                   (hermes-chat--dashboard-abort-bootstrap owner message))))
+    ((error quit)
+     (hermes-chat--dashboard-abort-bootstrap owner (error-message-string err)))))
+
 (defun hermes-chat--dashboard-start-bootstrap (owner buffer resolver)
   "Create OWNER's session in BUFFER through RESOLVER.
 Omit an unselected remote cwd: only the backend knows the selected
@@ -1473,29 +1457,8 @@ profile's workspace.  Keep the reservation through create and overrides."
           owner (error-message-string err)))))))
 
 (defun hermes-chat--dashboard-refresh-goal ()
-  "Refresh compact goal state through vanilla Hermes `/goal status'."
-  (when (and (hermes-chat--dashboard-client-live-p
-              hermes-chat--dashboard-client)
-             hermes-chat--dashboard-active-session-id)
-    (let ((buffer (current-buffer))
-          (client hermes-chat--dashboard-client)
-          (generation hermes-chat--lifecycle-generation)
-          (session-id hermes-chat--dashboard-active-session-id))
-      (hermes-dashboard-transport-command-dispatch
-       client "goal" "status"
-       :session-id session-id
-       :resolve
-       (lambda (result)
-         (hermes-chat--in-buffer buffer
-           (when (hermes-chat--dashboard-context-current-p
-                  client generation session-id)
-             (when-let* ((output (hermes-chat--dashboard-result-string
-                                  result '(output)))
-                         (projection
-                          (hermes-chat--dashboard-goal-status-projection output)))
-               (setq hermes-chat--goal (plist-get projection :goal))
-               (force-mode-line-update)))))
-       :reject #'ignore))))
+  "Read the attached session's structured automation snapshot."
+  (hermes-session-control--read))
 
 (defun hermes-chat--dashboard-idle-context (on-idle)
   "Return an idle-reconciliation context calling ON-IDLE when settled."
@@ -1594,19 +1557,31 @@ profile's workspace.  Keep the reservation through create and overrides."
    "Hermes session is still running; prompt was not submitted." t)
   (hermes-chat--settle-transport-entries assistant-id 'error))
 
-(defun hermes-chat--dashboard-insert-inflight-assistant ()
-  "Insert and return an assistant entry for a resumed in-flight turn."
+(defun hermes-chat--dashboard-insert-inflight-assistant (&optional turn-start)
+  "Insert and return an assistant entry for a resumed in-flight turn.
+With TURN-START the entry opens a backend-owned turn that has no visible
+user entry, so it bounds its turn the way a user entry does."
   (let* ((entry (hermes-chat--make-entry 'assistant "" 'streaming))
          (assistant-id (plist-get entry :id)))
-    (hermes-chat--insert-entry entry)
+    (hermes-chat--insert-entry
+     (if turn-start (plist-put entry :turn-start t) entry))
     assistant-id))
 
 (defun hermes-chat--dispatch-accepted-transport-event
     (assistant-id dashboard-p event)
   "Route admitted EVENT for ASSISTANT-ID, using dashboard policy if DASHBOARD-P."
   (hermes-chat--status-rule-note-event)
-  (unless (and dashboard-p
-               (funcall hermes-chat--busy-submit-event-function event))
+  (when dashboard-p
+    (hermes-chat--work-note-event event)
+    (hermes-session-control-observe event))
+  ;; Worker lifecycle feeds the roster and the spawning row's live card, not
+  ;; per-child transcript rows.
+  (unless (or (and dashboard-p
+                   (hermes-connectors--handle-event event))
+              (and dashboard-p hermes-chat--work-owner
+                   (hermes-chat--work-event-p event))
+              (and dashboard-p
+                   (funcall hermes-chat--busy-submit-event-function event)))
     (if (and dashboard-p (hermes-chat--assistant-independent-event-p event))
         (hermes-chat--handle-transport-event nil event)
       (when dashboard-p
@@ -1645,12 +1620,13 @@ profile's workspace.  Keep the reservation through create and overrides."
             (setq event (list :type 'status :status "closed"
                               :content (plist-get event :content))))
           (hermes-chat--dispatch-accepted-transport-event
-           assistant-id dashboard-p event))))))
+           assistant-id dashboard-p event)
+          (when dashboard-p (hermes-connectors--observe event)))))))
 
 (defun hermes-chat--assistant-independent-event-p (event)
   "Return non-nil when dashboard EVENT does not belong to an assistant turn."
   (or (hermes-chat--session-info-event-p event)
-      (eq (plist-get event :type) 'background)
+      (memq (plist-get event :type) '(background session-control))
       (hermes-chat--reconnecting-status-event-p event)
       (hermes-chat--reconnected-status-event-p event)))
 
@@ -1679,7 +1655,7 @@ profile's workspace.  Keep the reservation through create and overrides."
                      (equal hermes-chat--dashboard-active-session-id
                             (plist-get context :session-id)))
                 (plist-get context :assistant-id)
-              (hermes-chat--dashboard-insert-inflight-assistant))))
+              (hermes-chat--dashboard-insert-inflight-assistant t))))
       (hermes-chat--clear-active-tools)
       (setq hermes-chat--dashboard-running-p t
             hermes-chat--pending-assistant-id assistant-id
@@ -1875,10 +1851,15 @@ RESOLVE and REJECT receive the asynchronous request result."
          (hermes-dashboard-transport-dispatch-guard
           (or (plist-get context :application-guard)
               hermes-dashboard-transport-dispatch-guard))
+         (truncation (plist-get context :truncation))
          (send (lambda ()
                  (hermes-dashboard-transport-prompt-submit
                   client prompt :session-id session
                   :queued (and (plist-get context :application-guard) t)
+                  :truncate-before-row-id (plist-get truncation :row-id)
+                  :confirm-truncate (and truncation t)
+                  :confirm-deep-truncate (plist-get truncation :deep)
+                  :confirm-empty-truncate (plist-get truncation :empty)
                   :resolve resolve
                   :reject (if record
                               (lambda (_)
@@ -2408,7 +2389,11 @@ GENERATION and SESSION-ID, when non-nil, retain an interactive request's owner."
     (when (hermes-chat--dashboard-context-current-p client generation session-id)
       (hermes--promise-then
        (hermes-dashboard-transport-api-request-async
-        "GET" "/api/fs/list" :query (list (cons 'path directory)) :client client)
+        "GET" "/api/fs/list"
+        :query (append (list (cons 'path directory))
+                       (when hermes-chat--profile
+                         (list (cons 'profile hermes-chat--profile))))
+        :client client)
        (lambda (result)
          (hermes-chat--in-buffer buffer
            (when (hermes-chat--dashboard-context-current-p
@@ -2462,27 +2447,34 @@ without file-name handlers or home-directory abbreviation."
 With CREATE-P non-nil the resolver handles a fresh `session.create' result,
 so pending create-time runtime overrides are applied before ACTION.  RESUME-P
 applies only retry-owned overrides and otherwise discards them.  REJECT receives
-an override failure."
+an override failure.  BOOTSTRAP is the exact setup or resume owner; a resume
+owner is released once its receipt arrives."
   (lambda (result)
     (hermes-chat--in-buffer buffer
       (when (if bootstrap
                 (hermes-chat--dashboard-bootstrap-current-p bootstrap)
               (hermes-chat--dashboard-context-current-p client generation))
-        (hermes-chat--dashboard-record-session client result)
-        (when (hermes-chat--dashboard-result-live-turn-p result)
-          (hermes-chat--dashboard-restore-inflight-turn client)
-          (hermes-chat--dashboard-bind-stream-callback
-           client hermes-chat--pending-assistant-id)
-          (hermes-chat--dashboard-restore-pending-clarify result))
-        (cond
-         (create-p
-          (hermes-chat--dashboard-apply-bootstrap-overrides
-           bootstrap client (lambda () (funcall action client)) generation reject))
-         (resume-p
-          (hermes-chat--dashboard-apply-retry-overrides
-           client (lambda () (funcall action client)) generation reject))
-         (t
-          (funcall action client)))))))
+        (let ((attach
+               (lambda ()
+                 (hermes-chat--dashboard-record-session client result)
+                 (when (hermes-chat--dashboard-result-live-turn-p result)
+                   (hermes-chat--dashboard-restore-inflight-turn client)
+                   (hermes-chat--dashboard-bind-stream-callback
+                    client hermes-chat--pending-assistant-id)
+                   (hermes-chat--dashboard-restore-pending-clarify result))
+                 (cond
+                  (create-p
+                   (hermes-chat--dashboard-apply-bootstrap-overrides
+                    bootstrap client (lambda () (funcall action client))
+                    generation reject))
+                  (resume-p
+                   (hermes-chat--dashboard-apply-retry-overrides
+                    client (lambda () (funcall action client)) generation reject))
+                  (t
+                   (funcall action client))))))
+          (if (and bootstrap resume-p)
+              (hermes-chat--dashboard-finish-bootstrap bootstrap attach)
+            (funcall attach)))))))
 
 (defun hermes-chat--dashboard-create-title ()
   "Return the canonical title for a fresh dashboard session."
@@ -2516,14 +2508,16 @@ When dashboard session bootstrap fails, call REJECT with the error message."
       (hermes-chat--dashboard-apply-retry-overrides
        client (lambda () (funcall action client)) generation reject))
      (hermes-chat--session-id
-      (hermes-dashboard-transport-session-resume
-       client hermes-chat--session-id
-       :cols (hermes-chat--dashboard-cols)
-       :profile hermes-chat--profile
-       :resolve (hermes-chat--dashboard-action-resolver
-                 buffer client action generation nil reject t)
-       :reject (hermes-chat--dashboard-action-rejecter
-                buffer client generation reject)))
+      ;; This resume, explicit or automatic, supersedes a pending retry.
+      (hermes-chat--cancel-automation-resume)
+      (let* ((scoped-reject (hermes-chat--dashboard-action-rejecter
+                             buffer client generation reject))
+             (owner (hermes-chat--dashboard-begin-bootstrap
+                     client 'resume scoped-reject)))
+        (hermes-chat--dashboard-resume-bootstrap
+         owner buffer
+         (hermes-chat--dashboard-action-resolver
+          buffer client action generation nil scoped-reject t owner))))
      (t
       (let* ((scoped-reject (hermes-chat--dashboard-action-rejecter
                              buffer client generation reject))
@@ -2569,10 +2563,64 @@ DISPLAY is the compact user-turn text shown instead of CONTENT."
     (hermes-chat--queue-or-submit-content content display)))
 
 (defun hermes-chat--dashboard-handle-reconnected (_event)
-  "Render a ready socket while leaving the durable session lazy."
+  "Render a ready socket while leaving the durable session lazy.
+A session that was running a goal, loop or heartbeat resumes at once:
+the backend reaps detached sessions, which would silently stop it."
   (hermes-chat--insert-local-status "Dashboard socket reconnected" 'ready)
-  (hermes-chat--set-header-state
-   :status 'ready :activity "Socket ready; session resumes on next action"))
+  (if (and hermes-chat--session-id hermes-session-control--resume-p)
+      (progn
+        (hermes-chat--set-header-state :status 'ready :activity "Socket ready")
+        (hermes-chat--dashboard-resume-automation))
+    (hermes-chat--set-header-state
+     :status 'ready :activity "Socket ready; session resumes on next action")))
+
+(defconst hermes-chat--automation-resume-delays '(1 2 4)
+  "Seconds before each retry of a refused automation resume.")
+
+(defvar-local hermes-chat--automation-resume-timer nil
+  "The pending retry of this chat's automation resume, or nil.")
+
+(defun hermes-chat--cancel-automation-resume ()
+  "Cancel this chat's pending automation resume retry."
+  (when hermes-chat--automation-resume-timer
+    (cancel-timer hermes-chat--automation-resume-timer)
+    (setq hermes-chat--automation-resume-timer nil)))
+
+(defun hermes-chat--dashboard-resume-automation (&optional attempt)
+  "Resume this chat's stored session, which was running automation.
+The backend briefly refuses a session whose old connection is still
+settling (4007, 4009).  Retry those after each of
+`hermes-chat--automation-resume-delays' from index ATTEMPT, while this
+chat stays on the same connection."
+  (let ((buffer (current-buffer))
+        (attempt (or attempt 0)))
+    (hermes-chat--with-dashboard-session
+     nil buffer #'ignore
+     (lambda (message)
+       (let ((delay (nth attempt hermes-chat--automation-resume-delays))
+             (client hermes-chat--dashboard-client)
+             (generation hermes-chat--lifecycle-generation))
+         (if (not (and delay (stringp message)
+                       (memq (get-text-property 0 'hermes-rpc-code message)
+                             '(4007 4009))))
+             (hermes-chat--dashboard-bootstrap-error message)
+           (hermes-chat--cancel-automation-resume)
+           (let ((timer (timer-create)))
+             (timer-set-time timer (time-add nil delay))
+             (timer-set-function
+              timer
+              (lambda ()
+                (hermes-chat--in-buffer buffer
+                  (when (and (eq timer hermes-chat--automation-resume-timer)
+                             (hermes-chat--dashboard-context-current-p client generation)
+                             (not (hermes-chat--dashboard-session-attached-p))
+                             ;; Another setup will attach; never queue behind it.
+                             (not (hermes-chat--dashboard-bootstrap-current-p
+                                   hermes-chat--session-bootstrap)))
+                    (setq hermes-chat--automation-resume-timer nil)
+                    (hermes-chat--dashboard-resume-automation (1+ attempt))))))
+             (timer-activate timer)
+             (setq hermes-chat--automation-resume-timer timer))))))))
 
 ;;; Session title and background tasks
 

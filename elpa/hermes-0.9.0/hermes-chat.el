@@ -159,9 +159,11 @@ Inside a project, its root basename becomes the canonical session label."
 (require 'hermes-chat-attachments)
 (require 'hermes-chat-todos)
 (require 'hermes-chat-dashboard)
+(require 'hermes-chat-cards)
 (require 'hermes-chat-models)
 (require 'hermes-chat-handoff)
 (require 'hermes-chat-slash)
+(require 'hermes-chat-failure)
 
 (defconst hermes-chat--transient-entry-roles '(status progress tool)
   "Entry roles used for compact transport status/progress lines.")
@@ -186,7 +188,7 @@ Inside a project, its root basename becomes the canonical session label."
     (setq hermes-chat--model model))
   (when-let* ((agent (plist-get event :agent-name)))
     (setq hermes-chat--agent-name agent))
-  (dolist (key '(:reasoning-effort :fast :yolo))
+  (dolist (key '(:reasoning-effort :service-tier :fast :yolo))
     (when-let* ((tail (plist-member event key)))
       (setq hermes-chat--runtime-flags
             (plist-put hermes-chat--runtime-flags key (cadr tail)))))
@@ -257,7 +259,9 @@ reasoning.  Keep the activity neutral and use empty content only to clear it."
        (list :status status
              :activity (if (hermes-chat--interrupted-status-p status)
                            "Interrupted"
-                         (or (hermes-chat--event-string
+                         (or (and-let* ((failure (plist-get event :failure)))
+                               (hermes-chat-failure-title failure))
+                             (hermes-chat--event-string
                               event '(:content :error))
                              "Transport error")))))
     ('unknown (list :status 'error
@@ -312,10 +316,14 @@ line."
       (append (list (cons 'set-dashboard-running running))
               (unless running '((drain)))))))
 
-(defun hermes-chat--turn-terminal-suffix (status)
-  "Return the ordered terminal settlement effects for STATUS."
-  (list (cons 'settle status) '(finish) '(clear-pending)
-        '(set-dashboard-running) '(drain)))
+(defun hermes-chat--turn-terminal-suffix (status &optional event)
+  "Return the ordered terminal settlement effects for STATUS.
+A committed user row named by terminal EVENT first binds the turn."
+  (append
+   (and-let* ((row (plist-get event :user-row-id)))
+     (list (cons 'bind-turn-row row)))
+   (list (cons 'settle status) '(finish) '(clear-pending)
+         '(set-dashboard-running) '(drain))))
 
 (defun hermes-chat--turn-done-effects (event status)
   "Return the ordered effect list for a `done' EVENT with header STATUS.
@@ -326,14 +334,16 @@ re-submits any queued turn."
          (list '(clear-tools)
                (cons 'refresh-header status)
                (cons 'clear-prompts event)
-               (cons (if (plist-get event :response-previewed)
-                         'mark-previewed
-                       'mark-done)
+               (cons (cond ((plist-get event :response-transformed)
+                            'mark-transformed)
+                           ((plist-get event :response-previewed)
+                            'mark-previewed)
+                           (t 'mark-done))
                      (plist-get event :content))
                (and-let* ((warning (plist-get event :warning)))
                  (cons 'warning warning))
                '(drop-thinking)))
-   (hermes-chat--turn-terminal-suffix 'done)))
+   (hermes-chat--turn-terminal-suffix 'done event)))
 
 (defun hermes-chat--turn-suppressed-effects (event status)
   "Return the ordered effect list for a `suppressed-terminal' EVENT.
@@ -346,7 +356,8 @@ assistant entry, so the reply placeholder keeps its text."
          (cons 'clear-prompts (plist-get event :original))
          (cons 'mark-status (plist-get event :settle-status))
          '(drop-thinking))
-   (hermes-chat--turn-terminal-suffix (plist-get event :settle-status))))
+   (hermes-chat--turn-terminal-suffix (plist-get event :settle-status)
+                                      (plist-get event :original))))
 
 (defun hermes-chat--turn-error-effects (event status)
   "Return the ordered effect list for an `error' EVENT with header STATUS."
@@ -362,8 +373,10 @@ assistant entry, so the reply placeholder keeps its text."
          (list '(clear-tools)
                (cons 'refresh-header status)
                (cons 'clear-prompts event)
-               (cons 'append-error (cons content estatus)))))
-     (hermes-chat--turn-terminal-suffix estatus))))
+               (if-let* ((failure (plist-get event :failure)))
+                   (cons 'mark-failure (cons failure estatus))
+                 (cons 'append-error (cons content estatus))))))
+     (hermes-chat--turn-terminal-suffix estatus event))))
 
 (defun hermes-chat--turn-reduce-status (state event now)
   "Return (NEW-STATE . EFFECTS) for a status EVENT on STATE at time NOW.
@@ -481,6 +494,36 @@ and `upsert-entry'.  Other types return (STATE)."
   (hermes-chat--settle-transport-entries assistant-id 'done)
   (setq hermes-chat--dashboard-interim-assistant-id assistant-id))
 
+(defun hermes-chat--interim-precedes-p (interim-id assistant-id)
+  "Return non-nil when INTERIM-ID is ASSISTANT-ID's sealed predecessor.
+Walk back from ASSISTANT-ID and stop at the first user entry, so an
+interim from before a steer or redirect never counts."
+  (let ((node (gethash assistant-id hermes-chat--nodes))
+        found)
+    (while (and node (not found)
+                (setq node (ewoc-prev hermes-chat--ewoc node)))
+      (let ((entry (ewoc-data node)))
+        (cond ((equal (plist-get entry :id) interim-id) (setq found t))
+              ((eq (plist-get entry :role) 'user) (setq node nil)))))
+    found))
+
+(defun hermes-chat--mark-transformed-assistant (assistant-id content)
+  "Settle transformed final CONTENT as ASSISTANT-ID's authoritative reply.
+An output hook rewrote the final after streaming, so CONTENT replaces the
+streamed text instead of extending it.  When nothing streamed since the
+latest interim of this turn, CONTENT replaces that sealed interim."
+  (let ((interim-id hermes-chat--dashboard-interim-assistant-id)
+        (text (or content "")))
+    (if (and interim-id
+             (not (equal interim-id assistant-id))
+             (string-empty-p
+              (or (hermes-chat--entry-content-by-id assistant-id) ""))
+             (hermes-chat--interim-precedes-p interim-id assistant-id))
+        (progn
+          (hermes-chat--remove-entry assistant-id)
+          (hermes-chat--mark-assistant interim-id 'done text t))
+      (hermes-chat--mark-assistant assistant-id 'done text t))))
+
 (defun hermes-chat--mark-previewed-assistant (assistant-id content)
   "Settle previewed CONTENT on its interim entry, or ASSISTANT-ID as fallback."
   (let* ((interim-id hermes-chat--dashboard-interim-assistant-id)
@@ -523,7 +566,8 @@ stays side-effect-light."
     ((guard (null assistant-id)) nil)
     (`(reasoning-row . ,active) (hermes-chat--reasoning-row assistant-id active))
     (`(upsert-entry . ,event)
-     (hermes-chat--upsert-transport-entry assistant-id event))
+     (hermes-chat--upsert-transport-entry assistant-id event)
+     (hermes-chat--cards-note-tool assistant-id event))
     (`(message . ,text) (message "%s" text))
     (`(warning . ,text)
      (hermes-chat--insert-local-status (format "warning: %s" text) 'done))
@@ -532,13 +576,18 @@ stays side-effect-light."
      (hermes-chat--mark-assistant
       assistant-id 'done
       (hermes-chat--assistant-done-content assistant-id content) t))
+    (`(mark-transformed . ,content)
+     (hermes-chat--mark-transformed-assistant assistant-id content))
     (`(mark-previewed . ,content)
      (hermes-chat--mark-previewed-assistant assistant-id content))
     (`(append-error ,content . ,status)
      (hermes-chat--append-assistant-content assistant-id content status))
+    (`(mark-failure ,failure . ,status)
+     (hermes-chat--mark-assistant-failure assistant-id failure status))
     (`(mark-status . ,status)
      (hermes-chat--mark-assistant assistant-id status nil t))
     ('(drop-thinking) (hermes-chat--drop-duplicate-thinking assistant-id))
+    (`(bind-turn-row . ,row) (hermes-chat--bind-turn-row assistant-id row))
     (`(settle . ,status)
      (hermes-chat--images-settle assistant-id status)
      (hermes-chat--settle-transport-entries assistant-id status))
@@ -580,7 +629,7 @@ of its own."
 (defun hermes-chat--busy-message ()
   "Return the user-facing busy/backpressure message."
   (concat "A Hermes reply is still pending; use C-c C-i to interrupt, "
-          "C-c C-q to queue, C-c C-s to steer, C-c C-k to "
+          "C-c C-q to queue, C-c C-s to steer, C-c C-m to "
           "interrupt+send, "
           (and (hermes-chat--pending-prompt-p)
                "C-c C-a to answer the prompt, C-c C-d to cancel it, ")
@@ -617,12 +666,13 @@ of its own."
             hermes-chat--server-queued-prior-terminal-p nil))))
 
 (defun hermes-chat--activate-backend-turn (content)
-  "Record CONTENT as a backend-started turn and make it current."
+  "Record CONTENT as a backend-started turn and make it current.
+Return the new user entry's id."
   (when-let* ((assistant-id hermes-chat--pending-assistant-id))
     (hermes-chat--mark-assistant assistant-id 'done nil t)
     (hermes-chat--settle-transport-entries assistant-id 'done)
     (hermes-chat--dashboard-finish-assistant assistant-id))
-  (pcase-let ((`(,_user-id . ,assistant-id)
+  (pcase-let ((`(,user-id . ,assistant-id)
                (hermes-chat--insert-backend-turn content)))
     (hermes-chat--clear-active-tools)
     (hermes-chat-todos--begin assistant-id)
@@ -636,12 +686,15 @@ of its own."
           hermes-chat--process hermes-chat--dashboard-client)
     (hermes-chat--set-header-state
      :status 'pending :activity "Waiting for Hermes"
-     :assistant-id assistant-id)))
+     :assistant-id assistant-id)
+    user-id))
 
 (defun hermes-chat--accept-redirected-content (context)
   "Insert CONTEXT's accepted input at the held stream boundary.
 Events have been held since submission, so the original assistant still ends
-at that boundary even when a terminal event preceded the receipt."
+at that boundary even when a terminal event preceded the receipt.  The entry
+is marked `:redirect': it continues the running turn rather than opening one.
+Return its id."
   (let* ((assistant-id (plist-get context :assistant-id))
          (node (and hermes-chat--nodes (gethash assistant-id hermes-chat--nodes)))
          (entry (and node (ewoc-data node))))
@@ -650,11 +703,13 @@ at that boundary even when a terminal event preceded the receipt."
             (prefix (concat (plist-get entry :stream-prefix) (plist-get entry :content))))
         (hermes-chat--update-entry
          next-id (lambda (next) (hermes-chat--entry-with next :stream-prefix prefix))))))
-  (hermes-chat--insert-entry
-   (hermes-chat--make-entry 'user (plist-get context :content) 'done)
-   (hermes-chat--pending-assistant-node))
-  (when-let* ((admission (plist-get context :admission)))
-    (setf (plist-get admission :assistant-id) hermes-chat--pending-assistant-id)))
+  (let ((entry (hermes-chat--entry-with
+                (hermes-chat--make-entry 'user (plist-get context :content) 'done)
+                :redirect t)))
+    (hermes-chat--insert-entry entry (hermes-chat--pending-assistant-node))
+    (when-let* ((admission (plist-get context :admission)))
+      (setf (plist-get admission :assistant-id) hermes-chat--pending-assistant-id))
+    (plist-get entry :id)))
 
 (defun hermes-chat--message-start-event-p (event)
   "Return non-nil when EVENT is an assistant message start."
@@ -674,32 +729,40 @@ at that boundary even when a terminal event preceded the receipt."
       (funcall callback event))))
 
 (defun hermes-chat--resolve-streaming-busy-submit (context content events)
-  "Activate CONTEXT's streaming CONTENT and replay EVENTS at their boundary."
+  "Activate CONTEXT's streaming CONTENT and replay EVENTS at their boundary.
+Return the new user entry's id."
   (let* ((start (cl-position-if #'hermes-chat--message-start-event-p events))
          (before (if start (seq-take events start) events))
          (after (and start (nthcdr start events))))
     (hermes-chat--replay-busy-submit-events context before)
-    (hermes-chat--activate-backend-turn content)
-    (when-let* ((admission (plist-get context :admission)))
-      (setf (plist-get admission :assistant-id) hermes-chat--pending-assistant-id))
-    (hermes-chat--replay-busy-submit-events context after)))
+    (prog1 (hermes-chat--activate-backend-turn content)
+      (when-let* ((admission (plist-get context :admission)))
+        (setf (plist-get admission :assistant-id) hermes-chat--pending-assistant-id))
+      (hermes-chat--replay-busy-submit-events context after))))
 
 (defun hermes-chat--settle-busy-submit (context result)
   "Settle busy submission CONTEXT from backend RESULT and replay held events."
   (let ((content (plist-get context :content))
         (events (hermes-chat--busy-submit-events context))
         (status (hermes-chat--status-name
-                 (hermes-chat--result-string result 'status))))
+                 (hermes-chat--result-string result 'status)))
+        ;; A receipt may name the committed user row; terminal events
+        ;; carry it otherwise (`hermes-chat--bind-turn-row').
+        (row (hermes-transport--get result 'user_row_id)))
     (hermes-chat--image-admission-ack (plist-get context :admission) result)
     (setq hermes-chat--busy-submit-context nil)
     (pcase status
       ("queued"
        (hermes-chat--record-server-queued-content content)
+       (hermes-chat--bind-row-id hermes-chat--server-queued-user-id row)
        (hermes-chat--replay-busy-submit-events context events))
       ((or "steered" "redirected")
-       (hermes-chat--accept-redirected-content context)
+       (hermes-chat--bind-row-id
+        (hermes-chat--accept-redirected-content context) row)
        (hermes-chat--replay-busy-submit-events context events))
-      (_ (hermes-chat--resolve-streaming-busy-submit context content events)))))
+      (_ (hermes-chat--bind-row-id
+          (hermes-chat--resolve-streaming-busy-submit context content events)
+          row t)))))
 
 (defun hermes-chat--hold-busy-submit-event (event)
   "Hold EVENT while a busy submission awaits the backend policy result."
@@ -836,6 +899,11 @@ extends the input instead of prepending a blank line to it."
 (defun hermes-chat--submit-resolved (context result)
   "Settle CONTEXT from dashboard prompt RESULT."
   (hermes-chat--image-admission-ack (plist-get context :admission) result)
+  (hermes-chat--bind-row-id (plist-get context :user-id)
+                            (hermes-transport--get result 'user_row_id)
+                            (not (plist-get context :display)))
+  (when (plist-get context :truncation)
+    (hermes-chat--request-history-reconcile))
   (when-let* ((record (plist-get (plist-get context :queue-entry) :image-record)))
     (unless (eq (plist-get record :state) 'uncertain)
       (setf (plist-get record :state) 'accepted))
@@ -989,6 +1057,12 @@ extends the input instead of prepending a blank line to it."
     (hermes-chat--clear-submit-context context queue-id)
     (message "Hermes transport failed: %s" message)))
 
+(defvar hermes-chat--submit-truncation nil
+  "Truncation plist for the submission being started, or nil.
+Let-bound by the edit commands: :row-id names the durable user row to rewind
+before, :deep and :empty carry the user's confirmation of removing later
+turns or the whole transcript.")
+
 (defun hermes-chat--make-submit-context (content display queue-entry user assistant)
   "Return transport context for CONTENT, DISPLAY, QUEUE-ENTRY, USER, and ASSISTANT."
   (let ((dashboard-p (hermes-chat--dashboard-default-transport-p)))
@@ -996,6 +1070,7 @@ extends the input instead of prepending a blank line to it."
           :lifetime hermes-chat--lifecycle-generation
           :client nil
           :admission nil
+          :truncation hermes-chat--submit-truncation
           :application-guard nil
           :application-claim nil
           :application-observer nil :application-admitted nil
@@ -2137,40 +2212,127 @@ visible while reading."
        (hermes-chat--read-raw-profile notice)))))
 
 (defun hermes-chat--history-entry (message)
-  "Return a chat entry for a resumed history MESSAGE, or nil to skip it."
-  (let ((role (hermes-transport--scalar-string
-               (hermes-transport--get message 'role)))
-        (text (hermes-transport--scalar-string
-               (hermes-transport--get message 'text))))
-    (pcase role
-      ("user" (and text (hermes-chat--make-entry 'user text 'done)))
-      ("assistant" (and text (hermes-chat--make-entry 'assistant text 'done)))
-      ("tool"
-       (hermes-chat--make-entry
-        'tool
-        (hermes-chat--tool-head
-         (or (hermes-transport--scalar-string
-              (hermes-transport--get message 'name))
-             "tool")
-         (hermes-transport--scalar-string
-          (hermes-transport--get message 'context)))
-        'done)))))
+  "Return a chat entry for a resumed history MESSAGE, or nil to skip it.
+Use the backend's display projection; hidden rows return nil."
+  (when-let* ((projection (hermes-transport-history-projection message)))
+    (let ((role (hermes-transport--scalar-string
+                 (hermes-transport--get message 'role)))
+          (text (hermes-transport--non-empty-string
+                 (hermes-transport-history-text projection))))
+      (pcase role
+        ("user"
+         (and text
+              (let ((entry (hermes-chat--make-entry 'user text 'done)))
+                (when-let* ((row (hermes-transport-row-id
+                                  (hermes-transport--get message 'row_id))))
+                  (setq entry (plist-put entry :turn-row row)))
+                (if-let* ((row-id (hermes-transport-history-row-id message)))
+                    (plist-put entry :row-id row-id)
+                  entry))))
+        ("assistant" (and text (hermes-chat--make-entry 'assistant text 'done)))
+        ("tool"
+         (let ((entry (hermes-chat--make-entry
+                       'tool
+                       (hermes-chat--tool-head
+                        (or (hermes-transport--scalar-string
+                             (hermes-transport--get message 'name))
+                            "tool")
+                        (hermes-transport--scalar-string
+                         (hermes-transport--get message 'context)))
+                       'done)))
+           (if-let* ((call (hermes-transport--non-empty-string
+                            (hermes-transport--get message 'tool_call_id))))
+               (plist-put entry :tool-call-id call)
+             entry)))))))
+
+(defun hermes-chat--history-entries (message)
+  "Return the chat entries for a resumed history MESSAGE, in order.
+An assistant row's reasoning precedes its reply as a collapsed entry."
+  (let ((reasoning (and (equal (hermes-transport--get message 'role) "assistant")
+                        (hermes-transport--non-blank-string
+                         (plist-get (hermes-transport-history-projection message)
+                                    :reasoning)))))
+    (delq nil (list (and reasoning
+                         (hermes-chat--make-entry 'commentary reasoning 'done))
+                    (hermes-chat--history-entry message)))))
 
 (defun hermes-chat--render-history (messages)
   "Insert prior MESSAGES (from `session.resume') into the transcript."
+  (hermes-chat--render-history-entries
+   (mapcan #'hermes-chat--history-entries messages)))
+
+(defun hermes-chat--newest-turn ()
+  "Return (USER-NODE . REPLY-NODES) for the transcript's newest turn.
+REPLY-NODES are the assistant nodes since the last turn boundary, oldest
+first.  USER-NODE is that boundary when it is a user entry, else nil: a
+backend-owned turn shows no prompt to match."
+  (let ((node (ewoc-nth hermes-chat--ewoc -1))
+        replies boundary)
+    (while (and node (not boundary))
+      (let ((entry (ewoc-data node)))
+        (when (eq (plist-get entry :role) 'assistant)
+          (push node replies))
+        (if (hermes-chat--turn-boundary-p entry)
+            (setq boundary node)
+          (setq node (ewoc-prev hermes-chat--ewoc node)))))
+    (cons (and boundary (eq (plist-get (ewoc-data boundary) :role) 'user) boundary)
+          replies)))
+
+(defun hermes-chat--render-retained-failure (result)
+  "Rebuild the failed turn that resume RESULT retained, if any.
+Only an idle session's snapshot is a settled failure; a live one belongs
+to the running turn.  The snapshot carries no row identity, so it is the
+newest turn only when that shows the same prompt and either no reply yet
+or replies echoing the retained partial; the failure then settles the
+last reply, which shows the partial past the earlier segments.
+Otherwise the failed turn follows, prompt included."
+  (when-let* (((not (hermes-chat--dashboard-result-live-turn-p result)))
+              (retained (hermes-transport-retained-turn-failure
+                         (hermes-transport--get result 'inflight))))
+    (pcase-let* ((`(,user . ,replies) (hermes-chat--newest-turn))
+                 (partial (plist-get retained :partial-text))
+                 (same (and user
+                            (equal (plist-get retained :user)
+                                   (plist-get (ewoc-data user) :content))
+                            (or (null replies)
+                                (and partial
+                                     (hermes-chat--text-echoes-p
+                                      partial
+                                      (mapconcat (lambda (node)
+                                                   (plist-get (ewoc-data node) :content))
+                                                 replies " ")))))))
+      (if (and same replies)
+          (let* ((node (car (last replies)))
+                 (entry (hermes-chat-failure-retained-reply
+                         (ewoc-data node) retained
+                         (mapcar (lambda (earlier)
+                                   (plist-get (ewoc-data earlier) :content))
+                                 (butlast replies))))
+                 (owner hermes-chat--session-bootstrap))
+            ;; Bootstrap cleanup removes history entries by identity.
+            (when owner (push entry (plist-get owner :history-entries)))
+            (hermes-chat--preserve-input-point
+              (let ((inhibit-read-only t)
+                    (buffer-undo-list t))
+                (ewoc-set-data node entry)
+                (ewoc-invalidate hermes-chat--ewoc node))))
+        (hermes-chat--render-history-entries
+         (hermes-chat-failure-retained-entries retained (not same)))))))
+
+(defun hermes-chat--render-history-entries (entries)
+  "Insert resumed history ENTRIES into the transcript."
   (let ((owner hermes-chat--session-bootstrap))
-    (dolist (message messages)
-      (when-let* ((entry (hermes-chat--history-entry message)))
-        ;; Retain exact entries before insertion, which can run rendering hooks.
-        (when owner (push entry (plist-get owner :history-entries)))
-        ;; Start the change group inside the undo-disabled transcript boundary.
-        ;; EWOC links before printing; retry retires a failed, now empty node.
-        (hermes-chat--preserve-input-point
-         (let ((inhibit-read-only t)
-               (buffer-undo-list t))
-           (hermes-chat--register-node
-            entry (atomic-change-group (ewoc-enter-last hermes-chat--ewoc entry)))))
-        (hermes-chat--notify-state-change)))))
+    (dolist (entry entries)
+      ;; Retain exact entries before insertion, which can run rendering hooks.
+      (when owner (push entry (plist-get owner :history-entries)))
+      ;; Start the change group inside the undo-disabled transcript boundary.
+      ;; EWOC links before printing; retry retires a failed, now empty node.
+      (hermes-chat--preserve-input-point
+       (let ((inhibit-read-only t)
+             (buffer-undo-list t))
+         (hermes-chat--register-node
+          entry (atomic-change-group (ewoc-enter-last hermes-chat--ewoc entry)))))
+      (hermes-chat--notify-state-change))))
 
 (defun hermes-chat--clear-partial-history (owner)
   "Remove only history entries retained by the current bootstrap OWNER."
@@ -2192,6 +2354,7 @@ visible while reading."
   (hermes-chat--dashboard-record-session client result)
   (hermes-chat--clear-partial-history owner)
   (hermes-chat--render-history (hermes-transport--get result 'messages))
+  (hermes-chat--render-retained-failure result)
   (when (hermes-chat--dashboard-result-live-turn-p result)
     (hermes-chat--dashboard-restore-inflight-turn client))
   (hermes-chat--dashboard-restore-pending-clarify result)
@@ -2281,6 +2444,528 @@ visible while reading."
                        (hermes-chat--drain-queued-message))))))
              :reject #'failed)
           (error (failed (error-message-string err))))))))
+
+;;; Authoritative transcript reconciliation
+
+(defvar-local hermes-chat--history-reconcile nil
+  "Owner of a pending transcript reconciliation, or nil.
+A plist with the :client, :session and :lifetime that requested it, the
+:known node table at that time, and a :phase that is `wait' until the chat
+is idle and `read' while `session.history' is in flight.  :read-nodes is
+the node table when that read started, to tell whether a turn raced it.")
+
+(defun hermes-chat--bind-row-id (entry-id row-id &optional address-p)
+  "Record durable ROW-ID as the turn identity of user entry ENTRY-ID.
+With ADDRESS-P, ROW-ID also addresses the turn for editing.  Do nothing
+unless both exist."
+  (when-let* ((row-id (hermes-transport-row-id row-id))
+              (node (and hermes-chat--nodes
+                         (gethash entry-id hermes-chat--nodes)))
+              (entry (ewoc-data node)))
+    (when (eq (plist-get entry :role) 'user)
+      (setq entry (plist-put entry :turn-row row-id))
+      (ewoc-set-data node (if address-p (plist-put entry :row-id row-id) entry)))))
+
+(defun hermes-chat--request-history-reconcile ()
+  "Repaint the transcript from backend history once this chat is idle.
+Use after the backend rewinds the session, so the transcript never keeps
+turns the session no longer has nor drops any it still has."
+  (when (and hermes-chat--dashboard-client hermes-chat--dashboard-active-session-id)
+    (setq hermes-chat--history-reconcile
+          (list :phase 'wait
+                :client hermes-chat--dashboard-client
+                :session hermes-chat--dashboard-active-session-id
+                :lifetime hermes-chat--lifecycle-generation
+                :known (copy-hash-table hermes-chat--nodes)
+                :read-nodes nil))
+    (hermes-chat--history-reconcile-maybe)))
+
+(defun hermes-chat--history-reconcile-current-p (owner)
+  "Return non-nil when OWNER still belongs to this chat's live session."
+  (and owner
+       (eq owner hermes-chat--history-reconcile)
+       (hermes-chat--current-lifetime-p (plist-get owner :lifetime))
+       (eq (plist-get owner :client) hermes-chat--dashboard-client)
+       (equal (plist-get owner :session) hermes-chat--dashboard-active-session-id)))
+
+(defun hermes-chat--history-reconcile-maybe ()
+  "Read history for a waiting reconciliation once no turn is active."
+  (let ((owner hermes-chat--history-reconcile))
+    (cond
+     ((null owner))
+     ((not (hermes-chat--history-reconcile-current-p owner))
+      (setq hermes-chat--history-reconcile nil))
+     ((and (eq (plist-get owner :phase) 'wait)
+           (not (hermes-chat--active-turn-p)))
+      (setf (plist-get owner :phase) 'read
+            (plist-get owner :read-nodes) (copy-hash-table hermes-chat--nodes))
+      (let ((buffer (current-buffer)))
+        (condition-case err
+            (hermes-dashboard-transport-session-history
+             (plist-get owner :client) (plist-get owner :session)
+             :resolve (lambda (result)
+                        (hermes-chat--in-buffer buffer
+                          (hermes-chat--history-reconciled owner result)))
+             :reject (lambda (message)
+                       (hermes-chat--in-buffer buffer
+                         (hermes-chat--history-reconcile-failed owner message))))
+          (error (hermes-chat--history-reconcile-failed
+                  owner (error-message-string err)))))))))
+
+(defun hermes-chat--history-reconcile-failed (owner message)
+  "Report MESSAGE for reconciliation OWNER, leaving the transcript as is."
+  (when (hermes-chat--history-reconcile-current-p owner)
+    (setq hermes-chat--history-reconcile nil)
+    (hermes-chat--insert-local-status
+     (format "Could not refresh the transcript: %s" message) 'error)))
+
+(defun hermes-chat--history-read-raced-p (owner)
+  "Return non-nil when a turn ran since OWNER's history read started.
+Every turn adds transcript entries; local status lines do not count."
+  (let ((before (plist-get owner :read-nodes)))
+    (catch 'raced
+      (maphash (lambda (id node)
+                 (unless (or (gethash id before)
+                             (eq (plist-get (ewoc-data node) :role) 'status))
+                   (throw 'raced t)))
+               hermes-chat--nodes)
+      nil)))
+
+(defun hermes-chat--history-reconciled (owner result)
+  "Repaint the transcript from history RESULT read for OWNER.
+A turn that ran during the read, even one already finished, makes RESULT
+stale: read again once the chat is idle."
+  (when (hermes-chat--history-reconcile-current-p owner)
+    (if (or (hermes-chat--active-turn-p)
+            (hermes-chat--history-read-raced-p owner))
+        (progn (setf (plist-get owner :phase) 'wait)
+               (hermes-chat--history-reconcile-maybe))
+      (setq hermes-chat--history-reconcile nil)
+      (hermes-chat--repaint-history (hermes-transport--get result 'messages)
+                                    (plist-get owner :known)))))
+
+(defun hermes-chat--bind-turn-row (assistant-id row)
+  "Record committed user ROW as the identity of ASSISTANT-ID's turn.
+The turn opens at the last user entry before ASSISTANT-ID that is not an
+accepted redirect, or at the assistant entry opening a backend-owned turn.
+An identity the submit receipt already bound stays."
+  (let ((node (and hermes-chat--nodes (gethash assistant-id hermes-chat--nodes)))
+        found)
+    (while (and node (not found))
+      (let ((entry (ewoc-data node)))
+        (if (and (hermes-chat--turn-boundary-p entry)
+                 (not (plist-get entry :redirect)))
+            (setq found node)
+          (setq node (ewoc-prev hermes-chat--ewoc node)))))
+    (when-let* ((row (hermes-transport-row-id row))
+                ((and found (not (plist-get (ewoc-data found) :turn-row)))))
+      (ewoc-set-data found (plist-put (ewoc-data found) :turn-row row)))))
+
+(defun hermes-chat--split-turns (items entry-of)
+  "Split ITEMS into one (ROW . ITEMS) per turn, in transcript order.
+ENTRY-OF maps an item to its chat entry.  A turn boundary
+\(`hermes-chat--turn-boundary-p') starts a turn whose ROW is the entry's
+durable :turn-row, or nil without one; items before the first turn form
+the turn `prefix', which is always first.  Pure."
+  (let ((turns (list (list 'prefix))))
+    (dolist (item items)
+      (let ((entry (funcall entry-of item)))
+        (if (hermes-chat--turn-boundary-p entry)
+            (push (list (plist-get entry :turn-row) item) turns)
+          (push item (cdar turns)))))
+    (mapcar (lambda (turn) (cons (car turn) (reverse (cdr turn))))
+            (nreverse turns))))
+
+(defun hermes-chat--ewoc-nodes ()
+  "Return the transcript's EWOC nodes in order."
+  (let ((node (ewoc-nth hermes-chat--ewoc 0)) nodes)
+    (while node
+      (push node nodes)
+      (setq node (ewoc-next hermes-chat--ewoc node)))
+    (nreverse nodes)))
+
+(defun hermes-chat--entry-tool-call-id (entry)
+  "Return the durable tool call id of tool ENTRY, or nil."
+  (and (eq (plist-get entry :role) 'tool)
+       (or (plist-get entry :tool-call-id)
+           (plist-get (plist-get (plist-get entry :metadata) :event)
+                      :tool-call-id))))
+
+(defun hermes-chat--local-presentation-p (entry)
+  "Return non-nil when ENTRY is presentation history cannot rebuild.
+Worker cards qualify, as does any role history never has, such as task
+nodes, diffs and status lines."
+  (or (plist-get entry :card)
+      (not (memq (plist-get entry :role) '(user assistant commentary tool)))))
+
+(defun hermes-chat--same-content-p (node entry)
+  "Return non-nil when NODE already displays history ENTRY's content."
+  (let ((shown (ewoc-data node)))
+    (and (eq (plist-get shown :role) (plist-get entry :role))
+         (not (hermes-chat--entry-tool-call-id shown))
+         (equal (plist-get shown :content) (plist-get entry :content)))))
+
+(defun hermes-chat--repaint-turn (want turn by-call used)
+  "Plan rebuilding history turn WANT over local TURN.
+WANT is a history (ROW . ENTRIES) turn and TURN the local (ROW . NODES)
+turn with the same identity, or nil.  The value is (ITEMS . UPDATES).
+ITEMS lists, in order, WANT's
+entries with each replaced by the local node already showing it: a tool
+row by its call id in BY-CALL, any other entry by equal content in TURN.
+TURN's local presentation stays in place between them, and its failure
+settles the reply when that reply echoes the failure's partial, or stays
+as is when the history has no reply.  The partial is authoritative for
+the reply's text (`hermes-chat-failure-reply-text'); when no node shows
+the reply already, the failed node itself does.  USED marks claimed
+nodes.  The
+\(NODE . ENTRY) pairs in UPDATES refresh a kept node's identity or failure."
+  (let ((pending (cdr turn)) items updates)
+    (cl-flet ((advance (node)
+                ;; Keep TURN's presentation that precedes NODE.
+                (when-let* ((tail (memq node pending)))
+                  (while (not (eq (car pending) node))
+                    (let ((skipped (pop pending)))
+                      (when (hermes-chat--local-presentation-p (ewoc-data skipped))
+                        (push skipped items))))
+                  (setq pending (cdr tail)))))
+      (dolist (entry (cdr want))
+        (let ((node (if-let* ((call (hermes-chat--entry-tool-call-id entry)))
+                        (gethash call by-call)
+                      (seq-find (lambda (node) (hermes-chat--same-content-p node entry))
+                                pending))))
+          (if (or (null node) (gethash node used))
+              (push entry items)
+            (puthash node t used)
+            (advance node)
+            (push node items)
+            (when (eq (plist-get entry :role) 'user)
+              (let ((shown (ewoc-data node)))
+                (unless (and (equal (plist-get shown :row-id) (plist-get entry :row-id))
+                             (equal (plist-get shown :turn-row) (plist-get entry :turn-row)))
+                  (push (cons node (hermes-chat--entry-with
+                                    shown :row-id (plist-get entry :row-id)
+                                    :turn-row (plist-get entry :turn-row)))
+                        updates)))))))
+      ;; Live presentation streamed above the turn's final reply.
+      (let ((reply (and items (not (hermes-chat--node-item-p (car items)))
+                        (eq (plist-get (car items) :role) 'assistant)
+                        (pop items))))
+        (dolist (node pending)
+          (when (hermes-chat--local-presentation-p (ewoc-data node))
+            (push node items)))
+        (when reply (push reply items))))
+    (when-let* ((failed (seq-find (lambda (node)
+                                    (hermes-chat--entry-failure (ewoc-data node)))
+                                  (reverse (cdr turn))))
+                ((not (gethash failed used))))
+      ;; ITEMS is still newest first.
+      (let* ((replies (seq-filter (lambda (item)
+                                    (eq (plist-get (hermes-chat--item-entry item) :role)
+                                        'assistant))
+                                  items))
+             (reply (car replies))
+             (shown (and reply (hermes-chat--item-entry reply)))
+             (partial (plist-get (ewoc-data failed) :content))
+             (text (and reply
+                        (not (string-empty-p (or partial "")))
+                        (hermes-chat-failure-reply-text
+                         partial (plist-get shown :content)
+                         (mapcar (lambda (item)
+                                   (plist-get (hermes-chat--item-entry item) :content))
+                                 (reverse (cdr replies)))))))
+        (cond
+         ((null reply) (push failed items))
+         ((hermes-chat--node-item-p reply)
+          (when text
+            (push (cons reply (hermes-chat--entry-with
+                               shown :status 'error :content text
+                               :metadata (plist-put
+                                          (copy-sequence (plist-get shown :metadata))
+                                          :failure (hermes-chat--entry-failure
+                                                    (ewoc-data failed)))))
+                  updates)))
+         (text
+          ;; The failed node itself shows the reply, so repeating this
+          ;; reconciliation keeps it rather than printing a new one.
+          (puthash failed t used)
+          (setq items (cl-substitute failed reply items :test #'eq))
+          (unless (equal text partial)
+            (push (cons failed (hermes-chat--entry-with
+                                (ewoc-data failed) :status 'error :content text))
+                  updates))))))
+    (cons (nreverse items) updates)))
+
+(defun hermes-chat--node-item-p (item)
+  "Return non-nil when repaint ITEM is a kept EWOC node, not a new entry."
+  (not (keywordp (car-safe item))))
+
+(defun hermes-chat--item-entry (item)
+  "Return the chat entry that repaint ITEM displays."
+  (if (hermes-chat--node-item-p item) (ewoc-data item) item))
+
+(defun hermes-chat--repaint-history (messages known)
+  "Rebuild the transcript from history MESSAGES, its authority for content.
+Every turn shows exactly the history's entries, in its order.  A node
+already showing an entry stays: a tool row or worker card matched by its
+durable call id, anything else by equal content within the turn with the
+same durable user row (or the same tool calls).  That turn's local
+presentation, such as task nodes and diffs, and its failure stay with
+it; anything else is removed, so content from dropped or replaced turns
+never survives.  Local status lines added since KNOWN, a node table
+snapshot, stay, so the notice that caused the repaint remains visible.
+History's user rows bound the rebuilt turns, so repainting the same
+history again changes nothing."
+  (let* ((wanted (hermes-chat--split-turns
+                  (mapcan #'hermes-chat--history-entries messages) #'identity))
+         (local (hermes-chat--split-turns (hermes-chat--ewoc-nodes) #'ewoc-data))
+         (by-row (make-hash-table :test #'eql))
+         (by-call (make-hash-table :test #'equal))
+         (turn-of (make-hash-table :test #'eq))
+         (used (make-hash-table :test #'eq))
+         (claimed (make-hash-table :test #'eq))
+         items updates)
+    (dolist (turn local)
+      (when (and (car turn) (not (gethash (car turn) by-row)))
+        (puthash (car turn) turn by-row))
+      (dolist (node (cdr turn))
+        (puthash node turn turn-of)
+        (when-let* ((call (hermes-chat--entry-tool-call-id (ewoc-data node))))
+          (unless (gethash call by-call) (puthash call node by-call)))))
+    (dolist (want wanted)
+      (let ((turn (or (and (car want) (gethash (car want) by-row))
+                      (seq-some (lambda (entry)
+                                  (when-let* ((call (hermes-chat--entry-tool-call-id entry))
+                                              (node (gethash call by-call)))
+                                    (gethash node turn-of)))
+                                (cdr want)))))
+        (when (gethash turn claimed) (setq turn nil))
+        (when turn (puthash turn t claimed))
+        (pcase-let ((`(,turn-items . ,turn-updates)
+                     (hermes-chat--repaint-turn want turn by-call used)))
+          (setq items (nconc items turn-items)
+                updates (nconc turn-updates updates)))))
+    ;; The notices that caused this repaint stay last.
+    (dolist (node (hermes-chat--ewoc-nodes))
+      (let ((entry (ewoc-data node)))
+        (when (and (eq (plist-get entry :role) 'status)
+                   (not (gethash (plist-get entry :id) known))
+                   (not (memq node items)))
+          (setq items (nconc items (list node))))))
+    ;; History's user rows now bound every turn, so a kept assistant that
+    ;; opened a backend-owned turn stops being a boundary of its own.
+    ;; Otherwise the next reconciliation splits its turn in two.
+    (dolist (item items)
+      (when (hermes-chat--node-item-p item)
+        (let ((entry (or (cdr (assq item updates)) (ewoc-data item))))
+          (when (plist-get entry :turn-start)
+            (setq updates (cons (cons item (hermes-chat--entry-with
+                                            entry :turn-start nil))
+                                (assq-delete-all item updates)))))))
+    (hermes-chat--repaint-apply items updates)))
+
+(defun hermes-chat--repaint-apply (items updates)
+  "Make the transcript show ITEMS, kept nodes and new entries, in order.
+A kept node out of transcript order is printed anew from its data, since
+EWOC cannot move nodes.  Apply UPDATES, (NODE . ENTRY) pairs, to kept
+nodes, then let failures recompute which recovery actions still apply."
+  (let ((kept (make-hash-table :test #'eq))
+        (last 0)
+        successor)
+    (setq items (mapcar (lambda (item)
+                          (if (and (hermes-chat--node-item-p item)
+                                   (> (ewoc-location item) last))
+                              (progn (setq last (ewoc-location item))
+                                     (puthash item t kept)
+                                     item)
+                            (if (hermes-chat--node-item-p item)
+                                (or (cdr (assq item updates)) (ewoc-data item))
+                              item)))
+                        items))
+    (hermes-chat--preserve-input-point
+      (let ((inhibit-read-only t)
+            (buffer-undo-list t))
+        (hermes-chat--preserve-readers
+          (dolist (node (hermes-chat--ewoc-nodes))
+            (unless (gethash node kept)
+              (let ((id (plist-get (ewoc-data node) :id)))
+                (hermes-chat--stream-format-retire id)
+                (remhash id hermes-chat--nodes)
+                (ewoc-delete hermes-chat--ewoc node))))
+          ;; Walk backwards so each new entry lands before its successor.
+          (dolist (item (reverse items))
+            (setq successor
+                  (if (hermes-chat--node-item-p item)
+                      item
+                    (hermes-chat--register-node
+                     item (if successor
+                              (ewoc-enter-before hermes-chat--ewoc successor item)
+                            (ewoc-enter-last hermes-chat--ewoc item))))))
+          (pcase-dolist (`(,node . ,entry) updates)
+            (when (gethash node kept)
+              (ewoc-set-data node entry)
+              (ewoc-invalidate hermes-chat--ewoc node)))
+          (hermes-chat-failure-refresh-actions))))
+    (hermes-chat-todos-forget-removed-entry)
+    (hermes-chat--notify-state-change)))
+
+;;; Editing earlier turns
+
+(defvar-local hermes-chat--edit-turn nil
+  "The earlier user turn being edited in the composer, or nil.
+A plist with the turn's durable :row-id, the composer :draft it replaced,
+and the :client, :session and :lifetime that own the edit.")
+
+(defun hermes-chat--user-turn-at (position)
+  "Return the user entry at POSITION, or signal a `user-error'."
+  (let* ((node (and (not (hermes-chat--point-in-input-p))
+                    (hermes-chat--entry-node-at position)))
+         (entry (and node (ewoc-data node))))
+    (unless (eq (plist-get entry :role) 'user)
+      (user-error "Point is not on one of your messages"))
+    entry))
+
+(defun hermes-chat--rewind-target (verb)
+  "Return the user entry at point that may be rewound to for VERB."
+  (let ((entry (hermes-chat--user-turn-at (point))))
+    (when (hermes-chat--active-turn-p)
+      (user-error "Hermes is working; wait for this turn to end before %s" verb))
+    (unless (hermes-chat--dashboard-session-attached-p)
+      (user-error "No live Hermes session to rewind"))
+    (unless (plist-get entry :row-id)
+      (user-error "This message has no saved address; reload the session to %s it"
+                  (if (equal verb "editing") "edit" "rerun")))
+    entry))
+
+(defun hermes-chat--rewind-scope (row-id)
+  "Return (FIRST-P . LATER) for the user turn ROW-ID, or nil when absent.
+FIRST-P is non-nil when no turn precedes it; LATER counts the turns after
+it.  Turns are those `hermes-chat--turn-boundary-p' opens, so a finished
+backend-owned turn, such as a loop wakeup, counts like one you sent."
+  (let ((turns (ewoc-collect hermes-chat--ewoc #'hermes-chat--turn-boundary-p)))
+    (when-let* ((tail (seq-drop-while
+                       (lambda (entry)
+                         (not (and (eq (plist-get entry :role) 'user)
+                                   (eql (plist-get entry :row-id) row-id))))
+                       turns)))
+      (cons (eq tail turns) (1- (length tail))))))
+
+(defun hermes-chat--confirm-rewind (prompt scope)
+  "Ask with PROMPT whether to rewind SCOPE, a `hermes-chat--rewind-scope'."
+  (y-or-n-p
+   (format "%s%s? " prompt
+           (pcase (cdr scope)
+             (0 "")
+             (1 ", removing 1 later turn")
+             (n (format ", removing %d later turns" n))))))
+
+(defun hermes-chat--submit-rewind (content row-id scope)
+  "Submit CONTENT in place of user turn ROW-ID covering SCOPE."
+  (let ((hermes-chat--submit-truncation
+         (list :row-id row-id
+               :deep (and (> (cdr scope) 0) t)
+               :empty (car scope))))
+    (hermes-chat--submit-content content)))
+
+(defun hermes-chat-edit-turn ()
+  "Edit the message at point in the composer and resend it from there.
+Sending rewinds the conversation to just before this message.  Cancel with
+\\[hermes-chat-edit-cancel] to restore the previous draft."
+  (interactive nil hermes-chat-mode)
+  (let ((entry (hermes-chat--rewind-target "editing")))
+    (setq hermes-chat--edit-turn
+          (append (list :draft (if hermes-chat--edit-turn
+                                   (plist-get hermes-chat--edit-turn :draft)
+                                 (hermes-chat-input-string)))
+                  (hermes-chat--rewind-owner (plist-get entry :row-id))))
+    (hermes-chat--replace-input-tail (plist-get entry :content))
+    (force-mode-line-update)
+    (message "%s" (substitute-command-keys
+                   "Editing an earlier message: \\[hermes-chat-send] resends, \\[hermes-chat-edit-cancel] cancels"))))
+
+(defun hermes-chat-edit-cancel ()
+  "Stop editing an earlier message and restore the previous draft."
+  (interactive nil hermes-chat-mode)
+  (let ((edit hermes-chat--edit-turn))
+    (unless edit (user-error "Not editing an earlier message"))
+    (setq hermes-chat--edit-turn nil)
+    (hermes-chat--replace-input-tail (plist-get edit :draft))
+    (force-mode-line-update)))
+
+(defun hermes-chat--editing-p ()
+  "Return non-nil while the composer edits an earlier message."
+  (and hermes-chat--edit-turn t))
+
+(defun hermes-chat--send-edit (content)
+  "Resend edited CONTENT in place of the turn being edited.
+Return non-nil when the submission starts."
+  (let* ((edit hermes-chat--edit-turn)
+         (row-id (plist-get edit :row-id))
+         (scope (hermes-chat--rewind-scope row-id)))
+    (unless (and (hermes-chat--current-lifetime-p (plist-get edit :lifetime))
+                 (eq (plist-get edit :client) hermes-chat--dashboard-client)
+                 (equal (plist-get edit :session)
+                        hermes-chat--dashboard-active-session-id)
+                 scope)
+      (setq hermes-chat--edit-turn nil)
+      (force-mode-line-update)
+      (user-error "The edited message is gone from this session; text kept as a draft"))
+    (when (hermes-chat--active-turn-p)
+      (user-error "Hermes is working; wait for this turn to end before resending"))
+    (when (hermes-chat--confirm-rewind "Replace this message" scope)
+      ;; Anything can happen while the user answers: recheck before
+      ;; touching the composer, so a refusal keeps the edited text.
+      (unless (eq edit hermes-chat--edit-turn)
+        (user-error "The edit was cancelled; text kept as a draft"))
+      (hermes-chat--rewind-revalidate edit scope)
+      (hermes-chat--delete-input-tail)
+      (setq hermes-chat--edit-turn nil)
+      (force-mode-line-update)
+      (hermes-chat--submit-rewind content row-id scope))))
+
+(defun hermes-chat--rewind-owner (row-id)
+  "Return the ownership plist for rewinding to the user turn ROW-ID now."
+  (list :row-id row-id
+        :client hermes-chat--dashboard-client
+        :session hermes-chat--dashboard-active-session-id
+        :lifetime hermes-chat--lifecycle-generation))
+
+(defun hermes-chat--rewind-revalidate (owner scope)
+  "Signal a `user-error' unless OWNER may still rewind over SCOPE.
+OWNER is a `hermes-chat--rewind-owner' captured before asking the user and
+SCOPE the `hermes-chat--rewind-scope' they confirmed."
+  (unless (and (hermes-chat--current-lifetime-p (plist-get owner :lifetime))
+               (eq (plist-get owner :client) hermes-chat--dashboard-client)
+               (equal (plist-get owner :session)
+                      hermes-chat--dashboard-active-session-id))
+    (user-error "The session changed while asking; nothing was sent"))
+  (when (hermes-chat--active-turn-p)
+    (user-error "Hermes started a turn while asking; nothing was sent"))
+  (unless (equal (hermes-chat--rewind-scope (plist-get owner :row-id)) scope)
+    (user-error "The conversation changed while asking; nothing was sent")))
+
+(defun hermes-chat-restore-turn ()
+  "Rerun the conversation from the message at point.
+The message is sent again unchanged after the conversation is rewound to
+just before it; later turns are removed."
+  (interactive nil hermes-chat-mode)
+  (let* ((entry (hermes-chat--rewind-target "rerunning"))
+         (owner (hermes-chat--rewind-owner (plist-get entry :row-id)))
+         (scope (hermes-chat--rewind-scope (plist-get owner :row-id))))
+    (when (hermes-chat--confirm-rewind "Rerun from this message" scope)
+      (hermes-chat--rewind-revalidate owner scope)
+      (hermes-chat--submit-rewind (plist-get entry :content)
+                                  (plist-get owner :row-id) scope))))
+
+(defun hermes-chat--rewind-unavailable-p ()
+  "Return non-nil when point is not on a user turn that may be rewound."
+  (or (hermes-chat--active-turn-p)
+      (not (ignore-errors
+             (plist-get (hermes-chat--user-turn-at (point)) :row-id)))))
+
+(defun hermes-chat--message-actions-p ()
+  "Return non-nil when point is on a user turn or an edit is open."
+  (or hermes-chat--edit-turn
+      (and (ignore-errors (hermes-chat--user-turn-at (point))) t)))
 
 (defun hermes-chat--send-during-history ()
   "Queue composer input behind history, retrying a failed read on Send."
@@ -2460,6 +3145,9 @@ history read, including with empty input when a queued message is retained."
   (cond
    ((eq (plist-get hermes-chat--session-bootstrap :kind) 'history)
     (hermes-chat--send-during-history))
+   ((and hermes-chat--edit-turn hermes-chat--draft-images)
+    ;; An image draft is its own submission, so it would bypass the rewind.
+    (user-error "An edited message cannot carry images; remove them first"))
    (hermes-chat--draft-images (hermes-chat--queue-image-draft))
    (t
     (let ((content (hermes-chat--trimmed-input))
@@ -2475,6 +3163,8 @@ history read, including with empty input when a queued message is retained."
              ((hermes-chat--parse-slash content)
               (hermes-chat--handle-slash-content content)
               t)
+             (hermes-chat--edit-turn
+              (hermes-chat--send-edit content))
              ((and (hermes-chat--active-turn-p)
                    (null hermes-chat--session-bootstrap)
                    (null hermes-chat--application-context)
@@ -3012,9 +3702,13 @@ entry by hand shows tool output again."
 (defun hermes-chat-toggle-reasoning ()
   "Show or hide every expanded reasoning body in this chat.
 Hiding wins over per-entry expansion and keeps point; expanding a
-reasoning entry by hand shows reasoning again."
+reasoning entry by hand shows reasoning again.  Showing it says so
+when the backend profile does not capture reasoning; see
+`hermes-chat-enable-backend-reasoning'."
   (interactive nil hermes-chat-mode)
-  (hermes-chat--toggle-details 'hermes-reasoning "Reasoning"))
+  (hermes-chat--toggle-details 'hermes-reasoning "Reasoning")
+  (unless (hermes-chat--details-hidden-p 'hermes-reasoning)
+    (hermes-chat--check-backend-reasoning)))
 
 (defun hermes-chat--expandable-entry-p (entry)
   "Return non-nil when ENTRY has a collapsible body."
@@ -3251,9 +3945,18 @@ into `hermes-chat-mode', so each activation owns exactly one hint."
                   'local-map hermes-chat-images-mode-line-map
                   'help-echo "mouse-1 or C-c C-o I: Preview, remove or recover images"))))
 
+(defun hermes-chat--edit-mode-line ()
+  "Return the compact editing-an-earlier-message segment, or nil."
+  (when hermes-chat--edit-turn
+    (propertize " ✎ editing" 'face 'mode-line-emphasis
+                'help-echo (substitute-command-keys
+                            "\\[hermes-chat-send] resends from that message; \
+\\[hermes-chat-edit-cancel] restores the previous draft"))))
+
 (defun hermes-chat--mode-line-process ()
   "Return this chat's mode-line process segments, or nil when there are none."
-  (when-let* ((parts (delq nil (list (hermes-chat--images-mode-line)
+  (when-let* ((parts (delq nil (list (hermes-chat--edit-mode-line)
+                                     (hermes-chat--images-mode-line)
                                      (hermes-chat--new-output-mode-line)))))
     (apply #'concat parts)))
 
@@ -3266,6 +3969,7 @@ into `hermes-chat-mode', so each activation owns exactly one hint."
   "n" ("New chat" hermes-chat)
   "R" ("Rename session" hermes-chat-rename)
   "S" ("List / resume sessions" hermes-list-sessions)
+  "g" ("Goal / loop controls" hermes-session-control)
   :group "Fork"
   "b" ("Branch" hermes-chat-branch
        :inapt-if #'hermes-chat--active-turn-p)
@@ -3388,6 +4092,13 @@ into `hermes-chat-mode', so each activation owns exactly one hint."
   "y" ("Side question (btw)" hermes-chat-btw)
   "G" ("Background task" hermes-chat-background)
   "!" ("Stop processes" hermes-chat-stop-processes)
+  :group ("Message" :if #'hermes-chat--message-actions-p)
+  "C" ("Edit and resend" hermes-chat-edit-turn
+       :inapt-if #'hermes-chat--rewind-unavailable-p)
+  "U" ("Rerun from here" hermes-chat-restore-turn
+       :inapt-if #'hermes-chat--rewind-unavailable-p)
+  "Z" ("Cancel edit" hermes-chat-edit-cancel
+       :if #'hermes-chat--editing-p)
   :group ("Prompt" :if #'hermes-chat--pending-prompt-p)
   "a" ("Answer prompt" hermes-chat-respond-to-prompt)
   "d" ("Cancel prompt" hermes-chat-cancel-prompt))
@@ -3464,6 +4175,11 @@ into `hermes-chat-mode', so each activation owns exactly one hint."
   "n" (hermes-chat--transcript-key #'hermes-chat-next-turn)
   "p" (hermes-chat--transcript-key #'hermes-chat-previous-turn)
   "w" (hermes-chat--transcript-key #'hermes-chat-copy)
+  "e" (hermes-chat--transcript-key #'hermes-chat-edit-turn)
+  ;; Escape cancels an edit; otherwise it keeps its native meaning.
+  "<escape>" '(menu-item "" hermes-chat-edit-cancel
+                         :filter (lambda (command)
+                                   (and hermes-chat--edit-turn command)))
   "SPC" (hermes-chat--transcript-key #'scroll-up-command)
   "S-SPC" (hermes-chat--transcript-key #'scroll-down-command nil t)
   "DEL" (hermes-chat--transcript-key #'scroll-down-command nil t)
@@ -3476,7 +4192,8 @@ into `hermes-chat-mode', so each activation owns exactly one hint."
   "M-n" #'hermes-chat-input-history-next
   "C-c C-c" #'hermes-chat-interrupt-turn
   "C-c C-i" #'hermes-chat-interrupt
-  "C-c C-k" #'hermes-chat-interrupt-and-send
+  "C-c C-m" #'hermes-chat-interrupt-and-send
+  "C-c C-k" #'hermes-chat-clear
   "C-c C-q" #'hermes-chat-queue-message
   "C-c C-s" #'hermes-chat-steer-message
   "C-c C-a" #'hermes-chat-respond-to-prompt
@@ -3484,6 +4201,7 @@ into `hermes-chat-mode', so each activation owns exactly one hint."
   "C-c C-o" #'hermes-chat-actions-map-popup
   "C-c C-p" #'hermes-command-palette
   "C-c C-l" #'hermes-chat-view-attachments
+  "C-c C-g" #'hermes-session-control
   "C-c C-n" #'hermes-chat
   "C-c C-r" #'hermes-chat-rename
   "C-c C-b" #'hermes-switch-to-chat)
@@ -3518,6 +4236,8 @@ depth so a globalized linter re-enabled after the mode body is overridden."
             #'hermes-chat-todos--clear nil t)
   (add-hook 'hermes-chat-submit-inhibit-functions
             #'hermes-chat--images-inhibit nil t)
+  (add-hook 'hermes-chat-state-change-hook
+            #'hermes-chat--history-reconcile-maybe nil t)
   (setq-local desktop-save-buffer #'hermes-chat--desktop-save)
   (setq-local imenu-create-index-function #'hermes-chat--imenu-index)
   (add-hook 'warm-restart-blocker-functions
@@ -3542,9 +4262,11 @@ session is titled, after that title -- so chats stay filterable with
   (hermes-chat--new-buffer profile nil instance))
 
 (defun hermes-chat--new-command (title)
-  "Handle /new with TITLE, preserving a canonical Bot Chat relationship."
+  "Handle /new with TITLE, preserving a canonical Bot Chat relationship.
+An ordinary chat opens its successor under the same profile and backend."
   (if (not hermes-chat--bot-chat-root)
-      (hermes-chat--new-buffer nil title)
+      (hermes-chat--new-buffer hermes-chat--profile title hermes-instance
+                               hermes-chat--pinned-url)
     (let* ((buffer (current-buffer))
            (root hermes-chat--bot-chat-root)
            (lifetime hermes-chat--lifecycle-generation)
@@ -3580,6 +4302,8 @@ session is titled, after that title -- so chats stay filterable with
 (defun hermes-chat--install-registries ()
   "Install chat-owned callbacks into lower-layer registries."
   (setq hermes-chat--submit-function #'hermes-chat--submit-content
+        hermes-chat--history-reconcile-function
+        #'hermes-chat--request-history-reconcile
         hermes-chat--queue-drain-ready-function
         #'hermes-chat--dashboard-queue-drain-ready-p
         hermes-chat--turn-event-function #'hermes-chat--run-turn-reducer

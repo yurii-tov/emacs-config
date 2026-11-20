@@ -165,95 +165,52 @@
         (hermes-sessions--sessions-by-id
          (hermes-sessions--result-sessions result))))
 
-(defconst hermes-sessions--fenced-path-regexp "\\`/api/sessions/[^/?]+\\'"
-  "Session paths whose mutations the dashboard fences.
-Subresources (messages, search, timeline, bulk-delete) carry their own
-contracts and are never fenced here.")
-
-(defun hermes-sessions--fence-mutation-p (method path)
-  "Return non-nil when METHOD PATH is a fenced session mutation."
-  (and (member method '("DELETE" "PATCH"))
-       (stringp path)
-       (string-match-p hermes-sessions--fenced-path-regexp path)))
-
-(defun hermes-sessions--fence-request-id ()
-  "Return a fresh opaque idempotency key for one session mutation.
-The owner replays a request that reuses its key instead of applying the
-mutation twice, so each user action needs its own."
-  (format "%x-%04x-%04x-%04x-%04x"
-          (truncate (* 1000000 (float-time)))
-          (random 65536) (random 65536) (random 65536) (random 65536)))
-
-(defun hermes-sessions--fence-profile (body query)
-  "Return the target profile named in BODY or QUERY, or nil."
-  (let ((value (or (cdr (assq 'profile body)) (cdr (assq 'profile query)))))
-    (cond ((null value) nil)
-          ((symbolp value) (symbol-name value))
-          ((stringp value) (unless (string-empty-p value) value))
-          (t (format "%s" value)))))
-
-(defun hermes-sessions--fence-snapshot (client path profile)
-  "Return a promise of PATH's mutation snapshot on CLIENT for PROFILE."
-  (hermes-dashboard-transport-api-request-async
-   "GET" (concat path "/mutation-snapshot")
-   :query (and profile (list (cons 'profile profile)))
-   :client client))
-
-(defun hermes-sessions--fence-values (method body query snapshot request-id)
-  "Return (BODY . QUERY) carrying METHOD's fence from SNAPSHOT and REQUEST-ID.
-An absent row is fenced at revision zero, its storage-contract anchor; DELETE
-then answers `already_absent' instead of resurrecting nothing."
-  (let* ((revision (hermes-transport--get snapshot 'runtime_revision))
-         (generation (hermes-transport--get snapshot 'runtime_generation))
-         (fence (append
-                 (list (cons 'request_id request-id)
-                       (cons 'expected_revision (if (numberp revision) revision 0)))
-                 (and (numberp generation)
-                      (list (cons 'expected_generation generation))))))
-    (if (equal method "DELETE")
-        ;; DELETE reads the fence from its query string and sends no body.
-        (cons body (append fence (cl-remove-if-not #'cdr query)))
-      ;; PATCH reads it from the JSON body beside the changed field.
-      (cons (append fence body) query))))
-
-(defun hermes-sessions--fenced-rest (client method path body query)
-  "Return a promise of fenced METHOD PATH on CLIENT, or the legacy request.
-The counters come from a separate read so they cannot drift between the read
-and the write; the dispatch guard is re-bound around the mutation because the
-callback runs after the browser's dynamic extent has ended.  A backend
-without the snapshot endpoint keeps the unfenced request."
-  (let ((guard hermes-dashboard-transport--api-dispatch-guard)
-        (dispatch hermes-dashboard-transport-dispatch-guard)
-        (owner hermes-dashboard-transport-request-owner)
-        (profile (hermes-sessions--fence-profile body query))
-        (request-id (hermes-sessions--fence-request-id)))
-    (hermes--promise-catch
-     (hermes--promise-then
-      (hermes-sessions--fence-snapshot client path profile)
-      (lambda (snapshot)
-        (let ((body-query (hermes-sessions--fence-values
-                           method body query snapshot request-id)))
-          (let ((hermes-dashboard-transport--api-dispatch-guard guard)
-                (hermes-dashboard-transport-dispatch-guard dispatch)
-                (hermes-dashboard-transport-request-owner owner))
-            (hermes-dashboard-transport-api-request-async
-             method path :body (car body-query) :query (cdr body-query)
-             :client client)))))
-     (lambda (_reason)
-       (let ((hermes-dashboard-transport--api-dispatch-guard guard)
-             (hermes-dashboard-transport-dispatch-guard dispatch)
-             (hermes-dashboard-transport-request-owner owner))
-         (hermes-dashboard-transport-api-request-async
-          method path :body body :query query :client client))))))
-
 (defun hermes-sessions--rest (client method path &optional body query)
   "Return a dashboard REST METHOD PATH promise through CLIENT.
-BODY and QUERY extend the request.  Session mutations carry the owner's
-fence (a request id plus the current revision); reads do not."
-  (if (hermes-sessions--fence-mutation-p method path)
-      (hermes-sessions--fenced-rest client method path body query)
-    (hermes-dashboard-transport-api-request-async
-     method path :body body :query query :client client)))
+BODY and QUERY extend the request.  Fence session edits with a fresh snapshot."
+  (if (not (member method '("PATCH" "DELETE")))
+      (hermes-dashboard-transport-api-request-async
+       method path :body body :query query :client client)
+    (let* ((guard hermes-dashboard-transport--api-dispatch-guard)
+           (profile (or (alist-get 'profile body) (alist-get 'profile query)))
+           (send (lambda (identity)
+                   (let ((hermes-dashboard-transport--api-dispatch-guard guard))
+                     (hermes-dashboard-transport-api-request-async
+                      method path :client client
+                      :body (if (equal method "PATCH")
+                                (append body identity) body)
+                      :query (if (equal method "DELETE")
+                                 (append query identity) query))))))
+      (hermes--promise-then
+       (hermes-dashboard-transport-api-request-async
+        "GET" (concat path "/mutation-snapshot") :client client
+        :query (and profile `((profile . ,profile))) :current-p guard)
+       (lambda (snapshot)
+         (funcall send (hermes-sessions--mutation-identity snapshot path)))
+       (lambda (reason)
+         (if (and (stringp reason)
+                  (or (string-match-p "(HTTP 404): Not Found\\'" reason)
+                      (string-suffix-p
+                       (concat "(HTTP 404): No such API endpoint: "
+                               path "/mutation-snapshot") reason)))
+             (funcall send nil)
+           (hermes--promise-rejected reason)))))))
+
+(defun hermes-sessions--mutation-identity (snapshot path)
+  "Validate SNAPSHOT for PATH and return a new mutation identity."
+  (let ((revision (hermes-transport--get snapshot 'runtime_revision))
+        (generation (hermes-transport--get snapshot 'runtime_generation)))
+    (unless (and (equal (hermes-transport--get snapshot 'exists) t)
+                 (equal path (concat "/api/sessions/"
+                                     (url-hexify-string
+                                      (or (hermes-transport--get snapshot 'session_id)
+                                          ""))))
+                 (integerp revision) (>= revision 0)
+                 (integerp generation) (>= generation 0))
+      (error "Session mutation snapshot unavailable; refresh before trying again"))
+    `((request_id . ,(md5 (format "%s:%s:%s:%s" (emacs-pid) (current-time)
+                                   (random) path)))
+      (expected_revision . ,revision) (expected_generation . ,generation))))
 
 
 
@@ -265,11 +222,11 @@ fence (a request id plus the current revision); reads do not."
          (profile (read-string "Stored sessions backend profile: " "default")))
     (when (and (funcall current) (not (string-empty-p profile)))
       (with-current-buffer buffer
-        (setq hermes-sessions--catalogue-profile profile
+	(setq hermes-sessions--catalogue-profile profile
               hermes-sessions--catalogue-offset 0
               hermes-sessions--search-query nil
               hermes-sessions--all-profiles nil)
-        (hermes-sessions--revert)))))
+	(hermes-sessions--revert)))))
 
 (defun hermes-sessions-next-page ()
   "Append the next stored-session window, deduplicating pinned backfill."
@@ -659,29 +616,8 @@ Never retry a mutation after an uncertain outcome."
   (interactive nil hermes-sessions-mode hermes-session-detail-mode)
   (hermes-sessions--set-archived nil))
 
-(defun hermes-sessions--display-string (value)
-  "Return a readable display string for VALUE."
-  (cond
-   ((null value) nil)
-   ((hermes-transport--scalar-string value))
-   ((vectorp value)
-    (hermes-sessions--display-string (append value nil)))
-   ((and (listp value) (not (hermes-transport--object-p value)))
-    (string-join
-     (delq nil
-           (mapcar (lambda (item)
-                     (let ((text (hermes-sessions--display-string item)))
-                       (and text (not (string-empty-p text)) text)))
-                   value))
-     "\n"))
-   ((hermes-transport--object-p value)
-    (or (hermes-sessions--display-string
-         (hermes-transport--get-any value '(text content output preview summary)))
-        (let ((kind (hermes-transport--display-field value 'type)))
-          (and (not (string-empty-p kind))
-               (format "[%s]" kind)))
-        (prin1-to-string value)))
-   (value (format "%s" value))))
+(defalias 'hermes-sessions--display-string #'hermes-transport--display-string
+  "Return a readable display string for VALUE.")
 
 (defun hermes-sessions--message-role (message)
   "Return MESSAGE's role as a lowercase string."
@@ -690,10 +626,9 @@ Never retry a mutation after an uncertain outcome."
                 "system")))
 
 (defun hermes-sessions--message-text (message)
-  "Return MESSAGE's readable text body."
-  (or (hermes-sessions--display-string
-       (hermes-transport--get-any message '(text content context output)))
-      ""))
+  "Return MESSAGE's readable text body, or nil when the backend hides it."
+  (and-let* ((projection (hermes-transport-history-projection message)))
+    (hermes-transport-history-text projection)))
 
 (defun hermes-sessions--markdown (session messages)
   "Return SESSION and MESSAGES as Markdown."
@@ -702,11 +637,13 @@ Never retry a mutation after an uncertain outcome."
                  (or (hermes-sessions--non-empty-field session 'title)
                      "Hermes session")
                  (hermes-sessions--id session))
-         (mapcar (lambda (message)
-                   (format "## %s\n\n%s"
-                           (hermes-sessions--message-label message)
-                           (hermes-sessions--message-text message)))
-                 messages))
+         (delq nil
+               (mapcar (lambda (message)
+                         (when-let* ((text (hermes-sessions--message-text message)))
+                           (format "## %s\n\n%s"
+                                   (hermes-sessions--message-label message)
+                                   text)))
+                       messages)))
    "\n\n"))
 
 (defun hermes-sessions--write-export (session messages file)
@@ -780,8 +717,8 @@ Never retry a mutation after an uncertain outcome."
       (insert args "\n"))))
 
 (defun hermes-sessions--insert-message (message)
-  "Insert one history MESSAGE at point."
-  (let ((text (hermes-sessions--message-text message)))
+  "Insert one history MESSAGE at point, unless the backend hides it."
+  (when-let* ((text (hermes-sessions--message-text message)))
     (insert (propertize (format "[%s]\n" (hermes-sessions--message-label message))
                         'face 'font-lock-keyword-face))
     (insert (if (string-empty-p text) "[empty]" text) "\n")

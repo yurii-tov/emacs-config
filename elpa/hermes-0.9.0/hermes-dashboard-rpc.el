@@ -121,6 +121,19 @@ separately as a `btw.complete' event."
   :args (text) :session t)
 
 (hermes-dashboard-transport-define-rpc
+    hermes-dashboard-transport-session-control-read "session.control.read"
+  "Read CLIENT's SESSION-ID goal, loop and heartbeat snapshot.
+RESOLVE receives the control envelope; REJECT receives the error."
+  :session t)
+
+(hermes-dashboard-transport-define-rpc
+    hermes-dashboard-transport-session-control "session.control"
+  "Apply ACTION to CLIENT's SESSION-ID with optional ARGS object.
+ARGS contains text for subgoal.add or a one-based index for subgoal.remove.
+RESOLVE receives the control envelope; REJECT receives the error."
+  :args (action) :keys (args) :session t)
+
+(hermes-dashboard-transport-define-rpc
     hermes-dashboard-transport-session-close "session.close"
   "Close CLIENT's exact live SESSION-ID, without deleting stored history.
 RESOLVE and REJECT receive the asynchronous result or error."
@@ -298,6 +311,13 @@ RESOLVE and REJECT receive the result or error."
   :args (subagent-id) :session t)
 
 (hermes-dashboard-transport-define-rpc
+    hermes-dashboard-transport-process-kill "process.kill"
+  "Kill background PROCESS-ID on CLIENT's live SESSION-ID.
+The gateway refuses processes the session does not own.
+RESOLVE and REJECT receive the result or error."
+  :args (process-id) :session t)
+
+(hermes-dashboard-transport-define-rpc
     hermes-dashboard-transport-subagent-list "subagent.list"
   "List visible workers for CLIENT's live SESSION-ID.
 Visibility includes resumed lineage and is not control authority.
@@ -335,8 +355,15 @@ RESOLVE and REJECT receive the result or error.  Upload local bytes first."
     hermes-dashboard-transport-prompt-submit "prompt.submit"
   "Send TEXT through `prompt.submit' on CLIENT.
 SESSION-ID selects the live dashboard session.  RESOLVE and REJECT receive the
-result or error.  QUEUED forces non-interrupting admission when busy."
-  :args (text) :keys (queued) :session t)
+result or error.  QUEUED forces non-interrupting admission when busy.
+TRUNCATE-BEFORE-ROW-ID rewinds the session to just before that durable user
+row before TEXT runs; the backend refuses it without CONFIRM-TRUNCATE.
+CONFIRM-DEEP-TRUNCATE allows removing more than one user turn and
+CONFIRM-EMPTY-TRUNCATE allows replacing the whole transcript."
+  :args (text)
+  :keys (queued truncate-before-row-id confirm-truncate
+                confirm-deep-truncate confirm-empty-truncate)
+  :session t)
 
 (hermes-dashboard-transport-define-rpc
     hermes-dashboard-transport-prompt-background "prompt.background"

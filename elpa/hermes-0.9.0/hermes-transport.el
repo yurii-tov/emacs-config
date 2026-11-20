@@ -147,6 +147,88 @@ False, null, strings and other numbers are not true flags."
   "Return VALUE when it is a non-empty string, else nil."
   (and (stringp value) (not (string-empty-p value)) value))
 
+(defun hermes-transport--display-string (value)
+  "Return a readable display string for history VALUE, or nil.
+Join structured content parts by line; a part without text shows its type."
+  (cond
+   ((null value) nil)
+   ((hermes-transport--scalar-string value))
+   ((vectorp value)
+    (hermes-transport--display-string (append value nil)))
+   ((and (listp value) (not (hermes-transport--object-p value)))
+    (string-join
+     (delq nil (mapcar (lambda (item)
+                         (hermes-transport--non-empty-string
+                          (hermes-transport--display-string item)))
+                       value))
+     "\n"))
+   ((hermes-transport--object-p value)
+    (or (hermes-transport--display-string
+         (hermes-transport--get-any value '(text content output preview summary)))
+        (let ((kind (hermes-transport--display-field value 'type)))
+          (and (not (string-empty-p kind))
+               (format "[%s]" kind)))
+        (prin1-to-string value)))
+   (value (format "%s" value))))
+
+(defun hermes-transport-history-projection (message)
+  "Return the display projection of history MESSAGE, or nil to hide it.
+The backend may attach display_content, display_commentary and
+display_reasoning; a present field wins even when empty or null, and an
+absent one falls back to the raw fields.  Rows whose display_kind is
+\"hidden\" are model-facing scaffolding and return nil.  Otherwise return
+a plist: :content and :reasoning strings, and :commentary, a list of
+public commentary strings."
+  (unless (equal (hermes-transport--get message 'display_kind) "hidden")
+    (let ((content (hermes-transport--get-any
+                    message '(display_content text content context output)))
+          (reasoning
+           (if (hermes-transport--field-present-p message 'display_reasoning)
+               (hermes-transport--get message 'display_reasoning)
+             (hermes-transport--get-any
+              message '(reasoning reasoning_content reasoning_details)))))
+      (list :content (or (hermes-transport--display-string content) "")
+            ;; Only the backend may authorize commentary: raw sidecars stay out.
+            :commentary (delq nil (mapcar #'hermes-transport--non-blank-string
+                                          (append (hermes-transport--get
+                                                   message 'display_commentary)
+                                                  nil)))
+            :reasoning (or (hermes-transport--display-string reasoning) "")))))
+
+(defun hermes-transport-row-id (value)
+  "Return VALUE as a durable history row id, or nil.
+Row ids are positive integers; anything else is not an address."
+  (and (natnump value) (> value 0) value))
+
+(defun hermes-transport-history-row-id (message)
+  "Return the durable row id addressing user history MESSAGE, or nil.
+Only plain user turns qualify: a projected row such as a skill invocation
+displays text that differs from what the model saw, so resending it would
+not reproduce the turn."
+  (and (equal (hermes-transport--get message 'role) "user")
+       (null (hermes-transport--get message 'display_kind))
+       (not (hermes-transport--field-present-p message 'display_content))
+       (hermes-transport-row-id (hermes-transport--get message 'row_id))))
+
+(defun hermes-transport-history-text (projection)
+  "Return the visible reply text of history PROJECTION.
+Public commentary precedes the content as paragraphs unless it only
+repeats the content."
+  (let ((content (plist-get projection :content))
+        (commentary (plist-get projection :commentary)))
+    (if (or (null commentary)
+            (equal (hermes-transport--collapse-space
+                    (string-join commentary " "))
+                   (hermes-transport--collapse-space content)))
+        content
+      (string-join (append commentary
+                           (and (not (string-empty-p content)) (list content)))
+                   "\n\n"))))
+
+(defun hermes-transport--collapse-space (text)
+  "Return TEXT trimmed, with each whitespace run made one space."
+  (string-trim (replace-regexp-in-string "[ \t\n\r]+" " " (or text ""))))
+
 (defun hermes-transport--non-blank-string (value)
   "Return VALUE trimmed when it is non-blank, else nil."
   (and (stringp value)
@@ -235,6 +317,7 @@ False, null, strings and other numbers are not true flags."
                      (subagent_id . :subagent-id)
                      (parent_id . :parent-id)
                      (child_session_id . :child-session-id)
+                     (delegation_id . :delegation-id)
                      (seq . :seq)
                      (index . :index)
                      (task_index . :task-index)
@@ -766,6 +849,99 @@ The plist holds :used, :max, and :percent for the model's context window."
           :max max
           :percent (or (hermes-transport--get usage 'context_percent) 0))))
 
+(defun hermes-transport--explicit-false-p (object key)
+  "Return non-nil when OBJECT carries KEY as an explicit JSON false or null."
+  (and (hermes-transport--field-present-p object key)
+       (memq (hermes-transport--get object key) '(nil :json-false :json-null))
+       t))
+
+(defun hermes-transport--string-fields (object fields)
+  "Return a plist of OBJECT's string FIELDS.
+FIELDS is a list of (WIRE-KEY . PROPERTY) pairs.  Each PROPERTY maps to
+the non-empty string value, or nil when absent, empty or not a string."
+  (cl-loop for (key . property) in fields
+           append (list property (hermes-transport--non-empty-string
+                                  (hermes-transport--get object key)))))
+
+(defun hermes-transport-error-surface (value)
+  "Return the advisory `error_surface' VALUE as a plist, or nil.
+Require an object with a non-empty string `layer'.  A missing `code'
+reads as \"unknown\".  `:retryable' is nil only for an explicit false,
+as the released clients read it."
+  (when-let* (((hermes-transport--object-p value))
+              (layer (hermes-transport--non-empty-string
+                      (hermes-transport--get value 'layer))))
+    (append
+     (list :layer layer
+           :code (or (hermes-transport--non-empty-string
+                      (hermes-transport--get value 'code))
+                     "unknown")
+           :retryable (not (hermes-transport--explicit-false-p
+                            value 'retryable)))
+     (hermes-transport--string-fields
+      value '((provider . :provider) (provider_label . :provider-label)
+              (model . :model) (message . :message))))))
+
+(defun hermes-transport-billing-block (value)
+  "Return the billing-wall VALUE as a plist, or nil when not an object.
+Keep `billing_url' as `:url' only when it is an absolute http(s) URL, so a
+recovery link never opens anything else."
+  (when (hermes-transport--object-p value)
+    (let ((url (hermes-transport--non-empty-string
+                (hermes-transport--get value 'billing_url))))
+      (append
+       (hermes-transport--string-fields
+        value '((provider . :provider) (provider_label . :provider-label)
+                (model . :model) (message . :message)))
+       (list :url (and url (string-match-p "\\`https?://[^[:space:]]+\\'" url)
+                       url)
+             :nous (eq (hermes-transport--get value 'is_nous) t))))))
+
+(defun hermes-transport-turn-failure (payload)
+  "Return the structured failure facts of a failed turn PAYLOAD, or nil.
+Present only when the backend sent a well-formed `error_surface' or
+`billing' object; plain failures return nil and keep their ordinary
+rendering.  The plist holds `:surface' and `:billing', plus, when present,
+`:reason' (`failure_reason'), `:detail' (the raw `error' text) and
+`:partial-text' (the retained reply text of a `partial' turn)."
+  (let ((surface (hermes-transport-error-surface
+                  (hermes-transport--get payload 'error_surface)))
+        (billing (hermes-transport-billing-block
+                  (hermes-transport--get payload 'billing))))
+    (when (or surface billing)
+      (let ((reason (hermes-transport--non-empty-string
+                     (hermes-transport--get payload 'failure_reason)))
+            (detail (hermes-transport--non-empty-string
+                     (hermes-transport--get payload 'error)))
+            (partial (and (eq (hermes-transport--get payload 'partial) t)
+                          (hermes-transport--non-empty-string
+                           (hermes-transport--get payload 'text)))))
+        (append (list :surface surface :billing billing)
+                (and reason (list :reason reason))
+                (and detail (list :detail detail))
+                (and partial (list :partial-text partial)))))))
+
+(defun hermes-transport-retained-turn-failure (inflight)
+  "Return the failed turn retained in a `session.resume' INFLIGHT, or nil.
+The backend keeps a failed turn replayable until the next one starts; its
+snapshot then carries a non-blank `error'.  Return a plist of `:user'
+\(the prompt), `:partial-text' (the retained reply), `:error' (the raw
+error text) and `:failure', the structured failure when a well-formed
+`error_surface' is present.  A resume carries no billing descriptor."
+  (when-let* (((hermes-transport--object-p inflight))
+              (error (hermes-transport--non-blank-string
+                      (hermes-transport--get inflight 'error))))
+    (let ((surface (hermes-transport-error-surface
+                    (hermes-transport--get inflight 'error_surface))))
+      (list :user (hermes-transport--non-blank-string
+                   (hermes-transport--get inflight 'user))
+            :partial-text (hermes-transport--non-blank-string
+                           (hermes-transport--get inflight 'assistant))
+            :error error
+            :failure (and surface
+                          (list :surface surface :billing nil
+                                :detail error))))))
+
 (defun hermes-dashboard-transport--message-complete-event (type params payload)
   "Return a normalized `message.complete' event for TYPE/PARAMS/PAYLOAD.
 The :final-text field preserves literal text when PAYLOAD has no error."
@@ -789,6 +965,17 @@ The :final-text field preserves literal text when PAYLOAD has no error."
     (when warning (setq event (plist-put event :warning warning)))
     (when (hermes-transport--get payload 'response_previewed)
       (setq event (plist-put event :response-previewed t)))
+    (when (eq (hermes-transport--get payload 'response_transformed) t)
+      (setq event (plist-put event :response-transformed t)))
+    (when-let* (((eq (plist-get event :type) 'error))
+                (failure (hermes-transport-turn-failure payload)))
+      (setq event (plist-put event :failure failure)))
+    ;; The receipt names the committed user row that opened this turn.
+    (when-let* ((row (hermes-transport-row-id
+                      (hermes-transport--get
+                       (hermes-transport--get payload 'persisted_turn)
+                       'user_row_id))))
+      (setq event (plist-put event :user-row-id row)))
     event))
 
 (defun hermes-dashboard-transport--message-interim-event (type params payload)
@@ -970,7 +1157,7 @@ The :final-text field preserves literal text when PAYLOAD has no error."
 (defun hermes-dashboard-transport--session-info-event (type params payload)
   "Return a normalized `session.info' status event for TYPE/PARAMS/PAYLOAD.
 Surface the session's model, profile (agent) name, and runtime flags --
-reasoning effort, fast/priority tier, and approval bypass (yolo) -- so the
+reasoning effort, service tier, and approval bypass (yolo) -- so the
 chat header can show them."
   (let* ((running-present
           (hermes-transport--field-present-p payload 'running))
@@ -998,6 +1185,10 @@ chat header can show them."
     (when (hermes-transport--field-present-p payload 'fast)
       (setq event (plist-put event :fast
                              (eq (hermes-transport--get payload 'fast) t))))
+    (when (hermes-transport--field-present-p payload 'service_tier)
+      (setq event (plist-put event :service-tier
+                             (hermes-transport--scalar-string
+                              (hermes-transport--get payload 'service_tier)))))
     (when (hermes-transport--field-present-p payload 'yolo)
       (setq event (plist-put event :yolo
                              (eq (hermes-transport--get payload 'yolo) t))))
@@ -1094,14 +1285,121 @@ Delegate non-activity events to the notice and display fallback phase."
      (list (hermes-dashboard-transport--payload-event type params payload 'thinking)))
     (_ (hermes-dashboard-transport--normalize-notice-events type params payload))))
 
+;;;; Session controls
+
+(defconst hermes-transport--control-sections
+  '((goal ("active" "paused" "done")
+          (title . string) (status . string) (turns_used . integer)
+          (max_turns . integer) (created_at . number) (updated_at . number)
+          (paused_reason . string) (last_verdict . string)
+          (last_reason . string) (subgoals . strings) (contract . contract)
+          (gates . gates) (wait_barrier . barrier))
+    (loop ("active" "paused" "done")
+          (prompt . string) (status . string) (mode . string)
+          (interval_seconds . number) (current_delay . number)
+          (times . integer) (until . string) (max_ticks . integer)
+          (ticks_fired . integer) (created_at . number)
+          (last_fired_at . number) (next_due_at . number)
+          (awaiting_response . boolean) (deferred_by_goal . boolean)
+          (paused_reason . string) (last_stop_reason . string))
+    (heartbeat ("active" "paused")
+               (prompt . string) (status . string)
+               (interval_seconds . number) (created_at . number)
+               (last_fired_at . number) (fire_count . integer)))
+  "Released `session.control' sections: statuses, then (FIELD . TYPE).")
+
+(defun hermes-transport--control-key (field)
+  "Return the Lisp keyword for snake_case wire FIELD."
+  (intern (concat ":" (string-replace "_" "-" (symbol-name field)))))
+
+(defun hermes-transport--control-plist (object specs)
+  "Return OBJECT's SPECS fields as a plist, dropping ill-typed values.
+SPECS is a list of (FIELD . TYPE)."
+  (cl-loop for (field . type) in specs
+           for value = (hermes-transport--control-value
+                        type (hermes-transport--get object field))
+           when value append (list (hermes-transport--control-key field) value)))
+
+(defun hermes-transport--control-value (type value)
+  "Return VALUE coerced to wire TYPE, or nil when it does not match."
+  (pcase-exhaustive type
+    ('string (hermes-transport--non-empty-string value))
+    ('number (and (numberp value) value))
+    ('integer (and (integerp value) value))
+    ('boolean (eq value t))
+    ('strings (and (listp value) (seq-filter #'stringp value)))
+    ('contract (and (consp value)
+                    (hermes-transport--control-plist
+                     value '((outcome . string) (verification . string)
+                             (constraints . string) (boundaries . string)
+                             (stop_when . string)))))
+    ('gates (and (listp value)
+                 (mapcar (lambda (gate)
+                           (hermes-transport--control-plist
+                            gate '((command . string) (timeout_seconds . integer)
+                                   (max_retries . integer) (attempts . integer)
+                                   (last_exit_code . integer))))
+                         (seq-filter #'consp value))))
+    ('barrier (and (consp value)
+                   (member (hermes-transport--get value 'type)
+                           '("until" "session" "pid"))
+                   (hermes-transport--control-plist
+                    value '((type . string) (until_at . number)
+                            (target . scalar) (reason . string)))))
+    ('scalar (hermes-transport--scalar-string value))))
+
+(defun hermes-transport-control-snapshot (object)
+  "Normalize a released `session.control' snapshot OBJECT.
+Return (:revision R :updated-at T :goal G :loop L :heartbeat H), where an
+absent section is nil.  Return nil when OBJECT is malformed: a missing
+section key or a section without a known status makes no claim at all.
+The revision is an opaque content hash, empty when nothing is set."
+  (when (and (consp object)
+             (stringp (hermes-transport--get object 'revision))
+             (seq-every-p (lambda (section)
+                            (hermes-transport--field-present-p object (car section)))
+                          hermes-transport--control-sections))
+    (catch 'malformed
+      (append
+       (list :revision (hermes-transport--get object 'revision)
+             :updated-at (or (hermes-transport--control-value
+                              'number (hermes-transport--get object 'updated_at))
+                             0))
+       (cl-loop for (name statuses . specs) in hermes-transport--control-sections
+                for raw = (hermes-transport--get object name)
+                append (list (hermes-transport--control-key name)
+                             (when raw
+                               (unless (and (consp raw)
+                                            (member (hermes-transport--get raw 'status)
+                                                    statuses))
+                                 (throw 'malformed nil))
+                               (hermes-transport--control-plist raw specs))))))))
+
+(defun hermes-dashboard-transport--control-event (type params payload)
+  "Return a `session-control' event for TYPE, PARAMS and PAYLOAD, or nil."
+  (when-let* ((control (hermes-transport-control-snapshot
+                        (hermes-transport--get payload 'control))))
+    (append (hermes-dashboard-transport--event-base type params payload)
+            (list :type 'session-control :control control))))
+
 (defun hermes-dashboard-transport--normalize-notice-events (type params payload)
   "Return notice or fallback display events for TYPE, PARAMS and PAYLOAD."
   (pcase type
+    ;; Goal, loop and heartbeat snapshots are session state for the header
+    ;; and the controls view, never transcript.
+    ("session.control.update"
+     (when-let* ((event (hermes-dashboard-transport--control-event
+                         type params payload)))
+       (list event)))
     ;; Voice and skin changes are client-UI concerns, not transcript content.
-    ;; Usage ticks, title pushes and goal/loop control snapshots are session
-    ;; bookkeeping the stock TUI routes to its status bar, never transcript.
+    ;; Usage ticks and title pushes are session bookkeeping the stock TUI
+    ;; routes to its status bar, never transcript.
+    ;; Agent terminal events feed the desktop's terminal tabs: output chunks
+    ;; carry no text field, so they rendered as a bare label.  Process cards
+    ;; already show the last line and the exit.
     ((or "voice.status" "voice.transcript" "skin.changed"
-         "session.usage" "session.title" "session.control.update")
+         "session.usage" "session.title"
+         "agent.terminal.output" "terminal.close")
      nil)
     ("review.summary"
      (list (hermes-dashboard-transport--status-event
@@ -1120,6 +1418,104 @@ Delegate non-activity events to the notice and display fallback phase."
                 (hermes-dashboard-transport--payload-text payload)))
        (hermes-dashboard-transport--generic-display-event type params payload)))))
 
+(defun hermes-transport--connection-string (raw key)
+  "Return RAW's nonempty string field KEY, or nil."
+  (when-let* ((value (hermes-transport--get raw key))
+              ((stringp value))
+              ((not (string-empty-p value))))
+    value))
+
+(defun hermes-transport--connection-list (raw key)
+  "Return RAW's array field KEY as a list, or the symbol `invalid'."
+  (let ((value (hermes-transport--get raw key)))
+    (cond ((vectorp value) (append value nil))
+          ((listp value) value)
+          (t 'invalid))))
+
+(defun hermes-transport--connection-url (raw)
+  "Return RAW's web authorization link, or nil for any other scheme."
+  (when-let* ((url (hermes-transport--connection-string raw 'connect_url))
+              ((string-match-p "\\`https?://[^[:space:]]+\\'" url)))
+    url))
+
+(defun hermes-transport--connection-needs (raw)
+  "Return the credential labels RAW's install still needs.
+Only fields the backend requires block an install; like the backend, treat
+an omitted `required' as required.  Keep only each field's prompt or name;
+defaults may be secret and the client never collects credentials."
+  (let ((fields (hermes-transport--connection-list raw 'required_env)))
+    (when (listp fields)
+      (delq nil (mapcar (lambda (field)
+                          (when (or (hermes-transport--get field 'required)
+                                    (not (hermes-transport--field-present-p
+                                          field 'required)))
+                            (or (hermes-transport--connection-string
+                                 field 'prompt)
+                                (hermes-transport--connection-string
+                                 field 'name))))
+                        fields)))))
+
+(defun hermes-transport--connection-target (raw)
+  "Return the displayable, non-secret fields of connection target RAW.
+Return nil when RAW lacks the name, kind, or state every frame carries."
+  (let ((name (hermes-transport--connection-string raw 'name))
+        (kind (hermes-transport--connection-string raw 'kind))
+        (state (hermes-transport--connection-string raw 'state)))
+    (when (and name kind state)
+      (list :name name :kind kind :state state
+            :action (hermes-transport--connection-string raw 'action)
+            :alias (hermes-transport--connection-string raw 'alias)
+            :detail (hermes-transport--connection-string raw 'detail)
+            :instructions (hermes-transport--connection-string raw 'instructions)
+            :discovery-error
+            (hermes-transport--connection-string raw 'discovery_error)
+            :connect-url (hermes-transport--connection-url raw)
+            :needs (hermes-transport--connection-needs raw)))))
+
+(defun hermes-transport--connection-snapshot (payload)
+  "Return the full connection operation snapshot in PAYLOAD, or nil.
+PAYLOAD is a `connection.request' or `connection.update' payload, a
+`pending_connection' resume snapshot, or an operation RPC result.  Every
+frame carries all targets, so the result replaces, never merges, a card.
+A directory operation has no targets; only its request carries the
+`display' suggestions, so its settlement update has neither."
+  (let* ((id (hermes-transport--connection-string payload 'op_id))
+         (seq (hermes-transport--get payload 'seq))
+         (raw (hermes-transport--connection-list payload 'targets))
+         (targets (and (listp raw)
+                       (mapcar #'hermes-transport--connection-target raw)))
+         (display (hermes-transport--get payload 'display))
+         (suggested (and display (hermes-transport--connection-list
+                                  display 'suggested)))
+         (names (mapcar (lambda (target) (plist-get target :name)) targets)))
+    (when (and id (natnump seq)
+               (hermes-transport--field-present-p payload 'targets)
+               (listp raw) (listp suggested)
+               (not (memq nil targets))
+               (equal names (seq-uniq names)))
+      (list :id id :seq seq :targets targets
+            :tool-call-id (hermes-transport--connection-string
+                           payload 'tool_call_id)
+            :suggested (and (null targets) (seq-filter #'stringp suggested))
+            :settled (eq (hermes-transport--get payload 'settled) t)
+            :settled-by (hermes-transport--connection-string
+                         payload 'settled_by)))))
+
+(defun hermes-dashboard-transport--connection-event (type params payload)
+  "Return the structured connection event TYPE from PARAMS and PAYLOAD.
+Accept an update only when its owner is the session the frame is routed to;
+account operations belong to the Connectors page, not a chat."
+  (let ((owner (hermes-transport--get payload 'owner))
+        (session (hermes-transport--connection-string params 'session_id)))
+    (when (and session
+               (or (equal type "connection.request")
+                   (and (equal (hermes-transport--get owner 'type) "session")
+                        (equal (hermes-transport--get owner 'session_id)
+                               session))))
+      (when-let* ((snapshot (hermes-transport--connection-snapshot payload)))
+        (list :type 'connection :event type :session-id session
+              :operation snapshot)))))
+
 (defun hermes-dashboard-transport--normalize-event-frame (frame)
   "Return normalized transport events for JSON-RPC event FRAME."
   (let* ((params (hermes-transport--get frame 'params))
@@ -1127,6 +1523,10 @@ Delegate non-activity events to the notice and display fallback phase."
                 (hermes-transport--get params 'type)))
          (payload (or (hermes-transport--get params 'payload) '())))
     (pcase type
+      ((or "connection.request" "connection.update")
+       (when-let* ((event (hermes-dashboard-transport--connection-event
+                          type params payload)))
+         (list event)))
       ("gateway.ready"
        (list (hermes-dashboard-transport--status-event
               type params payload "ready" "Hermes dashboard connected")))
@@ -1180,131 +1580,112 @@ notices instead of flattening them to plain status text."
   (let ((value (hermes-transport--get object field)))
     (and (stringp value) (not (string-empty-p value)) value)))
 
+;; Roster rows are plain plists keyed by (KIND . ID); a repeated ID keeps
+;; its first row.  A malformed row fails the whole read: dropping it would
+;; make its worker look finished.
+
+(defun hermes-transport--work-number (object field)
+  "Return a nonnegative number from OBJECT's FIELD, or nil."
+  (let ((value (hermes-transport--get object field)))
+    (and (numberp value) (>= value 0) value)))
+
+(defun hermes-transport--work-rows (result field id-field project)
+  "Return PROJECT applied to each of RESULT's FIELD rows.
+Signal unless FIELD is an array whose every row is an object carrying a
+nonempty ID-FIELD string."
+  (let ((rows (and (hash-table-p result) (gethash field result))))
+    (unless (and (vectorp rows)
+                 (seq-every-p (lambda (row)
+                                (and (hash-table-p row)
+                                     (hermes-transport-work-string row id-field)))
+                              rows))
+      (error "Invalid %s roster" field))
+    (seq-uniq (mapcar project rows)
+              (lambda (a b) (equal (plist-get a :key) (plist-get b :key))))))
+
 (defun hermes-transport-work-delegate-row (row)
-  "Return inert display metadata for the validated delegate ROW."
+  "Return display metadata for `subagent.list' ROW.
+A listed worker is running unless the backend says it is queued."
   (let ((id (hermes-transport-work-string row 'subagent_id))
         (status (hermes-transport-work-string row 'status)))
     (list :key (cons 'delegate id) :id id :kind 'delegate
-          :status status :state (if (equal status "running") 'running 'unknown)
+          :status status :state (if (equal status "queued") 'queued 'running)
           :parent (hermes-transport-work-string row 'parent_id)
-          :owner (hermes-transport-work-string row 'owner_agent_session_id)
+          :depth (hermes-transport--work-number row 'depth)
+          :delegation-id (hermes-transport-work-string row 'delegation_id)
           :goal (or (hermes-transport-work-string row 'goal) "—")
           :model (or (hermes-transport-work-string row 'model) "—")
-          :started (let ((value (hermes-transport--get row 'started_at)))
-                     (and (numberp value) (>= value 0) value)))))
+          :started (hermes-transport--work-number row 'started_at)
+          :tool-count (hermes-transport--work-number row 'tool_count)
+          :last-tool (hermes-transport-work-string row 'last_tool)
+          :accepting-steer (eq (hermes-transport--get row 'accepting_steer) t))))
 
-(defun hermes-transport--work-delegate-index (active)
-  "Return (NODES . PARTIAL) for the lossless ACTIVE delegate array.
-Index valid rows by ID; retain ambiguous markers for duplicates and invalid
-metadata so neither can contribute roots or traversal edges."
-  (let ((nodes (make-hash-table :test #'equal))
-        partial)
-    (seq-doseq (row active)
-      (let ((id (and (hash-table-p row)
-                     (hermes-transport-work-string row 'subagent_id))))
-        (cond
-         ((not id) (setq partial t))
-         ((gethash id nodes)
-          (puthash id 'ambiguous nodes)
-          (setq partial t))
-         ((cl-some
-           (lambda (field)
-             (let ((value (hermes-transport--get row field)))
-               (and value (not (eq value :json-null))
-                    (not (hermes-transport-work-string row field)))))
-           '(parent_id owner_agent_session_id status))
-          (puthash id 'ambiguous nodes)
-          (setq partial t))
-         (t (puthash id row nodes)))))
-    (cons nodes partial)))
-
-(defun hermes-transport-work-delegates (result key)
-  "Project lossless delegation RESULT for verified durable session KEY.
-Return rows and coverage.  Signal for invalid collections or KEY.  Exclude
-ambiguous IDs and their traversal edges; malformed rows make coverage partial."
-  (unless (and (stringp key) (not (string-empty-p key))
-               (hash-table-p result) (vectorp (gethash "active" result)))
-    (error "Invalid delegate inventory or unbound durable key"))
-  (let* ((index (hermes-transport--work-delegate-index (gethash "active" result)))
-         (nodes (car index))
-         (children (make-hash-table :test #'equal))
-         (seen (make-hash-table :test #'equal))
-         roots rows)
-    (maphash
-     (lambda (id row)
-       (when (hash-table-p row)
-         (when (equal (hermes-transport-work-string row 'owner_agent_session_id) key)
-           (push id roots))
-         (when-let* ((parent (hermes-transport-work-string row 'parent_id)))
-           (push id (gethash parent children)))))
-     nodes)
-    (while roots
-      (let* ((id (pop roots)) (row (gethash id nodes)))
-        (when (and (hash-table-p row) (not (gethash id seen)))
-          (puthash id t seen)
-          (push (hermes-transport-work-delegate-row row) rows)
-          (setq roots (append (gethash id children) roots)))))
-    (list :rows rows :coverage (if (cdr index) 'partial 'current))))
+(defun hermes-transport-work-failure-row (row)
+  "Return read-only worker metadata for persisted failed task ROW."
+  (let* ((delegation (hermes-transport-work-string row 'delegation_id))
+         (index (hermes-transport--get row 'task_index)))
+    (unless (and (integerp index) (>= index 0))
+      (error "Invalid delegation task index"))
+    (list :key (cons 'delegate (format "delegation:%s:%d" delegation index))
+          :id (format "delegation:%s:%d" delegation index) :kind 'delegate
+          :persisted t :state 'failed
+          :delegation-id delegation :task-index index
+          :status (hermes-transport-work-string row 'status)
+          :goal (or (hermes-transport-work-string row 'goal) "—")
+          :error (hermes-transport-work-string row 'error)
+          :started (hermes-transport--work-number row 'dispatched_at)
+          :finished (hermes-transport--work-number row 'completed_at))))
 
 (defun hermes-transport-work-subagents (result)
-  "Project lossless session roster RESULT without granting control authority.
-Reject invalid arrays; omit duplicate or malformed worker identities."
-  (unless (and (hash-table-p result) (vectorp (gethash "subagents" result)))
-    (error "Invalid session worker roster"))
-  (let* ((index (hermes-transport--work-delegate-index (gethash "subagents" result)))
-         rows)
-    (maphash
-     (lambda (_id row)
-       (when (hash-table-p row)
-         (push (append (hermes-transport-work-delegate-row row)
-                       (list :accepting-steer
-                             (eq (hermes-transport--get row 'accepting_steer) t)))
-               rows)))
-     (car index))
-    (list :rows rows :coverage (if (cdr index) 'partial 'current))))
+  "Return worker rows from lossless `subagent.list' RESULT.
+Signal for a missing live roster or a malformed roster array.
+An absent delegation array is accepted for older backends."
+  (append (hermes-transport--work-rows result "subagents" 'subagent_id
+                                      #'hermes-transport-work-delegate-row)
+          (when (and (hash-table-p result) (gethash "delegations" result))
+            (hermes-transport--work-rows result "delegations" 'delegation_id
+                                         #'hermes-transport-work-failure-row))))
+
+(defun hermes-transport-work-process-state (status exit-code reason)
+  "Return the process state for wire STATUS, EXIT-CODE and completion REASON.
+Anything not reported as exited is running, as in the Hermes TUI."
+  (cond ((not (equal status "exited")) 'running)
+        ((equal reason "failed_start") 'failed)
+        ((member reason '("killed" "lost")) (intern reason))
+        ((and (integerp exit-code) (/= exit-code 0)) 'failed)
+        (t 'done)))
+
+(defun hermes-transport-work-last-line (text)
+  "Return the last nonblank line of TEXT, or nil.
+Skip a final bare `logout', which a login shell prints as it exits."
+  (and (stringp text)
+       (let ((lines (split-string text "\n" t "[ \t\r]+")))
+         (car (last (if (equal (car (last lines)) "logout") (butlast lines) lines))))))
 
 (defun hermes-transport-work-process-row (row)
-  "Return inert display metadata and typed terminal evidence for process ROW."
+  "Return display metadata for `process.list' ROW.
+Elapsed time comes from `uptime_seconds'; the wire `started_at' is a
+zone-less local timestamp and is ignored."
   (let ((id (hermes-transport-work-string row 'session_id))
         (status (hermes-transport-work-string row 'status))
-        (exit (hermes-transport--get row 'exit_code)))
+        (exit (hermes-transport--get row 'exit_code))
+        (reason (hermes-transport-work-string row 'completion_reason)))
     (list :key (cons 'process id) :id id :kind 'process :status status
-          :state (cond ((equal status "running") 'running)
-                       ((and (equal status "exited") (integerp exit))
-                        (if (zerop exit) 'done 'failed))
-                       (t 'unknown))
-          :exit-code (and (integerp exit) exit)
+          :state (hermes-transport-work-process-state status exit reason)
+          :exit-code (and (integerp exit) exit) :reason reason
           :command (or (hermes-transport-work-string row 'command) "—")
           :cwd (or (hermes-transport-work-string row 'cwd) "—")
           :output-tail (or (hermes-transport-work-string row 'output_tail) "—")
-          :started (let ((value (hermes-transport--get row 'started_at)))
-                     (and (numberp value) (>= value 0) value)))))
+          :last-line (hermes-transport-work-last-line
+                      (hermes-transport--get row 'output_preview))
+          :uptime (hermes-transport--work-number row 'uptime_seconds)
+          :exited-at (hermes-transport--work-number row 'exited_at))))
 
 (defun hermes-transport-work-processes (result)
-  "Project lossless session-scoped process RESULT into rows and coverage.
-Signal for invalid collections.  Exclude malformed rows and duplicate IDs,
-making coverage partial; missing terminal evidence never implies success."
-  (unless (and (hash-table-p result) (vectorp (gethash "processes" result)))
-    (error "Invalid process inventory"))
-  (let ((nodes (make-hash-table :test #'equal)) partial rows)
-    (seq-doseq (row (gethash "processes" result))
-      (let ((id (and (hash-table-p row)
-                     (hermes-transport-work-string row 'session_id))))
-        (cond
-         ((not id) (setq partial t))
-         ((gethash id nodes)
-          (puthash id 'ambiguous nodes)
-          (setq partial t))
-         ((let ((status (hermes-transport--get row 'status)))
-            (and status (not (eq status :json-null)) (not (stringp status))))
-          (puthash id 'ambiguous nodes)
-          (setq partial t))
-         (t (puthash id row nodes)))))
-    (maphash (lambda (_id row)
-               (when (hash-table-p row)
-                 (push (hermes-transport-work-process-row row) rows)))
-             nodes)
-    (list :rows rows :coverage (if partial 'partial 'current))))
+  "Return process rows from lossless `process.list' RESULT.
+Signal for a missing or malformed process array."
+  (hermes-transport--work-rows result "processes" 'session_id
+                               #'hermes-transport-work-process-row))
 
 (provide 'hermes-transport)
 ;;; hermes-transport.el ends here
