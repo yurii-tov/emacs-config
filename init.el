@@ -352,7 +352,8 @@
       confirm-kill-processes nil
       confirm-kill-emacs 'y-or-n-p
       save-interprogram-paste-before-kill t
-      calendar-week-start-day 1)
+      calendar-week-start-day 1
+      large-file-warning-threshold nil)
 
 
 ;; Startup
