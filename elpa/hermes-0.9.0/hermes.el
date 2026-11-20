@@ -236,9 +236,13 @@ Set by `hermes-dashboard--check-auth' to surface a provider-onboarding card.")
   :group "Navigate"
   "n" ("Next" hermes-dashboard-next :stay-open t)
   "p" ("Previous" hermes-dashboard-previous :stay-open t)
+  "TAB" ("Next" hermes-dashboard-next :stay-open t)
+  "S-TAB" ("Previous" hermes-dashboard-previous :stay-open t)
   "RET" ("Open" hermes-dashboard-open)
   :group "Chats"
   "c" ("New chat" hermes-chat)
+  "k" ("Kill chat buffer" hermes-dashboard-kill-chat
+       :inapt-if #'hermes-dashboard--chat-unavailable-p)
   "S" ("Sessions" hermes-list-sessions)
   "v" ("Selected chat" :keymap hermes-dash-chat-map
        :inapt-if #'hermes-dashboard--chat-unavailable-p)
@@ -251,6 +255,9 @@ Set by `hermes-dashboard--check-auth' to surface a provider-onboarding card.")
   :group "View"
   "g" ("Refresh" hermes-dashboard-refresh :stay-open t)
   "?" ("Help" hermes-dashboard-popup))
+
+;; Toolkits and terminals deliver shift-TAB as `backtab', not `S-tab'.
+(keymap-set hermes-dashboard-mode-map "<backtab>" #'hermes-dashboard-previous)
 
 (dolist (command '(hermes-dashboard-mode-map-popup
                   hermes-dashboard-mode-map--enter-hermes-dash-chat-map
@@ -483,7 +490,8 @@ Set by `hermes-dashboard--check-auth' to surface a provider-onboarding card.")
             "\n")
     (dolist (detail (hermes-dashboard--format-chat-detail node))
       (insert "    " detail "\n"))
-    (insert (propertize "    RET open   i interrupt   s steer   a respond\n"
+    (insert (propertize (concat "    RET open   i interrupt   s steer   a respond"
+                                "   k kill\n")
                         'face 'hermes-dashboard-muted))
     (hermes-dashboard--add-card-properties
      start node (string-join
@@ -870,6 +878,26 @@ dashboard URL, so it re-fetches automatically after the configured URL changes."
   (with-current-buffer (hermes-dashboard--selected-chat-buffer)
     (call-interactively #'hermes-chat-disconnect)))
 
+(defun hermes-dashboard-kill-chat ()
+  "Kill the Hermes chat buffer selected by the dashboard card at point.
+The transcript is generated, so a modified buffer is never queried; only
+unsent composer input asks for confirmation, because no other copy of it
+exists.  Killing runs the chat's cleanup path, releasing its dashboard
+client and session, and the durable session stays resumable."
+  (interactive nil hermes-dashboard-mode)
+  (let* ((buffer (hermes-dashboard--selected-chat-buffer))
+         (name (buffer-name buffer))
+         (draft (with-current-buffer buffer
+                  (and (hermes-chat--input-position)
+                       (not (hermes-chat--composer-empty-p))))))
+    (when (and draft
+               (not (yes-or-no-p (format "Kill %s with unsent input? " name))))
+      (user-error "Kill cancelled"))
+    (with-current-buffer buffer
+      (set-buffer-modified-p nil))
+    (kill-buffer buffer)
+    (message "Killed %s" name)))
+
 (defun hermes-dashboard-refresh-visible ()
   "Refresh the visible Hermes dashboard buffer, when it exists."
   (when-let* ((buffer (hermes-buffer--find hermes-dashboard-buffer-name
@@ -1031,8 +1059,7 @@ Durable Hermes sessions and backend data are preserved."
       (hermes-dashboard--warm-profile-cache))
     (pop-to-buffer-same-window buffer)
     (with-current-buffer buffer
-      (goto-char (point-min))
-      (keymap-popup hermes-dashboard-mode-map))))
+      (goto-char (point-min)))))
 
 (provide 'hermes)
 ;;; hermes.el ends here
