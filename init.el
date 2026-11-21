@@ -2265,10 +2265,6 @@ The tunnel reconnects every 5 seconds if dropped, and exits on success."
       hermes-dashboard-transport-start-mode 'remote)
 
 
-(with-eval-after-load 'hermes-chat
-  (keymap-set hermes-chat-mode-map "C-c C-k" 'hermes-chat-clear))
-
-
 ;; Statistics / combinatorics
 ;; ==========================
 
