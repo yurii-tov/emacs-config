@@ -3,6 +3,7 @@
 ;; Copyright (C) 2026  Thanos Apollo
 
 ;; Author: Thanos Apollo <public@thanosapollo.org>
+;; Maintainer: Yurii Tovarnov <jurystepanovich@gmail.com>
 ;; Keywords: tools, convenience
 
 ;; This program is free software; you can redistribute it and/or modify

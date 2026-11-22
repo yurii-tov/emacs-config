@@ -3,6 +3,7 @@
 ;; Copyright (C) 2026  Thanos Apollo
 
 ;; Author: Thanos Apollo <public@thanosapollo.org>
+;; Maintainer: Yurii Tovarnov <jurystepanovich@gmail.com>
 ;; Assisted-by: Hermes:MoA
 ;; Keywords: tools, convenience
 
@@ -222,11 +223,11 @@ BODY and QUERY extend the request.  Fence session edits with a fresh snapshot."
          (profile (read-string "Stored sessions backend profile: " "default")))
     (when (and (funcall current) (not (string-empty-p profile)))
       (with-current-buffer buffer
-	(setq hermes-sessions--catalogue-profile profile
+        (setq hermes-sessions--catalogue-profile profile
               hermes-sessions--catalogue-offset 0
               hermes-sessions--search-query nil
               hermes-sessions--all-profiles nil)
-	(hermes-sessions--revert)))))
+        (hermes-sessions--revert)))))
 
 (defun hermes-sessions-next-page ()
   "Append the next stored-session window, deduplicating pinned backfill."
@@ -857,6 +858,133 @@ without attaching or changing its live session."
     (when (string-empty-p id)
       (user-error "No Hermes session id to resume"))
     (hermes-chat-resume-session id title profile instance)))
+
+;;;; Interactive session choice
+
+(defvar hermes-sessions--resume-history nil
+  "Minibuffer history for `hermes-sessions--read-resume-choice'.")
+
+(defconst hermes-sessions--timestamp-format "%Y-%m-%d %H:%M:%S"
+  "Format of the start timestamp in the resume prompt annotation.")
+
+(defun hermes-sessions--started-at (session)
+  "Return SESSION's start time in `hermes-sessions--timestamp-format', or nil.
+Numeric start times are formatted as local time; ISO 8601 strings are
+parsed first so their offset is applied."
+  (let ((value (hermes-transport--get session 'started_at)))
+    (cond
+     ((numberp value)
+      (format-time-string hermes-sessions--timestamp-format
+                          (seconds-to-time value)))
+     ((and (stringp value) (not (string-empty-p value)))
+      (ignore-errors
+        (format-time-string hermes-sessions--timestamp-format
+                            (date-to-time value)))))))
+
+(defun hermes-sessions--resume-annotation (session)
+  "Return the completion annotation for SESSION.
+It is the session's start time and nothing else."
+  (when-let* ((time (hermes-sessions--started-at session)))
+    (concat "  " (propertize time 'face 'completions-annotations))))
+
+(defun hermes-sessions--resume-label (session)
+  "Return the completion label naming SESSION."
+  (or (hermes-sessions--non-empty-field session 'title)
+      (hermes-sessions--id session)))
+
+(defun hermes-sessions--resume-rows (sessions)
+  "Return (LABEL . SESSION) rows for SESSIONS, keeping the listing order.
+LABEL is the session title, or its id when untitled.  A title shared by
+several sessions gains a bracketed id prefix so every row is selectable."
+  (let ((counts (make-hash-table :test #'equal))
+        (rows nil))
+    (dolist (session sessions)
+      (let ((label (hermes-sessions--resume-label session)))
+        (puthash label (1+ (gethash label counts 0)) counts)))
+    (dolist (session sessions (nreverse rows))
+      (let* ((label (hermes-sessions--resume-label session))
+             (id (hermes-sessions--id session)))
+        (push (cons (if (> (gethash label counts 0) 1)
+                        (format "%s [%s]" label
+                                (substring id 0 (min 8 (length id))))
+                      label)
+                    session)
+              rows)))))
+
+(defun hermes-sessions--resume-table (rows-cell)
+  "Return a completion table over the live rows in ROWS-CELL.
+ROWS-CELL is a cons whose car holds (LABEL . SESSION) rows.  It stays
+empty until the session listing lands, which is what lets the prompt open
+before the request is answered; the backend's order is kept."
+  (lambda (string predicate action)
+    (if (eq action 'metadata)
+        `(metadata
+          (category . hermes-session)
+          (annotation-function
+           . ,(lambda (label)
+                (when-let* ((session (cdr (assoc label (car rows-cell)))))
+                  (hermes-sessions--resume-annotation session))))
+          (display-sort-function . identity)
+          (cycle-sort-function . identity))
+      (complete-with-action action (mapcar #'car (car rows-cell))
+                            string predicate))))
+
+(defun hermes-sessions--resume-sessions (client)
+  "Return a promise of the sessions the current listing shows on CLIENT."
+  (hermes--promise-map (hermes-sessions--fetch client)
+                       #'hermes-sessions--result-sessions))
+
+(defconst hermes-sessions--resume-loading-message
+  "Loading sessions list..."
+  "Echo-area message shown while the resume prompt waits for its listing.")
+
+(defun hermes-sessions--read-resume-choice ()
+  "Read a session to resume in the minibuffer and return it, or nil.
+Offer every session in the current listing as its title, annotated with
+its start time.  The listing is fetched before
+the prompt opens, announced with `hermes-sessions--resume-loading-message'
+while it is still arriving, so the prompt never opens on an empty list.
+A trimmed input that names no candidate is returned as a session carrying
+only its id, so an unlisted session can still be resumed."
+  (let ((rows-cell (list nil))
+        (request (list :settled nil :failed nil))
+        (choice nil))
+    (condition-case err
+        (hermes-browser--run-on-client
+         #'hermes-sessions--resume-sessions
+         (lambda (sessions)
+           (setf (plist-get request :settled) t)
+           (setcar rows-cell (hermes-sessions--resume-rows sessions)))
+         (lambda (reason)
+           (setf (plist-get request :settled) t
+                 (plist-get request :failed) reason)))
+      (error (setf (plist-get request :settled) t
+                   (plist-get request :failed) (error-message-string err))))
+    (unless (plist-get request :settled)
+      (message "%s" hermes-sessions--resume-loading-message)
+      (let ((deadline (+ (float-time) hermes-dashboard-transport-http-timeout)))
+        (while (and (not (plist-get request :settled))
+                    (< (float-time) deadline))
+          (accept-process-output nil 0.05)))
+      (message nil)
+      (unless (plist-get request :settled)
+        (message "Session list timed out; enter a session id")))
+    (when-let* ((failure (plist-get request :failed)))
+      (message "Hermes: %s" failure))
+    (setq choice (string-trim
+                  (or (completing-read "Resume Hermes session: "
+                                       (hermes-sessions--resume-table rows-cell)
+                                       nil nil nil 'hermes-sessions--resume-history)
+                      "")))
+    (cond
+     ((string-empty-p choice) nil)
+     ((cdr (assoc choice (car rows-cell))))
+     (t `((id . ,choice))))))
+
+;; The chat facade reads sessions through this registry rather than requiring
+;; this file, which is downstream of it.
+(setq hermes-chat--read-session-choice-function
+      #'hermes-sessions--read-resume-choice)
 
 (defun hermes-sessions--title-empty-p (title)
   "Return non-nil when TITLE is blank."

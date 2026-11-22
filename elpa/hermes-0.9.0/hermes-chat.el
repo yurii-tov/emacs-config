@@ -3,6 +3,7 @@
 ;; Copyright (C) 2026  Thanos Apollo
 
 ;; Author: Thanos Apollo <public@thanosapollo.org>
+;; Maintainer: Yurii Tovarnov <jurystepanovich@gmail.com>
 ;; Assisted-by: Hermes:MoA
 ;; Keywords: tools, convenience
 
@@ -2153,7 +2154,7 @@ MODEL-LABEL is the profile's provider/model string, or nil when unknown."
 CANDIDATES is a (NAME . MODEL-LABEL) alist; the annotation shows the model."
   (lambda (name)
     (when-let* ((model (cdr (assoc name candidates))))
-      (concat "  " (propertize model 'face 'shadow)))))
+      (concat "  " (propertize model 'face 'completions-annotations)))))
 
 (defun hermes-chat--existing-dashboard-client ()
   "Return a live dashboard client for the current Hermes instance, or nil."
@@ -3024,6 +3025,12 @@ history is loaded."
       (rename-buffer (hermes-chat--buffer-name profile instance) t))
     buffer))
 
+(defvar hermes-chat--read-session-choice-function nil
+  "Function reading a resumable session for `hermes-chat-resume-session'.
+It returns a session alist, or nil for no choice.  `hermes-sessions'
+registers its listing-backed reader here, keeping this file free of an
+upward dependency; nil falls back to reading a session id.")
+
 (defun hermes-chat-resume-session (session-id &optional title profile instance bot-root pinned-url)
   "Open a Hermes chat buffer that resumes dashboard SESSION-ID.
 TITLE, when given, records its server title metadata.  PROFILE selects its
@@ -3033,8 +3040,24 @@ the backend-confirmed canonical Bot Chat root and enables its /new policy.
 PINNED-URL explicitly retains a verified backend through hooks and reconnect;
 when omitted, BOT-ROOT uses INSTANCE's endpoint.  Ordinary chats stay unpinned.
 Over the dashboard transport the prior messages are fetched and rendered; the
-durable session continues on send."
-  (interactive (list (read-string "Resume Hermes session id: ")))
+durable session continues on send.
+
+Interactively, read a session with completion: every session the dashboard
+lists is offered by title and annotated with its start time.  Typed text
+that names no listed session is taken as a session id, so an unlisted
+session can still be resumed."
+  (interactive
+   (let* ((instance (hermes-instance-resolve))
+          (choice (let ((hermes-instance instance))
+                    (if hermes-chat--read-session-choice-function
+                        (funcall hermes-chat--read-session-choice-function)
+                      (let ((id (read-string "Resume Hermes session id: ")))
+                        (unless (string-empty-p id) `((id . ,id))))))))
+     (list (hermes-transport--field choice 'id)
+           (hermes-transport--field choice 'title)
+           (hermes-transport--non-empty-string
+            (hermes-transport--field choice 'profile))
+           instance)))
   (let ((buffer (hermes-chat--resume-buffer
                  session-id title profile instance bot-root pinned-url)))
     (pop-to-buffer-same-window buffer)
@@ -3370,12 +3393,18 @@ the gateway cwd while it differs from the chat's project root."
                                  (hermes-transport--non-empty-string
                                   (plist-get hermes-chat--status-state :activity))
                                  (hermes-chat--divergent-directory-label))))
-             (parts (delq nil (list title attention
-                                    (and detail
-                                         (propertize (string-join detail " · ")
-                                                     'face 'shadow))))))
+             (parts (delq nil
+                          (list title attention
+                                (and detail
+                                     (propertize
+                                      (string-join detail " · ")
+                                      'face
+                                      'completions-annotations))))))
         (and parts
-             (concat "  " (string-join parts (propertize " · " 'face 'shadow))))))))
+             (concat "  " (string-join
+                           parts
+                           (propertize " · " 'face
+                                       'completions-annotations))))))))
 
 (defun hermes-chat--switch-candidates (buffers current)
   "Return (NAME . BUFFER) for chat BUFFERS in completion order, CURRENT last.
@@ -3967,15 +3996,17 @@ into `hermes-chat-mode', so each activation owns exactly one hint."
   :exit-key "q"
   :group "Session"
   "n" ("New chat" hermes-chat)
+  "r" ("Resume session" hermes-chat-resume-session)
   "R" ("Rename session" hermes-chat-rename)
-  "S" ("List / resume sessions" hermes-list-sessions)
-  "g" ("Goal / loop controls" hermes-session-control)
+  "S" ("List sessions" hermes-list-sessions)
   :group "Fork"
   "b" ("Branch" hermes-chat-branch
        :inapt-if #'hermes-chat--active-turn-p)
   "H" ("Hand off" hermes-chat-handoff)
   "z" ("Compress" hermes-chat-compress
-       :inapt-if #'hermes-chat--active-turn-p))
+       :inapt-if #'hermes-chat--active-turn-p)
+  :group "Goal"
+  "g" ("Goal / loop controls" hermes-session-control))
 
 (put 'hermes-chat-sess-map-popup 'command-modes '(hermes-chat-mode))
 

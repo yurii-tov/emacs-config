@@ -2,6 +2,7 @@
 
 ;; Copyright (C) 2026 Thanos Apollo
 ;; Author: Thanos Apollo <public@thanosapollo.org>
+;; Maintainer: Yurii Tovarnov <jurystepanovich@gmail.com>
 ;; Keywords: tools, multimedia
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 

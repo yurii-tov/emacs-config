@@ -3,6 +3,7 @@
 ;; Copyright (C) 2026  Thanos Apollo
 
 ;; Author: Thanos Apollo <public@thanosapollo.org>
+;; Maintainer: Yurii Tovarnov <jurystepanovich@gmail.com>
 ;; Assisted-by: Hermes:MoA
 ;; Keywords: tools, convenience
 
@@ -358,8 +359,8 @@ one line instead of appending."
      ;; tools are expected to tag frames with a tool_call_id.
      (when-let* ((key (or (hermes-chat--transport-key-fragment
                            event '(:tool-call-id :tool_call_id :call-id
-						 :call_id :id :message-id
-						 :message_id :index :seq))
+                                                 :call_id :id :message-id
+                                                 :message_id :index :seq))
                           (hermes-chat--tool-name event)
                           (hermes-chat--transport-key-fragment
                            event '(:event)))))
@@ -713,6 +714,25 @@ frontier is missing, foreign or moved since validation, return
     (set-marker (car hermes-chat--protected-frontier) nil))
   (setq hermes-chat--protected-frontier nil))
 
+(defvar-local hermes-chat--composer-read-only nil
+  "Reason string while the composer refuses modifications, or nil.
+The value doubles as the `read-only' text property on the composer, so a
+refused edit reports it: \"Text is read-only: REASON\".")
+
+(defun hermes-chat--composer-read-only-protect ()
+  "Make the composer tail read-only, including its trailing boundary.
+The character before the input marker must lose `rear-nonsticky', or Emacs
+still allows text to be appended at `point-max'."
+  (when-let* ((pos (hermes-chat--input-position))
+              (reason hermes-chat--composer-read-only))
+    (let ((inhibit-read-only t)
+          (buffer-undo-list t))
+      (when (> pos (point-min))
+        (put-text-property (1- pos) pos 'read-only reason)
+        (remove-text-properties (1- pos) pos '(rear-nonsticky nil)))
+      (add-text-properties pos (point-max)
+                           (list 'read-only reason 'front-sticky t)))))
+
 (defun hermes-chat--protect-transcript ()
   "Make transcript and prompt read-only while keeping input tail writable.
 Scan only from the protected frontier: this runs after every streamed delta,
@@ -741,7 +761,30 @@ changes in the undo list."
             (progn (set-marker (car frontier) pos)
                    (setcdr frontier pos))
           (setq hermes-chat--protected-frontier
-                (cons (copy-marker pos) pos)))))))
+                (cons (copy-marker pos) pos)))
+        ;; Rendering resets the tail and the boundary character, so a
+        ;; locked composer has to be protected again after every pass.
+        (when hermes-chat--composer-read-only
+          (hermes-chat--composer-read-only-protect))))))
+
+(defun hermes-chat--composer-read-only-apply (flag)
+  "Lock the composer with refusal reason FLAG, or unlock it when FLAG is nil.
+Unlocking puts the trailing boundary character back the way transcript
+protection leaves it -- `rear-nonsticky' included -- so the frontier stays
+valid and no rescan is needed."
+  (setq hermes-chat--composer-read-only flag)
+  (if flag
+      (hermes-chat--composer-read-only-protect)
+    (when-let* ((pos (hermes-chat--input-position)))
+      (let ((inhibit-read-only t)
+            (buffer-undo-list t))
+        (remove-text-properties pos (point-max)
+                                '(read-only nil front-sticky nil
+                                  rear-nonsticky nil))
+        (when (> pos (point-min))
+          (add-text-properties (1- pos) pos
+                               '(read-only t front-sticky t
+                                 rear-nonsticky t)))))))
 
 (defun hermes-chat--adjust-undo-element (element deltas)
   "Adjust draft undo ELEMENT by DELTAS, including native change groups."
@@ -2019,10 +2062,13 @@ METADATA is stored as the entry's `:metadata' plist."
       (and (eq (plist-get (ewoc-data node) :role) 'assistant)
            node))))
 
-(defun hermes-chat--insert-local-status (content &optional status)
-  "Insert local status CONTENT with optional STATUS."
+(defun hermes-chat--insert-local-status (content &optional status expanded)
+  "Insert local status CONTENT with optional STATUS.
+EXPANDED non-nil starts a long notice expanded instead of collapsed, for
+command results the user asked to see in full."
   (hermes-chat--insert-entry
-   (hermes-chat--make-entry 'status content (or status 'done))
+   (hermes-chat--make-entry 'status content (or status 'done) nil
+                            (and expanded (list :expanded t)))
    (hermes-chat--trailing-active-assistant-node)))
 
 ;;; Offline recovery actions

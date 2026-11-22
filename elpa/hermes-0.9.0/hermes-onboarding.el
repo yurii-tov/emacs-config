@@ -3,6 +3,7 @@
 ;; Copyright (C) 2026  Thanos Apollo
 
 ;; Author: Thanos Apollo <public@thanosapollo.org>
+;; Maintainer: Yurii Tovarnov <jurystepanovich@gmail.com>
 ;; Assisted-by: Hermes:MoA
 ;; Keywords: tools, convenience
 
@@ -91,7 +92,8 @@ Signal a `user-error' when none are connectable."
            (completion-extra-properties
             (list :annotation-function
                   (lambda (_name)
-                    (concat "  " (propertize "API" 'face 'shadow)))))
+                    (concat "  " (propertize
+                                  "API" 'face 'completions-annotations)))))
            (choice (completing-read "Connect provider: " candidates nil t)))
       (or (cdr (assoc choice candidates))
           (user-error "No provider selected")))))

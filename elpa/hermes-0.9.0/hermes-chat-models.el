@@ -3,6 +3,7 @@
 ;; Copyright (C) 2026  Thanos Apollo
 
 ;; Author: Thanos Apollo <public@thanosapollo.org>
+;; Maintainer: Yurii Tovarnov <jurystepanovich@gmail.com>
 ;; Assisted-by: Hermes:MoA
 ;; Keywords: tools, convenience
 
@@ -127,13 +128,14 @@ capabilities."
                         :authenticated authenticated)))))
 
 (defun hermes-chat--model-annotation (data &optional current)
-  "Return the shadowed annotation for candidate DATA.
+  "Return the annotated candidate details for DATA.
 CURRENT non-nil marks the chat's current model."
   (let ((details (plist-get data :details)))
     (when (or details current)
       (concat
        "  "
-       (and details (propertize (string-join details " · ") 'face 'shadow))
+       (and details (propertize (string-join details " · ")
+                                'face 'completions-annotations))
        (and details current " ")
        (and current (propertize "• current" 'face 'success))))))
 

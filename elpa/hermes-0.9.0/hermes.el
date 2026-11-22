@@ -3,8 +3,9 @@
 ;; Copyright (C) 2026  Thanos Apollo
 
 ;; Author: Thanos Apollo <public@thanosapollo.org>
+;; Maintainer: Yurii Tovarnov <jurystepanovich@gmail.com>
 ;; Assisted-by: Hermes:MoA
-;; Version: 0.9.1
+;; Version: 0.9.3
 ;; URL: https://github.com/yurii-tov/emacs-hermes
 ;; Keywords: tools, convenience
 ;; Package-Requires: ((emacs "29.1") (keymap-popup "0.4.0") (websocket "1.15") (markdown-mode "2.6"))
@@ -241,6 +242,7 @@ Set by `hermes-dashboard--check-auth' to surface a provider-onboarding card.")
   "RET" ("Open" hermes-dashboard-open)
   :group "Chats"
   "c" ("New chat" hermes-chat)
+  "r" ("Resume session" hermes-chat-resume-session)
   "k" ("Kill chat buffer" hermes-dashboard-kill-chat
        :inapt-if #'hermes-dashboard--chat-unavailable-p)
   "S" ("Sessions" hermes-list-sessions)
@@ -501,25 +503,11 @@ Set by `hermes-dashboard--check-auth' to surface a provider-onboarding card.")
                  "\n")
      'hermes-dashboard-buffer buffer)))
 
-(defun hermes-dashboard--print-empty-node (node)
-  "Insert empty-state dashboard NODE at point."
-  (let ((start (point)))
-    (insert (propertize (or (plist-get node :title)
-                            "No live Hermes chat buffers")
-                        'face 'hermes-dashboard-muted)
-            "\n")
-    (when-let* ((subtitle (hermes-dashboard--nonempty-string
-                           (plist-get node :subtitle))))
-      (insert "    " (propertize subtitle 'face 'hermes-dashboard-muted) "\n"))
-    (hermes-dashboard--add-card-properties
-     start node "No live chat buffer is attached to this card")))
-
 (defun hermes-dashboard--print-node (node)
   "Insert dashboard NODE at point."
   (pcase (hermes-dashboard--node-kind node)
     ('action (hermes-dashboard--print-action-node node))
     ('chat (hermes-dashboard--print-chat-node node))
-    ('empty (hermes-dashboard--print-empty-node node))
     (_ (insert (propertize (format "%S\n" node)
                            'face 'hermes-dashboard-muted)))))
 
@@ -553,7 +541,13 @@ The onboarding node leads when `hermes-dashboard--needs-onboarding' is set."
                :key "c"
                :title "Chat"
                :subtitle "Open a new Hermes chat"
-               :action #'hermes-chat))))
+               :action #'hermes-chat)
+         (list :id "action:resume"
+               :kind 'action
+               :key "r"
+               :title "Resume session"
+               :subtitle "Open a saved Hermes conversation"
+               :action #'hermes-chat-resume-session))))
 
 (defun hermes-dashboard--check-auth (&optional force)
   "Surface an onboarding card when a live connection reports no usable provider.
@@ -652,21 +646,13 @@ dashboard URL, so it re-fetches automatically after the configured URL changes."
              nodes)))
       (append known (hermes-dashboard--instance-group "Other" other)))))
 
-(defun hermes-dashboard--empty-node ()
-  "Return the dashboard empty-state node."
-  (list :id "empty:chats"
-        :kind 'empty
-        :title "No live Hermes chat buffers"
-        :subtitle "Press c to open Chat."))
-
 (defun hermes-dashboard--collect-nodes ()
   "Return dashboard nodes for actions and live chat buffers."
-  (let ((chat-nodes
-         (hermes-dashboard--group-chat-nodes
-          (mapcar #'hermes-dashboard--chat-node
-                  (hermes-dashboard--chat-buffers)))))
-    (append (hermes-dashboard--action-nodes)
-            (if chat-nodes chat-nodes (list (hermes-dashboard--empty-node))))))
+  (append
+   (hermes-dashboard--action-nodes)
+   (hermes-dashboard--group-chat-nodes
+    (mapcar #'hermes-dashboard--chat-node
+            (hermes-dashboard--chat-buffers)))))
 
 (defun hermes-dashboard--node-at-point (&optional position)
   "Return dashboard EWOC node at POSITION or point."

@@ -3,6 +3,7 @@
 ;; Copyright (C) 2026  Thanos Apollo
 
 ;; Author: Thanos Apollo <public@thanosapollo.org>
+;; Maintainer: Yurii Tovarnov <jurystepanovich@gmail.com>
 ;; Assisted-by: Hermes:MoA
 ;; Keywords: tools, convenience
 
@@ -867,34 +868,69 @@ parent's description, so a narrowed list still says what the pair does."
           (push (cons (concat "/" name " " sub) description) rows))))
     (nreverse rows)))
 
-(defun hermes-chat--command-completion-table (rows)
-  "Return a completion table over ROWS that annotates each candidate.
-ROWS are (CANDIDATE . ANNOTATION) cells; catalogue order is kept."
-  (let ((candidates (mapcar #'car rows)))
-    (lambda (string predicate action)
-      (if (eq action 'metadata)
-          `(metadata
-            (category . hermes-slash-command)
-            (annotation-function
-             . ,(lambda (candidate)
-                  (when-let* ((annotation (cdr (assoc candidate rows))))
-                    (and (not (string-empty-p annotation))
-                         (concat "  " (propertize annotation 'face 'shadow))))))
-            (display-sort-function . identity)
-            (cycle-sort-function . identity))
-        (complete-with-action action candidates string predicate)))))
+(defun hermes-chat--cached-command-rows ()
+  "Return this chat's cached slash commands as completion rows.
+The cache holds bare names and descriptions, so subcommands appear only
+once the live catalog lands; a warm chat still gets a filled prompt the
+moment the prompt opens."
+  (mapcar (lambda (pair)
+            (cons (concat "/" (car pair)) (or (cdr pair) "")))
+          hermes-chat--commands-cache))
+
+(defun hermes-chat--command-completion-table (rows-cell)
+  "Return a completion table over the live rows in ROWS-CELL.
+ROWS-CELL is a cons whose car holds (CANDIDATE . ANNOTATION) cells.  It
+stays empty until the catalog lands, which is what lets the prompt open
+before the request is answered; catalogue order is kept."
+  (lambda (string predicate action)
+    (if (eq action 'metadata)
+        `(metadata
+          (category . hermes-slash-command)
+          (annotation-function
+           . ,(lambda (candidate)
+                (when-let* ((annotation (cdr (assoc candidate (car rows-cell)))))
+                  (and (not (string-empty-p annotation))
+                       (concat "  " (propertize
+                                     annotation
+                                     'face 'completions-annotations))))))
+          (display-sort-function . identity)
+          (cycle-sort-function . identity))
+      (complete-with-action action (mapcar #'car (car rows-cell))
+                            string predicate))))
 
 (defvar hermes-chat--command-history nil
   "Minibuffer history for `hermes-chat-show-commands'.")
 
-(defun hermes-chat--read-command-choice (rows)
-  "Read one command from ROWS in the minibuffer and return the text.
+(defun hermes-chat--read-command-choice (rows-cell)
+  "Read one command in the minibuffer, from the live rows in ROWS-CELL.
 Candidates are annotated with their descriptions.  Free text is
 accepted, so an argument or a command missing from the catalog can still
 be typed."
   (completing-read "Hermes command: "
-                   (hermes-chat--command-completion-table rows)
+                   (hermes-chat--command-completion-table rows-cell)
                    nil nil nil 'hermes-chat--command-history))
+
+(defun hermes-chat--command-prompt-completions-window ()
+  "Return the completions window serving the open command prompt, or nil."
+  (when-let* ((minibuffer (active-minibuffer-window))
+              (window (get-buffer-window "*Completions*" 'visible)))
+    (let ((reference (and (boundp 'completion-reference-buffer)
+                          (buffer-local-value 'completion-reference-buffer
+                                              (window-buffer window)))))
+      (when (or (null reference)
+                (eq reference (window-buffer minibuffer)))
+        window))))
+
+(defun hermes-chat--command-prompt-refresh ()
+  "Re-render an open command prompt's completions after the catalog lands.
+A table that fills asynchronously never repaints the display itself, so
+a list the user already asked for would otherwise stay empty.  A prompt
+with no list on screen is left alone, so nothing pops up over the chat.
+Return non-nil when a list was repainted."
+  (when (hermes-chat--command-prompt-completions-window)
+    (with-selected-window (active-minibuffer-window)
+      (minibuffer-completion-help)
+      t)))
 
 (defun hermes-chat--insert-command (command buffer lifetime)
   "Insert COMMAND into the composer of chat BUFFER, which must own LIFETIME.
@@ -921,49 +957,130 @@ An existing draft is never edited: COMMAND goes to the kill ring instead."
         (select-window window)
         (goto-char (point-max))))))
 
-(defun hermes-chat--choose-command (rows buffer lifetime)
-  "Read one of ROWS in the minibuffer and insert it into chat BUFFER.
-BUFFER and LIFETIME identify the chat that owns the catalog; an empty
-choice inserts nothing."
-  (when-let* ((choice (hermes-chat--read-command-choice rows))
-              (command (hermes-transport--non-empty-string
-                        (string-trim choice))))
-    (hermes-chat--insert-command command buffer lifetime)))
+(defun hermes-chat--command-result-rows (rows-cell result)
+  "Publish catalog RESULT into ROWS-CELL and report it in the echo area.
+A list the prompt already displays is re-rendered, because a table that
+fills after the prompt opened does not repaint itself.  A warning and an
+empty catalog are announced while the prompt is open, so the user knows
+what is missing without leaving the minibuffer."
+  (setcar rows-cell (hermes-chat--command-choice-rows result))
+  (hermes-chat--command-prompt-refresh)
+  (let ((warning (hermes-transport--non-empty-string
+                  (hermes-chat--result-string result 'warning))))
+    (cond
+     (warning (message "%s" warning))
+     ((null (car rows-cell)) (message "No slash commands in the catalog")))))
 
-(defun hermes-chat--show-command-choice (result buffer lifetime)
-  "Prompt for one command from catalog RESULT and insert it into BUFFER.
-BUFFER's chat must still own LIFETIME.  A catalog warning is reported in
-the echo area; an empty catalog falls back to the
-`hermes-chat-commands-mode' listing."
-  (let ((warning (hermes-chat--result-string result 'warning))
-        (rows (hermes-chat--command-choice-rows result)))
-    (when (hermes-transport--non-empty-string warning)
-      (message "%s" warning))
-    (if rows
-        (hermes-chat--choose-command rows buffer lifetime)
-      (display-buffer (hermes-chat--commands-view result buffer lifetime)))))
+(defvar-local hermes-chat--commands-pending nil
+  "Token of the command catalog request this chat is waiting for.
+While non-nil the composer is read-only, so the prompt's command cannot
+race text typed into the composer behind it.")
+
+(defun hermes-chat--commands-lock (token)
+  "Make this buffer's composer read-only until TOKEN's request settles."
+  (setq hermes-chat--commands-pending token)
+  (hermes-chat--composer-read-only-apply
+   "the command list is still loading"))
+
+(defun hermes-chat--commands-unlock (&optional token)
+  "Release the composer lock, unless TOKEN belongs to a newer request.
+Return non-nil when this call released the lock, so a superseded or
+retired request can drop its result.  With no lock held this is a no-op,
+which keeps buffer cleanup from touching an unlocked composer."
+  (when (and hermes-chat--commands-pending
+             (or (null token) (eq token hermes-chat--commands-pending)))
+    (setq hermes-chat--commands-pending nil)
+    (hermes-chat--composer-read-only-apply nil)
+    t))
+
+(defconst hermes-chat--commands-loading-message "Loading command list..."
+  "Echo-area notice shown while the command catalog is still arriving.")
+
+(defconst hermes-chat--commands-timeout-message
+  "Command list timed out; type the command"
+  "Echo-area notice shown when the command catalog missed its deadline.")
+
+(defun hermes-chat--commands-await (request)
+  "Wait for the command catalog REQUEST to settle, bounded in time.
+The prompt must not open on an empty list, so the wait announces itself in
+the echo area and gives up after
+`hermes-dashboard-transport-http-timeout'.  A timed-out REQUEST stays
+pending: the prompt then reads the live rows if the catalog lands later."
+  (unless (plist-get request :settled)
+    (message "%s" hermes-chat--commands-loading-message)
+    (let ((deadline (+ (float-time) hermes-dashboard-transport-http-timeout)))
+      (while (and (not (plist-get request :settled))
+                  (< (float-time) deadline))
+        (accept-process-output nil 0.05)))
+    (message nil)
+    (unless (plist-get request :settled)
+      (message "%s" hermes-chat--commands-timeout-message))))
 
 (defun hermes-chat-show-commands ()
   "Read a slash command from the dashboard catalog in the minibuffer.
 Each candidate is annotated with its description and each subcommand is
 offered as \"/COMMAND SUB\".  The chosen command is inserted into this
 chat's composer; an existing draft is never edited, so the command goes
-to the kill ring instead.  The catalog never enters the transcript.  The
-catalog is fetched first and the prompt opens when it lands."
+to the kill ring instead.  The catalog never enters the transcript.
+
+A chat that already cached the catalog seeds the candidates and goes
+straight to the prompt.  Otherwise the list is fetched first: the echo
+area says the list is loading for up to
+`hermes-dashboard-transport-http-timeout', so the prompt opens on a
+filled catalog instead of an empty one, and a failed fetch reports
+itself in the transcript without prompting at all.  The composer stays
+read-only for the whole exchange.  A catalog with no commands at all
+falls back to the `hermes-chat-commands-mode' listing."
   (interactive nil hermes-chat-mode)
-  (let ((buffer (current-buffer))
-        (lifetime hermes-chat--lifecycle-generation)
-        (client (hermes-chat--dashboard-control-client)))
-    (hermes-dashboard-transport-commands-catalog
-     client
-     :resolve (lambda (result)
-                (hermes-chat--in-lifetime buffer lifetime
-                  (setq hermes-chat--commands-cache
-                        (hermes-chat--catalog-candidates result))
-                  (hermes-chat--show-command-choice result buffer lifetime)))
-     :reject (lambda (message)
-               (hermes-chat--in-lifetime buffer lifetime
-                 (hermes-chat--command-error message))))))
+  (let* ((buffer (current-buffer))
+         (lifetime hermes-chat--lifecycle-generation)
+         (client (hermes-chat--dashboard-control-client))
+         (token (list 'commands))
+         (rows-cell (list (hermes-chat--cached-command-rows)))
+         (request (list :settled nil :result nil :failed nil
+                        :prompted nil :closed nil))
+         (choice nil))
+    (hermes-chat--commands-lock token)
+    (unwind-protect
+        (progn
+          (hermes-dashboard-transport-commands-catalog
+           client
+           :resolve (lambda (result)
+                      (hermes-chat--in-lifetime buffer lifetime
+                        (setf (plist-get request :settled) t
+                              (plist-get request :result) result)
+                        (unless (plist-get request :closed)
+                          (hermes-chat--command-result-rows rows-cell result))
+                        (setq hermes-chat--commands-cache
+                              (hermes-chat--catalog-candidates result))))
+           :reject (lambda (message)
+                     (hermes-chat--in-lifetime buffer lifetime
+                       (setf (plist-get request :settled) t
+                             (plist-get request :failed) message)
+                       ;; A failure before the prompt needs no echo here:
+                       ;; the transcript reports it once the wait ends.
+                       (when (plist-get request :prompted)
+                         (if (plist-get request :closed)
+                             (hermes-chat--command-error message)
+                           (message "%s" message))))))
+          (unless (car rows-cell)
+            (hermes-chat--commands-await request))
+          (unless (plist-get request :failed)
+            (setf (plist-get request :prompted) t)
+            (setq choice (hermes-chat--read-command-choice rows-cell))))
+      (setf (plist-get request :closed) t)
+      (hermes-chat--commands-unlock token))
+    (let ((command (hermes-transport--non-empty-string
+                    (string-trim (or choice "")))))
+      (cond
+       (command
+        (hermes-chat--insert-command command buffer lifetime))
+       ((plist-get request :failed)
+        (hermes-chat--in-lifetime buffer lifetime
+          (hermes-chat--command-error (plist-get request :failed))))
+       ((and (plist-get request :settled) (null (car rows-cell)))
+        (display-buffer (hermes-chat--commands-view (plist-get request :result)
+                                                   buffer lifetime)))))))
 
 ;;; Commands help buffer
 
@@ -1225,27 +1342,47 @@ Interactively, a prefix argument prompts for the focus topic."
         (hermes-chat--dashboard-slash-exec name next-arg (substring content 1)))
     (user-error "Command alias target missing")))
 
-(defun hermes-chat--handle-send-result (message &optional notice)
-  "Handle command-dispatch MESSAGE with optional NOTICE."
+(defun hermes-chat--handle-send-result (message &optional notice display)
+  "Handle command-dispatch MESSAGE with optional NOTICE and DISPLAY.
+DISPLAY is the text shown as the user turn instead of MESSAGE, which stays
+model-facing scaffolding."
   (when (hermes-transport--non-empty-string notice)
     (hermes-chat--insert-local-status notice 'done))
   (cond
    ((not (hermes-transport--non-empty-string message))
     (user-error "Command returned no message to send"))
    ((hermes-chat--active-turn-p)
-    (hermes-chat--queue-content message))
+    (hermes-chat--queue-content message nil display))
    (t
-    (hermes-chat--dashboard-queue-or-submit message (current-buffer)))))
+    (hermes-chat--dashboard-queue-or-submit message (current-buffer) display))))
 
-(defun hermes-chat--handle-skill-result (message name)
-  "Send skill MESSAGE to the agent, echoing a compact loading line for NAME.
-The dispatch returns the full skill payload (the agent needs it); the
-transcript shows only \"loading skill: NAME\", not the whole skill."
+(defun hermes-chat--skill-invocation (name arg display)
+  "Return the user turn for a dispatched skill NAME invoked with ARG.
+DISPLAY is the gateway's projection of the typed invocation, which also
+covers bundles and stacked skills; NAME and ARG rebuild that invocation when
+the gateway sends none, so the prompt is never swapped for a loading line."
+  (or (hermes-transport--non-empty-string display)
+      (let ((text (string-join
+                   (delq nil
+                         (list (when-let* ((bare (hermes-chat--command-name name)))
+                                 (concat "/" bare))
+                               (hermes-transport--non-empty-string arg)))
+                   " ")))
+        (unless (string-empty-p text) text))))
+
+(defun hermes-chat--handle-skill-result (message name arg display notice)
+  "Send skill MESSAGE to the agent, echoing its invocation NAME ARG.
+DISPLAY, the gateway's projection of the typed invocation, wins over the one
+rebuilt from NAME and ARG; NOTICE reports stacked and skipped skills.  The
+dispatch returns the full skill payload, which the agent needs and the
+transcript never echoes."
   (unless (hermes-transport--non-empty-string message)
     (user-error "Skill returned no content to load"))
-  (let ((display (format "⚡ loading skill: %s"
-                         (or (hermes-transport--non-empty-string name) "skill"))))
-    (hermes-chat--dashboard-queue-or-submit message (current-buffer) display)))
+  (when (hermes-transport--non-empty-string notice)
+    (hermes-chat--insert-local-status notice 'done))
+  (hermes-chat--dashboard-queue-or-submit
+   message (current-buffer)
+   (hermes-chat--skill-invocation name arg display)))
 
 (defun hermes-chat--prefill-input (message)
   "Replace the input tail with MESSAGE."
@@ -1281,18 +1418,24 @@ When INPUT-EDITED is non-nil, retain MESSAGE for explicit manual recovery."
     ("send"
      (hermes-chat--handle-send-result
       (hermes-chat--result-string result 'message)
-      (hermes-chat--result-string result 'notice)))
+      (hermes-chat--result-string result 'notice)
+      (hermes-chat--result-string result 'display)))
     ("skill"
      (hermes-chat--handle-skill-result
       (hermes-chat--result-string result 'message)
-      (hermes-chat--result-string result 'name)))
+      (hermes-chat--result-string result 'name)
+      arg
+      (hermes-chat--result-string result 'display)
+      (hermes-chat--result-string result 'notice)))
     ("prefill"
      (hermes-chat--handle-prefill-result
       (hermes-chat--result-string result 'message)
       (hermes-chat--result-string result 'notice) input-edited))
     (_
      (when-let* ((output (hermes-chat--result-output result)))
-       (hermes-chat--insert-local-status output 'done)))))
+       ;; Command output is the user's answer, not background noise: a long
+       ;; notice starts expanded instead of behind a disclosure toggle.
+       (hermes-chat--insert-local-status output 'done t)))))
 
 (defun hermes-chat--format-command-pair (pair)
   "Return a readable catalog line for PAIR."
@@ -1303,6 +1446,7 @@ When INPUT-EDITED is non-nil, retain MESSAGE for explicit manual recovery."
 (hermes-chat-register-submit-inhibit-function
  #'hermes-chat--command-submit-inhibit-reason)
 (hermes-chat-register-cleanup-function #'hermes-chat--command-stop)
+(hermes-chat-register-cleanup-function #'hermes-chat--commands-unlock)
 
 (provide 'hermes-chat-slash)
 ;;; hermes-chat-slash.el ends here
