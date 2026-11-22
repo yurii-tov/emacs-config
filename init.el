@@ -1110,7 +1110,9 @@
 
 
 (with-eval-after-load 'diff
-  (keymap-set diff-mode-shared-map "a" 'diff-apply-hunk))
+  (define-keymap :keymap diff-mode-shared-map
+    "h" 'diff-apply-hunk
+    "H" 'diff-apply-buffer))
 
 
 ;; TRAMP
