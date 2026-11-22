@@ -1105,6 +1105,14 @@
   (setq wgrep-auto-save-buffer t))
 
 
+;; Diff
+;; ====
+
+
+(with-eval-after-load 'diff
+  (keymap-set diff-mode-shared-map "a" 'diff-apply-hunk))
+
+
 ;; TRAMP
 ;; =====
 
