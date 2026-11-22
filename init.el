@@ -2678,6 +2678,7 @@ Example input:
     "l" 'vc-print-root-log
     "s" 'vc-switch-branch
     "c" 'vc-create-branch
+    "j" 'vc-merge
     "r" 'vc-reset
     "R" (lambda () (interactive) (vc-reset "--soft" "Squash" t))
     "h" (lambda () (interactive) (vc-reset "--hard" "Hard reset"))))
