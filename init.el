@@ -124,26 +124,26 @@
   "M-k" 'kill-whole-line            "C-x B" 'bookmark-delete
   "M-=" 'count-words                "C-x j" 'bookmark-jump
   "M-q" 'hippie-expand              "C-x u" 'reopen-with-sudo
-  "M-1" 'shell-command              "C-x ." 'eglot
-  "M-!" 'async-shell-command        "C-x p" 'pass
-  "M-2" 'enclose-text-quotes        "C-x l" 'recompile
-  "M-3" 'enclose-text-asterisks     "C-x C-l" 'compile
-  "M-4" 'enclose-text-apostrophes   "C-x C-b" 'ibuffer
-  "M-9" 'enclose-text-parenthesis   "C-x C-k" 'kill-buffer-and-window
-  "M-(" 'enclose-text-angle         "C-x C-=" 'display-line-numbers-mode
-  "M-0" 'enclose-text-square        "C-c j" 'cider-start-map
-  "M-)" 'enclose-text-curly         "C-c k" 'sql-connect
-  "M-i" 'imenu                      "C-c i" 'ielm
-  "M-u" 'force-revert-buffer        "C-c s" 'ssh
-  "M-j" 'switch-to-buffer           "C-c x" 'ssh-tunnel
-  "M-`" 'shell                      "C-c d" 'serve-directory
-  "M-g" 'goto-line                  "C-c v" 'capture-video
-  "M-/" project-prefix-map          "C-c c" 'org-capture
-  "M-l" 'move-line-up               "C-c a" 'org-agenda
-  "M-M" 'mc/mark-all-dwim           "C-c o" 'org-push
-  "M-N" 'mc/mark-next-like-this     "C-c w" 'watch-file
-  "M-P" 'mc/mark-previous-like-this "C-c p" 'proced
-  "S-<down-mouse-1>" nil            "C-c h" 'hermes)
+  "M-1" 'async-shell-command        "C-x ." 'eglot
+  "M-2" 'enclose-text-quotes        "C-x p" 'pass
+  "M-3" 'enclose-text-asterisks     "C-x l" 'recompile
+  "M-4" 'enclose-text-apostrophes   "C-x C-l" 'compile
+  "M-9" 'enclose-text-parenthesis   "C-x C-b" 'ibuffer
+  "M-(" 'enclose-text-angle         "C-x C-k" 'kill-buffer-and-window
+  "M-0" 'enclose-text-square        "C-x C-=" 'display-line-numbers-mode
+  "M-)" 'enclose-text-curly         "C-c j" 'cider-start-map
+  "M-i" 'imenu                      "C-c k" 'sql-connect
+  "M-u" 'force-revert-buffer        "C-c i" 'ielm
+  "M-j" 'switch-to-buffer           "C-c s" 'ssh
+  "M-`" 'shell                      "C-c x" 'ssh-tunnel
+  "M-g" 'goto-line                  "C-c d" 'serve-directory
+  "M-/" project-prefix-map          "C-c v" 'capture-video
+  "M-l" 'move-line-up               "C-c c" 'org-capture
+  "M-M" 'mc/mark-all-dwim           "C-c a" 'org-agenda
+  "M-N" 'mc/mark-next-like-this     "C-c o" 'org-push
+  "M-P" 'mc/mark-previous-like-this "C-c w" 'watch-file
+  "S-<down-mouse-1>" nil            "C-c p" 'proced
+  "C-c h" 'hermes)
 
 
 ;; Conflicts
