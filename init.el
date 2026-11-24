@@ -1655,19 +1655,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
                   (apply f args)))))
 
 
-(advice-add 'shell-command
-            :around
-            (lambda (f &rest args)
-              "Pipe selected region into the command"
-              (if (use-region-p)
-                  (shell-command-on-region (region-beginning)
-                                           (region-end)
-                                           (car args)
-                                           nil
-                                           current-prefix-arg)
-                (apply f args))))
-
-
 ;; Async shell commands
 ;; ====================
 
