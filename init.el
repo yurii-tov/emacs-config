@@ -584,6 +584,10 @@
                   (ibuffer-update nil)))))
 
 
+(with-eval-after-load 'ibuffer
+  (keymap-set ibuffer-mode-map "j" 'ibuffer-jump-to-filter-group))
+
+
 ;; Files
 ;; =====
 
