@@ -1638,7 +1638,8 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ;; ==============
 
 
-(setq shell-command-prompt-show-cwd t)
+(setq shell-command-prompt-show-cwd t
+      async-shell-command-display-buffer nil)
 
 
 (advice-add 'read-shell-command
@@ -1653,13 +1654,6 @@ Optionally, formats the buffer with COMMAND (if provided)"
                     (completing-read
                      (car args) history nil nil (cadr args) history-symbol)
                   (apply f args)))))
-
-
-;; Async shell commands
-;; ====================
-
-
-(setq async-shell-command-display-buffer nil)
 
 
 (add-hook 'shell-command-mode-hook 'read-only-mode)
