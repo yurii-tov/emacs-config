@@ -881,7 +881,7 @@ moment the prompt opens."
   "Return a completion table over the live rows in ROWS-CELL.
 ROWS-CELL is a cons whose car holds (CANDIDATE . ANNOTATION) cells.  It
 stays empty until the catalog lands, which is what lets the prompt open
-before the request is answered; catalogue order is kept."
+before the request is answered."
   (lambda (string predicate action)
     (if (eq action 'metadata)
         `(metadata
@@ -892,14 +892,9 @@ before the request is answered; catalogue order is kept."
                   (and (not (string-empty-p annotation))
                        (concat "  " (propertize
                                      annotation
-                                     'face 'completions-annotations))))))
-          (display-sort-function . identity)
-          (cycle-sort-function . identity))
+                                     'face 'completions-annotations)))))))
       (complete-with-action action (mapcar #'car (car rows-cell))
                             string predicate))))
-
-(defvar hermes-chat--command-history nil
-  "Minibuffer history for `hermes-chat-show-commands'.")
 
 (defun hermes-chat--read-command-choice (rows-cell)
   "Read one command in the minibuffer, from the live rows in ROWS-CELL.
