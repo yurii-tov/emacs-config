@@ -1727,7 +1727,7 @@ Optionally, formats the buffer with COMMAND (if provided)"
 ")
 
 
-(add-to-list 'comint-output-filter-functions 'comint-truncate-buffer)
+(add-hook 'comint-output-filter-functions 'comint-truncate-buffer)
 
 
 ;; Persistent history
