@@ -2530,7 +2530,7 @@ Example input:
 ;; ===
 
 
-;; Good-looking mode line indicator
+(add-to-list 'savehist-additional-variables 'log-edit-comment-ring)
 
 
 (setq vc-display-status 'no-backend)
@@ -2544,9 +2544,6 @@ Example input:
                 (cl-case (cadr s)
                   (vc-up-to-date-state (setf (caddr s) "✓ "))
                   (vc-edited-state (setf (caddr s) "● "))))))
-
-
-;; vc-dir buffer
 
 
 (defun update-vc-git-dir-extra-headers (headers)
@@ -2587,9 +2584,6 @@ Example input:
                   (vc-refresh-headers)))))
 
 
-;; Pull/push
-
-
 (advice-add 'vc-git--pushpull
             :override
             (lambda (command _ extra-args)
@@ -2606,9 +2600,6 @@ Example input:
                (concat "git " (string-join (cons command extra-args) " ")))
               (when (eq major-mode 'vc-dir-mode)
                 (vc-refresh-headers))))
-
-
-;; Reset
 
 
 (defun vc-reset (&optional param action commit-p)
@@ -2637,7 +2628,9 @@ Example input:
       (vc-dir-refresh))))
 
 
-;; Convenient revision copying
+(defun vc-delete-branch (branch)
+  (interactive (list (vc-read-revision "Delete branch: ")))
+  (shell-command (concat "git branch -D " branch)))
 
 
 (defun log-view-copy-revision ()
@@ -2645,15 +2638,6 @@ Example input:
   (let ((r (cadr (log-view-current-entry))))
     (kill-new r)
     (message "Copied to clipboard: %s" r)))
-
-
-;; Commit message history
-
-
-(add-to-list 'savehist-additional-variables 'log-edit-comment-ring)
-
-
-;; Keybindings
 
 
 (with-eval-after-load 'vc-dir
@@ -2668,6 +2652,7 @@ Example input:
 
 (with-eval-after-load 'vc-git
   (define-keymap :keymap vc-dir-git-mode-map
+    "k" 'vc-delete-branch
     "r" 'vc-reset
     "R" (lambda () (interactive) (vc-reset "--soft" "Squash" t))
     "h" (lambda () (interactive) (vc-reset "--hard" "Hard reset"))))
